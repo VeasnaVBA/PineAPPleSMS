@@ -1,5 +1,8 @@
 {
-  "buildCommand": null,
-  "installCommand": null,
-  "outputDirectory": "."
+  "version": 2,
+  "cleanUrls": false,
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
 }
