@@ -144,6 +144,32 @@
     };
   </script>
 
+  <script>
+    // Global Error & Promise Rejection Diagnostic Overlay
+    window.addEventListener('error', function(e) {
+      console.error('Captured Global Error:', e.error || e.message);
+      var errDiv = document.getElementById('debug-error-banner');
+      if (!errDiv) {
+        errDiv = document.createElement('div');
+        errDiv.id = 'debug-error-banner';
+        errDiv.style = 'position:fixed;top:0;left:0;right:0;background:#dc2626;color:#ffffff;padding:12px 16px;z-index:999999;font-family:monospace;font-size:13px;white-space:pre-wrap;line-height:1.4;box-shadow:0 4px 6px rgba(0,0,0,0.3);';
+        document.body ? document.body.appendChild(errDiv) : document.documentElement.appendChild(errDiv);
+      }
+      errDiv.textContent = 'JavaScript Error: ' + (e.message || e) + '\nAt: ' + (e.filename || '') + ':' + (e.lineno || '');
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      console.error('Unhandled Promise Rejection:', e.reason);
+      var errDiv = document.getElementById('debug-error-banner');
+      if (!errDiv) {
+        errDiv = document.createElement('div');
+        errDiv.id = 'debug-error-banner';
+        errDiv.style = 'position:fixed;top:0;left:0;right:0;background:#dc2626;color:#ffffff;padding:12px 16px;z-index:999999;font-family:monospace;font-size:13px;white-space:pre-wrap;line-height:1.4;box-shadow:0 4px 6px rgba(0,0,0,0.3);';
+        document.body ? document.body.appendChild(errDiv) : document.documentElement.appendChild(errDiv);
+      }
+      errDiv.textContent = 'Unhandled Rejection: ' + (e.reason?.stack || e.reason?.message || e.reason);
+    });
+  </script>
+
   <!-- Standalone Offline Client-side Excel Libraries (SheetJS & ExcelJS) -->
   <script src="assets/vendor/xlsx.full.min.js"></script>
   <script src="assets/vendor/exceljs.min.js"></script>
@@ -155,7 +181,8 @@
 </head>
 <body class="h-full bg-background text-foreground antialiased font-khmer">
 
-  <div id="app" class="flex min-h-screen relative overflow-x-hidden">
+  <!-- Authenticated Application Shell (hidden until user logs in) -->
+  <div id="app" class="hidden flex min-h-screen relative overflow-x-hidden">
     <!-- Sidebar Container (Fixed on Left) -->
     <aside id="sidebar-container" class="fixed top-0 left-0 bottom-0 z-40 h-full w-[260px] sidebar-transition"></aside>
 
@@ -172,7 +199,7 @@
   </div>
 
   <!-- Login View Container -->
-  <div id="login-container" class="hidden"></div>
+  <div id="login-container"></div>
 
   <!-- Main JavaScript Module Entrypoint -->
   <script type="module" src="js/app.js"></script>
