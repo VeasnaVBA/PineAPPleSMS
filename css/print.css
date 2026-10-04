@@ -1,0 +1,529 @@
+/* Print styles for School Management System */
+
+@font-face {
+  font-family: 'Khmer OS Muol Light';
+  src: local('Khmer OS Muol Light'),
+       local('Khmer OS Moul Light'),
+       local('Moul'),
+       url('../assets/fonts/KhmerOSmuollight.woff2') format('woff2'),
+       url('../assets/fonts/KhmerOSmuollight.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Khmer OS Moul Light';
+  src: local('Khmer OS Moul Light'),
+       local('Khmer OS Muol Light'),
+       local('Moul'),
+       url('../assets/fonts/KhmerOSmuollight.woff2') format('woff2'),
+       url('../assets/fonts/KhmerOSmuollight.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Moul';
+  src: local('Moul'),
+       local('Khmer OS Moul Light'),
+       local('Khmer OS Muol Light'),
+       url('../assets/fonts/KhmerOSmuollight.woff2') format('woff2'),
+       url('../assets/fonts/KhmerOSmuollight.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Khmer OS Siemreap';
+  src: local('Khmer OS Siemreap'),
+       local('Siemreap');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+.font-khmer-muol,
+[style*="Khmer OS Muol Light"],
+[style*="Khmer OS Moul Light"],
+[style*="Moul"] {
+    font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important;
+  letter-spacing: normal !important;
+  font-feature-settings: normal !important;
+  -webkit-font-feature-settings: normal !important;
+  font-variant-ligatures: normal !important;
+  text-rendering: optimizeLegibility !important;
+  line-height: 1.8 !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+@media print {
+
+
+  html, body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-family: 'Kantumruy Pro', 'Khmer OS Siemreap', 'Siemreap', system-ui, sans-serif !important;
+    font-size: 11pt !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .font-khmer-muol,
+  [style*="Khmer OS Muol Light"],
+  [style*="Khmer OS Moul Light"],
+  [style*="Moul"] {
+    font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important;
+    letter-spacing: normal !important;
+    font-feature-settings: normal !important;
+    -webkit-font-feature-settings: normal !important;
+    font-variant-ligatures: normal !important;
+    text-rendering: optimizeLegibility !important;
+    line-height: 1.8 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide navigation shell, topbar, background app content when printing */
+  #sidebar,
+  #sidebar-container,
+  #topbar,
+  #topbar-container,
+  #unassigned-classroom-banner,
+  .no-print,
+  button,
+  .btn-close-modal,
+  .action-buttons {
+    display: none !important;
+  }
+
+  #main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .card, .table-container {
+    border: 1px solid #000 !important;
+    box-shadow: none !important;
+  }
+
+  body:not(.printing-report-viewer) table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  body:not(.printing-report-viewer) th,
+  body:not(.printing-report-viewer) td {
+    border: 1px solid #000 !important;
+    padding: 5px 8px !important;
+  }
+
+  /* Specific Isolated Print Mode for MoEYS Reports */
+  body.printing-moeys-report #app {
+    display: none !important;
+  }
+
+  body.printing-moeys-report .moeys-report-dialog-overlay {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+    backdrop-filter: none !important;
+  }
+
+  body.printing-moeys-report .moeys-report-dialog-card {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  body.printing-moeys-report .moeys-report-toolbar {
+    display: none !important;
+  }
+
+  body.printing-moeys-report .moeys-scroll-container {
+    overflow: visible !important;
+    max-height: none !important;
+    padding: 0 !important;
+  }
+
+  body.printing-moeys-report .moeys-table,
+  body.printing-report-viewer .moeys-table {
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    border: 1.5px solid #000000 !important;
+    font-size: 10px !important;
+    page-break-inside: auto;
+  }
+
+  body.printing-moeys-report .moeys-table tr,
+  body.printing-report-viewer .moeys-table tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  body.printing-moeys-report .moeys-table th,
+  body.printing-report-viewer .moeys-table th {
+    background-color: #f3f4f6 !important;
+    color: #000000 !important;
+    border: 1px solid #000000 !important;
+    padding: 5px 4px !important;
+    font-weight: bold !important;
+    text-align: center !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+    box-sizing: border-box !important;
+  }
+
+  body.printing-moeys-report .moeys-table td,
+  body.printing-report-viewer .moeys-table td {
+    border: 1px solid #000000 !important;
+    padding: 4px 4px !important;
+    color: #000000 !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+    box-sizing: border-box !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+
+  .score-sheet-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  body.printing-moeys-report .score-sheet-dual-grid,
+  body.printing-report-viewer .score-sheet-dual-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  body.printing-moeys-report .score-sheet-dual-grid > div,
+  body.printing-report-viewer .score-sheet-dual-grid > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  body.printing-moeys-report .score-sheet-table,
+  body.printing-report-viewer .score-sheet-table {
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important;
+    font-size: 10px !important;
+  }
+
+  body.printing-moeys-report .score-sheet-table th,
+  body.printing-report-viewer .score-sheet-table th,
+  body.printing-moeys-report .score-sheet-table thead th,
+  body.printing-report-viewer .score-sheet-table thead th {
+    background-color: #0045ff !important;
+    color: #ffffff !important;
+    font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important;
+    font-size: 10px !important;
+    font-weight: bold !important;
+    padding: 4px !important;
+    line-height: 1.25 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body.printing-moeys-report .score-sheet-table th,
+  body.printing-report-viewer .score-sheet-table th,
+  body.printing-moeys-report .score-sheet-table td,
+  body.printing-report-viewer .score-sheet-table td {
+    font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important;
+    padding: 4px !important;
+    line-height: 1.25 !important;
+    font-size: 10px !important;
+    box-sizing: border-box !important;
+  }
+
+  .page-break {
+    page-break-after: always;
+  }
+
+  /* Specific Isolated Print Mode for Global Report Viewer */
+  body.printing-report-viewer #app {
+    display: none !important;
+  }
+
+  body.printing-report-viewer .report-viewer-overlay {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+    backdrop-filter: none !important;
+  }
+
+  body.printing-report-viewer .report-viewer-header,
+  body.printing-report-viewer .report-viewer-toolbar,
+  body.printing-report-viewer #rv-sidebar,
+  body.printing-report-viewer .no-print {
+    display: none !important;
+  }
+
+  /* WYSIWYG Virtual A4 Print Specification */
+  body.printing-report-viewer * {
+    visibility: hidden;
+  }
+
+  body.printing-report-viewer .report-preview-workspace,
+  body.printing-report-viewer .report-preview-workspace *,
+  body.printing-report-viewer .a4-sheet-page,
+  body.printing-report-viewer .a4-sheet-page *,
+  body.printing-report-viewer .report-viewer-sheet,
+  body.printing-report-viewer .report-viewer-sheet * {
+    visibility: visible;
+  }
+
+  body.printing-report-viewer .rv-page-badge,
+  body.printing-report-viewer .rv-resize-handle,
+  body.printing-report-viewer .rv-image-toolbar,
+  body.printing-report-viewer .report-viewer-header,
+  body.printing-report-viewer .report-viewer-toolbar,
+  body.printing-report-viewer #rv-sidebar,
+  body.printing-report-viewer .no-print,
+  body.printing-report-viewer button {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  body.printing-report-viewer .report-preview-workspace,
+  body.printing-report-viewer .report-viewer-scroll-container {
+    overflow: visible !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    display: block !important;
+  }
+
+  body.printing-report-viewer .report-viewer-paper-scaler {
+    transform: none !important;
+    width: 100% !important;
+    gap: 0 !important;
+    display: block !important;
+  }
+
+  body.printing-report-viewer .a4-sheet-page,
+  body.printing-report-viewer .report-viewer-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  body.printing-report-viewer .a4-sheet-page:last-child,
+  body.printing-report-viewer .report-viewer-sheet:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  /* Table Shading & Exact Background Colors & True Page Breaking */
+  .report-viewer-sheet table {
+    border-collapse: collapse !important;
+  }
+  .report-viewer-sheet thead {
+    display: table-header-group !important;
+  }
+  .report-viewer-sheet tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  .report-viewer-sheet table,
+  .report-viewer-sheet tr,
+  .report-viewer-sheet th,
+  .report-viewer-sheet td,
+  [style*="background-color"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Resizable Image Container Print Rules (Floating Overlay) */
+  .rv-resizable-image {
+    position: absolute !important;
+    outline: none !important;
+    z-index: 30 !important;
+  }
+  .rv-resizable-image .rv-resize-handle,
+  .rv-resizable-image .rv-image-toolbar {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Floating Textbox Print Rules (Floating Overlay) */
+  .rv-floating-textbox {
+    position: absolute !important;
+    outline: none !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    z-index: 35 !important;
+  }
+  .rv-floating-textbox .rv-textbox-content {
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+  .rv-floating-textbox .rv-textbox-resize-handle,
+  .rv-floating-textbox .rv-textbox-toolbar,
+  .rv-floating-textbox .rv-drag-handle {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* =========================================================
+     Dedicated Isolated Print Mode for Student ID Card Studio
+     ========================================================= */
+  body.printing-id-cards #app,
+  body.printing-id-cards #id-card-studio-overlay,
+  body.printing-id-cards .moeys-report-dialog-overlay,
+  body.printing-id-cards .report-viewer-overlay {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  body.printing-id-cards #id-card-print-container {
+    display: block !important;
+    visibility: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    background: transparent !important;
+  }
+
+  body.printing-id-cards #id-card-print-container * {
+    visibility: visible !important;
+  }
+
+  body.printing-id-cards .a4-card-sheet {
+    display: flex !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    margin: 0 auto !important;
+    box-shadow: none !important;
+    border: none !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    box-sizing: border-box !important;
+  }
+
+  body.printing-id-cards.landscape-print .a4-card-sheet,
+  body.printing-id-cards .a4-card-sheet.a4-sheet-landscape {
+    width: 297mm !important;
+    height: 210mm !important;
+    min-height: 210mm !important;
+    max-height: 210mm !important;
+  }
+
+  body.printing-id-cards .a4-card-sheet:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  body.printing-id-cards .id-card-item {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body.printing-id-cards .vertical-ribbon-text {
+    writing-mode: vertical-rl !important;
+    transform: rotate(180deg) !important;
+  }
+
+  /* =========================================================
+     Dedicated Isolated Print Mode for MoEYS Teacher CV Report
+     ========================================================= */
+  .teacher-cv-page {
+    page-break-after: always !important;
+    break-after: page !important;
+    box-sizing: border-box !important;
+    background-color: #ffffff !important;
+  }
+
+  .teacher-cv-page:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  .teacher-cv-document table,
+  .teacher-cv-document th,
+  .teacher-cv-document td,
+  .teacher-cv-document div {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* Screen and Global Presentation for MoEYS Teacher CV */
+.teacher-cv-page {
+  box-sizing: border-box;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+}
+
+

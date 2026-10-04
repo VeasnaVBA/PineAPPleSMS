@@ -1,0 +1,1096 @@
+/**
+ * Admin User Accounts & Permissions Management Page
+ * Includes:
+ * 1. User Accounts Table & Modal (Create, Edit, Disable, Delete, Classroom assignment)
+ * 2. Role Permissions Management Matrix (Section 6 & 7: Checkbox grid for Director & Teacher)
+ * 3. Security Audit Logs (Section 22: Activity history from IndexedDB activityLogs)
+ */
+import { authService } from '../services/authService.js';
+import { UserService } from '../services/userService.js';
+import { permissionService, MENU_KEYS } from '../services/permissionService.js';
+import { db } from '../database/db.js';
+import { i18n, t } from '../i18n/i18n.js';
+import { getIcon } from '../components/icons.js';
+import { toast } from '../components/toast.js';
+import { Modal } from '../components/modal.js';
+import { SyncService } from '../services/syncService.js';
+import { renderActionDropdown } from '../components/actionDropdown.js';
+
+export const UsersPage = {
+  users: [],
+  classes: [],
+  auditLogs: [],
+  permissions: null,
+  activeTab: 'tab-accounts',
+  searchQuery: '',
+  roleFilter: 'all',
+  statusFilter: 'all',
+  container: null,
+
+  async render(container) {
+    this.container = container;
+
+    // Multi-level security: Verify role
+    if (!authService.isAdmin()) {
+      this.renderAccessDenied(container);
+      return;
+    }
+
+    try {
+      this.classes = await db.getAll('classes');
+      this.users = await UserService.getAll();
+      this.permissions = await permissionService.getAll();
+      this.auditLogs = (await db.getAll('activityLogs')).reverse();
+    } catch (err) {
+      console.error('Failed to load users data:', err);
+      toast.error('Failed to load user accounts or permissions.');
+    }
+
+    const currentLocale = i18n.getLocale();
+    const isKm = currentLocale === 'km';
+
+    container.innerHTML = `
+      <div class="space-y-6 animate-fade-in pb-12 select-none">
+        <!-- Page Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="p-2 rounded-lg bg-primary/10 text-primary">
+                ${getIcon('users', 'w-5 h-5')}
+              </span>
+              <h1 class="text-2xl font-bold tracking-tight text-foreground ${isKm ? 'font-khmer' : ''}">
+                ${isKm ? 'គ្រប់គ្រងគណនី & សិទ្ធិប្រើប្រាស់' : 'Account & Permission Management'}
+              </h1>
+            </div>
+            <p class="text-xs sm:text-sm text-muted-foreground mt-1">
+              ${isKm 
+                ? 'គ្រប់គ្រងគណនីអ្នកប្រើប្រាស់ បែងចែកបន្ទប់រៀន និងកំណត់សិទ្ធិម៉ឺនុយសម្រាប់តួនាទី Director & Teacher'
+                : 'Manage user accounts, assign classrooms, and configure sidebar menu permissions for Director & Teacher.'}
+            </p>
+          </div>
+
+          <!-- Add User Button (Only on Accounts tab) -->
+          <button id="btn-add-user" 
+                  class="${this.activeTab === 'tab-accounts' ? 'inline-flex' : 'hidden'} items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs sm:text-sm shadow-sm transition-all cursor-pointer">
+            ${getIcon('plus', 'w-4 h-4')}
+            <span>${isKm ? 'បង្កើតគណនីថ្មី' : 'Add New User'}</span>
+          </button>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="p-1 rounded-xl border border-border bg-card shadow-2xs flex items-center gap-1.5 overflow-x-auto text-xs sm:text-sm font-medium" id="users-page-tabs">
+          <button data-target-tab="tab-accounts" 
+                  class="tab-btn px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-2 cursor-pointer ${this.activeTab === 'tab-accounts' ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'}">
+            ${getIcon('user', 'w-4 h-4')}
+            <span>${isKm ? 'គណនីអ្នកប្រើប្រាស់' : 'User Accounts'}</span>
+            <span class="tab-badge px-1.5 py-0.5 rounded-full ${this.activeTab === 'tab-accounts' ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground'} text-[10px] font-semibold">${this.users.length}</span>
+          </button>
+
+          <button data-target-tab="tab-permissions" 
+                  class="tab-btn px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-2 cursor-pointer ${this.activeTab === 'tab-permissions' ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'}">
+            ${getIcon('lock', 'w-4 h-4')}
+            <span>${isKm ? 'ម៉ាទ្រីសសិទ្ធិប្រើប្រាស់' : 'Role Permissions Matrix'}</span>
+          </button>
+
+          <button data-target-tab="tab-logs" 
+                  class="tab-btn px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-2 cursor-pointer ${this.activeTab === 'tab-logs' ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'}">
+            ${getIcon('clock', 'w-4 h-4')}
+            <span>${isKm ? 'កំណត់ត្រាសុវត្ថិភាព' : 'Security Audit Logs'}</span>
+            <span class="tab-badge px-1.5 py-0.5 rounded-full ${this.activeTab === 'tab-logs' ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground'} text-[10px] font-semibold">${this.auditLogs.length}</span>
+          </button>
+        </div>
+
+        <!-- TAB 1: USER ACCOUNTS -->
+        <div id="tab-accounts" class="tab-content ${this.activeTab === 'tab-accounts' ? '' : 'hidden'} space-y-4">
+          <!-- Filter & Search Toolbar -->
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-card p-3 rounded-xl border border-border">
+            <!-- Search input -->
+            <div class="relative w-full sm:w-80">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
+                ${getIcon('search', 'w-4 h-4')}
+              </span>
+              <input type="text" 
+                     id="user-search-input" 
+                     value="${this.searchQuery}"
+                     placeholder="${isKm ? 'ស្វែងរកតាមឈ្មោះ ឬឈ្មោះអ្នកប្រើ...' : 'Search by name or username...'}"
+                     class="w-full h-9 pl-10 pr-3 py-1.5 bg-background border border-input rounded-md text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary box-border shadow-xs" />
+            </div>
+
+            <!-- Role & Status Dropdowns -->
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <select id="user-role-filter" 
+                      class="h-9 px-3 py-1.5 pr-8 bg-background border border-input rounded-md text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary box-border shadow-xs">
+                <option value="all" ${this.roleFilter === 'all' ? 'selected' : ''}>${isKm ? 'គ្រប់តួនាទី' : 'All Roles'}</option>
+                <option value="ADMIN" ${this.roleFilter === 'ADMIN' ? 'selected' : ''}>Admin</option>
+                <option value="DIRECTOR" ${this.roleFilter === 'DIRECTOR' ? 'selected' : ''}>Director</option>
+                <option value="TEACHER" ${this.roleFilter === 'TEACHER' ? 'selected' : ''}>Teacher</option>
+              </select>
+
+              <select id="user-status-filter" 
+                      class="h-9 px-3 py-1.5 pr-8 bg-background border border-input rounded-md text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary box-border shadow-xs">
+                <option value="all" ${this.statusFilter === 'all' ? 'selected' : ''}>${isKm ? 'គ្រប់ស្ថានភាព' : 'All Status'}</option>
+                <option value="ACTIVE" ${this.statusFilter === 'ACTIVE' ? 'selected' : ''}>${isKm ? 'សកម្ម' : 'Active'}</option>
+                <option value="DISABLED" ${this.statusFilter === 'DISABLED' ? 'selected' : ''}>${isKm ? 'ត្រូវបានផ្អាក' : 'Disabled'}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Users Data Table -->
+          <div class="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs sm:text-sm">
+                <thead class="bg-muted/60 border-b border-border text-muted-foreground font-semibold">
+                  <tr>
+                    <th class="px-4 py-3">ID</th>
+                    <th class="px-4 py-3">${isKm ? 'ឈ្មោះ & ឈ្មោះគណនី' : 'Name & Username'}</th>
+                    <th class="px-4 py-3">${isKm ? 'តួនាទី' : 'Role'}</th>
+                    <th class="px-4 py-3">${isKm ? 'បន្ទប់រៀនដែលបានចាត់តាំង' : 'Assigned Classroom'}</th>
+                    <th class="px-4 py-3">${isKm ? 'ស្ថានភាព' : 'Status'}</th>
+                    <th class="px-4 py-3">${isKm ? 'ការចូលចុងក្រោយ' : 'Last Login'}</th>
+                    <th class="w-[50px] px-2 py-3 text-center">${isKm ? 'សកម្មភាព' : 'Actions'}</th>
+                  </tr>
+                </thead>
+                <tbody id="users-table-body" class="divide-y divide-border">
+                  ${this.renderTableRows()}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: ROLE PERMISSIONS MATRIX (Sections 6 & 7) -->
+        <div id="tab-permissions" class="tab-content ${this.activeTab === 'tab-permissions' ? '' : 'hidden'} space-y-6">
+          <div class="bg-card p-6 rounded-xl border border-border shadow-sm space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+              <div>
+                <h3 class="text-base font-semibold text-foreground tracking-tight">
+                  ${isKm ? 'កំណត់សិទ្ធិម៉ឺនុយសម្រាប់តួនាទីនីមួយៗ' : 'Sidebar Menu Access Matrix'}
+                </h3>
+                <p class="text-xs text-muted-foreground mt-0.5">
+                  ${isKm 
+                    ? 'គ្រប់គ្រងម៉ឺនុយសិក្សាដែល Director និង Teacher អាចមើលឃើញ និងចូលប្រើប្រាស់បាន។ Admin ត្រូវបានកំណត់សម្រាប់តែការគ្រប់គ្រងគណនីអ្នកប្រើប្រាស់ប៉ុណ្ណោះ។' 
+                    : 'Control which academic navigation menus are accessible to Director and Teacher roles. Admin is dedicated exclusively to administrative user management.'}
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button id="btn-reset-perms" class="px-3 py-1.5 rounded-lg border border-border hover:bg-muted text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+                  ${isKm ? 'កំណត់លំនាំដើមឡើងវិញ' : 'Reset Defaults'}
+                </button>
+                <button id="btn-save-perms" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs shadow-sm transition-all">
+                  ${getIcon('check', 'w-4 h-4')}
+                  <span>${isKm ? 'រក្សាទុកការកំណត់' : 'Save Permissions'}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Permission Checkbox Table -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs sm:text-sm">
+                <thead class="bg-muted/60 border-b border-border text-muted-foreground font-semibold">
+                  <tr>
+                    <th class="px-4 py-3">${isKm ? 'ឈ្មោះម៉ឺនុយ (Navigation Menu)' : 'Navigation Menu'}</th>
+                    <th class="px-4 py-3 text-center">
+                      <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                        ADMIN
+                      </span>
+                    </th>
+                    <th class="px-4 py-3 text-center">
+                      <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-500/10 text-purple-500 border border-purple-500/20">
+                        DIRECTOR
+                      </span>
+                    </th>
+                    <th class="px-4 py-3 text-center">
+                      <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                        TEACHER
+                      </span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-border" id="permissions-matrix-tbody">
+                  ${this.renderPermissionsMatrixRows()}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="p-3.5 rounded-lg bg-muted/40 border border-border/80 flex items-center gap-2.5 text-xs text-muted-foreground">
+              ${getIcon('lock', 'w-4 h-4 text-primary flex-shrink-0')}
+              <span>
+                ${isKm 
+                  ? 'ការផ្លាស់ប្តូរសិទ្ធិត្រូវបានរក្សាទុកក្នុង IndexedDB និងមានប្រសិទ្ធភាពភ្លាមៗចំពោះរបារចំហៀង និង Route Guard ។' 
+                  : 'Permission changes persist in IndexedDB and take effect immediately across sidebar menus and client route guards.'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: AUDIT LOGS (Section 22) -->
+        <div id="tab-logs" class="tab-content ${this.activeTab === 'tab-logs' ? '' : 'hidden'} space-y-4">
+          <div class="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+            <div class="p-4 border-b border-border flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-semibold text-foreground">${isKm ? 'កំណត់ត្រាសកម្មភាព និងសុវត្ថិភាព' : 'System Security & Activity Trail'}</h3>
+                <p class="text-xs text-muted-foreground">${isKm ? 'តាមដានរាល់ការបង្កើតគណនី ការលុប ការប្តូរសិទ្ធិ និងការចូលប្រើប្រាស់' : 'Track account creations, status updates, permission modifications, and security events.'}</p>
+              </div>
+              <button id="btn-refresh-logs" class="p-1.5 rounded-lg border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Refresh Logs">
+                ${getIcon('rotateCw', 'w-4 h-4')}
+              </button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs sm:text-sm">
+                <thead class="bg-muted/60 border-b border-border text-muted-foreground font-semibold">
+                  <tr>
+                    <th class="px-4 py-3">${isKm ? 'កាលបរិច្ឆេទ & ម៉ោង' : 'Timestamp'}</th>
+                    <th class="px-4 py-3">${isKm ? 'សកម្មភាព' : 'Action'}</th>
+                    <th class="px-4 py-3">${isKm ? 'ព័ត៌មានលម្អិត' : 'Event Details'}</th>
+                  </tr>
+                </thead>
+                <tbody id="logs-table-body" class="divide-y divide-border">
+                  ${this.renderAuditLogRows()}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    this.bindEvents();
+  },
+
+  renderPermissionsMatrixRows() {
+    const isKm = i18n.getLocale() === 'km';
+    const directorPerms = this.permissions?.DIRECTOR || {};
+    const teacherPerms = this.permissions?.TEACHER || {};
+
+    const menuLabels = {
+      dashboard: isKm ? 'ផ្ទាំងព័ត៌មាន' : 'Dashboard',
+      schools: isKm ? 'គ្រប់គ្រងសាលារៀន' : 'Schools Management',
+      students: isKm ? 'គ្រប់គ្រងសិស្ស' : 'Students Management',
+      teachers: isKm ? 'គ្រប់គ្រងគ្រូបង្រៀន' : 'Teachers Directory',
+      classes: isKm ? 'គ្រប់គ្រងថ្នាក់រៀន' : 'Classes Management',
+      attendance: isKm ? 'កត់ត្រាវត្តមាន' : 'Attendance Roll-Call',
+      scores: isKm ? 'ពិន្ទុ និងការវាយតម្លៃ' : 'Scores & Grading',
+      reports: isKm ? 'មជ្ឈមណ្ឌលរបាយការណ៍' : 'Reports & Printouts',
+      settings: isKm ? 'ការកំណត់ប្រព័ន្ធ' : 'System Settings'
+    };
+
+    const academicRows = MENU_KEYS.map(key => {
+      const isDirectorChecked = directorPerms[key] !== false;
+      const isTeacherChecked = Boolean(teacherPerms[key]);
+
+      return `
+        <tr class="hover:bg-muted/40 transition-colors">
+          <td class="px-4 py-3.5 font-medium text-foreground flex items-center gap-2">
+            ${getIcon(key, 'w-4 h-4 text-muted-foreground')}
+            <span>${menuLabels[key] || key}</span>
+          </td>
+          <!-- Admin (Academic & school menus restricted; Settings & Users accessible) -->
+          <td class="px-4 py-3.5 text-center">
+            ${(key === 'settings')
+              ? `<div class="inline-flex items-center justify-center w-6 h-6 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs" title="Privilege">✓</div>`
+              : `<span class="text-xs text-muted-foreground font-mono" title="Academic & school menu restricted from Admin role">—</span>`
+            }
+          </td>
+          <!-- Director Checkbox -->
+          <td class="px-4 py-3.5 text-center">
+            <input type="checkbox" 
+                   class="perm-checkbox rounded border-input text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                   data-role="DIRECTOR" 
+                   data-key="${key}"
+                   ${isDirectorChecked ? 'checked' : ''} />
+          </td>
+          <!-- Teacher Checkbox -->
+          <td class="px-4 py-3.5 text-center">
+            <input type="checkbox" 
+                   class="perm-checkbox rounded border-input text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                   data-role="TEACHER" 
+                   data-key="${key}"
+                   ${isTeacherChecked ? 'checked' : ''} />
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    const usersRow = `
+      <tr class="hover:bg-muted/40 transition-colors bg-primary/5">
+        <td class="px-4 py-3.5 font-semibold text-foreground flex items-center gap-2">
+          ${getIcon('users', 'w-4 h-4 text-primary')}
+          <span>${isKm ? 'គ្រប់គ្រងគណនី' : 'User Accounts & Access'}</span>
+        </td>
+        <!-- Admin (Dedicated privilege) -->
+        <td class="px-4 py-3.5 text-center">
+          <div class="inline-flex items-center justify-center w-6 h-6 rounded bg-rose-500/10 text-rose-500 font-bold text-xs" title="Permanent Admin Privilege">
+            ✓
+          </div>
+        </td>
+        <!-- Director (Restricted) -->
+        <td class="px-4 py-3.5 text-center">
+          <span class="text-xs text-muted-foreground font-mono" title="Admin only">—</span>
+        </td>
+        <!-- Teacher (Restricted) -->
+        <td class="px-4 py-3.5 text-center">
+          <span class="text-xs text-muted-foreground font-mono" title="Admin only">—</span>
+        </td>
+      </tr>
+    `;
+
+    return usersRow + academicRows;
+  },
+
+  renderAuditLogRows() {
+    const isKm = i18n.getLocale() === 'km';
+    if (!this.auditLogs || this.auditLogs.length === 0) {
+      return `
+        <tr>
+          <td colspan="3" class="px-4 py-8 text-center text-muted-foreground">
+            ${isKm ? 'មិនទាន់មានកំណត់ត្រាសកម្មភាពនៅឡើយទេ' : 'No activity logs recorded yet.'}
+          </td>
+        </tr>
+      `;
+    }
+
+    return this.auditLogs.slice(0, 50).map(log => {
+      const dateStr = new Date(log.timestamp).toLocaleString();
+      let badgeClass = 'bg-primary/10 text-primary border-primary/20';
+      if (log.action.includes('DELETE')) badgeClass = 'bg-rose-500/10 text-rose-500 border-rose-500/20';
+      else if (log.action.includes('CREATE')) badgeClass = 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+      else if (log.action.includes('PERMISSIONS')) badgeClass = 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+
+      return `
+        <tr class="hover:bg-muted/40 transition-colors">
+          <td class="px-4 py-2.5 font-mono text-xs text-muted-foreground whitespace-nowrap">${dateStr}</td>
+          <td class="px-4 py-2.5 whitespace-nowrap">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold border ${badgeClass}">
+              ${log.action}
+            </span>
+          </td>
+          <td class="px-4 py-2.5 text-xs text-foreground">${log.details || log.description || '—'}</td>
+        </tr>
+      `;
+    }).join('');
+  },
+
+  renderTableRows() {
+    const isKm = i18n.getLocale() === 'km';
+    let filtered = [...this.users];
+
+    // Search filter
+    if (this.searchQuery.trim()) {
+      const q = this.searchQuery.trim().toLowerCase();
+      filtered = filtered.filter(u => 
+        (u.displayName && u.displayName.toLowerCase().includes(q)) ||
+        (u.username && u.username.toLowerCase().includes(q)) ||
+        (u.id && u.id.toLowerCase().includes(q))
+      );
+    }
+
+    // Role filter
+    if (this.roleFilter !== 'all') {
+      filtered = filtered.filter(u => u.role === this.roleFilter);
+    }
+
+    // Status filter
+    if (this.statusFilter !== 'all') {
+      filtered = filtered.filter(u => u.status === this.statusFilter);
+    }
+
+    if (filtered.length === 0) {
+      return `
+        <tr>
+          <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
+            <div class="flex flex-col items-center justify-center gap-2">
+              ${getIcon('users', 'w-8 h-8 text-muted-foreground/50')}
+              <p class="font-medium">${isKm ? 'រកមិនឃើញគណនីអ្នកប្រើប្រាស់ទេ' : 'No user accounts found'}</p>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    return filtered.map(u => {
+      let roleBadge = '';
+      if (u.role === 'ADMIN') {
+        roleBadge = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-500/10 text-rose-500 border border-rose-500/20">ADMIN</span>`;
+      } else if (u.role === 'DIRECTOR') {
+        roleBadge = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-500/10 text-purple-500 border border-purple-500/20">DIRECTOR</span>`;
+      } else {
+        roleBadge = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-500/10 text-blue-500 border border-blue-500/20">TEACHER</span>`;
+      }
+
+      let classDisplay = '<span class="text-muted-foreground">—</span>';
+      if (u.role === 'TEACHER') {
+        const classId = u.classId || u.assignedClassId;
+        const cls = this.classes.find(c => c.id === classId);
+        classDisplay = cls 
+          ? `<span class="font-medium text-foreground">${cls.name}</span>`
+          : `<span class="text-amber-500 font-medium">${isKm ? 'មិនទាន់ចាត់តាំង' : 'Unassigned'}</span>`;
+      }
+
+      const statusBadge = u.status === 'ACTIVE'
+        ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> ${isKm ? 'សកម្ម' : 'Active'}
+           </span>`
+        : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-red-500/10 text-red-500 border border-red-500/20">
+             <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> ${isKm ? 'ផ្អាក' : 'Disabled'}
+           </span>`;
+
+      const lastLoginStr = u.lastLogin 
+        ? new Date(u.lastLogin).toLocaleDateString() + ' ' + new Date(u.lastLogin).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : '<span class="text-muted-foreground">—</span>';
+
+      return `
+        <tr class="hover:bg-muted/40 transition-colors">
+          <td class="px-4 py-3 font-mono text-xs text-muted-foreground">${u.id}</td>
+          <td class="px-4 py-3">
+            <div class="font-semibold text-foreground">${u.displayName}</div>
+            <div class="text-[11px] text-muted-foreground">@${u.username}</div>
+          </td>
+          <td class="px-4 py-3">${roleBadge}</td>
+          <td class="px-4 py-3">${classDisplay}</td>
+          <td class="px-4 py-3">${statusBadge}</td>
+          <td class="px-4 py-3 text-xs text-muted-foreground">${lastLoginStr}</td>
+          <td class="w-[50px] px-2 py-2 text-center">
+            ${renderActionDropdown({
+              id: u.id,
+              title: isKm ? 'ជម្រើសសកម្មភាព' : 'Actions',
+              actions: [
+                {
+                  label: isKm ? 'កញ្ចប់ទិន្នន័យ' : 'Config Package',
+                  icon: 'download',
+                  show: (u.role === 'DIRECTOR' || u.role === 'TEACHER'),
+                  onClick: async () => {
+                    try {
+                      if (u.role === 'DIRECTOR') {
+                        await SyncService.generateDirectorPackage(u);
+                        toast.success(isKm ? 'បានបង្កើតកញ្ចប់ទិន្នន័យនាយកដោយជោគជ័យ' : 'Director config package generated successfully!');
+                      } else if (u.role === 'TEACHER') {
+                        await SyncService.generateTeacherPackage(u);
+                        toast.success(isKm ? 'បានបង្កើតកញ្ចប់ទិន្នន័យគ្រូបង្រៀនដោយជោគជ័យ' : 'Teacher config package generated successfully!');
+                      }
+                      await this.reload();
+                    } catch (err) {
+                      toast.error(err.message);
+                    }
+                  }
+                },
+                {
+                  label: isKm ? 'កែប្រែគណនី' : 'Edit Account',
+                  icon: 'keyRound',
+                  onClick: () => this.openUserModal(u)
+                },
+                {
+                  label: u.status === 'ACTIVE' 
+                    ? (isKm ? 'ផ្អាកគណនី' : 'Disable') 
+                    : (isKm ? 'បើកដំណើរការ' : 'Enable'),
+                  icon: u.status === 'ACTIVE' ? 'lock' : 'check',
+                  onClick: async () => {
+                    try {
+                      const newStatus = await UserService.toggleStatus(u.id);
+                      toast.success(
+                        newStatus === 'ACTIVE' 
+                          ? (isKm ? 'គណនីត្រូវបានបើកដំណើរការឡើងវិញ' : 'Account activated.') 
+                          : (isKm ? 'គណនីត្រូវបានផ្អាក' : 'Account disabled.')
+                      );
+                      await this.reload();
+                    } catch (err) {
+                      toast.error(err.message);
+                    }
+                  }
+                },
+                {
+                  label: isKm ? 'លុបគណនី' : 'Delete',
+                  icon: 'trash2',
+                  destructive: true,
+                  onClick: () => this.confirmDelete(u)
+                }
+              ]
+            })}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  },
+
+  bindEvents() {
+    const isKm = i18n.getLocale() === 'km';
+
+    // Tabs navigation
+    this.container.querySelectorAll('button[data-target-tab]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-target-tab');
+        this.activeTab = target;
+
+        // Toggle tab buttons
+        this.container.querySelectorAll('button[data-target-tab]').forEach(b => {
+          const isSelected = b.getAttribute('data-target-tab') === target;
+          b.className = `tab-btn px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            isSelected 
+              ? 'bg-primary text-primary-foreground shadow-xs' 
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+          }`;
+          const badge = b.querySelector('.tab-badge');
+          if (badge) {
+            badge.className = `tab-badge px-1.5 py-0.5 rounded-full ${
+              isSelected ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground'
+            } text-[10px] font-semibold`;
+          }
+        });
+
+        // Toggle tab panes
+        this.container.querySelectorAll('.tab-content').forEach(pane => {
+          pane.classList.toggle('hidden', pane.id !== target);
+        });
+
+        // Toggle Add User button in header
+        const addUserBtn = document.getElementById('btn-add-user');
+        if (addUserBtn) {
+          addUserBtn.className = target === 'tab-accounts' 
+            ? 'inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs sm:text-sm shadow-sm transition-all cursor-pointer'
+            : 'hidden';
+        }
+      });
+    });
+
+    // Save permissions button
+    document.getElementById('btn-save-perms')?.addEventListener('click', async () => {
+      const directorPerms = {};
+      const teacherPerms = {};
+
+      this.container.querySelectorAll('.perm-checkbox').forEach(cb => {
+        const role = cb.getAttribute('data-role');
+        const key = cb.getAttribute('data-key');
+        if (role === 'DIRECTOR') directorPerms[key] = cb.checked;
+        if (role === 'TEACHER') teacherPerms[key] = cb.checked;
+      });
+
+      try {
+        await permissionService.savePermissions({
+          DIRECTOR: directorPerms,
+          TEACHER: teacherPerms
+        });
+        toast.success(
+          isKm 
+            ? 'សិទ្ធិប្រើប្រាស់ត្រូវបានរក្សាទុកដោយជោគជ័យ! របារចំហៀងត្រូវបានធ្វើបច្ចុប្បន្នភាព។' 
+            : 'Role permissions saved successfully! Dynamic sidebar updated.'
+        );
+      } catch (err) {
+        toast.error('Failed to save permissions: ' + err.message);
+      }
+    });
+
+    // Reset defaults button
+    document.getElementById('btn-reset-perms')?.addEventListener('click', async () => {
+      try {
+        await permissionService.resetDefaults();
+        this.permissions = await permissionService.getAll();
+        const tbody = document.getElementById('permissions-matrix-tbody');
+        if (tbody) tbody.innerHTML = this.renderPermissionsMatrixRows();
+        toast.success(isKm ? 'បានកំណត់សិទ្ធិលំនាំដើមឡើងវិញ' : 'Permissions reset to defaults.');
+      } catch (err) {
+        toast.error(err.message);
+      }
+    });
+
+    // Refresh logs button
+    document.getElementById('btn-refresh-logs')?.addEventListener('click', async () => {
+      this.auditLogs = (await db.getAll('activityLogs')).reverse();
+      const logsBody = document.getElementById('logs-table-body');
+      if (logsBody) logsBody.innerHTML = this.renderAuditLogRows();
+      toast.info('Audit logs refreshed.');
+    });
+
+    // Add User button
+    document.getElementById('btn-add-user')?.addEventListener('click', () => {
+      this.openUserModal();
+    });
+
+    // Search input
+    const searchInput = document.getElementById('user-search-input');
+    searchInput?.addEventListener('input', (e) => {
+      this.searchQuery = e.target.value;
+      this.refreshTable();
+    });
+
+    // Role filter
+    const roleFilter = document.getElementById('user-role-filter');
+    roleFilter?.addEventListener('change', (e) => {
+      this.roleFilter = e.target.value;
+      this.refreshTable();
+    });
+
+    // Status filter
+    const statusFilter = document.getElementById('user-status-filter');
+    statusFilter?.addEventListener('change', (e) => {
+      this.statusFilter = e.target.value;
+      this.refreshTable();
+    });
+
+    // Table action buttons
+    const tbody = document.getElementById('users-table-body');
+    tbody?.addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+
+      const action = btn.getAttribute('data-action');
+      const id = btn.getAttribute('data-id');
+      const user = this.users.find(u => u.id === id);
+      if (!user) return;
+
+      if (action === 'edit') {
+        this.openUserModal(user);
+      } else if (action === 'export-package') {
+        try {
+          if (user.role === 'DIRECTOR') {
+            await SyncService.generateDirectorPackage(user);
+            toast.success(isKm ? 'បានបង្កើតកញ្ចប់ទិន្នន័យនាយកដោយជោគជ័យ' : 'Director config package generated successfully!');
+          } else if (user.role === 'TEACHER') {
+            await SyncService.generateTeacherPackage(user);
+            toast.success(isKm ? 'បានបង្កើតកញ្ចប់ទិន្នន័យគ្រូបង្រៀនដោយជោគជ័យ' : 'Teacher config package generated successfully!');
+          }
+          await this.reload();
+        } catch (err) {
+          toast.error(err.message);
+        }
+      } else if (action === 'toggle-status') {
+        try {
+          const newStatus = await UserService.toggleStatus(id);
+          toast.success(
+            newStatus === 'ACTIVE' 
+              ? (isKm ? 'គណនីត្រូវបានបើកដំណើរការឡើងវិញ' : 'Account activated.') 
+              : (isKm ? 'គណនីត្រូវបានផ្អាក' : 'Account disabled.')
+          );
+          await this.reload();
+        } catch (err) {
+          toast.error(err.message);
+        }
+      } else if (action === 'delete') {
+        this.confirmDelete(user);
+      }
+    });
+  },
+
+  refreshTable() {
+    const tbody = document.getElementById('users-table-body');
+    if (tbody) {
+      tbody.innerHTML = this.renderTableRows();
+    }
+  },
+
+  async reload() {
+    this.users = await UserService.getAll();
+    this.refreshTable();
+    try {
+      this.auditLogs = (await db.getAll('activityLogs')).reverse();
+      const logsBody = document.getElementById('logs-table-body');
+      if (logsBody) logsBody.innerHTML = this.renderAuditLogRows();
+      const usersBadge = document.querySelector('button[data-target-tab="tab-accounts"] span span:last-child');
+      if (usersBadge) usersBadge.textContent = this.users.length;
+      const logsBadge = document.querySelector('button[data-target-tab="tab-logs"] span span:last-child');
+      if (logsBadge) logsBadge.textContent = this.auditLogs.length;
+    } catch (e) {
+      console.warn('Error refreshing stats on reload:', e);
+    }
+  },
+
+  async openUserModal(userToEdit = null) {
+    const isKm = i18n.getLocale() === 'km';
+    const isEdit = Boolean(userToEdit);
+
+    // Refresh classes list from database to ensure newly added classes appear
+    try {
+      this.classes = await db.getAll('classes');
+    } catch (e) {
+      console.warn('Could not reload classes:', e);
+    }
+
+    const assignedClassId = userToEdit ? (userToEdit.classId || userToEdit.assignedClassId || '') : '';
+    const classOptions = this.classes.length > 0
+      ? this.classes.map(c => `
+          <option value="${c.id}" ${assignedClassId === c.id ? 'selected' : ''}>
+            ${c.name} (${c.academicYear})
+          </option>
+        `).join('')
+      : `<option value="" disabled>${isKm ? '-- មិនទាន់មានទិន្នន័យបន្ទប់រៀននៅឡើយ --' : '-- No classes available yet --'}</option>`;
+
+    const content = `
+      <form id="user-form" class="space-y-4 text-xs sm:text-sm">
+        <!-- Display Name -->
+        <div>
+          <label class="block font-semibold text-foreground mb-1">
+            ${isKm ? 'ឈ្មោះពេញ' : 'Full Display Name'} *
+          </label>
+          <input type="text" id="modal-user-name" required
+                 value="${userToEdit ? userToEdit.displayName : ''}"
+                 placeholder="${isKm ? 'ឧទាហរណ៍៖ សុក សុផល' : 'e.g. Sok Sophal'}"
+                 class="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs" />
+        </div>
+
+        <!-- Username -->
+        <div>
+          <label class="block font-semibold text-foreground mb-1">
+            ${isKm ? 'ឈ្មោះគណនី' : 'Username'} *
+          </label>
+          <input type="text" id="modal-user-username" required
+                 ${isEdit ? 'disabled' : ''}
+                 value="${userToEdit ? userToEdit.username : ''}"
+                 placeholder="${isKm ? 'ឧទាហរណ៍៖ teacher03' : 'e.g. teacher03'}"
+                 class="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs disabled:opacity-60 disabled:cursor-not-allowed" />
+        </div>
+
+        <!-- Role Selector -->
+        <div>
+          <label class="block font-semibold text-foreground mb-1">
+            ${isKm ? 'តួនាទី' : 'Role'} *
+          </label>
+          <select id="modal-user-role" 
+                  class="w-full h-10 px-3 py-2 pr-9 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs">
+            <option value="TEACHER" ${userToEdit?.role === 'TEACHER' ? 'selected' : (!isEdit ? 'selected' : '')}>Teacher</option>
+            <option value="DIRECTOR" ${userToEdit?.role === 'DIRECTOR' ? 'selected' : ''}>Director</option>
+            <option value="ADMIN" ${userToEdit?.role === 'ADMIN' ? 'selected' : ''}>Admin</option>
+          </select>
+        </div>
+
+        <!-- Classroom Assignment (Optional for Teacher) -->
+        <div id="modal-class-group" class="${userToEdit?.role === 'DIRECTOR' || userToEdit?.role === 'ADMIN' ? 'hidden' : ''}">
+          <label class="block font-semibold text-foreground mb-1">
+            ${isKm ? 'បន្ទប់រៀនដែលត្រូវចាត់តាំង' : 'Assigned Classroom'}
+            <span class="text-muted-foreground font-normal text-xs">(${isKm ? 'ស្រេចចិត្ត' : 'Optional'})</span>
+          </label>
+          <select id="modal-user-class" 
+                  class="w-full h-10 px-3 py-2 pr-9 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs">
+            <option value="">${isKm ? '-- មិនទាន់ចាត់តាំងបន្ទប់រៀន --' : '-- No Assigned Classroom --'}</option>
+            ${classOptions}
+          </select>
+          <p class="text-[11px] text-muted-foreground mt-1">
+            ${this.classes.length === 0 
+              ? (isKm ? 'ពុំទាន់មានបន្ទប់រៀនត្រូវបានបង្កើតនៅក្នុងប្រព័ន្ធទេ។ លោកអ្នកអាចបង្កើតគណនីបាន ហើយចាត់តាំងបន្ទប់រៀននៅពេលក្រោយ។' : 'No classes exist in the system yet. You can create the account now and assign a classroom later.')
+              : (isKm ? 'ជ្រើសរើសបន្ទប់រៀនប្រសិនបើគ្រូបង្រៀននេះគ្រប់គ្រងថ្នាក់ជាក់លាក់ណាមួយ ឬទុកនៅទទេបាន។' : 'Select a classroom if this teacher is assigned to a specific class, or leave unassigned.')
+            }
+          </p>
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label class="block font-semibold text-foreground mb-1">
+            ${isEdit ? (isKm ? 'ពាក្យសម្ងាត់ថ្មី (ទុកទទេបើមិនចង់ប្តូរ)' : 'New Password (leave blank to keep current)') : (isKm ? 'ពាក្យសម្ងាត់' : 'Password')} ${isEdit ? '' : '*'}
+          </label>
+          <input type="password" id="modal-user-password" 
+                 ${isEdit ? '' : 'required'}
+                 placeholder="••••••••"
+                 class="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs" />
+        </div>
+
+        <!-- Confirm Password -->
+        <div>
+          <label class="block font-semibold text-foreground mb-1">
+            ${isKm ? 'បញ្ជាក់ពាក្យសម្ងាត់' : 'Confirm Password'} ${isEdit ? '' : '*'}
+          </label>
+          <input type="password" id="modal-user-confirm-password" 
+                 ${isEdit ? '' : 'required'}
+                 placeholder="••••••••"
+                 class="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs" />
+        </div>
+
+        <!-- Error banner in modal -->
+        <div id="modal-form-error" class="hidden p-2.5 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-xs"></div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-2 pt-4 border-t border-border">
+          <button type="button" id="btn-modal-cancel" 
+                  class="px-4 py-2 rounded-lg border border-border hover:bg-muted text-foreground font-medium transition-colors">
+            ${isKm ? 'បោះបង់' : 'Cancel'}
+          </button>
+          <button type="submit" id="btn-modal-save" 
+                  class="px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm transition-all">
+            ${isKm ? 'រក្សាទុក' : 'Save Account'}
+          </button>
+        </div>
+      </form>
+    `;
+
+    const modal = Modal.open({
+      title: isEdit 
+        ? (isKm ? 'កែប្រែគណនីអ្នកប្រើប្រាស់' : 'Edit User Account') 
+        : (isKm ? 'បង្កើតគណនីអ្នកប្រើប្រាស់ថ្មី' : 'Create User Account'),
+      content,
+      maxWidth: 'max-w-lg'
+    });
+
+    const roleSelect = document.getElementById('modal-user-role');
+    const classGroup = document.getElementById('modal-class-group');
+    const classSelect = document.getElementById('modal-user-class');
+
+    roleSelect?.addEventListener('change', (e) => {
+      if (e.target.value === 'TEACHER') {
+        classGroup?.classList.remove('hidden');
+      } else {
+        classGroup?.classList.add('hidden');
+        if (classSelect) classSelect.value = '';
+      }
+    });
+
+    document.getElementById('btn-modal-cancel')?.addEventListener('click', () => modal.close());
+
+    document.getElementById('user-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errBox = document.getElementById('modal-form-error');
+      if (errBox) errBox.classList.add('hidden');
+
+      const displayName = document.getElementById('modal-user-name')?.value || '';
+      const username = document.getElementById('modal-user-username')?.value || '';
+      const role = roleSelect?.value || 'TEACHER';
+      const classId = classSelect?.value || null;
+      const pass = document.getElementById('modal-user-password')?.value || '';
+      const confirmPass = document.getElementById('modal-user-confirm-password')?.value || '';
+
+      if (pass && pass !== confirmPass) {
+        if (errBox) {
+          errBox.textContent = isKm ? 'ពាក្យសម្ងាត់មិនត្រូវគ្នាទេ' : 'Passwords do not match.';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      try {
+        if (isEdit) {
+          await UserService.update(userToEdit.id, {
+            displayName,
+            role,
+            classId,
+            password: pass || null
+          });
+          toast.success(isKm ? 'គណនីត្រូវបានកែប្រែដោយជោគជ័យ' : 'Account updated successfully.');
+        } else {
+          await UserService.create({
+            displayName,
+            username,
+            password: pass,
+            role,
+            classId
+          });
+          toast.success(isKm ? 'បានបង្កើតគណនីថ្មីដោយជោគជ័យ' : 'Account created successfully.');
+        }
+
+        modal.close();
+        await this.reload();
+      } catch (err) {
+        if (errBox) {
+          errBox.textContent = err.message;
+          errBox.classList.remove('hidden');
+        }
+      }
+    });
+  },
+
+  confirmDelete(user) {
+    const isKm = i18n.getLocale() === 'km';
+
+    // Safeguard 1: Never allow deleting the primary Admin account
+    if (user.role === 'ADMIN') {
+      toast.error(
+        isKm ? 'មិនអាចលុបគណនី Admin ចម្បងបានទេ។' : 'Cannot delete the primary Admin account.',
+        isKm ? 'សកម្មភាពត្រូវបានហាមឃាត់' : 'Action Forbidden'
+      );
+      return;
+    }
+
+    const modalTitle = isKm ? 'លុបគណនី និងទិន្នន័យទាំងអស់?' : 'Permanently Delete Account & Data?';
+    const warningText = isKm
+      ? `សកម្មភាពនេះនឹងលុបគណនី <span class="font-bold text-foreground">@${user.username}</span> (${user.displayName || user.username}), ទិន្នន័យទាំងអស់ក្នុងម៉ាស៊ីន (Local DB) និងឯកសារ Google Sheet នៅក្នុង Google Drive ជាអចិន្ត្រៃយ៍។`
+      : `This action will permanently delete user account <span class="font-bold text-foreground">@${user.username}</span> (${user.displayName || user.username}), all local database storage (Local DB), and the corresponding Google Sheet file in Google Drive.`;
+
+    const contentHtml = `
+      <div id="delete-modal-main-content" class="space-y-4">
+        <div class="flex items-start gap-3 p-3.5 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs leading-relaxed">
+          <span class="p-1 rounded-md bg-destructive/20 text-destructive flex-shrink-0 mt-0.5">
+            ${getIcon('alertTriangle', 'w-4 h-4')}
+          </span>
+          <div>
+            <p class="font-semibold text-destructive mb-0.5">${isKm ? 'ការព្រមានអំពីការបាត់បង់ទិន្នន័យជាអចិន្ត្រៃយ៍' : 'Permanent Data Loss Warning'}</p>
+            <p class="text-destructive/90">${warningText}</p>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-lg border border-border bg-card text-xs space-y-1.5">
+          <div class="flex items-center justify-between text-muted-foreground">
+            <span>${isKm ? 'ឈ្មោះគណនី' : 'Username'}:</span>
+            <span class="font-mono font-bold text-foreground">@${user.username}</span>
+          </div>
+          <div class="flex items-center justify-between text-muted-foreground">
+            <span>${isKm ? 'ឈ្មោះពេញ' : 'Display Name'}:</span>
+            <span class="font-semibold text-foreground">${user.displayName || '—'}</span>
+          </div>
+          <div class="flex items-center justify-between text-muted-foreground">
+            <span>${isKm ? 'តួនាទី' : 'Role'}:</span>
+            <span class="font-semibold ${user.role === 'DIRECTOR' ? 'text-purple-600 dark:text-purple-400' : 'text-blue-600 dark:text-blue-400'}">${user.role}</span>
+          </div>
+          <div class="flex items-center justify-between text-muted-foreground">
+            <span>${isKm ? 'ទិន្នន័យក្នុងម៉ាស៊ីន (Local DB)' : 'Local Database'}:</span>
+            <span class="font-mono text-foreground">SchoolWorkspace_${user.id}</span>
+          </div>
+        </div>
+
+        <label class="flex items-start gap-3 p-3 rounded-lg border border-border bg-muted/40 cursor-pointer hover:bg-muted/70 transition-colors select-none">
+          <input type="checkbox" id="delete-drive-file-cb" checked 
+                 class="mt-0.5 w-4 h-4 rounded text-destructive border-input focus:ring-destructive cursor-pointer" />
+          <div class="text-xs">
+            <span class="font-semibold text-foreground">
+              ${isKm ? 'លុបឯកសារក្នុង Google Drive ផងដែរ (Delete cloud backup file in Google Drive)' : 'Delete cloud backup file in Google Drive'}
+            </span>
+            <p class="text-muted-foreground mt-0.5 font-mono text-[11px]">
+              SchoolWorkspace_${user.username}
+            </p>
+          </div>
+        </label>
+      </div>
+
+      <!-- Loading / Progress Overlay -->
+      <div id="delete-progress-overlay" class="hidden flex flex-col items-center justify-center py-8 text-center space-y-3">
+        <div class="w-9 h-9 border-3 border-destructive border-t-transparent rounded-full animate-spin"></div>
+        <p id="delete-progress-text" class="text-xs sm:text-sm font-semibold text-foreground animate-pulse">
+          ${isKm ? 'កំពុងដំណើរការលុបទិន្នន័យ...' : 'Processing deletion...'}
+        </p>
+        <p class="text-[11px] text-muted-foreground">
+          ${isKm ? 'សូមកុំបិទកម្មវិធីក្នុងអំឡុងពេលនេះ' : 'Please do not close the application during this process'}
+        </p>
+      </div>
+    `;
+
+    const footerHtml = `
+      <div id="delete-modal-footer-buttons" class="flex items-center justify-end gap-2.5 w-full">
+        <button id="btn-cancel-delete" type="button" 
+                class="px-4 py-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-xs sm:text-sm font-medium transition-colors shadow-xs cursor-pointer">
+          ${isKm ? 'បោះបង់ (Cancel)' : 'Cancel'}
+        </button>
+        <button id="btn-confirm-delete" type="button" 
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer">
+          ${getIcon('trash', 'w-4 h-4')}
+          <span>${isKm ? 'លុបជាអចិន្ត្រៃយ៍' : 'Delete Permanently'}</span>
+        </button>
+      </div>
+    `;
+
+    const modal = Modal.open({
+      title: modalTitle,
+      content: contentHtml,
+      footer: footerHtml,
+      maxWidth: 'max-w-md',
+      backdropClose: false,
+      preventUnsavedClose: false
+    });
+
+    const cancelBtn = modal.element.querySelector('#btn-cancel-delete');
+    const confirmBtn = modal.element.querySelector('#btn-confirm-delete');
+    const driveCheckbox = modal.element.querySelector('#delete-drive-file-cb');
+    const mainContent = modal.element.querySelector('#delete-modal-main-content');
+    const progressOverlay = modal.element.querySelector('#delete-progress-overlay');
+    const progressText = modal.element.querySelector('#delete-progress-text');
+    const footerButtons = modal.element.querySelector('#delete-modal-footer-buttons');
+
+    cancelBtn?.addEventListener('click', () => modal.close());
+
+    const executeDeletion = async (deleteDrive, allowFallback = false) => {
+      // Switch UI to Progress Mode
+      mainContent?.classList.add('hidden');
+      progressOverlay?.classList.remove('hidden');
+      if (footerButtons) footerButtons.classList.add('hidden');
+
+      const onProgress = (step) => {
+        if (progressText) {
+          if (step === 'deletingDrive') {
+            progressText.textContent = isKm ? 'កំពុងលុបឯកសារពី Google Drive...' : 'Deleting file from Google Drive...';
+          } else if (step === 'deletingLocal') {
+            progressText.textContent = isKm ? 'កំពុងលុបទិន្នន័យក្នុងម៉ាស៊ីន...' : 'Deleting local database...';
+          }
+        }
+      };
+
+      try {
+        const result = await UserService.deleteUserWithData(user, {
+          deleteDriveFile: deleteDrive,
+          allowLocalFallback: allowFallback,
+          onProgress
+        });
+
+        modal.close();
+
+        if (result.driveDeleted) {
+          toast.success(
+            isKm 
+              ? `គណនី @${user.username} និងទិន្នន័យទាំងអស់ (Local & Drive) ត្រូវបានលុបដោយជោគជ័យ។`
+              : `User account @${user.username} and all data (Local & Drive) deleted successfully.`
+          );
+        } else {
+          toast.success(
+            isKm 
+              ? `គណនី @${user.username} និងទិន្នន័យក្នុងម៉ាស៊ីនត្រូវបានលុបដោយជោគជ័យ។`
+              : `User account @${user.username} and local data deleted successfully.`
+          );
+        }
+
+        await this.reload();
+      } catch (err) {
+        modal.close();
+
+        if (err.code === 'OFFLINE' || err.message === 'OFFLINE_DRIVE_UNREACHABLE') {
+          // Offline safeguard confirmation prompt
+          Modal.confirm({
+            title: isKm ? 'គ្មានការតភ្ជាប់អ៊ីនធឺណិត' : 'No Internet Connection',
+            message: isKm 
+              ? 'មិនមានអ៊ីនធឺណិតដើម្បីលុបឯកសារក្នុង Google Drive ទេ។ តើអ្នកចង់បន្តលុបទិន្នន័យក្នុងម៉ាស៊ីនដែរឬទេ?'
+              : 'Device is offline. Unable to reach Google Drive. Proceed with local deletion only?',
+            destructive: true,
+            confirmText: isKm ? 'លុបតែទិន្នន័យក្នុងម៉ាស៊ីន' : 'Delete Local Data Only',
+            cancelText: isKm ? 'បោះបង់' : 'Cancel',
+            onConfirm: async () => {
+              await executeDeletion(false, true);
+            }
+          });
+        } else {
+          // Google Drive deletion failure fallback prompt
+          Modal.confirm({
+            title: isKm ? 'ការលុបឯកសារ Drive មិនជោគជ័យ' : 'Google Drive Deletion Failed',
+            message: isKm
+              ? `មិនអាចលុបឯកសារនៅលើ Google Drive បានទេ (${err.message})។ តើអ្នកចង់បន្តលុបគណនី និងទិន្នន័យក្នុងម៉ាស៊ីនដែរឬទេ?`
+              : `Could not delete file from Google Drive (${err.message}). Proceed with local account and data deletion anyway?`,
+            destructive: true,
+            confirmText: isKm ? 'លុបតែទិន្នន័យក្នុងម៉ាស៊ីន' : 'Delete Local Data Only',
+            cancelText: isKm ? 'បោះបង់' : 'Cancel',
+            onConfirm: async () => {
+              await executeDeletion(false, true);
+            }
+          });
+        }
+      }
+    };
+
+    confirmBtn?.addEventListener('click', async () => {
+      const deleteDrive = Boolean(driveCheckbox?.checked);
+      await executeDeletion(deleteDrive, false);
+    });
+  },
+
+  renderAccessDenied(container) {
+    const isKm = i18n.getLocale() === 'km';
+    container.innerHTML = `
+      <div class="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+        <div class="w-16 h-16 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center mb-4">
+          ${getIcon('lock', 'w-8 h-8')}
+        </div>
+        <h2 class="text-2xl font-bold tracking-tight text-foreground ${isKm ? 'font-khmer' : ''}">
+          ${isKm ? 'គ្មានសិទ្ធិចូលប្រើប្រាស់ (Access Denied)' : 'Access Denied'}
+        </h2>
+        <p class="text-xs sm:text-sm text-muted-foreground mt-2 max-w-md">
+          ${isKm 
+            ? 'អ្នកមិនមានសិទ្ធិចូលមើលទំព័រគ្រប់គ្រងគណនីនេះទេ។ មានតែ Administrator ប៉ុណ្ណោះដែលអាចចូលដំណើរការបាន។'
+            : 'You do not have permission to access the User Accounts Management page. Only administrators are allowed.'}
+        </p>
+        <a href="#dashboard" class="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs sm:text-sm shadow transition-all">
+          ${getIcon('arrowRight', 'w-4 h-4 rotate-180')}
+          <span>${isKm ? 'ត្រឡប់ទៅផ្ទាំងព័ត៌មាន (Dashboard)' : 'Back to Dashboard'}</span>
+        </a>
+      </div>
+    `;
+  }
+};

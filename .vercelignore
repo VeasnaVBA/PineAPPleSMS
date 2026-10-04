@@ -1,0 +1,12 @@
+# Electron build artifacts and desktop binaries
+dist/
+electron/
+main.js
+apps-script/
+scratch/
+*.exe
+*.dmg
+*.deb
+*.AppImage
+*.zip
+*.log

@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Khmer OS Muol Light';
+  src: local('Khmer OS Muol Light'),
+       local('Khmer OS Moul Light'),
+       local('Moul'),
+       url('../assets/fonts/KhmerOSmuollight.woff2') format('woff2'),
+       url('../assets/fonts/KhmerOSmuollight.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Khmer OS Moul Light';
+  src: local('Khmer OS Moul Light'),
+       local('Khmer OS Muol Light'),
+       local('Moul'),
+       url('../assets/fonts/KhmerOSmuollight.woff2') format('woff2'),
+       url('../assets/fonts/KhmerOSmuollight.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Moul';
+  src: local('Moul'),
+       local('Khmer OS Moul Light'),
+       local('Khmer OS Muol Light'),
+       url('../assets/fonts/KhmerOSmuollight.woff2') format('woff2'),
+       url('../assets/fonts/KhmerOSmuollight.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Khmer OS Siemreap';
+  src: local('Khmer OS Siemreap'),
+       local('Siemreap');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+.font-khmer-muol,
+[style*="Khmer OS Muol Light"],
+[style*="Khmer OS Moul Light"],
+[style*="Moul"] {
+  font-family: 'Khmer OS Muol Light', 'Moul', 'Kantumruy Pro', cursive, sans-serif !important;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1, "clig" 1;
+  -webkit-font-feature-settings: "kern" 1, "liga" 1, "clig" 1;
+  font-variant-ligatures: common-ligatures;
+  line-height: 1.8 !important;
+}

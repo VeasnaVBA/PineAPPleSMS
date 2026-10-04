@@ -1,0 +1,1201 @@
+/* School Management System - App CSS
+   Shadcn-inspired design system with CSS custom properties
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Kantumruy+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Moul&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Siemreap&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Moul&display=swap');
+
+/* 1. Standardized Khmer OS Muol Light & Moul OpenType Offline @font-face */
+@font-face {
+  font-family: 'Khmer OS Muol Light';
+  src: local('Khmer OS Muol Light'),
+       local('Khmer OS Moul Light'),
+       local('Moul'),
+       url('../assets/fonts/KhmerOSmuollight.woff2') format('woff2'),
+       url('../assets/fonts/KhmerOSmuollight.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Khmer OS Muol Light';
+  src: local('Khmer OS Muol Light'),
+       local('Khmer OS Moul Light'),
+       local('Moul'),
+       url('../assets/fonts/KhmerOSmuollight.woff2') format('woff2'),
+       url('../assets/fonts/KhmerOSmuollight.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Khmer OS Moul Light';
+  src: local('Khmer OS Moul Light'),
+       local('Khmer OS Muol Light'),
+       local('Moul'),
+       url('../assets/fonts/KhmerOSmuollight.woff2') format('woff2'),
+       url('../assets/fonts/KhmerOSmuollight.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Khmer OS Moul Light';
+  src: local('Khmer OS Moul Light'),
+       local('Khmer OS Muol Light'),
+       local('Moul'),
+       url('../assets/fonts/KhmerOSmuollight.woff2') format('woff2'),
+       url('../assets/fonts/KhmerOSmuollight.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Moul';
+  src: local('Moul'),
+       local('Khmer OS Moul Light'),
+       local('Khmer OS Muol Light'),
+       url('../assets/fonts/KhmerOSmuollight.woff2') format('woff2'),
+       url('../assets/fonts/KhmerOSmuollight.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Moul';
+  src: local('Moul'),
+       local('Khmer OS Moul Light'),
+       local('Khmer OS Muol Light'),
+       url('../assets/fonts/KhmerOSmuollight.woff2') format('woff2'),
+       url('../assets/fonts/KhmerOSmuollight.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Khmer OS Siemreap';
+  src: local('Khmer OS Siemreap'),
+       local('Siemreap');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 2. Enforce OpenType Ligatures, Subscript Shaping & Text Rendering CSS */
+.font-khmer-muol,
+[style*="Khmer OS Muol Light"],
+[style*="Khmer OS Moul Light"],
+[style*="Moul"] {
+  font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important;
+  letter-spacing: normal !important;
+  font-feature-settings: normal !important;
+  -webkit-font-feature-settings: normal !important;
+  font-variant-ligatures: normal !important;
+  text-rendering: optimizeLegibility !important;
+  line-height: 1.8 !important; /* Muol requires higher line-height to prevent clipping */
+}
+
+:root {
+  --font-en: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-km: 'Kantumruy Pro', 'Khmer OS Siemreap', 'Siemreap', 'Khmer OS', 'Battambang', system-ui, sans-serif;
+  --font-sans: var(--font-en), var(--font-km);
+  --font-khmer: var(--font-km), var(--font-en);
+
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+  
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+  
+  --primary: 240 5.9% 10%;
+  --primary-foreground: 0 0% 98%;
+
+  --main-btn-color: #18181b;
+  --main-btn-foreground: #ffffff;
+  
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+  
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+  
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+
+  --success: 142.1 76.2% 36.3%;
+  --success-foreground: 355.7 100% 97.3%;
+
+  --warning: 38 92% 50%;
+  --warning-foreground: 48 96% 89%;
+  
+  --border: 240 5.9% 82%;
+  --input: 240 5.9% 68%;
+  --ring: 240 5.9% 10%;
+  
+  --radius: 0.5rem;
+
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 72px;
+  --topbar-height: 64px;
+
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+.dark {
+  /* shadcn/ui New York style - Zinc / Slate palette (Dark mode) */
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  
+  --primary: 0 0% 98%;
+  --primary-foreground: 240 5.9% 10%;
+  
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+
+  --success: 142.1 70.6% 45.3%;
+  --success-foreground: 144.9 80.4% 10%;
+
+  --warning: 38 92% 50%;
+  --warning-foreground: 48 96% 89%;
+  
+  --border: 240 3.7% 24%;
+  --input: 240 3.7% 36%;
+  --ring: 240 4.9% 83.9%;
+
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+* {
+  box-sizing: border-box;
+  border-color: hsl(var(--border));
+}
+
+/* Global Typographic Scaling System
+   Controls root font-size across entire application (Small, Normal, Large, Extra Large)
+   Scales all Tailwind rem units proportionately
+*/
+html[data-font-size="sm"] {
+  font-size: 14px;
+}
+
+html[data-font-size="base"],
+html:not([data-font-size]) {
+  font-size: 16px;
+}
+
+html[data-font-size="lg"] {
+  font-size: 18px;
+}
+
+html[data-font-size="xl"] {
+  font-size: 20px;
+}
+
+html, body {
+  font-family: var(--font-sans);
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Apply Khmer font specifically to Khmer text or Khmer locale */
+[lang="km"], .font-khmer, html[lang="km"] body {
+  font-family: var(--font-khmer);
+  line-height: 1.625;
+}
+
+/* Form input line height safeguarding for Khmer and Latin text */
+input, select, textarea, button {
+  font-family: inherit;
+  line-height: inherit;
+}
+
+/* Ensure wide tables retain horizontal & vertical scroll containment within card */
+.table-container, [data-table-container], .overflow-x-auto {
+  overflow: auto;
+  max-width: 100%;
+  max-height: calc(100vh - 270px);
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbars on all table scroll containers while keeping full scroll functionality */
+.table-container,
+[data-table-container],
+.overflow-x-auto,
+.overflow-y-auto,
+.overflow-auto,
+.no-scrollbar,
+div:has(> table) {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.table-container::-webkit-scrollbar,
+[data-table-container]::-webkit-scrollbar,
+.overflow-x-auto::-webkit-scrollbar,
+.overflow-y-auto::-webkit-scrollbar,
+.overflow-auto::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar,
+div:has(> table)::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+/* Apply English / Latin font specifically */
+[lang="en"], .font-en, html[lang="en"] body {
+  font-family: var(--font-sans);
+}
+
+.font-preview-en {
+  font-family: var(--font-en) !important;
+}
+
+.font-preview-km {
+  font-family: var(--font-km) !important;
+}
+
+/* Custom Scrollbars for general page elements */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.45);
+}
+
+/* Transitions */
+.sidebar-transition {
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.content-transition {
+  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Collapsed Sidebar Alignment & Justification */
+#sidebar-container.collapsed .sidebar-header,
+.collapsed .sidebar-header {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+#sidebar-container.collapsed .sidebar-nav,
+.collapsed .sidebar-nav {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+#sidebar-container.collapsed .nav-link,
+.collapsed .nav-link {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-left: auto;
+  margin-right: auto;
+  gap: 0;
+}
+
+#sidebar-container.collapsed .nav-link > div,
+.collapsed .nav-link > div {
+  margin: 0 auto;
+}
+
+/* Glassmorphism accent utility */
+.glass-panel {
+  background: hsl(var(--card) / 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--border) / 0.7);
+}
+
+/* ==========================================================================
+   shadcn/ui Component System (New York Style - Zinc/Slate)
+   ========================================================================== */
+
+/* Buttons: Flat, sharp contrast, subtle active scale, distinct variants */
+.btn-shadcn, 
+button:not(.no-shadcn):not([class*="theme-choice"]):not([class*="lang-choice"]):not(.nav-link):not([class*="toast-close"]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  border-radius: calc(var(--radius) - 2px);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
+  outline: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.btn-shadcn:active,
+button:not(.no-shadcn):not([class*="theme-choice"]):not([class*="lang-choice"]):not(.nav-link):active {
+  transform: scale(0.98);
+}
+
+.btn-shadcn:focus-visible,
+button:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
+}
+
+.btn-shadcn:disabled,
+button:disabled {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Apply strictly to main / primary buttons */
+.btn-primary,
+button.btn-primary,
+a.btn-primary,
+button.bg-primary {
+  background-color: var(--main-btn-color, var(--primary)) !important;
+  border-color: var(--main-btn-color, var(--primary)) !important;
+  color: var(--main-btn-foreground, var(--primary-foreground, #ffffff)) !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.btn-primary:hover,
+button.btn-primary:hover,
+a.btn-primary:hover,
+button.bg-primary:hover {
+  filter: brightness(0.92);
+}
+
+.btn-default {
+  background-color: var(--main-btn-color, hsl(var(--primary))) !important;
+  color: var(--main-btn-foreground, hsl(var(--primary-foreground))) !important;
+}
+
+.btn-secondary {
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.btn-secondary:hover {
+  filter: brightness(0.95);
+}
+
+.btn-outline {
+  border: 1px solid hsl(var(--input)) !important;
+  background-color: hsl(var(--card));
+  color: hsl(var(--foreground));
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.btn-outline:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: hsl(var(--foreground));
+}
+.btn-ghost:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+.btn-destructive {
+  background-color: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.btn-destructive:hover {
+  filter: brightness(0.9);
+}
+
+/* Button Sizes */
+.btn-sm {
+  height: 2.25rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  font-size: 0.75rem;
+  border-radius: calc(var(--radius) - 2px);
+}
+.btn-md {
+  height: 2.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  font-size: 0.875rem;
+}
+.btn-lg {
+  height: 2.75rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  font-size: 1rem;
+}
+.btn-icon {
+  height: 2.25rem;
+  width: 2.25rem;
+  padding: 0;
+}
+
+/* Cards: Subtle borders, clean shadows, rounded-xl */
+.card-shadcn, [class*="bg-card"]:not([class*="fixed"]):not([class*="absolute"]):not(select):not(button) {
+  border-color: hsl(var(--border));
+}
+
+.card-header-shadcn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 1.5rem;
+}
+
+.card-title-shadcn {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+  color: hsl(var(--foreground));
+}
+
+.card-description-shadcn {
+  font-size: 0.8125rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.card-content-shadcn {
+  padding: 1.5rem;
+  padding-top: 0;
+}
+
+.card-footer-shadcn {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  padding-top: 0;
+}
+
+/* ==========================================================================
+   shadcn/ui Inputs & Selects Specification
+   Exact Height: 2.5rem (40px) standard (h-10) / 2.25rem (36px) compact (h-9)
+   Padding: 0.5rem 0.75rem (px-3 py-2)
+   Font: 0.875rem (text-sm), leading-normal
+   Baseline & Vertical Alignment: centered, non-clipping for Khmer & Latin
+   Borders: 1px solid hsl(var(--input)), rounded-md (calc(var(--radius) - 2px))
+   ========================================================================== */
+
+/* Base form controls: applies to all standard text/data inputs and selects */
+.input-shadcn,
+input[type="text"]:not([class*="no-shadcn"]),
+input[type="email"]:not([class*="no-shadcn"]),
+input[type="password"]:not([class*="no-shadcn"]),
+input[type="number"]:not([class*="no-shadcn"]),
+input[type="date"]:not([class*="no-shadcn"]),
+input[type="tel"]:not([class*="no-shadcn"]),
+input[type="search"]:not([class*="no-shadcn"]),
+input[type="url"]:not([class*="no-shadcn"]),
+select:not([class*="no-shadcn"]) {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box !important;
+  height: 2.5rem; /* 40px - shadcn h-10 standard */
+  border-radius: calc(var(--radius) - 2px); /* rounded-md */
+  border: 1px solid hsl(var(--input)) !important;
+  background-color: hsl(var(--card));
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem; /* default px-3 py-2 */
+  padding-right: 0.75rem;
+  font-size: 0.875rem; /* text-sm */
+  line-height: 1.25rem;
+  color: hsl(var(--foreground)) !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  vertical-align: middle;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: hsl(var(--muted-foreground)) !important;
+  opacity: 0.9 !important;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none !important;
+  border-color: hsl(var(--ring)) !important;
+  box-shadow: 0 0 0 1px hsl(var(--ring)) !important;
+}
+
+/* Compact Density (h-9 / 36px) for toolbars and compact table filters */
+.input-shadcn-sm,
+.input-sm,
+input.h-9:not([class*="no-shadcn"]),
+select.h-9:not([class*="no-shadcn"]) {
+  height: 2.25rem !important; /* 36px */
+  padding-top: 0.375rem !important;
+  padding-bottom: 0.375rem !important;
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+  font-size: 0.75rem !important; /* text-xs */
+  line-height: 1rem !important;
+}
+
+/* Icon Padding Overrides: Ensures text/placeholder never overlaps leading or trailing icons */
+input[class*="pl-8"], input.pl-8, .pl-8 { padding-left: 2rem !important; }
+input[class*="pl-9"], input.pl-9, .pl-9 { padding-left: 2.25rem !important; }
+input[class*="pl-10"], input.pl-10, .pl-10 { padding-left: 2.5rem !important; }
+input[class*="pl-11"], input.pl-11, .pl-11 { padding-left: 2.75rem !important; }
+input[class*="pl-12"], input.pl-12, .pl-12 { padding-left: 3rem !important; }
+
+input[class*="pr-8"], input.pr-8, .pr-8 { padding-right: 2rem !important; }
+input[class*="pr-9"], input.pr-9, .pr-9 { padding-right: 2.25rem !important; }
+input[class*="pr-10"], input.pr-10, .pr-10 { padding-right: 2.5rem !important; }
+input[class*="pr-11"], input.pr-11, .pr-11 { padding-right: 2.75rem !important; }
+input[class*="pr-12"], input.pr-12, .pr-12 { padding-right: 3rem !important; }
+input[class*="pr-14"], input.pr-14, .pr-14 { padding-right: 3.5rem !important; }
+
+/* Dropdown <select> normalization: Custom SVG chevron arrow with consistent right padding */
+.select-shadcn,
+select:not([class*="no-shadcn"]) {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: var(--select-chevron);
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem 1rem;
+  padding-right: 2.25rem !important; /* pr-9 prevents text from overlapping arrow */
+  cursor: pointer;
+}
+
+.select-shadcn-sm,
+select.h-9:not([class*="no-shadcn"]),
+select[class*="py-1"]:not([class*="py-2"]):not([class*="h-10"]),
+select[class*="py-1.5"]:not([class*="py-2"]):not([class*="h-10"]) {
+  background-position: right 0.5rem center;
+  padding-right: 1.75rem !important;
+}
+
+/* Date picker indicator baseline alignment */
+input[type="date"]:not([class*="no-shadcn"]) {
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.85);
+}
+
+/* Textarea: preserve custom height while sharing border, font, and focus styling */
+textarea:not([class*="no-shadcn"]) {
+  box-sizing: border-box !important;
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid hsl(var(--input));
+  background-color: hsl(var(--background));
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: hsl(var(--foreground));
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Focus States: shadcn ring */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 1px hsl(var(--ring));
+}
+
+/* Disabled state */
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  background-color: hsl(var(--muted) / 0.6);
+}
+
+/* Placeholders */
+input::placeholder,
+textarea::placeholder {
+  color: hsl(var(--muted-foreground));
+  opacity: 0.8;
+}
+
+/* Badges: Pill shapes, high contrast */
+.badge-shadcn, [class*="rounded-full"][class*="px-2"] {
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  line-height: 1.2;
+}
+
+/* Tables: Clean borders, muted sticky headers, hover rows */
+table:not(.no-shadcn) {
+  width: 100%;
+  caption-side: bottom;
+  border-collapse: collapse;
+}
+
+table:not(.no-shadcn) thead tr {
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+table:not(.no-shadcn) th {
+  height: 2.5rem;
+  padding: 0.5rem 1rem;
+  text-align: left;
+  vertical-align: middle;
+  font-weight: 500;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+  background-color: hsl(var(--muted) / 0.5);
+}
+
+table:not(.no-shadcn) td,
+table tbody tr > td,
+table tbody tr > th {
+  padding: 0.75rem 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid hsl(var(--border) / 0.4) !important;
+  line-height: 1.5;
+}
+
+/* Fix sticky column layer masking horizontal row divider lines in divide-y tables */
+tbody.divide-y > tr,
+table tbody.divide-y > tr {
+  border-top-width: 0 !important;
+  border-bottom-width: 0 !important;
+}
+
+tbody.divide-y > tr > td,
+table tbody.divide-y > tr > td {
+  border-bottom: 1px solid hsl(var(--border) / 0.4) !important;
+}
+
+/* Enforce strict stacking context: thead always sits ABOVE tbody */
+table thead {
+  position: relative !important;
+  z-index: 40 !important;
+}
+
+table:not(.no-shadcn) thead th,
+table thead th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 40 !important;
+  background-color: hsl(var(--muted)) !important;
+  border-bottom: 1px solid hsl(var(--border) / 0.6) !important;
+}
+
+table tbody {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+table tbody tr {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* ==========================================================================
+   Table Borders & Sticky Action Columns
+   Continuous subtle horizontal row line with NO vertical separator before action column
+   ========================================================================== */
+table thead th.sticky.right-0,
+table thead th[class*="sticky"][class*="right-0"],
+table thead th.sticky-action-col,
+table thead th:last-child.sticky {
+  position: sticky !important;
+  right: 0 !important;
+  top: 0 !important;
+  z-index: 50 !important;
+  background-color: hsl(var(--muted)) !important;
+  border-left: none !important;
+  border-bottom: 1px solid hsl(var(--border) / 0.6) !important;
+  box-shadow: none !important;
+}
+
+table tbody td.sticky.right-0,
+table tbody td[class*="sticky"][class*="right-0"],
+table tbody td.sticky-action-col,
+table tbody td.sticky,
+table tbody td[class*="sticky"] {
+  position: sticky !important;
+  right: 0 !important;
+  z-index: 10 !important;
+  border-left: none !important;
+  border-bottom: 1px solid hsl(var(--border) / 0.4) !important;
+  box-shadow: none !important;
+}
+
+.dark table thead {
+  position: relative !important;
+  z-index: 40 !important;
+}
+
+.dark table:not(.no-shadcn) thead th,
+.dark table thead th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 40 !important;
+  background-color: hsl(var(--muted)) !important;
+  border-bottom: 1px solid hsl(var(--border) / 0.6) !important;
+}
+
+.dark table thead th.sticky.right-0,
+.dark table thead th[class*="sticky"][class*="right-0"],
+.dark table thead th.sticky-action-col,
+.dark table thead th:last-child.sticky {
+  position: sticky !important;
+  right: 0 !important;
+  top: 0 !important;
+  z-index: 50 !important;
+  background-color: hsl(var(--muted)) !important;
+  border-left: none !important;
+  border-bottom: 1px solid hsl(var(--border) / 0.6) !important;
+  box-shadow: none !important;
+}
+
+.dark table tbody td.sticky.right-0,
+.dark table tbody td[class*="sticky"][class*="right-0"],
+.dark table tbody td.sticky-action-col,
+.dark table tbody td.sticky,
+.dark table tbody td[class*="sticky"] {
+  position: sticky !important;
+  right: 0 !important;
+  z-index: 10 !important;
+  border-left: none !important;
+  border-bottom: 1px solid hsl(var(--border) / 0.4) !important;
+  box-shadow: none !important;
+}
+
+/* ==========================================================================
+   Global Table Row & Sticky Action Column Synchronization
+   Ensures the action column (and any sticky column) highlights with the exact same color as the hovered row
+   ========================================================================== */
+table:not(.no-shadcn) tbody tr,
+table tbody tr,
+table tbody tr > td {
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* Base table row & cell hover color - perfectly unified */
+table:not(.no-shadcn) tbody tr:hover,
+table:not(.no-shadcn) tbody tr:hover > td,
+table tbody tr:hover,
+table tbody tr:hover > td,
+tr.hover\:bg-muted\/40:hover,
+tr.hover\:bg-muted\/40:hover > td,
+tr.hover\:bg-muted\/50:hover,
+tr.hover\:bg-muted\/50:hover > td,
+tr.hover\:bg-accent\/40:hover,
+tr.hover\:bg-accent\/40:hover > td,
+tr.group:hover > td {
+  background-color: hsl(var(--muted) / 0.55) !important;
+}
+
+/* Ensure sticky cells (including right-0 action columns) match row hover with identical color */
+table tbody tr:hover > td.sticky,
+table tbody tr:hover > td[class*="sticky"],
+table tbody tr:hover > td.sticky-action-col,
+table tbody tr:hover > td[class*="right-0"],
+table tbody tr:hover > td[class*="left-0"],
+table tbody tr:hover > td:has(.action-dropdown-trigger),
+table tbody tr.group:hover > td.sticky,
+table tbody tr.group:hover > td[class*="sticky"],
+table tbody tr.group:hover > td.sticky-action-col,
+table tbody tr.group:hover > td[class*="right-0"],
+table tbody tr.group:hover > td[class*="left-0"],
+table:not(.no-shadcn) tbody tr:hover > td.sticky,
+table:not(.no-shadcn) tbody tr:hover > td[class*="sticky"],
+table:not(.no-shadcn) tbody tr:hover > td.sticky-action-col,
+table:not(.no-shadcn) tbody tr:hover > td[class*="right-0"],
+table:not(.no-shadcn) tbody tr:hover > td[class*="left-0"] {
+  background-color: color-mix(in srgb, hsl(var(--muted)) 55%, hsl(var(--card))) !important;
+}
+
+/* Selected/checked row matching for sticky columns */
+table tbody tr.bg-primary\/5:not(:hover) > td.sticky,
+table tbody tr.bg-primary\/5:not(:hover) > td[class*="sticky"],
+table tbody tr.bg-primary\/5:not(:hover) > td.sticky-action-col,
+table tbody tr[class*="bg-primary/5"]:not(:hover) > td.sticky,
+table tbody tr[class*="bg-primary/5"]:not(:hover) > td[class*="sticky"],
+table tbody tr[class*="bg-primary/5"]:not(:hover) > td.sticky-action-col {
+  background-color: color-mix(in srgb, hsl(var(--primary)) 6%, hsl(var(--card))) !important;
+}
+
+/* Dark mode support for sticky row hover with identical color */
+.dark table:not(.no-shadcn) tbody tr:hover,
+.dark table:not(.no-shadcn) tbody tr:hover > td,
+.dark table tbody tr:hover,
+.dark table tbody tr:hover > td,
+.dark tr.hover\:bg-muted\/40:hover,
+.dark tr.hover\:bg-muted\/40:hover > td,
+.dark tr.hover\:bg-muted\/50:hover,
+.dark tr.hover\:bg-muted\/50:hover > td,
+.dark tr.hover\:bg-accent\/40:hover,
+.dark tr.hover\:bg-accent\/40:hover > td,
+.dark tr.group:hover > td {
+  background-color: hsl(var(--muted) / 0.55) !important;
+}
+
+.dark table tbody tr:hover > td.sticky,
+.dark table tbody tr:hover > td[class*="sticky"],
+.dark table tbody tr:hover > td.sticky-action-col,
+.dark table tbody tr:hover > td[class*="right-0"],
+.dark table tbody tr:hover > td[class*="left-0"],
+.dark table tbody tr:hover > td:has(.action-dropdown-trigger),
+.dark table tbody tr.group:hover > td.sticky,
+.dark table tbody tr.group:hover > td[class*="sticky"],
+.dark table tbody tr.group:hover > td.sticky-action-col,
+.dark table tbody tr.group:hover > td[class*="right-0"],
+.dark table tbody tr.group:hover > td[class*="left-0"],
+.dark table:not(.no-shadcn) tbody tr:hover > td.sticky,
+.dark table:not(.no-shadcn) tbody tr:hover > td[class*="sticky"],
+.dark table:not(.no-shadcn) tbody tr:hover > td.sticky-action-col,
+.dark table:not(.no-shadcn) tbody tr:hover > td[class*="right-0"],
+.dark table:not(.no-shadcn) tbody tr:hover > td[class*="left-0"] {
+  background-color: color-mix(in srgb, hsl(var(--muted)) 55%, hsl(var(--card))) !important;
+}
+
+.dark table tbody tr.bg-primary\/5:not(:hover) > td.sticky,
+.dark table tbody tr.bg-primary\/5:not(:hover) > td[class*="sticky"],
+.dark table tbody tr.bg-primary\/5:not(:hover) > td.sticky-action-col,
+.dark table tbody tr[class*="bg-primary/5"]:not(:hover) > td.sticky,
+.dark table tbody tr[class*="bg-primary/5"]:not(:hover) > td[class*="sticky"],
+.dark table tbody tr[class*="bg-primary/5"]:not(:hover) > td.sticky-action-col {
+  background-color: color-mix(in srgb, hsl(var(--primary)) 12%, hsl(var(--card))) !important;
+}
+
+/* Dialogs / Modals: Centered, blurred backdrop, clean card container */
+.dialog-overlay {
+  background-color: hsl(var(--background) / 0.8);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.dialog-content {
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  border-radius: calc(var(--radius) + 4px);
+}
+
+/* Line-height rules for Khmer and English */
+.font-khmer, [lang="km"] {
+  line-height: 1.625;
+}
+
+.font-khmer button, .font-khmer td, .font-khmer p, .font-khmer span {
+  line-height: 1.6;
+}
+
+/* Khmer form controls: normal line-height preserves vertical centering without clipping */
+.font-khmer input,
+.font-khmer select,
+html[lang="km"] input,
+html[lang="km"] select {
+  line-height: normal;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.15s ease-out forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.15s ease-out forwards;
+}
+
+/* Resizable Image Container & Controls (Floating Overlay - Never distorts text or paper size) */
+.rv-resizable-image {
+  position: absolute !important;
+  display: inline-block;
+  user-select: none;
+  max-width: 100%;
+  cursor: grab;
+  z-index: 30;
+  box-sizing: border-box;
+}
+.rv-resizable-image:active,
+.rv-resizable-image.rv-is-dragging {
+  cursor: grabbing !important;
+}
+.rv-resizable-image:hover,
+.rv-resizable-image.rv-selected-image {
+  outline: 2px dashed #2563eb;
+  outline-offset: 2px;
+}
+.rv-resizable-image .rv-resize-handle {
+  touch-action: none;
+}
+
+/* Enforce Exact Background Colors for Tables & Shading */
+.report-viewer-sheet table,
+.report-viewer-sheet tr,
+.report-viewer-sheet th,
+.report-viewer-sheet td,
+[style*="background-color"] {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+@media print {
+  .rv-resizable-image {
+    outline: none !important;
+  }
+  .rv-resizable-image .rv-resize-handle,
+  .rv-resizable-image .rv-image-toolbar {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+
+/* Ensure text selection / highlight is always crisp & visible in Dark Mode & Report Viewer */
+.dark ::selection {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+.dark ::-moz-selection {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.report-viewer-sheet ::selection,
+.report-viewer-sheet *::selection,
+.a4-sheet-page ::selection,
+.a4-sheet-page *::selection,
+.rv-paper-content ::selection,
+.rv-paper-content *::selection,
+#rv-paper-sheet ::selection,
+#rv-paper-sheet *::selection,
+#rv-paper-container ::selection,
+#rv-paper-container *::selection {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.report-viewer-sheet ::-moz-selection,
+.report-viewer-sheet *::-moz-selection,
+.a4-sheet-page ::-moz-selection,
+.a4-sheet-page *::-moz-selection,
+.rv-paper-content ::-moz-selection,
+.rv-paper-content *::-moz-selection,
+#rv-paper-sheet ::-moz-selection,
+#rv-paper-sheet *::-moz-selection,
+#rv-paper-container ::-moz-selection,
+#rv-paper-container *::-moz-selection {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+/* Ensure report table headers default to crisp black text and 100% responsive layout */
+.moeys-table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed !important;
+  border-collapse: collapse !important;
+}
+
+.moeys-table th,
+.moeys-table thead th,
+.moeys-table thead tr th {
+  color: #000000 !important;
+}
+
+.moeys-table th,
+.moeys-table td {
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+  box-sizing: border-box !important;
+}
+
+/* Score Sheet Dual-Column and Header Styling */
+.score-sheet-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.score-sheet-dual-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  align-items: start !important;
+  box-sizing: border-box !important;
+}
+
+.score-sheet-dual-grid > div {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.score-sheet-table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed !important;
+  border-collapse: collapse !important;
+  font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important;
+  font-size: 10px !important;
+}
+
+.score-sheet-table th,
+.score-sheet-table thead th,
+.score-sheet-table thead tr th {
+  background-color: #0045ff !important;
+  color: #ffffff !important;
+  font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important;
+  font-weight: bold !important;
+  font-size: 10px !important;
+  padding: 4px !important;
+  line-height: 1.25 !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.score-sheet-table th,
+.score-sheet-table td {
+  font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important;
+  padding: 4px !important;
+  line-height: 1.25 !important;
+  font-size: 10px !important;
+  box-sizing: border-box !important;
+}
+
+/* Admissions Staging Table Sticky Action Column Support */
+.admissions-table thead,
+.admissions-table thead tr {
+  background-color: hsl(var(--muted)) !important;
+}
+
+.admissions-table thead th {
+  background-color: hsl(var(--muted)) !important;
+}
+
+.admissions-table th.sticky-action-col {
+  position: sticky !important;
+  right: 0 !important;
+  top: 0 !important;
+  z-index: 50 !important;
+  background-color: hsl(var(--muted)) !important;
+  border-left: none !important;
+  border-bottom: 1px solid hsl(var(--border) / 0.6) !important;
+  box-shadow: none !important;
+}
+
+.admissions-table td.sticky-action-col {
+  position: sticky !important;
+  right: 0 !important;
+  z-index: 10 !important;
+  background-color: hsl(var(--card)) !important;
+  border-left: none !important;
+  border-bottom: 1px solid hsl(var(--border) / 0.4) !important;
+  box-shadow: none !important;
+}
+
+.admissions-table tbody tr:hover td.sticky-action-col {
+  background-color: color-mix(in srgb, hsl(var(--muted)) 55%, hsl(var(--card))) !important;
+}
+
+.dark .admissions-table th.sticky-action-col {
+  position: sticky !important;
+  right: 0 !important;
+  top: 0 !important;
+  z-index: 50 !important;
+  background-color: hsl(var(--muted)) !important;
+  border-left: none !important;
+  border-bottom: 1px solid hsl(var(--border) / 0.6) !important;
+  box-shadow: none !important;
+}
+
+.dark .admissions-table td.sticky-action-col {
+  position: sticky !important;
+  right: 0 !important;
+  z-index: 10 !important;
+  background-color: hsl(var(--card)) !important;
+  border-left: none !important;
+  border-bottom: 1px solid hsl(var(--border) / 0.4) !important;
+  box-shadow: none !important;
+}
+
+.dark .admissions-table tbody tr:hover td.sticky-action-col {
+  background-color: color-mix(in srgb, hsl(var(--muted)) 55%, hsl(var(--card))) !important;
+}
+
