@@ -2,10 +2,9 @@
   "name": "pineapplesms",
   "version": "1.0.0",
   "description": "A professional, local-first offline School Management System built as a modern web application, completely capable of running in standard web browsers without Node.js at runtime, and fully packaged for Windows desktop execution with Electron.",
-  "main": "main.js",
   "scripts": {
-    "start": "electron .",
-    "electron": "electron .",
+    "start": "electron main.js",
+    "electron": "electron main.js",
     "build:css": "tailwindcss -i ./css/input.css -o ./css/tailwind.css --minify",
     "watch:css": "tailwindcss -i ./css/input.css -o ./css/tailwind.css --watch",
     "serve": "npx serve .",
