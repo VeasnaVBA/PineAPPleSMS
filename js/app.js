@@ -120,8 +120,22 @@ class SchoolApp {
   }
 }
 
-// Bootstrap on DOM ready
-document.addEventListener('DOMContentLoaded', () => {
+// Bootstrap on DOM ready or immediately if already loaded
+function bootstrap() {
   const app = new SchoolApp();
-  app.init();
-});
+  app.init().catch(err => {
+    console.error('Fatal initialization error:', err);
+    // Fallback: force show login page on error so screen is never blank
+    const appShell = document.getElementById('app');
+    const loginContainer = document.getElementById('login-container');
+    if (appShell) appShell.classList.add('hidden');
+    if (loginContainer) loginContainer.classList.remove('hidden');
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootstrap);
+} else {
+  bootstrap();
+}
+
