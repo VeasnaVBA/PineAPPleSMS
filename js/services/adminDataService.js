@@ -367,7 +367,7 @@ export const AdminDataService = {
     // 3. Apply Permissions
     if (permissions && typeof permissions === 'object' && Object.keys(permissions).length > 0) {
       try {
-        await permissionService.savePermissions(permissions);
+        await permissionService.savePermissions(permissions, { syncToCloud: false });
       } catch (e) {
         console.warn('Could not save incoming permissions:', e);
       }
@@ -387,6 +387,49 @@ export const AdminDataService = {
       usersCount,
       settingsUpdated
     };
+  },
+
+  /**
+   * Automatically triggered when an Admin logs in:
+   * 1. Checks if SchoolSystem_AdminData exists in Google Drive.
+   * 2. If it does not exist, Google Apps Script automatically creates it with all default data.
+   * 3. If it already exists, pulls latest updates and synchronizes any local changes.
+   */
+  async syncOnAdminLogin() {
+    if (!CloudSyncService.isOnline()) return;
+    const url = getCloudSyncUrl();
+    if (!url || !url.startsWith('http')) return;
+
+    try {
+      console.log('[AdminDataService] Admin logged in. Ensuring SchoolSystem_AdminData is synced with Google Drive...');
+      // 1. Pull existing admin sheet if available
+      const pullRes = await this.pullFromGoogleSheet({ silent: true });
+      // 2. If newly created or pulled, sync current state back so all accounts & settings match perfectly
+      await this.saveToGoogleSheet({ silent: true });
+      console.log('[AdminDataService] SchoolSystem_AdminData verification and sync complete.');
+    } catch (err) {
+      console.warn('[AdminDataService] syncOnAdminLogin notice:', err);
+    }
+  },
+
+  /**
+   * Debounced Auto-Sync for every admin change (creating/updating users, permissions, settings)
+   */
+  _autoSyncTimer: null,
+  queueAutoSync() {
+    if (this._autoSyncTimer) {
+      clearTimeout(this._autoSyncTimer);
+    }
+    this._autoSyncTimer = setTimeout(async () => {
+      try {
+        if (CloudSyncService.isOnline()) {
+          console.log('[AdminDataService] Auto-syncing admin changes to Google Drive (SchoolSystem_AdminData)...');
+          await this.saveToGoogleSheet({ silent: true });
+        }
+      } catch (e) {
+        console.warn('[AdminDataService] Auto-sync background notice:', e);
+      }
+    }, 800);
   },
 
   /**

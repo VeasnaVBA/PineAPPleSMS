@@ -642,6 +642,7 @@ export const SettingsPage = {
       btn.addEventListener('click', () => {
         const theme = btn.getAttribute('data-theme-choice');
         themeService.setTheme(theme);
+        AdminDataService.queueAutoSync();
         this.render(container);
         toast.success(`Theme updated to ${theme}`);
       });
@@ -656,6 +657,7 @@ export const SettingsPage = {
       btn.addEventListener('click', () => {
         const hex = btn.getAttribute('data-hex');
         themeService.setPrimaryColor(hex);
+        AdminDataService.queueAutoSync();
         this.render(container);
         toast.success(currentLocale === 'km' ? 'បានផ្លាស់ប្តូរពណ៌ចម្បងដោយជោគជ័យ' : 'Theme color updated');
       });
@@ -666,6 +668,7 @@ export const SettingsPage = {
       btn.addEventListener('click', () => {
         const lang = btn.getAttribute('data-lang-choice');
         i18n.setLocale(lang);
+        AdminDataService.queueAutoSync();
         this.render(container);
         toast.success(lang === 'km' ? 'ភាសាត្រូវបានផ្លាស់ប្តូរទៅ ភាសាខ្មែរ' : 'Language changed to English');
       });
@@ -677,6 +680,7 @@ export const SettingsPage = {
     selectFontEn?.addEventListener('change', (e) => {
       const selected = e.target.value;
       fontService.setEnglishFont(selected);
+      AdminDataService.queueAutoSync();
       if (previewFontEn) {
         previewFontEn.style.fontFamily = fontService.getEnglishStack(selected);
       }
@@ -691,6 +695,7 @@ export const SettingsPage = {
     selectFontKm?.addEventListener('change', (e) => {
       const selected = e.target.value;
       fontService.setKhmerFont(selected);
+      AdminDataService.queueAutoSync();
       if (previewFontKm) {
         previewFontKm.style.fontFamily = fontService.getKhmerStack(selected);
       }
@@ -714,6 +719,7 @@ export const SettingsPage = {
         if (!FONT_SIZES[sizeKey]) return;
 
         fontService.setFontSize(sizeKey);
+        AdminDataService.queueAutoSync();
 
         // Update active button styles
         container.querySelectorAll('.font-size-choice-btn').forEach(b => {
@@ -758,6 +764,7 @@ export const SettingsPage = {
         if (!year) return;
         try {
           await SettingsService.setActiveAcademicYear(year);
+          AdminDataService.queueAutoSync();
           toast.success(currentLocale === 'km' ? `បានកំណត់ឆ្នាំសិក្សា ${year} ជាឆ្នាំសកម្ម` : `Active academic year set to ${year}`);
           window.dispatchEvent(new CustomEvent('app:refresh-data'));
           await this.render(container);
@@ -825,6 +832,7 @@ export const SettingsPage = {
           try {
             const success = await SettingsService.deleteAcademicYear(id || name);
             if (success) {
+              AdminDataService.queueAutoSync();
               toast.success(t('settings.deleteYearSuccess').replace('{year}', name || id));
               window.dispatchEvent(new CustomEvent('app:refresh-data'));
               await this.render(container);
@@ -908,6 +916,7 @@ export const SettingsPage = {
     container.querySelector('#btn-settings-save-cloud-url')?.addEventListener('click', () => {
       const url = cloudUrlInput?.value?.trim() || '';
       setCloudSyncUrl(url);
+      AdminDataService.queueAutoSync();
       toast.success(currentLocale === 'km' ? 'បានរក្សាទុកអាសយដ្ឋាន Web App ដោយជោគជ័យ' : 'Google Script Web App URL saved successfully.');
     });
 
@@ -1235,6 +1244,7 @@ export const SettingsPage = {
 
       try {
         await SettingsService.createAcademicYear({ name, startDate, endDate });
+        AdminDataService.queueAutoSync();
         toast.success(currentLocale === 'km' ? `បានបង្កើតឆ្នាំសិក្សា "${name}" ដោយជោគជ័យ` : `Academic year "${name}" created successfully`);
         modal.close();
         window.dispatchEvent(new CustomEvent('app:refresh-data'));

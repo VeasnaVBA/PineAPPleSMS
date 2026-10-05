@@ -6,6 +6,7 @@
 import { globalDb, deleteWorkspaceDatabase, db } from '../database/db.js';
 import { hashPassword } from './authService.js';
 import { CloudSyncService } from './cloudSyncService.js';
+import { AdminDataService } from './adminDataService.js';
 
 export const UserService = {
   /**
@@ -90,6 +91,9 @@ export const UserService = {
 
     await globalDb.put('users', newUser);
 
+    // Auto-sync admin database changes to Google Drive
+    AdminDataService.queueAutoSync();
+
     const { passwordHash: _, ...safeUser } = newUser;
     return safeUser;
   },
@@ -132,6 +136,9 @@ export const UserService = {
     user.updatedAt = new Date().toISOString();
     await globalDb.put('users', user);
 
+    // Auto-sync admin database changes to Google Drive
+    AdminDataService.queueAutoSync();
+
     const { passwordHash: _, ...safeUser } = user;
     return safeUser;
   },
@@ -156,6 +163,9 @@ export const UserService = {
     user.updatedAt = new Date().toISOString();
     await globalDb.put('users', user);
 
+    // Auto-sync admin database changes to Google Drive
+    AdminDataService.queueAutoSync();
+
     return newStatus;
   },
 
@@ -174,6 +184,9 @@ export const UserService = {
     }
 
     await globalDb.delete('users', id);
+
+    // Auto-sync admin database changes to Google Drive
+    AdminDataService.queueAutoSync();
 
     return true;
   },
@@ -243,6 +256,9 @@ export const UserService = {
 
     // Step C — Remove User Record from Global Database
     await globalDb.delete('users', targetUser.id);
+
+    // Auto-sync admin database changes to Google Drive
+    AdminDataService.queueAutoSync();
 
     // Optional audit log recording
     try {

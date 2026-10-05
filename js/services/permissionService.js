@@ -240,7 +240,7 @@ class PermissionService {
   /**
    * Save customized permissions for a role or all roles
    */
-  async savePermissions(allPermissions) {
+  async savePermissions(allPermissions, options = {}) {
     this.customPermissions = JSON.parse(JSON.stringify(allPermissions));
     await db.put('settings', {
       key: 'role_permissions',
@@ -257,6 +257,12 @@ class PermissionService {
       });
     } catch (e) {
       console.warn('Could not write to activityLogs:', e);
+    }
+
+    if (options.syncToCloud !== false) {
+      import('./adminDataService.js').then(({ AdminDataService }) => {
+        AdminDataService.queueAutoSync();
+      }).catch(() => {});
     }
 
     this.notify();

@@ -175,8 +175,16 @@ export const ThemeColorModal = {
     };
 
     // Close handlers
-    closeBtn?.addEventListener('click', () => this.close());
+    closeBtn?.addEventListener('click', () => {
+      import('../services/adminDataService.js').then(({ AdminDataService }) => {
+        AdminDataService.queueAutoSync();
+      }).catch(() => {});
+      this.close();
+    });
     doneBtn?.addEventListener('click', () => {
+      import('../services/adminDataService.js').then(({ AdminDataService }) => {
+        AdminDataService.queueAutoSync();
+      }).catch(() => {});
       toast.success(isKm ? 'បានផ្លាស់ប្តូរពណ៌ចម្បងដោយជោគជ័យ!' : 'Primary theme color applied successfully!');
       this.close();
     });

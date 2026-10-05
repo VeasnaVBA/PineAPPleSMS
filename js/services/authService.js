@@ -177,6 +177,13 @@ class AuthService {
     localStorage.setItem(this.sessionKey, JSON.stringify(sessionData));
     this.notify(sessionData);
 
+    // If Admin logs in, auto verify and sync SchoolSystem_AdminData in Google Drive
+    if (sessionData.role === 'ADMIN') {
+      import('./adminDataService.js').then(({ AdminDataService }) => {
+        AdminDataService.syncOnAdminLogin().catch(e => console.warn('Admin login sync notice:', e));
+      }).catch(() => {});
+    }
+
     return sessionData;
   }
 
