@@ -446,114 +446,183 @@ export const SubjectsPage = {
 
     const defaultCode = isEdit ? existingSubject.code : await SubjectService.generateCode();
     const scores = existingSubject?.scoreByGrade || {
-      G7: existingSubject?.maxScore || 50,
-      G8: existingSubject?.maxScore || 50,
-      G9: existingSubject?.maxScore || 50,
-      G10: existingSubject?.maxScore || 50,
-      G11: existingSubject?.maxScore || 50,
-      G12: existingSubject?.maxScore || 50
+      G7: existingSubject?.maxScore || 0,
+      G8: existingSubject?.maxScore || 0,
+      G9: existingSubject?.maxScore || 0,
+      G10: existingSubject?.maxScore || 0,
+      G11: existingSubject?.maxScore || 0,
+      G12: existingSubject?.maxScore || 0
     };
+
+    const modalTitleText = isEdit 
+      ? (isKm ? 'កែប្រែមុខវិជ្ជា (Edit Course)' : 'Edit Course') 
+      : (isKm ? 'បន្ថែមមុខវិជ្ជាថ្មី (Add New Course)' : 'Add New Course');
 
     const modalContent = `
       <div class="space-y-4 p-5 select-none ${fontClass}">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <!-- Subject Code -->
-          <div>
-            <label class="block text-xs font-semibold text-foreground mb-1">
-              ${t('subjects.code') || 'កូដមុខវិជ្ជា'} <span class="text-rose-500">*</span>
+        <!-- Green Title -->
+        <div>
+          <h3 class="text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">
+            ${modalTitleText}
+          </h3>
+        </div>
+
+        <!-- Row 1: Course ID, Icon, Subject Name -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
+          <!-- Course ID -->
+          <div class="flex-1">
+            <label class="block text-[11px] font-bold text-muted-foreground uppercase mb-1">
+              ${isKm ? 'លេខកូដមុខវិជ្ជា (COURSE ID)' : 'COURSE ID'} <span class="text-rose-500">*</span>
             </label>
             <input type="text"
                    id="modal-subject-code"
                    value="${defaultCode}"
-                   class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary uppercase font-mono" />
+                   placeholder="E.G. CRS-101"
+                   class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 uppercase font-mono shadow-2xs" />
             <p id="modal-code-err" class="text-[11px] text-rose-500 mt-1 hidden"></p>
           </div>
 
-          <!-- Credit Hours -->
-          <div>
-            <label class="block text-xs font-semibold text-foreground mb-1">
-              ${t('subjects.creditHours') || 'ម៉ោងបង្រៀន/សប្តាហ៍ (Weekly Hours)'}
-            </label>
-            <input type="number"
-                   id="modal-subject-hours"
-                   min="1"
-                   max="40"
-                   value="${existingSubject?.creditHours || 2}"
-                   class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono" />
+          <!-- Middle Graduation / Book Icon -->
+          <div class="hidden sm:flex items-center justify-center w-10 h-10 rounded-lg border border-border bg-muted/30 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mb-0.5 shadow-2xs">
+            ${getIcon('graduationCap', 'w-5 h-5') || getIcon('bookOpen', 'w-5 h-5')}
           </div>
 
-          <!-- Subject Name (Khmer) -->
-          <div class="sm:col-span-2">
-            <label class="block text-xs font-semibold text-foreground mb-1">
-              ${t('subjects.nameKhmer') || 'ឈ្មោះមុខវិជ្ជា (ខ្មែរ)'} <span class="text-rose-500">*</span>
+          <!-- Subject Name (ឈ្មោះមុខវិជ្ជា) -->
+          <div class="flex-1">
+            <label class="block text-[11px] font-bold text-muted-foreground mb-1 ${fontClass}">
+              ${isKm ? 'ឈ្មោះមុខវិជ្ជា' : 'Subject Name'} <span class="text-rose-500">*</span>
             </label>
             <input type="text"
                    id="modal-subject-name"
                    value="${existingSubject?.name || ''}"
-                   placeholder="${isKm ? 'ឧ. គណិតវិទ្យា' : 'e.g. គណិតវិទ្យា'}"
-                   class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                   placeholder="${isKm ? 'ឧ. ភាសាខ្មែរ, English' : 'e.g. English'}"
+                   class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs ${fontClass}" />
             <p id="modal-name-err" class="text-[11px] text-rose-500 mt-1 hidden"></p>
-          </div>
-
-          <!-- English Name -->
-          <div class="sm:col-span-2">
-            <label class="block text-xs font-semibold text-foreground mb-1">
-              ${t('subjects.nameEn') || 'ឈ្មោះជាភាសាអង់គ្លេស (English Name)'}
-            </label>
-            <input type="text"
-                   id="modal-subject-name-en"
-                   value="${existingSubject?.nameEn || ''}"
-                   placeholder="${isKm ? 'ឧ. Mathematics' : 'e.g. Mathematics'}"
-                   class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
           </div>
         </div>
 
-        <!-- Score by Grade Section (G7 - G12) -->
-        <div class="pt-3 border-t border-border/80">
+        <!-- Row 2: SCORES BY GRADE -->
+        <div>
           <div class="flex items-center justify-between mb-2">
-            <label class="text-xs font-semibold text-foreground">
-              ${isKm ? 'ពិន្ទុតាមកម្រិតថ្នាក់ (Score by Grade)' : 'Score by Grade Level'}
+            <label class="block text-[11px] font-bold text-muted-foreground uppercase">
+              ${isKm ? 'ពិន្ទុតាមកម្រិតថ្នាក់ (SCORES BY GRADE)' : 'SCORES BY GRADE'}
             </label>
-            <div class="flex items-center gap-1.5 text-[11px]">
-              <span class="text-muted-foreground">${isKm ? 'ដាក់ពិន្ទុស្មើគ្នា៖' : 'Quick fill:'}</span>
+            <div class="flex items-center gap-1.5 text-[10px]">
+              <span class="text-muted-foreground">${isKm ? 'ដាក់ពិន្ទុរហ័ស៖' : 'Quick fill:'}</span>
               <button type="button" data-fill="50" class="btn-quick-fill px-1.5 py-0.5 rounded bg-muted/60 hover:bg-muted font-mono cursor-pointer">50</button>
               <button type="button" data-fill="100" class="btn-quick-fill px-1.5 py-0.5 rounded bg-muted/60 hover:bg-muted font-mono cursor-pointer">100</button>
             </div>
           </div>
 
-          <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
-            ${GRADES.map(g => `
-              <div>
-                <label class="block text-[11px] font-mono font-medium text-muted-foreground text-center mb-1">${g}</label>
-                <input type="number"
-                       id="modal-grade-${g}"
-                       min="0"
-                       max="500"
-                       value="${scores[g] !== undefined ? scores[g] : 50}"
-                       class="w-full px-2 py-1.5 text-center text-xs sm:text-sm font-mono rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-              </div>
-            `).join('')}
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <!-- Col 1: G7 and G10 -->
+            <div class="flex items-center gap-2">
+              <span class="w-8 text-xs font-mono font-bold text-muted-foreground">G7</span>
+              <input type="number"
+                     id="modal-grade-G7"
+                     min="0"
+                     max="500"
+                     value="${scores.G7 !== undefined ? scores.G7 : 0}"
+                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs" />
+            </div>
+            <!-- Col 2: G8 and G11 -->
+            <div class="flex items-center gap-2">
+              <span class="w-8 text-xs font-mono font-bold text-muted-foreground">G8</span>
+              <input type="number"
+                     id="modal-grade-G8"
+                     min="0"
+                     max="500"
+                     value="${scores.G8 !== undefined ? scores.G8 : 0}"
+                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs" />
+            </div>
+            <!-- Col 3: G9 and G12 -->
+            <div class="flex items-center gap-2">
+              <span class="w-8 text-xs font-mono font-bold text-muted-foreground">G9</span>
+              <input type="number"
+                     id="modal-grade-G9"
+                     min="0"
+                     max="500"
+                     value="${scores.G9 !== undefined ? scores.G9 : 0}"
+                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs" />
+            </div>
+
+            <!-- Row 2 of scores: G10, G11, G12 -->
+            <div class="flex items-center gap-2">
+              <span class="w-8 text-xs font-mono font-bold text-muted-foreground">G10</span>
+              <input type="number"
+                     id="modal-grade-G10"
+                     min="0"
+                     max="500"
+                     value="${scores.G10 !== undefined ? scores.G10 : 0}"
+                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs" />
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-8 text-xs font-mono font-bold text-muted-foreground">G11</span>
+              <input type="number"
+                     id="modal-grade-G11"
+                     min="0"
+                     max="500"
+                     value="${scores.G11 !== undefined ? scores.G11 : 0}"
+                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs" />
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-8 text-xs font-mono font-bold text-muted-foreground">G12</span>
+              <input type="number"
+                     id="modal-grade-G12"
+                     min="0"
+                     max="500"
+                     value="${scores.G12 !== undefined ? scores.G12 : 0}"
+                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs" />
+            </div>
           </div>
         </div>
 
-        <!-- Modal Actions -->
-        <div class="flex items-center justify-end gap-2 pt-3 border-t border-border">
+        <!-- Row 3: Description (ការពិពណ៌នា) -->
+        <div>
+          <label class="block text-[11px] font-bold text-muted-foreground mb-1 ${fontClass}">
+            ${isKm ? 'ការពិពណ៌នា' : 'Description'}
+          </label>
+          <textarea id="modal-subject-desc"
+                    rows="2"
+                    placeholder="${isKm ? 'ការពិពណ៌នាមុខវិជ្ជា...' : 'Course description...'}"
+                    class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-y shadow-2xs ${fontClass}">${existingSubject?.description || existingSubject?.notes || ''}</textarea>
+        </div>
+
+        <!-- Row 4: SUM OF COURSES (optional) -->
+        <div>
+          <label class="block text-[11px] font-bold text-muted-foreground mb-1 uppercase">
+            ${isKm ? 'SUM OF COURSES' : 'SUM OF COURSES'} <span class="text-muted-foreground/80 font-normal lowercase">(optional)</span>
+          </label>
+          <input type="text"
+                 id="modal-subject-sum"
+                 value="${existingSubject?.sumOfCourses || ''}"
+                 placeholder="e.g. CRS-010, CRS-011"
+                 class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 uppercase font-mono shadow-2xs" />
+          <p class="text-[11px] text-muted-foreground mt-1 leading-relaxed ${fontClass}">
+            ${isKm 
+              ? 'បញ្ចូលកូដមុខវិជ្ជា (បំបែកដោយសញ្ញាក្បៀស ,)។ នៅពេលមានពិន្ទុមុខវិជ្ជាតូចៗ មុខវិជ្ជានេះនឹងបូកសរុបដោយស្វ័យប្រវត្តិ។ ទុកនៅទទេសម្រាប់ការបញ្ចូលពិន្ទុធម្មតា។' 
+              : 'Enter course codes (comma-separated). When sub-course scores exist, this course auto-totals them. Leave blank for normal manual entry.'}
+          </p>
+        </div>
+
+        <!-- Row 5: Modal Actions (Cancel & Create Course) -->
+        <div class="flex items-center justify-between sm:justify-end gap-3 pt-3 border-t border-border">
           <button type="button"
                   id="modal-btn-cancel"
-                  class="px-4 py-2 rounded-lg text-xs sm:text-sm font-medium border border-border bg-background hover:bg-muted text-foreground transition-colors cursor-pointer">
+                  class="flex-1 sm:flex-none sm:min-w-[120px] px-5 py-2.5 rounded-lg text-xs sm:text-sm font-medium border border-border bg-card hover:bg-muted text-foreground transition-colors text-center cursor-pointer ${fontClass}">
             ${t('common.cancel') || 'បោះបង់'}
           </button>
           <button type="button"
                   id="modal-btn-save"
-                  class="px-5 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-colors cursor-pointer">
-            ${t('common.save') || 'រក្សាទុក'}
+                  class="flex-1 sm:flex-none sm:min-w-[130px] px-6 py-2.5 rounded-lg text-xs sm:text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors text-center cursor-pointer">
+            ${isEdit ? (isKm ? 'រក្សាទុកមុខវិជ្ជា' : 'Update Course') : (isKm ? 'បង្កើតមុខវិជ្ជា' : 'Create Course')}
           </button>
         </div>
       </div>
     `;
 
     const modal = Modal.show({
-      title: isEdit ? (t('subjects.editSubject') || 'កែប្រែមុខវិជ្ជា') : (t('subjects.addSubject') || 'បន្ថែមមុខវិជ្ជាថ្មី'),
+      title: '', // Custom top header inside content
       content: modalContent,
       width: 'max-w-lg',
       onClose: () => {}
@@ -582,8 +651,8 @@ export const SubjectsPage = {
     modalEl.querySelector('#modal-btn-save')?.addEventListener('click', async () => {
       const codeInput = modalEl.querySelector('#modal-subject-code');
       const nameInput = modalEl.querySelector('#modal-subject-name');
-      const nameEnInput = modalEl.querySelector('#modal-subject-name-en');
-      const hoursInput = modalEl.querySelector('#modal-subject-hours');
+      const descInput = modalEl.querySelector('#modal-subject-desc');
+      const sumInput = modalEl.querySelector('#modal-subject-sum');
       const codeErr = modalEl.querySelector('#modal-code-err');
       const nameErr = modalEl.querySelector('#modal-name-err');
 
@@ -624,10 +693,13 @@ export const SubjectsPage = {
       const subjectData = {
         code,
         name,
-        nameEn: nameEnInput?.value.trim() || '',
+        nameEn: existingSubject?.nameEn || name,
+        description: descInput?.value.trim() || '',
+        notes: descInput?.value.trim() || '',
+        sumOfCourses: sumInput?.value.trim() || '',
         maxScore: maxScore > 0 ? maxScore : 100,
         scoreByGrade,
-        creditHours: Number(hoursInput?.value) > 0 ? Number(hoursInput.value) : 2
+        creditHours: existingSubject?.creditHours || 2
       };
 
       try {
