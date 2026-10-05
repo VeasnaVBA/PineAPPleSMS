@@ -138,57 +138,6 @@ export const SubjectsPage = {
           </div>
         </div>
 
-        <!-- Active Grade & Classroom Focus Banner -->
-        <div class="p-3.5 rounded-xl bg-card border border-border shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-xs font-mono">
-              ${activeGrade}
-            </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="text-xs sm:text-sm font-bold text-foreground ${fontClass}">
-                  ${isTeacher && teacherClass 
-                    ? (isKm ? `ថ្នាក់រៀនរបស់អ្នក៖ ${teacherClass.name} (កម្រិត ${activeGrade})` : `Your Classroom: ${teacherClass.name} (Grade ${activeGrade})`)
-                    : (isKm ? `កម្រិតថ្នាក់សកម្ម៖ ${activeGrade}` : `Active Grade Focus: ${activeGrade}`)}
-                </span>
-                ${isTeacher ? `
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20 ${fontClass}">
-                    ${getIcon('lock', 'w-3 h-3')}
-                    <span>${isKm ? 'បានចាក់សោថ្នាក់' : 'Assigned Class'}</span>
-                  </span>
-                ` : ''}
-              </div>
-              <p class="text-[11px] text-muted-foreground leading-tight mt-0.5 ${fontClass}">
-                ${isTeacher && teacherClass
-                  ? (isKm ? `ពិន្ទុនៃកម្រិតថ្នាក់ ${activeGrade} របស់ថ្នាក់ ${teacherClass.name} ត្រូវបានកំណត់ជាពណ៌ និងដិត (Bold) ដោយស្វ័យប្រវត្ត` : `Scores for ${teacherClass.name} (${activeGrade}) are locked and highlighted in bold & theme color.`)
-                  : (isKm ? 'ពិន្ទុនៃកម្រិតថ្នាក់នេះត្រូវបានកំណត់ជាពណ៌ និងដិត (Bold) ក្នុងតារាង' : 'Scores for this grade level are highlighted in bold & app theme color')}
-              </p>
-            </div>
-          </div>
-
-          <!-- Grade Level Filter: Clickable for Director; Locked for Teacher -->
-          <div class="flex items-center gap-1.5 flex-wrap">
-            ${isTeacher ? `
-              <!-- Teacher Account: Display single locked active grade badge -->
-              <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/60 border border-border text-xs font-mono text-muted-foreground select-none">
-                <span>${isKm ? 'កម្រិតថ្នាក់គ្រូ៖' : 'Teacher Grade:'}</span>
-                <span class="font-bold text-primary">${activeGrade}</span>
-                ${teacherClass ? `<span class="text-foreground/80">(${teacherClass.name})</span>` : ''}
-              </div>
-            ` : `
-              <!-- Director Account: Interactive switchable grade pills -->
-              <span class="text-[11px] text-muted-foreground mr-1 hidden sm:inline ${fontClass}">${isKm ? 'ជ្រើសរើសកម្រិត៖' : 'Switch Grade:'}</span>
-              ${GRADES.map(g => `
-                <button type="button"
-                        data-grade="${g}"
-                        class="btn-select-grade px-2.5 py-1 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer ${activeGrade === g ? 'bg-primary text-primary-foreground shadow-xs scale-105' : 'bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground'}">
-                  ${g}
-                </button>
-              `).join('')}
-            `}
-          </div>
-        </div>
-
         <!-- Grading Formula & Scale Banner (MoEYS Standard A-F) -->
         <div class="p-4 rounded-xl bg-card border border-border shadow-2xs space-y-3">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-2.5">
