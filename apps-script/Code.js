@@ -2,29 +2,117 @@
  * SmartSchool Management System - Google Drive & Google Sheets Sync Backend
  * 
  * Supports:
- * 1. User Workspaces (SchoolWorkspace_<username>)
- *    - Students, Schools, Classes, Teachers, Attendance, Scores
- * 2. Admin Central Data Sheet (SchoolSystem_AdminData)
+ * 1. Admin Central Data Sheet (SchoolSystem_AdminData)
+ *    - Automatically creates and manages this spreadsheet as the primary cloud database.
+ *    - Every user (Admin, Director, Teacher) uses this sheet to verify credentials and settings.
  *    - Settings (Script URL, Theme, Primary Color, Font Size, Fonts, Language, Academic Year)
  *    - User Accounts (Admin, Director, Teachers, Usernames, Passwords, Roles, Status, Classes)
  *    - Role Permissions Matrix (Director & Teacher access)
+ * 2. User Workspaces (SchoolWorkspace_<username>)
+ *    - Students, Schools, Classes, Teachers, Attendance, Scores
  */
 
 var ADMIN_SPREADSHEET_NAME = 'SchoolSystem_AdminData';
+
+/**
+ * Default Seed Users created when SchoolSystem_AdminData is first initialized
+ */
+var DEFAULT_SEED_USERS = [
+  {
+    id: "usr_admin_01",
+    username: "admin",
+    password: "admin123",
+    displayName: "System Administrator",
+    role: "ADMIN",
+    status: "ACTIVE",
+    classId: "",
+    permissions: JSON.stringify({ settings: true, users: true })
+  },
+  {
+    id: "usr_director_01",
+    username: "director1",
+    password: "director123",
+    displayName: "School Director",
+    role: "DIRECTOR",
+    status: "ACTIVE",
+    classId: "",
+    permissions: JSON.stringify({ dashboard: true, schools: true, registration: true, promotion: true, students: true, teachers: true, classes: true, attendance: true, scores: true, reports: true, settings: true })
+  },
+  {
+    id: "usr_teacher_01",
+    username: "teacher1",
+    password: "teacher123",
+    displayName: "Lead Teacher",
+    role: "TEACHER",
+    status: "ACTIVE",
+    classId: "class_7a",
+    permissions: JSON.stringify({ dashboard: true, schools: true, students: true, classes: true, attendance: true, scores: true, reports: true })
+  },
+  {
+    id: "usr_director_02",
+    username: "king",
+    password: "king123",
+    displayName: "Director King",
+    role: "DIRECTOR",
+    status: "ACTIVE",
+    classId: "",
+    permissions: JSON.stringify({ dashboard: true, schools: true, registration: true, promotion: true, students: true, teachers: true, classes: true, attendance: true, scores: true, reports: true, settings: true })
+  }
+];
+
+var DEFAULT_SEED_SETTINGS = [
+  { key: "theme", value: "light" },
+  { key: "primaryColor", value: "#18181b" },
+  { key: "fontSize", value: "base" },
+  { key: "fontEn", value: "Inter" },
+  { key: "fontKm", value: "Kantumruy Pro" },
+  { key: "locale", value: "km" },
+  { key: "activeAcademicYear", value: "2024–2025" },
+  { key: "autoBackup", value: "weekly" },
+  { key: "schoolNameEn", value: "SmartSchool Management" },
+  { key: "schoolNameKm", value: "ប្រព័ន្ធគ្រប់គ្រងសាលារៀន ស្មាតស្គូល" }
+];
+
+var DEFAULT_SEED_PERMISSIONS = [
+  {
+    role: "DIRECTOR",
+    permissionsJson: JSON.stringify({ dashboard: true, schools: true, registration: true, promotion: true, students: true, teachers: true, classes: true, attendance: true, scores: true, reports: true, settings: true })
+  },
+  {
+    role: "TEACHER",
+    permissionsJson: JSON.stringify({ dashboard: true, schools: true, registration: false, promotion: false, students: true, teachers: false, classes: true, attendance: true, scores: true, reports: true, settings: false })
+  }
+];
+
+/**
+ * Optional: Run this function directly inside Google Apps Script editor
+ * to immediately create and initialize the SchoolSystem_AdminData sheet in Google Drive!
+ */
+function initAdminSheet() {
+  var res = getOrCreateAdminSpreadsheet();
+  Logger.log("Admin Spreadsheet created/verified at URL: " + res.spreadsheet.getUrl());
+  return res.spreadsheet.getUrl();
+}
 
 function doGet(e) {
   try {
     var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : 'PING';
     
-    if (action === 'GET_ADMIN_DATA') {
+    if (action === 'GET_ADMIN_DATA' || action === 'FETCH_ADMIN_DATA') {
+      return handleGetAdminData();
+    } else if (action === 'INIT_ADMIN_DATA') {
+      getOrCreateAdminSpreadsheet();
       return handleGetAdminData();
     } else if (action === 'LIST_ALL_WORKSPACE_FILES') {
       return handleListAllWorkspaceFiles();
     } else {
+      // On ping, also ensure the Admin Spreadsheet is ready in Google Drive
+      var adminInfo = getOrCreateAdminSpreadsheet();
       return jsonResponse({
         success: true,
         status: 'online',
         action: action,
+        adminSpreadsheetUrl: adminInfo.spreadsheet.getUrl(),
         message: 'SmartSchool Google Apps Script Web App Backend is active and running.',
         timestamp: new Date().toISOString()
       });
@@ -47,7 +135,10 @@ function doPost(e) {
     
     if (action === 'SAVE_ADMIN_DATA') {
       return handleSaveAdminData(payload.data || {});
-    } else if (action === 'GET_ADMIN_DATA') {
+    } else if (action === 'GET_ADMIN_DATA' || action === 'FETCH_ADMIN_DATA') {
+      return handleGetAdminData();
+    } else if (action === 'INIT_ADMIN_DATA') {
+      getOrCreateAdminSpreadsheet();
       return handleGetAdminData();
     } else if (action === 'PULL_TO_DRIVE') {
       return handlePullToDrive(fileName, username, payload.data || {});
@@ -66,17 +157,89 @@ function doPost(e) {
 }
 
 /**
+ * Get existing SchoolSystem_AdminData or automatically create and seed it
+ */
+function getOrCreateAdminSpreadsheet() {
+  var files = DriveApp.getFilesByName(ADMIN_SPREADSHEET_NAME);
+  if (files.hasNext()) {
+    return {
+      spreadsheet: SpreadsheetApp.open(files.next()),
+      isNew: false
+    };
+  }
+  
+  // Auto-create spreadsheet if missing
+  var spreadsheet = SpreadsheetApp.create(ADMIN_SPREADSHEET_NAME);
+  
+  // 1. Seed Settings Sheet
+  var settingsSheet = spreadsheet.getSheetByName('settings');
+  if (!settingsSheet) settingsSheet = spreadsheet.insertSheet('settings');
+  settingsSheet.clear();
+  var settingsHeaders = ['key', 'value', 'updatedAt'];
+  var settingsMatrix = [settingsHeaders];
+  for (var s = 0; s < DEFAULT_SEED_SETTINGS.length; s++) {
+    var st = DEFAULT_SEED_SETTINGS[s];
+    settingsMatrix.push([st.key, st.value, new Date().toISOString()]);
+  }
+  settingsSheet.getRange(1, 1, settingsMatrix.length, settingsHeaders.length).setValues(settingsMatrix);
+  formatSheetHeader(settingsSheet, settingsHeaders.length);
+  
+  // 2. Seed Users Sheet
+  var usersSheet = spreadsheet.getSheetByName('users');
+  if (!usersSheet) usersSheet = spreadsheet.insertSheet('users');
+  usersSheet.clear();
+  var usersHeaders = ['id', 'username', 'password', 'passwordHash', 'displayName', 'role', 'status', 'classId', 'permissions', 'createdAt', 'updatedAt'];
+  var usersMatrix = [usersHeaders];
+  for (var u = 0; u < DEFAULT_SEED_USERS.length; u++) {
+    var usr = DEFAULT_SEED_USERS[u];
+    usersMatrix.push([
+      usr.id,
+      usr.username,
+      usr.password,
+      '', // passwordHash
+      usr.displayName,
+      usr.role,
+      usr.status,
+      usr.classId,
+      usr.permissions,
+      new Date().toISOString(),
+      new Date().toISOString()
+    ]);
+  }
+  usersSheet.getRange(1, 1, usersMatrix.length, usersHeaders.length).setValues(usersMatrix);
+  formatSheetHeader(usersSheet, usersHeaders.length);
+  
+  // 3. Seed Permissions Sheet
+  var permSheet = spreadsheet.getSheetByName('permissions');
+  if (!permSheet) permSheet = spreadsheet.insertSheet('permissions');
+  permSheet.clear();
+  var permHeaders = ['role', 'permissionsJson', 'updatedAt'];
+  var permMatrix = [permHeaders];
+  for (var p = 0; p < DEFAULT_SEED_PERMISSIONS.length; p++) {
+    var pItem = DEFAULT_SEED_PERMISSIONS[p];
+    permMatrix.push([pItem.role, pItem.permissionsJson, new Date().toISOString()]);
+  }
+  permSheet.getRange(1, 1, permMatrix.length, permHeaders.length).setValues(permMatrix);
+  formatSheetHeader(permSheet, permHeaders.length);
+  
+  // Remove default Sheet1
+  var defaultSheet = spreadsheet.getSheetByName('Sheet1');
+  if (defaultSheet && spreadsheet.getSheets().length > 1) {
+    try { spreadsheet.deleteSheet(defaultSheet); } catch (_) {}
+  }
+  
+  return {
+    spreadsheet: spreadsheet,
+    isNew: true
+  };
+}
+
+/**
  * Save Admin Central Data (Settings, User Accounts, Permissions) to SchoolSystem_AdminData
  */
 function handleSaveAdminData(data) {
-  var files = DriveApp.getFilesByName(ADMIN_SPREADSHEET_NAME);
-  var spreadsheet;
-  
-  if (files.hasNext()) {
-    spreadsheet = SpreadsheetApp.open(files.next());
-  } else {
-    spreadsheet = SpreadsheetApp.create(ADMIN_SPREADSHEET_NAME);
-  }
+  var adminInfo = getOrCreateAdminSpreadsheet();
+  var spreadsheet = adminInfo.spreadsheet;
   
   var settingsList = [];
   if (data.settings && typeof data.settings === 'object') {
@@ -199,17 +362,9 @@ function handleSaveAdminData(data) {
  * Retrieve Admin Central Data (Settings, User Accounts, Permissions) from SchoolSystem_AdminData
  */
 function handleGetAdminData() {
-  var files = DriveApp.getFilesByName(ADMIN_SPREADSHEET_NAME);
-  if (!files.hasNext()) {
-    return jsonResponse({
-      success: true,
-      found: false,
-      fileName: ADMIN_SPREADSHEET_NAME,
-      message: 'Admin spreadsheet ' + ADMIN_SPREADSHEET_NAME + ' does not exist on Google Drive yet.'
-    });
-  }
+  var adminInfo = getOrCreateAdminSpreadsheet();
+  var spreadsheet = adminInfo.spreadsheet;
   
-  var spreadsheet = SpreadsheetApp.open(files.next());
   var resultSettings = {};
   var resultUsers = [];
   var resultPermissions = {};
@@ -283,6 +438,7 @@ function handleGetAdminData() {
     action: 'GET_ADMIN_DATA',
     fileName: ADMIN_SPREADSHEET_NAME,
     spreadsheetUrl: spreadsheet.getUrl(),
+    isNewlyCreated: adminInfo.isNew,
     data: {
       settings: resultSettings,
       users: resultUsers,
