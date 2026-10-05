@@ -1,7 +1,9 @@
 /**
  * Subjects Management Page
  * Standard curriculum subjects management with scores by grade level (G7-G12) and credit hours.
- * Supports active classroom / grade level highlighting (e.g. 7A -> G7 column highlighted with app theme color).
+ * Role-aware behavior:
+ * - Teacher: Automatically locked to their single classroom's grade (e.g. 7A -> G7), cannot switch other grades.
+ * - Director: Can freely switch and inspect all grade levels (G7 - G12).
  */
 
 import { SubjectService, GRADES } from '../services/subjectService.js';
@@ -17,6 +19,8 @@ export const SubjectsPage = {
   state: {
     subjects: [],
     classes: [],
+    teacherClass: null,
+    isTeacher: false,
     searchQuery: '',
     previewScore: 50,
     activeGrade: 'G7',
@@ -45,6 +49,9 @@ export const SubjectsPage = {
 
   async loadData() {
     try {
+      const isTeacher = authService.isTeacher();
+      this.state.isTeacher = isTeacher;
+
       const [subjectsList, classesList] = await Promise.all([
         SubjectService.getAll(),
         ClassService.getAll().catch(() => [])
@@ -52,22 +59,35 @@ export const SubjectsPage = {
       this.state.subjects = Array.isArray(subjectsList) ? subjectsList : [];
       this.state.classes = Array.isArray(classesList) ? classesList : [];
 
-      // Detect active grade based on logged-in user classroom assignment
-      if (!this.state.activeGrade || this.state.activeGrade === 'G7') {
-        if (authService.isTeacher()) {
-          const teacherClasses = await ClassService.getClassesForTeacher().catch(() => []);
-          if (teacherClasses.length > 0 && teacherClasses[0].name) {
+      if (isTeacher) {
+        // Teacher has strictly 1 classroom: detect its name & lock to its grade level
+        const teacherClasses = await ClassService.getClassesForTeacher().catch(() => []);
+        if (teacherClasses.length > 0 && teacherClasses[0]) {
+          this.state.teacherClass = teacherClasses[0];
+          this.state.selectedClassId = teacherClasses[0].id;
+          if (teacherClasses[0].name) {
             this.state.activeGrade = SubjectService.extractGradeFromClassName(teacherClasses[0].name);
-            this.state.selectedClassId = teacherClasses[0].id;
           }
-        } else if (this.state.classes.length > 0 && this.state.classes[0].name) {
-          this.state.activeGrade = SubjectService.extractGradeFromClassName(this.state.classes[0].name);
+        } else {
+          this.state.teacherClass = null;
+          this.state.activeGrade = 'G7';
+        }
+      } else {
+        // Director / Admin account: can inspect all grades
+        this.state.teacherClass = null;
+        if (!this.state.activeGrade) {
+          if (this.state.classes.length > 0 && this.state.classes[0].name) {
+            this.state.activeGrade = SubjectService.extractGradeFromClassName(this.state.classes[0].name);
+          } else {
+            this.state.activeGrade = 'G7';
+          }
         }
       }
     } catch (err) {
-      console.error('Error loading subjects:', err);
+      console.error('Error loading subjects data:', err);
       this.state.subjects = [];
       this.state.classes = [];
+      this.state.teacherClass = null;
     }
   },
 
@@ -76,6 +96,8 @@ export const SubjectsPage = {
     const isKm = i18n.getLocale() === 'km';
     const fontClass = isKm ? 'font-khmer' : '';
     const q = (this.state.searchQuery || '').trim().toLowerCase();
+    const isTeacher = this.state.isTeacher;
+    const teacherClass = this.state.teacherClass;
     const activeGrade = this.state.activeGrade || 'G7';
 
     const subjectsList = Array.isArray(this.state.subjects) ? this.state.subjects : [];
@@ -116,32 +138,54 @@ export const SubjectsPage = {
           </div>
         </div>
 
-        <!-- Grade / Classroom Quick Focus Toolbar -->
+        <!-- Active Grade & Classroom Focus Banner -->
         <div class="p-3.5 rounded-xl bg-card border border-border shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-          <div class="flex items-center gap-2">
-            <div class="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-xs font-mono">
               ${activeGrade}
             </div>
             <div>
-              <span class="text-xs font-bold text-foreground ${fontClass}">
-                ${isKm ? `កម្រិតថ្នាក់សកម្ម៖ ${activeGrade}` : `Active Grade Focus: ${activeGrade}`}
-              </span>
-              <p class="text-[11px] text-muted-foreground leading-tight ${fontClass}">
-                ${isKm ? 'ពិន្ទុនៃកម្រិតថ្នាក់នេះត្រូវបានកំណត់ជាពណ៌ និងដិត (Bold) ក្នុងតារាង' : 'Scores for this grade level are highlighted in bold & app theme color'}
+              <div class="flex items-center gap-2">
+                <span class="text-xs sm:text-sm font-bold text-foreground ${fontClass}">
+                  ${isTeacher && teacherClass 
+                    ? (isKm ? `ថ្នាក់រៀនរបស់អ្នក៖ ${teacherClass.name} (កម្រិត ${activeGrade})` : `Your Classroom: ${teacherClass.name} (Grade ${activeGrade})`)
+                    : (isKm ? `កម្រិតថ្នាក់សកម្ម៖ ${activeGrade}` : `Active Grade Focus: ${activeGrade}`)}
+                </span>
+                ${isTeacher ? `
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20 ${fontClass}">
+                    ${getIcon('lock', 'w-3 h-3')}
+                    <span>${isKm ? 'បានចាក់សោថ្នាក់' : 'Assigned Class'}</span>
+                  </span>
+                ` : ''}
+              </div>
+              <p class="text-[11px] text-muted-foreground leading-tight mt-0.5 ${fontClass}">
+                ${isTeacher && teacherClass
+                  ? (isKm ? `ពិន្ទុនៃកម្រិតថ្នាក់ ${activeGrade} របស់ថ្នាក់ ${teacherClass.name} ត្រូវបានកំណត់ជាពណ៌ និងដិត (Bold) ដោយស្វ័យប្រវត្ត` : `Scores for ${teacherClass.name} (${activeGrade}) are locked and highlighted in bold & theme color.`)
+                  : (isKm ? 'ពិន្ទុនៃកម្រិតថ្នាក់នេះត្រូវបានកំណត់ជាពណ៌ និងដិត (Bold) ក្នុងតារាង' : 'Scores for this grade level are highlighted in bold & app theme color')}
               </p>
             </div>
           </div>
 
-          <!-- Grade Level Filter Pills -->
+          <!-- Grade Level Filter: Clickable for Director; Locked for Teacher -->
           <div class="flex items-center gap-1.5 flex-wrap">
-            <span class="text-[11px] text-muted-foreground mr-1 hidden sm:inline ${fontClass}">${isKm ? 'ជ្រើសរើសកម្រិត៖' : 'Switch Grade:'}</span>
-            ${GRADES.map(g => `
-              <button type="button"
-                      data-grade="${g}"
-                      class="btn-select-grade px-2.5 py-1 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer ${activeGrade === g ? 'bg-primary text-primary-foreground shadow-xs scale-105' : 'bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground'}">
-                ${g}
-              </button>
-            `).join('')}
+            ${isTeacher ? `
+              <!-- Teacher Account: Display single locked active grade badge -->
+              <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/60 border border-border text-xs font-mono text-muted-foreground select-none">
+                <span>${isKm ? 'កម្រិតថ្នាក់គ្រូ៖' : 'Teacher Grade:'}</span>
+                <span class="font-bold text-primary">${activeGrade}</span>
+                ${teacherClass ? `<span class="text-foreground/80">(${teacherClass.name})</span>` : ''}
+              </div>
+            ` : `
+              <!-- Director Account: Interactive switchable grade pills -->
+              <span class="text-[11px] text-muted-foreground mr-1 hidden sm:inline ${fontClass}">${isKm ? 'ជ្រើសរើសកម្រិត៖' : 'Switch Grade:'}</span>
+              ${GRADES.map(g => `
+                <button type="button"
+                        data-grade="${g}"
+                        class="btn-select-grade px-2.5 py-1 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer ${activeGrade === g ? 'bg-primary text-primary-foreground shadow-xs scale-105' : 'bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground'}">
+                  ${g}
+                </button>
+              `).join('')}
+            `}
           </div>
         </div>
 
@@ -155,7 +199,9 @@ export const SubjectsPage = {
               </h3>
               <span class="text-[11px] text-muted-foreground hidden sm:inline">•</span>
               <span class="text-[11px] text-muted-foreground hidden sm:inline ${fontClass}">
-                ${isKm ? 'យោងតាមឈ្មោះថ្នាក់ (ឧ. 7A គឺថ្នាក់ទី៧)' : 'Matched by classroom name (e.g. 7A = Grade 7)'}
+                ${isTeacher && teacherClass 
+                  ? (isKm ? `គណនាផ្អែកលើថ្នាក់ ${teacherClass.name} (កម្រិត ${activeGrade})` : `Calculated for class ${teacherClass.name} (${activeGrade})`)
+                  : (isKm ? 'យោងតាមឈ្មោះថ្នាក់ (ឧ. 7A គឺថ្នាក់ទី៧)' : 'Matched by classroom name (e.g. 7A = Grade 7)')}
               </span>
             </div>
 
@@ -252,11 +298,26 @@ export const SubjectsPage = {
                 <tr class="bg-muted/30 text-[11px] font-medium text-muted-foreground">
                   ${GRADES.map(g => {
                     const isColActive = g === activeGrade;
+                    const canClick = !isTeacher;
+                    let headerClasses = 'px-2.5 py-1.5 text-center min-w-[50px] border-r border-border/40 font-mono tracking-tight transition-colors ';
+                    
+                    if (isColActive) {
+                      headerClasses += 'text-primary font-bold bg-primary/10 ';
+                    } else {
+                      headerClasses += 'text-foreground/80 ';
+                    }
+
+                    if (canClick) {
+                      headerClasses += 'cursor-pointer hover:bg-muted/60 ';
+                    } else {
+                      headerClasses += 'cursor-default ';
+                    }
+
                     return `
                       <th scope="col" 
                           data-grade="${g}"
-                          title="${isKm ? `ចុចដើម្បីផ្ដោតលើកម្រិតថ្នាក់ ${g}` : `Click to focus on ${g}`}"
-                          class="btn-select-grade px-2.5 py-1.5 text-center min-w-[50px] border-r border-border/40 font-mono tracking-tight transition-colors cursor-pointer ${isColActive ? 'text-primary font-bold bg-primary/10' : 'text-foreground/80 hover:bg-muted/60'}">
+                          title="${isTeacher ? (isColActive ? (isKm ? `ថ្នាក់រៀនរបស់អ្នក (${activeGrade})` : `Your assigned classroom (${activeGrade})`) : (isKm ? 'ថ្នាក់ផ្សេងទៀតត្រូវបានចាក់សោ' : 'Locked for teacher account')) : (isKm ? `ចុចដើម្បីផ្ដោតលើកម្រិតថ្នាក់ ${g}` : `Click to focus on ${g}`)}"
+                          class="${canClick ? 'btn-select-grade' : ''} ${headerClasses}">
                         ${g}
                       </th>
                     `;
@@ -381,16 +442,18 @@ export const SubjectsPage = {
       });
     }
 
-    // Grade Level select / focus buttons & header clicks
-    this.container.querySelectorAll('.btn-select-grade').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const g = btn.getAttribute('data-grade');
-        if (g && GRADES.includes(g)) {
-          this.state.activeGrade = g;
-          this.renderLayout();
-        }
+    // Grade Level select / focus buttons & header clicks (only active for non-teacher roles)
+    if (!this.state.isTeacher) {
+      this.container.querySelectorAll('.btn-select-grade').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const g = btn.getAttribute('data-grade');
+          if (g && GRADES.includes(g)) {
+            this.state.activeGrade = g;
+            this.renderLayout();
+          }
+        });
       });
-    });
+    }
 
     // Preview Score selector buttons
     this.container.querySelectorAll('.btn-preview-score').forEach(btn => {
