@@ -5,7 +5,7 @@
  * 
  * Account-Isolation & Naming Specification:
  * - File Name format: SchoolWorkspace_<username>
- * - Tabs: students (29 fields), schools (7 columns), classes, teachers, attendance, scores
+ * - Tabs: students, schools, classes, teachers, attendance, scores, academicYears, subjects, groups, report_settings, registration_queue, settings
  */
 
 import { db } from '../database/db.js';
@@ -170,6 +170,17 @@ export const CloudSyncService = {
       });
       const attendance = await db.getAll('attendance');
       const scores = await db.getAll('scores');
+      const academicYears = await db.getAll('academicYears');
+      const subjects = await db.getAll('subjects');
+      const groups = await db.getAll('groups');
+      const report_settings = await db.getAll('report_settings');
+      const rawRegs = await db.getAll('registration_queue');
+      const registration_queue = rawRegs.map(r => {
+        const clean = { ...r };
+        delete clean.photoBlob;
+        return clean;
+      });
+      const settings = await db.getAll('settings');
 
       // 5. Construct payload matching specification
       const payload = {
@@ -181,7 +192,13 @@ export const CloudSyncService = {
           classes,
           teachers,
           attendance,
-          scores
+          scores,
+          academicYears,
+          subjects,
+          groups,
+          report_settings,
+          registration_queue,
+          settings
         }
       };
 
@@ -202,7 +219,12 @@ export const CloudSyncService = {
           classes: classes.length,
           teachers: teachers.length,
           attendance: attendance.length,
-          scores: scores.length
+          scores: scores.length,
+          academicYears: academicYears.length,
+          subjects: subjects.length,
+          groups: groups.length,
+          report_settings: report_settings.length,
+          registration_queue: registration_queue.length
         };
 
         const summaryText = t('cloudSync.syncSummary', counts);
@@ -320,6 +342,12 @@ export const CloudSyncService = {
       let teacherCount = 0;
       let attendanceCount = 0;
       let scoreCount = 0;
+      let academicYearCount = 0;
+      let subjectCount = 0;
+      let groupCount = 0;
+      let reportSettingCount = 0;
+      let registrationCount = 0;
+      let settingCount = 0;
 
       // 1. Students
       if (Array.isArray(data.students)) {
@@ -416,6 +444,88 @@ export const CloudSyncService = {
         }
       }
 
+      // 7. Academic Years (Director module: Academic Years & Promotions)
+      if (Array.isArray(data.academicYears)) {
+        for (const item of data.academicYears) {
+          if (!item.id && !item.name) continue;
+          const cleanItem = {
+            ...item,
+            id: item.id ? String(item.id).trim() : `ay-${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+            name: item.name ? String(item.name).trim() : '',
+            isActive: item.isActive === true || item.isActive === 'true' || item.isActive === 1
+          };
+          await db.put('academicYears', cleanItem);
+          academicYearCount++;
+        }
+      }
+
+      // 8. Subjects (Director module: Curriculum Subjects)
+      if (Array.isArray(data.subjects)) {
+        for (const item of data.subjects) {
+          if (!item.id && !item.name && !item.code) continue;
+          const cleanItem = {
+            ...item,
+            id: item.id ? String(item.id).trim() : `sub-${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+            code: item.code ? String(item.code).trim() : '',
+            name: item.name ? String(item.name).trim() : ''
+          };
+          await db.put('subjects', cleanItem);
+          subjectCount++;
+        }
+      }
+
+      // 9. Groups (Director / Teacher module: Student groups)
+      if (Array.isArray(data.groups)) {
+        for (const item of data.groups) {
+          if (!item.id && !item.name && !item.classId) continue;
+          const cleanItem = {
+            ...item,
+            id: item.id ? String(item.id).trim() : `grp-${Date.now()}_${Math.random().toString(36).substr(2, 4)}`
+          };
+          await db.put('groups', cleanItem);
+          groupCount++;
+        }
+      }
+
+      // 10. Report Settings (Director module: Report card layouts & signatures)
+      if (Array.isArray(data.report_settings)) {
+        for (const item of data.report_settings) {
+          if (!item.id && !item.key && !item.type) continue;
+          const cleanItem = {
+            ...item,
+            id: item.id ? String(item.id).trim() : (item.key ? String(item.key).trim() : `rs-${Date.now()}`)
+          };
+          await db.put('report_settings', cleanItem);
+          reportSettingCount++;
+        }
+      }
+
+      // 11. Registration Queue (Director module: New Student Admissions / Staging)
+      if (Array.isArray(data.registration_queue)) {
+        for (const item of data.registration_queue) {
+          if (!item.id && !item.tempStudentId && !item.name && !item.khmerName) continue;
+          const cleanItem = {
+            ...item,
+            id: item.id ? String(item.id).trim() : `reg-${Date.now()}_${Math.random().toString(36).substr(2, 4)}`
+          };
+          await db.put('registration_queue', cleanItem);
+          registrationCount++;
+        }
+      }
+
+      // 12. Settings (User Workspace preferences)
+      if (Array.isArray(data.settings)) {
+        for (const item of data.settings) {
+          if (!item.key) continue;
+          const cleanItem = {
+            key: String(item.key).trim(),
+            value: item.value !== undefined ? item.value : ''
+          };
+          await db.put('settings', cleanItem);
+          settingCount++;
+        }
+      }
+
       // 2. Clear all in-memory service caches and student page cache
       authService.clearServiceCaches();
       if (StudentsPage) {
@@ -426,7 +536,20 @@ export const CloudSyncService = {
       window.dispatchEvent(new CustomEvent('app:refresh-data', {
         detail: {
           timestamp: Date.now(),
-          counts: { studentCount, schoolCount, classCount, teacherCount, attendanceCount, scoreCount }
+          counts: { 
+            studentCount, 
+            schoolCount, 
+            classCount, 
+            teacherCount, 
+            attendanceCount, 
+            scoreCount,
+            academicYearCount,
+            subjectCount,
+            groupCount,
+            reportSettingCount,
+            registrationCount,
+            settingCount
+          }
         }
       }));
 

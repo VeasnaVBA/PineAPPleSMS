@@ -558,7 +558,13 @@ function handlePullToDrive(fileName, username, data) {
     { name: 'classes', data: data.classes || [] },
     { name: 'teachers', data: data.teachers || [] },
     { name: 'attendance', data: data.attendance || [] },
-    { name: 'scores', data: data.scores || [] }
+    { name: 'scores', data: data.scores || [] },
+    { name: 'academicYears', data: data.academicYears || [] },
+    { name: 'subjects', data: data.subjects || [] },
+    { name: 'groups', data: data.groups || [] },
+    { name: 'report_settings', data: data.report_settings || [] },
+    { name: 'registration_queue', data: data.registration_queue || [] },
+    { name: 'settings', data: data.settings || [] }
   ];
   
   var counts = {};
@@ -624,7 +630,20 @@ function handlePushToApp(fileName, username) {
   }
   
   var spreadsheet = SpreadsheetApp.open(files.next());
-  var sheetNames = ['students', 'schools', 'classes', 'teachers', 'attendance', 'scores'];
+  var sheetNames = [
+    'students', 
+    'schools', 
+    'classes', 
+    'teachers', 
+    'attendance', 
+    'scores',
+    'academicYears',
+    'subjects',
+    'groups',
+    'report_settings',
+    'registration_queue',
+    'settings'
+  ];
   var resultData = {};
   
   for (var s = 0; s < sheetNames.length; s++) {
@@ -658,7 +677,7 @@ function handlePushToApp(fileName, username) {
         }
         item[colKey] = val;
       }
-      if (hasValue && (item.id || item.studentId || item.code || item.name)) {
+      if (hasValue && (item.id || item.studentId || item.code || item.name || item.key || item.tempStudentId || item.date || item.classId || item.subjectId || item.teacherId)) {
         items.push(item);
       }
     }
