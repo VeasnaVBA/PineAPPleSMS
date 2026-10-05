@@ -23,13 +23,26 @@ export const CoursesPage = {
     this.container = typeof container === 'string' ? document.getElementById(container) : container;
     if (!this.container) return;
 
-    await this.loadData();
-    this.renderLayout();
+    try {
+      await this.loadData();
+      this.renderLayout();
+    } catch (err) {
+      console.error('CoursesPage render error:', err);
+      if (this.container) {
+        this.container.innerHTML = `
+          <div class="p-6 rounded-xl border border-destructive/30 bg-destructive/10 text-destructive text-sm">
+            <h4 class="font-bold">Error loading Courses</h4>
+            <p class="mt-1">${err.message}</p>
+          </div>
+        `;
+      }
+    }
   },
 
   async loadData() {
     try {
-      this.state.courses = await CourseService.getAll();
+      const list = await CourseService.getAll();
+      this.state.courses = Array.isArray(list) ? list : [];
       const currentUser = authService.getCurrentUser();
       if (currentUser) {
         this.state.activeGrade = await CourseService.resolveActiveGradeForUser(currentUser);
@@ -37,6 +50,7 @@ export const CoursesPage = {
     } catch (err) {
       console.error('Error loading courses:', err);
       this.state.courses = [];
+      this.state.activeGrade = 'G8';
     }
   },
 
@@ -46,19 +60,22 @@ export const CoursesPage = {
     const fontClass = isKm ? 'font-khmer' : '';
     const q = (this.state.searchQuery || '').trim().toLowerCase();
 
+    const coursesList = Array.isArray(this.state.courses) ? this.state.courses : [];
+
     // Filter courses by search query
-    const filtered = this.state.courses.filter(c => {
+    const filtered = coursesList.filter(c => {
+      if (!c) return false;
       if (!q) return true;
       return (
-        (c.courseId && c.courseId.toLowerCase().includes(q)) ||
-        (c.name && c.name.toLowerCase().includes(q)) ||
-        (c.nameEn && c.nameEn.toLowerCase().includes(q)) ||
-        (c.category && c.category.toLowerCase().includes(q))
+        (c.courseId && String(c.courseId).toLowerCase().includes(q)) ||
+        (c.name && String(c.name).toLowerCase().includes(q)) ||
+        (c.nameEn && String(c.nameEn).toLowerCase().includes(q)) ||
+        (c.category && String(c.category).toLowerCase().includes(q))
       );
     });
 
     const formatGradeLabel = (g) => {
-      const num = g.replace(/\D/g, '');
+      const num = String(g).replace(/\D/g, '');
       if (isKm) {
         const kmDigits = { '7': '៧', '8': '៨', '9': '៩', '10': '១០', '11': '១១', '12': '១២' };
         return `ថ្នាក់ទី ${kmDigits[num] || num} (${g})`;
@@ -165,10 +182,19 @@ export const CoursesPage = {
                     </td>
                   </tr>
                 ` : filtered.map(item => {
-                  const scores = item.scores || {};
-                  const activeScore = scores[this.state.activeGrade] !== undefined ? scores[this.state.activeGrade] : 0;
-                  const scaleText = CourseService.getGradingScaleText(this.state.activeGrade, activeScore);
-                  const mainName = isKm ? item.name : (item.nameEn || item.name);
+                  let scores = {};
+                  try {
+                    if (item.scores && typeof item.scores === 'object') {
+                      scores = item.scores;
+                    } else if (typeof item.scores === 'string') {
+                      scores = JSON.parse(item.scores);
+                    }
+                  } catch (_) {
+                    scores = {};
+                  }
+                  const activeScore = scores && scores[this.state.activeGrade] !== undefined ? Number(scores[this.state.activeGrade]) || 0 : 0;
+                  const scaleText = CourseService.getGradingScaleText(this.state.activeGrade || 'G8', activeScore);
+                  const mainName = isKm ? (item.name || item.courseId) : (item.nameEn || item.name || item.courseId);
                   const subName = isKm ? item.nameEn : (item.nameEn ? item.name : '');
 
                   return `

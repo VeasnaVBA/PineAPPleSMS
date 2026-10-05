@@ -246,43 +246,49 @@ export const CourseService = {
   async resolveActiveGradeForUser(user) {
     if (!user) return 'G8';
     
-    // 1. Check user.assignedClassId or user.classId
-    const classId = user.classId || user.assignedClassId;
-    let className = '';
+    try {
+      // 1. Check user.assignedClassId or user.classId
+      const classId = user.classId || user.assignedClassId;
+      let className = '';
 
-    if (classId) {
-      try {
-        const cls = await db.get('classes', classId);
-        if (cls?.name) className = cls.name;
-        else if (cls?.grade) {
-          const num = String(cls.grade).replace(/\D/g, '');
-          if (num && GRADE_KEYS.includes(`G${num}`)) return `G${num}`;
-        }
-      } catch (_) {}
-    }
-
-    if (!className && user.className) {
-      className = user.className;
-    }
-
-    if (className) {
-      const match = className.match(/(?:ថ្នាក់ទី|Grade|\b)?\s*([7-9]|1[0-2])\b/i) || className.match(/\b([7-9]|1[0-2])/);
-      if (match && match[1]) {
-        return `G${match[1]}`;
+      if (classId) {
+        try {
+          const cls = await db.get('classes', classId);
+          if (cls?.name) className = String(cls.name);
+          else if (cls?.grade) {
+            const num = String(cls.grade).replace(/\D/g, '');
+            if (num && GRADE_KEYS.includes(`G${num}`)) return `G${num}`;
+          }
+        } catch (_) {}
       }
-    }
 
-    // 2. If teacher account, check classes store for classes associated with this teacher
-    if (user.role === 'TEACHER') {
-      try {
-        const allClasses = await db.getAll('classes');
-        const teacherClass = allClasses.find(c => c.userId === user.id || c.accountId === user.id || c.teacherId === user.id);
-        if (teacherClass?.name) {
-          const match = teacherClass.name.match(/\b([7-9]|1[0-2])/);
-          if (match && match[1]) return `G${match[1]}`;
+      if (!className && user.className) {
+        className = String(user.className);
+      }
+
+      if (className) {
+        const cleanStr = String(className);
+        const match = cleanStr.match(/(?:ថ្នាក់ទី|Grade|\b)?\s*([7-9]|1[0-2])\b/i) || cleanStr.match(/\b([7-9]|1[0-2])/);
+        if (match && match[1]) {
+          return `G${match[1]}`;
         }
-      } catch (_) {}
-    }
+      }
+
+      // 2. If teacher account, check classes store for classes associated with this teacher
+      if (user.role === 'TEACHER') {
+        try {
+          const allClasses = await db.getAll('classes');
+          if (Array.isArray(allClasses)) {
+            const teacherClass = allClasses.find(c => c && (c.userId === user.id || c.accountId === user.id || c.teacherId === user.id));
+            if (teacherClass?.name) {
+              const cleanTStr = String(teacherClass.name);
+              const match = cleanTStr.match(/\b([7-9]|1[0-2])/);
+              if (match && match[1]) return `G${match[1]}`;
+            }
+          }
+        } catch (_) {}
+      }
+    } catch (_) {}
 
     return 'G8';
   },
