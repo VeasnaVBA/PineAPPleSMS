@@ -26,7 +26,7 @@
 
 export const GLOBAL_DB_NAME = 'SchoolSystem_Global';
 export const GLOBAL_DB_VERSION = 1;
-export const WORKSPACE_DB_VERSION = 5;
+export const WORKSPACE_DB_VERSION = 6;
 export const LEGACY_DB_NAME = 'SchoolManagementDB';
 
 /**
@@ -319,6 +319,14 @@ class WorkspaceDatabase {
           regStore.createIndex('targetGrade', 'targetGrade', { unique: false });
           regStore.createIndex('name', 'name', { unique: false });
           regStore.createIndex('importedAt', 'importedAt', { unique: false });
+        }
+
+        // 14. Courses (Curriculum Subjects & Max Scores G7-G12)
+        if (!db.objectStoreNames.contains('courses')) {
+          const courseStore = db.createObjectStore('courses', { keyPath: 'id' });
+          courseStore.createIndex('courseId', 'courseId', { unique: false });
+          courseStore.createIndex('name', 'name', { unique: false });
+          courseStore.createIndex('category', 'category', { unique: false });
         }
       };
 
