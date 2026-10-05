@@ -10,6 +10,7 @@ import { AdminDataService } from '../services/adminDataService.js';
 import { i18n, t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
+import { APP_LOGO_BASE64 } from '../config/appLogo.js';
 
 export class LoginPage {
   constructor(containerId, onLoginSuccess) {
@@ -79,7 +80,7 @@ export class LoginPage {
           <div class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-2.5 font-medium text-lg tracking-tight ${brandTextClass}">
               <div class="w-8 h-8 rounded-lg overflow-hidden bg-primary/10 border border-primary/20 flex items-center justify-center shadow-2xs">
-                <img src="./assets/images/app_logo.png" alt="Logo" class="w-full h-full object-contain p-0.5" onerror="this.outerHTML='<span class=\\'text-primary\\'>${getIcon('school', 'w-4 h-4')}</span>'" />
+                <img src="${APP_LOGO_BASE64}" alt="Logo" class="w-full h-full object-contain p-0.5" />
               </div>
               <span class="font-bold tracking-tight">SmartSchool</span>
             </div>
