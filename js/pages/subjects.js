@@ -1,9 +1,9 @@
 /**
  * Subjects Management Page
- * Standard curriculum subjects management with max scores and credit hours.
+ * Standard curriculum subjects management with scores by grade level (G7-G12) and credit hours.
  */
 
-import { SubjectService } from '../services/subjectService.js';
+import { SubjectService, GRADES } from '../services/subjectService.js';
 import { authService } from '../services/authService.js';
 import { i18n, t } from '../i18n/i18n.js';
 import { toast } from '../components/toast.js';
@@ -14,7 +14,8 @@ export const SubjectsPage = {
   container: null,
   state: {
     subjects: [],
-    searchQuery: ''
+    searchQuery: '',
+    highlightedGrade: null
   },
 
   async render(container) {
@@ -74,7 +75,7 @@ export const SubjectsPage = {
               ${t('subjects.title') || 'គ្រប់គ្រងមុខវិជ្ជា'}
             </h1>
             <p class="text-xs sm:text-sm text-muted-foreground mt-1 ${fontClass}">
-              ${t('subjects.subtitle') || 'បញ្ជីមុខវិជ្ជាកម្មវិធីសិក្សាជាតិ ពិន្ទុពេញ និងចំនួនម៉ោងបង្រៀនប្រចាំសប្តាហ៍'}
+              ${t('subjects.subtitle') || 'បញ្ជីមុខវិជ្ជាកម្មវិធីសិក្សាជាតិ ពិន្ទុតាមកម្រិតថ្នាក់ (G7-G12) និងចំនួនម៉ោងបង្រៀន'}
             </p>
           </div>
           
@@ -108,37 +109,47 @@ export const SubjectsPage = {
           </div>
         </div>
 
-        <!-- Subjects Table -->
+        <!-- Subjects Table with Multi-column Header for Score by Grade -->
         <div class="border border-border/80 rounded-xl bg-card overflow-hidden shadow-2xs">
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs sm:text-sm ${fontClass}">
-              <thead class="bg-muted/40 text-muted-foreground text-[11px] sm:text-xs font-semibold uppercase tracking-wider select-none border-b border-border ${fontClass}">
-                <tr>
-                  <th scope="col" class="w-12 px-3 py-3 text-center border-r border-border/50">
+              <thead class="bg-muted/40 text-muted-foreground text-[11px] sm:text-xs font-semibold select-none border-b border-border ${fontClass}">
+                <!-- Top Header Row -->
+                <tr class="border-b border-border/60">
+                  <th scope="col" rowspan="2" class="w-12 px-3 py-3 text-center border-r border-border/50 align-middle">
                     ${t('common.no') || 'ល.រ'}
                   </th>
-                  <th scope="col" class="px-4 py-3 min-w-[130px] font-semibold text-foreground border-r border-border/50 ${fontClass}">
+                  <th scope="col" rowspan="2" class="px-4 py-3 min-w-[120px] font-semibold text-foreground border-r border-border/50 align-middle ${fontClass}">
                     ${t('subjects.code') || 'កូដមុខវិជ្ជា'}
                   </th>
-                  <th scope="col" class="px-4 py-3 min-w-[240px] font-semibold text-foreground border-r border-border/50 ${fontClass}">
-                    ${t('subjects.name') || 'ឈ្មោះមុខវិជ្ជា'}
+                  <th scope="col" rowspan="2" class="px-4 py-3 min-w-[200px] font-semibold text-foreground border-r border-border/50 align-middle ${fontClass}">
+                    ${isKm ? 'ឈ្មោះមុខវិជ្ជា' : 'Subject Name'}
                   </th>
-                  <th scope="col" class="px-4 py-3 text-center min-w-[110px] font-semibold text-foreground border-r border-border/50 ${fontClass}">
-                    ${t('subjects.maxScore') || 'ពិន្ទុពេញ'}
+                  <th scope="col" colspan="6" class="px-4 py-2 text-center font-semibold text-foreground border-r border-border/50 bg-muted/20 ${fontClass}">
+                    ${isKm ? 'ពិន្ទុតាមកម្រិតថ្នាក់ (Score by Grade)' : 'Score (by Grade)'}
                   </th>
-                  <th scope="col" class="px-4 py-3 text-center min-w-[140px] font-semibold text-foreground border-r border-border/50 ${fontClass}">
-                    ${t('subjects.creditHours') || 'ម៉ោងបង្រៀន/សប្តាហ៍'}
+                  <th scope="col" rowspan="2" class="px-3 py-3 text-center min-w-[100px] font-semibold text-foreground border-r border-border/50 align-middle ${fontClass}">
+                    ${isKm ? 'ម៉ោង/សប្តាហ៍' : 'Hours/wk'}
                   </th>
-                  <th scope="col" class="px-4 py-3 text-center min-w-[100px] font-semibold text-foreground ${fontClass}">
+                  <th scope="col" rowspan="2" class="px-4 py-3 text-center min-w-[90px] font-semibold text-foreground align-middle ${fontClass}">
                     ${t('common.actions') || 'សកម្មភាព'}
                   </th>
+                </tr>
+
+                <!-- Sub Header Row for G7 - G12 -->
+                <tr class="bg-muted/30 text-[11px] font-medium text-muted-foreground">
+                  ${GRADES.map(g => `
+                    <th scope="col" class="px-2.5 py-1.5 text-center min-w-[50px] border-r border-border/40 font-mono tracking-tight text-foreground/80">
+                      ${g}
+                    </th>
+                  `).join('')}
                 </tr>
               </thead>
 
               <tbody class="divide-y divide-border/60 ${fontClass}">
                 ${filtered.length === 0 ? `
                   <tr>
-                    <td colspan="6" class="text-center py-12 text-muted-foreground ${fontClass}">
+                    <td colspan="11" class="text-center py-12 text-muted-foreground ${fontClass}">
                       <div class="flex flex-col items-center justify-center gap-2">
                         ${getIcon('inbox', 'w-8 h-8 text-muted-foreground/50')}
                         <span>${t('subjects.noData') || 'មិនទាន់មានមុខវិជ្ជាណាមួយនៅឡើយទេ'}</span>
@@ -148,21 +159,22 @@ export const SubjectsPage = {
                 ` : filtered.map((item, idx) => {
                   const mainName = isKm ? item.name : (item.nameEn || item.name);
                   const subName = isKm ? item.nameEn : (item.nameEn ? item.name : '');
+                  const scores = item.scoreByGrade || {};
 
                   return `
                     <tr class="hover:bg-muted/20 transition-colors group">
                       <!-- Row No -->
-                      <td class="px-3 py-3.5 text-center text-muted-foreground border-r border-border/40 font-mono text-xs">
+                      <td class="px-3 py-3 text-center text-muted-foreground border-r border-border/40 font-mono text-xs">
                         ${idx + 1}
                       </td>
 
                       <!-- Subject Code -->
-                      <td class="px-4 py-3.5 font-semibold text-foreground border-r border-border/40 whitespace-nowrap">
+                      <td class="px-4 py-3 font-semibold text-foreground border-r border-border/40 whitespace-nowrap">
                         <span class="font-mono text-xs px-2 py-0.5 rounded bg-muted/50 border border-border text-foreground tracking-tight">${item.code || ''}</span>
                       </td>
 
                       <!-- Subject Name (Khmer & English) -->
-                      <td class="px-4 py-3.5 border-r border-border/40 ${fontClass}">
+                      <td class="px-4 py-3 border-r border-border/40 ${fontClass}">
                         <div class="font-semibold text-foreground text-sm flex items-center gap-1.5">
                           ${getIcon('bookOpen', 'w-3.5 h-3.5 text-primary flex-shrink-0')}
                           <span>${mainName}</span>
@@ -170,20 +182,26 @@ export const SubjectsPage = {
                         ${subName ? `<div class="text-[11px] text-muted-foreground/80 mt-0.5 pl-5">${subName}</div>` : ''}
                       </td>
 
-                      <!-- Max Score -->
-                      <td class="px-4 py-3.5 text-center border-r border-border/40 text-xs font-bold text-foreground">
-                        <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-mono">
-                          ${item.maxScore || 100}
-                        </span>
-                      </td>
+                      <!-- Grade Scores G7 - G12 -->
+                      ${GRADES.map(g => {
+                        const scoreVal = scores[g] !== undefined ? scores[g] : (item.maxScore || 0);
+                        const isZero = Number(scoreVal) === 0;
+                        return `
+                          <td class="px-2.5 py-3 text-center border-r border-border/40 font-mono text-xs">
+                            <span class="${isZero ? 'text-muted-foreground/40' : 'text-foreground font-medium'}">
+                              ${scoreVal}
+                            </span>
+                          </td>
+                        `;
+                      }).join('')}
 
                       <!-- Weekly Credit Hours -->
-                      <td class="px-4 py-3.5 text-center border-r border-border/40 text-xs font-medium text-muted-foreground">
-                        <span class="font-mono">${item.creditHours || 2}</span> ${isKm ? 'ម៉ោង' : 'hrs/wk'}
+                      <td class="px-3 py-3 text-center border-r border-border/40 text-xs font-medium text-muted-foreground">
+                        <span class="font-mono text-foreground">${item.creditHours || 2}</span>
                       </td>
 
                       <!-- Actions -->
-                      <td class="px-4 py-3.5 text-center whitespace-nowrap">
+                      <td class="px-4 py-3 text-center whitespace-nowrap">
                         <div class="flex items-center justify-center gap-1.5">
                           <button type="button"
                                   data-action="edit"
@@ -265,12 +283,20 @@ export const SubjectsPage = {
     const isEdit = Boolean(existingSubject);
 
     const defaultCode = isEdit ? existingSubject.code : await SubjectService.generateCode();
+    const scores = existingSubject?.scoreByGrade || {
+      G7: existingSubject?.maxScore || 50,
+      G8: existingSubject?.maxScore || 50,
+      G9: existingSubject?.maxScore || 50,
+      G10: existingSubject?.maxScore || 50,
+      G11: existingSubject?.maxScore || 50,
+      G12: existingSubject?.maxScore || 50
+    };
 
     const modalContent = `
       <div class="space-y-4 p-5 select-none ${fontClass}">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <!-- Subject Code -->
-          <div class="sm:col-span-2">
+          <div>
             <label class="block text-xs font-semibold text-foreground mb-1">
               ${t('subjects.code') || 'កូដមុខវិជ្ជា'} <span class="text-rose-500">*</span>
             </label>
@@ -279,6 +305,19 @@ export const SubjectsPage = {
                    value="${defaultCode}"
                    class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary uppercase font-mono" />
             <p id="modal-code-err" class="text-[11px] text-rose-500 mt-1 hidden"></p>
+          </div>
+
+          <!-- Credit Hours -->
+          <div>
+            <label class="block text-xs font-semibold text-foreground mb-1">
+              ${t('subjects.creditHours') || 'ម៉ោងបង្រៀន/សប្តាហ៍ (Weekly Hours)'}
+            </label>
+            <input type="number"
+                   id="modal-subject-hours"
+                   min="1"
+                   max="40"
+                   value="${existingSubject?.creditHours || 2}"
+                   class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono" />
           </div>
 
           <!-- Subject Name (Khmer) -->
@@ -305,31 +344,33 @@ export const SubjectsPage = {
                    placeholder="${isKm ? 'ឧ. Mathematics' : 'e.g. Mathematics'}"
                    class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
           </div>
+        </div>
 
-          <!-- Max Score -->
-          <div>
-            <label class="block text-xs font-semibold text-foreground mb-1">
-              ${t('subjects.maxScore') || 'ពិន្ទុពេញ (Max Score)'} <span class="text-rose-500">*</span>
+        <!-- Score by Grade Section (G7 - G12) -->
+        <div class="pt-3 border-t border-border/80">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-semibold text-foreground">
+              ${isKm ? 'ពិន្ទុតាមកម្រិតថ្នាក់ (Score by Grade)' : 'Score by Grade Level'}
             </label>
-            <input type="number"
-                   id="modal-subject-score"
-                   min="1"
-                   max="500"
-                   value="${existingSubject?.maxScore || 100}"
-                   class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono" />
+            <div class="flex items-center gap-1.5 text-[11px]">
+              <span class="text-muted-foreground">${isKm ? 'ដាក់ពិន្ទុស្មើគ្នា៖' : 'Quick fill:'}</span>
+              <button type="button" data-fill="50" class="btn-quick-fill px-1.5 py-0.5 rounded bg-muted/60 hover:bg-muted font-mono cursor-pointer">50</button>
+              <button type="button" data-fill="100" class="btn-quick-fill px-1.5 py-0.5 rounded bg-muted/60 hover:bg-muted font-mono cursor-pointer">100</button>
+            </div>
           </div>
 
-          <!-- Credit Hours -->
-          <div>
-            <label class="block text-xs font-semibold text-foreground mb-1">
-              ${t('subjects.creditHours') || 'ម៉ោងបង្រៀន/សប្តាហ៍ (Weekly Hours)'}
-            </label>
-            <input type="number"
-                   id="modal-subject-hours"
-                   min="1"
-                   max="40"
-                   value="${existingSubject?.creditHours || 2}"
-                   class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono" />
+          <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            ${GRADES.map(g => `
+              <div>
+                <label class="block text-[11px] font-mono font-medium text-muted-foreground text-center mb-1">${g}</label>
+                <input type="number"
+                       id="modal-grade-${g}"
+                       min="0"
+                       max="500"
+                       value="${scores[g] !== undefined ? scores[g] : 50}"
+                       class="w-full px-2 py-1.5 text-center text-xs sm:text-sm font-mono rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+              </div>
+            `).join('')}
           </div>
         </div>
 
@@ -359,6 +400,17 @@ export const SubjectsPage = {
     const modalEl = document.getElementById(modal.id);
     if (!modalEl) return;
 
+    // Quick fill buttons
+    modalEl.querySelectorAll('.btn-quick-fill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const val = btn.getAttribute('data-fill');
+        GRADES.forEach(g => {
+          const inp = modalEl.querySelector(`#modal-grade-${g}`);
+          if (inp) inp.value = val;
+        });
+      });
+    });
+
     // Cancel button
     modalEl.querySelector('#modal-btn-cancel')?.addEventListener('click', () => {
       modal.close();
@@ -369,7 +421,6 @@ export const SubjectsPage = {
       const codeInput = modalEl.querySelector('#modal-subject-code');
       const nameInput = modalEl.querySelector('#modal-subject-name');
       const nameEnInput = modalEl.querySelector('#modal-subject-name-en');
-      const scoreInput = modalEl.querySelector('#modal-subject-score');
       const hoursInput = modalEl.querySelector('#modal-subject-hours');
       const codeErr = modalEl.querySelector('#modal-code-err');
       const nameErr = modalEl.querySelector('#modal-name-err');
@@ -398,11 +449,22 @@ export const SubjectsPage = {
         return;
       }
 
+      // Collect scores per grade
+      const scoreByGrade = {};
+      let maxScore = 0;
+      GRADES.forEach(g => {
+        const inp = modalEl.querySelector(`#modal-grade-${g}`);
+        const val = Number(inp?.value || 0);
+        scoreByGrade[g] = !isNaN(val) && val >= 0 ? val : 0;
+        if (scoreByGrade[g] > maxScore) maxScore = scoreByGrade[g];
+      });
+
       const subjectData = {
         code,
         name,
         nameEn: nameEnInput?.value.trim() || '',
-        maxScore: Number(scoreInput?.value) > 0 ? Number(scoreInput.value) : 100,
+        maxScore: maxScore > 0 ? maxScore : 100,
+        scoreByGrade,
         creditHours: Number(hoursInput?.value) > 0 ? Number(hoursInput.value) : 2
       };
 
@@ -449,7 +511,7 @@ export const SubjectsPage = {
         </p>
         <div class="p-3 rounded-lg bg-muted/40 border border-border text-xs space-y-1">
           <div class="font-bold text-foreground">${subject.name}${subject.nameEn ? ` (${subject.nameEn})` : ''}</div>
-          <div class="font-mono text-muted-foreground">${subject.code} • ${subject.maxScore || 100} pts • ${subject.creditHours || 2} hrs/wk</div>
+          <div class="font-mono text-muted-foreground">${subject.code} • ${subject.creditHours || 2} hrs/wk</div>
         </div>
         <div class="flex items-center justify-end gap-2 pt-2">
           <button type="button"

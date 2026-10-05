@@ -31,6 +31,7 @@ export const km = {
     name: "ឈ្មោះមុខវិជ្ជា",
     nameKhmer: "ឈ្មោះមុខវិជ្ជា (ខ្មែរ)",
     nameEn: "ឈ្មោះជាភាសាអង់គ្លេស (English Name)",
+    scoreByGrade: "ពិន្ទុតាមកម្រិតថ្នាក់",
     maxScore: "ពិន្ទុពេញ",
     creditHours: "ម៉ោងបង្រៀន/សប្តាហ៍",
     searchPlaceholder: "ស្វែងរកមុខវិជ្ជា (ឈ្មោះ, កូដ)...",

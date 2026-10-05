@@ -31,6 +31,7 @@ export const en = {
     name: "Subject Name",
     nameKhmer: "Subject Name (Khmer)",
     nameEn: "English Name",
+    scoreByGrade: "Score (by Grade)",
     maxScore: "Max Score",
     creditHours: "Weekly Credit Hours",
     searchPlaceholder: "Search subjects (name, code)...",
