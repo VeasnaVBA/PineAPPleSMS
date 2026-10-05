@@ -19,16 +19,10 @@ export const CoursesPage = {
     activeGrade: 'G8' // Default active grade preview matching reference screenshot
   },
 
-  async render(containerId = 'main-content') {
-    this.container = typeof containerId === 'string' ? document.getElementById(containerId) : containerId;
+  async render(container) {
+    this.container = typeof container === 'string' ? document.getElementById(container) : container;
     if (!this.container) return;
 
-    // 1. Instant render if courses are already present in memory (eliminates language change & tab switch flicker)
-    if (this.state.courses && this.state.courses.length > 0) {
-      this.renderLayout();
-    }
-
-    // 2. Fetch fresh data and render smoothly
     await this.loadData();
     this.renderLayout();
   },
@@ -37,15 +31,12 @@ export const CoursesPage = {
     try {
       this.state.courses = await CourseService.getAll();
       const currentUser = authService.getCurrentUser();
-      if (currentUser && !this.state.activeGrade) {
+      if (currentUser) {
         this.state.activeGrade = await CourseService.resolveActiveGradeForUser(currentUser);
       }
     } catch (err) {
       console.error('Error loading courses:', err);
-      if (!this.state.courses || this.state.courses.length === 0) {
-        toast.error(t('common.errorLoading') || 'Failed to load courses');
-        this.state.courses = [];
-      }
+      this.state.courses = [];
     }
   },
 

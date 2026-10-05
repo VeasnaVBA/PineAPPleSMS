@@ -26,7 +26,7 @@
 
 export const GLOBAL_DB_NAME = 'SchoolSystem_Global';
 export const GLOBAL_DB_VERSION = 1;
-export const WORKSPACE_DB_VERSION = 6;
+export const WORKSPACE_DB_VERSION = 7;
 export const LEGACY_DB_NAME = 'SchoolManagementDB';
 
 /**
