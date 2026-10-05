@@ -913,11 +913,15 @@ export const SettingsPage = {
     // Save Google Script Web App URL
     const cloudUrlInput = container.querySelector('#settings-cloud-url');
     const cloudFeedback = container.querySelector('#settings-cloud-feedback');
-    container.querySelector('#btn-settings-save-cloud-url')?.addEventListener('click', () => {
+    container.querySelector('#btn-settings-save-cloud-url')?.addEventListener('click', async () => {
       const url = cloudUrlInput?.value?.trim() || '';
       setCloudSyncUrl(url);
-      AdminDataService.queueAutoSync();
       toast.success(currentLocale === 'km' ? 'បានរក្សាទុកអាសយដ្ឋាន Web App ដោយជោគជ័យ' : 'Google Script Web App URL saved successfully.');
+      try {
+        await AdminDataService.saveToGoogleSheet({ silent: true });
+      } catch (e) {
+        console.warn('Auto sync on URL save error:', e);
+      }
     });
 
     // Test Google Script Web App Connection

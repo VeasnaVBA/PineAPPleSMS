@@ -61,6 +61,7 @@ var DEFAULT_SEED_USERS = [
 ];
 
 var DEFAULT_SEED_SETTINGS = [
+  { key: "scriptUrl", value: "" },
   { key: "theme", value: "light" },
   { key: "primaryColor", value: "#18181b" },
   { key: "fontSize", value: "base" },
