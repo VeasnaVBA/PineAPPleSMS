@@ -41,6 +41,7 @@ export class Router {
     this.container = document.getElementById(contentContainerId);
     this.sidebar = sidebar;
     this.currentRoute = 'dashboard';
+    this._refreshDebounce = null;
 
     window.addEventListener('hashchange', () => this.handleRoute());
     
@@ -49,9 +50,15 @@ export class Router {
       this.loadRoute(this.currentRoute, true);
     });
 
-    // Re-render active route when data is restored from cloud without full page reload
-    window.addEventListener('app:refresh-data', () => {
-      this.loadRoute(this.currentRoute, true);
+    // Debounced refresh when data changes in background, avoiding jarring flickers
+    window.addEventListener('app:refresh-data', (e) => {
+      if (this._refreshDebounce) clearTimeout(this._refreshDebounce);
+      this._refreshDebounce = setTimeout(() => {
+        // Only refresh if no modal is currently open to avoid disrupting user interaction
+        if (!document.querySelector('.dialog-overlay, [role="dialog"], #theme-color-modal-overlay')) {
+          this.loadRoute(this.currentRoute, true);
+        }
+      }, 350);
     });
   }
 
@@ -91,7 +98,7 @@ export class Router {
     const page = routes[routeKey] || defaultFallback;
 
     // Prevent jarring re-render/blink if clicking on the already active tab
-    if (!force && this.currentRoute === routeKey && this.container?.children?.length > 0 && !this.container.querySelector('.animate-spin')) {
+    if (!force && this.currentRoute === routeKey && this.container?.children?.length > 0) {
       this.sidebar?.setActive(routeKey);
       return;
     }
@@ -131,28 +138,9 @@ export class Router {
       return;
     }
 
-    // Only show a loading spinner if rendering takes longer than 150ms (avoids blank-screen flicker on fast local navigation)
-    let isRenderComplete = false;
-    const loadingTimer = setTimeout(() => {
-      if (!isRenderComplete && this.container && (!this.container.children || this.container.children.length === 0)) {
-        this.container.innerHTML = `
-          <div class="flex items-center justify-center p-12 text-muted-foreground text-sm">
-            <div class="flex items-center gap-2">
-              <div class="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
-              <span>Loading...</span>
-            </div>
-          </div>
-        `;
-      }
-    }, 150);
-
     try {
       await page.render(this.container);
-      isRenderComplete = true;
-      clearTimeout(loadingTimer);
     } catch (err) {
-      isRenderComplete = true;
-      clearTimeout(loadingTimer);
       console.error(`Error rendering page [${routeKey}]:`, err);
       this.container.innerHTML = `
         <div class="p-6 rounded-xl border border-destructive/30 bg-destructive/10 text-destructive text-sm">

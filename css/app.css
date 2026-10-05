@@ -961,21 +961,21 @@ html[lang="km"] select {
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0.92; transform: translateY(1px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-8px); }
+  from { opacity: 0.92; transform: translateY(-2px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.15s ease-out forwards;
+  animation: fadeIn 0.1s ease-out forwards;
 }
 
 .animate-slide-down {
-  animation: slideDown 0.15s ease-out forwards;
+  animation: slideDown 0.1s ease-out forwards;
 }
 
 /* Resizable Image Container & Controls (Floating Overlay - Never distorts text or paper size) */
