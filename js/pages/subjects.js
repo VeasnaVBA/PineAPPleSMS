@@ -460,9 +460,9 @@ export const SubjectsPage = {
 
     const modalContent = `
       <div class="space-y-4 p-5 select-none ${fontClass}">
-        <!-- Green Title -->
+        <!-- App Theme Title -->
         <div>
-          <h3 class="text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">
+          <h3 class="text-sm sm:text-base font-bold text-primary">
             ${modalTitleText}
           </h3>
         </div>
@@ -478,12 +478,12 @@ export const SubjectsPage = {
                    id="modal-subject-code"
                    value="${defaultCode}"
                    placeholder="E.G. CRS-101"
-                   class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 uppercase font-mono shadow-2xs" />
+                   class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary uppercase font-mono shadow-2xs" />
             <p id="modal-code-err" class="text-[11px] text-rose-500 mt-1 hidden"></p>
           </div>
 
           <!-- Middle Graduation / Book Icon -->
-          <div class="hidden sm:flex items-center justify-center w-10 h-10 rounded-lg border border-border bg-muted/30 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mb-0.5 shadow-2xs">
+          <div class="hidden sm:flex items-center justify-center w-10 h-10 rounded-lg border border-border bg-muted/30 text-primary flex-shrink-0 mb-0.5 shadow-2xs">
             ${getIcon('graduationCap', 'w-5 h-5') || getIcon('bookOpen', 'w-5 h-5')}
           </div>
 
@@ -496,7 +496,7 @@ export const SubjectsPage = {
                    id="modal-subject-name"
                    value="${existingSubject?.name || ''}"
                    placeholder="${isKm ? 'ឧ. ភាសាខ្មែរ, English' : 'e.g. English'}"
-                   class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs ${fontClass}" />
+                   class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-2xs ${fontClass}" />
             <p id="modal-name-err" class="text-[11px] text-rose-500 mt-1 hidden"></p>
           </div>
         </div>
@@ -523,7 +523,7 @@ export const SubjectsPage = {
                      min="0"
                      max="500"
                      value="${scores.G7 !== undefined ? scores.G7 : 0}"
-                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs" />
+                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-2xs" />
             </div>
             <!-- Col 2: G8 and G11 -->
             <div class="flex items-center gap-2">
@@ -533,7 +533,7 @@ export const SubjectsPage = {
                      min="0"
                      max="500"
                      value="${scores.G8 !== undefined ? scores.G8 : 0}"
-                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs" />
+                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-2xs" />
             </div>
             <!-- Col 3: G9 and G12 -->
             <div class="flex items-center gap-2">
@@ -543,7 +543,7 @@ export const SubjectsPage = {
                      min="0"
                      max="500"
                      value="${scores.G9 !== undefined ? scores.G9 : 0}"
-                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs" />
+                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-2xs" />
             </div>
 
             <!-- Row 2 of scores: G10, G11, G12 -->
@@ -554,7 +554,7 @@ export const SubjectsPage = {
                      min="0"
                      max="500"
                      value="${scores.G10 !== undefined ? scores.G10 : 0}"
-                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs" />
+                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-2xs" />
             </div>
             <div class="flex items-center gap-2">
               <span class="w-8 text-xs font-mono font-bold text-muted-foreground">G11</span>
@@ -563,7 +563,7 @@ export const SubjectsPage = {
                      min="0"
                      max="500"
                      value="${scores.G11 !== undefined ? scores.G11 : 0}"
-                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs" />
+                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-2xs" />
             </div>
             <div class="flex items-center gap-2">
               <span class="w-8 text-xs font-mono font-bold text-muted-foreground">G12</span>
@@ -572,7 +572,7 @@ export const SubjectsPage = {
                      min="0"
                      max="500"
                      value="${scores.G12 !== undefined ? scores.G12 : 0}"
-                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs" />
+                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-2xs" />
             </div>
           </div>
         </div>
@@ -585,7 +585,7 @@ export const SubjectsPage = {
           <textarea id="modal-subject-desc"
                     rows="2"
                     placeholder="${isKm ? 'ការពិពណ៌នាមុខវិជ្ជា...' : 'Course description...'}"
-                    class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-y shadow-2xs ${fontClass}">${existingSubject?.description || existingSubject?.notes || ''}</textarea>
+                    class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-y shadow-2xs ${fontClass}">${existingSubject?.description || existingSubject?.notes || ''}</textarea>
         </div>
 
         <!-- Row 4: SUM OF COURSES (optional) -->
@@ -597,7 +597,7 @@ export const SubjectsPage = {
                  id="modal-subject-sum"
                  value="${existingSubject?.sumOfCourses || ''}"
                  placeholder="e.g. CRS-010, CRS-011"
-                 class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 uppercase font-mono shadow-2xs" />
+                 class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary uppercase font-mono shadow-2xs" />
           <p class="text-[11px] text-muted-foreground mt-1 leading-relaxed ${fontClass}">
             ${isKm 
               ? 'បញ្ចូលកូដមុខវិជ្ជា (បំបែកដោយសញ្ញាក្បៀស ,)។ នៅពេលមានពិន្ទុមុខវិជ្ជាតូចៗ មុខវិជ្ជានេះនឹងបូកសរុបដោយស្វ័យប្រវត្តិ។ ទុកនៅទទេសម្រាប់ការបញ្ចូលពិន្ទុធម្មតា។' 
@@ -614,7 +614,7 @@ export const SubjectsPage = {
           </button>
           <button type="button"
                   id="modal-btn-save"
-                  class="flex-1 sm:flex-none sm:min-w-[130px] px-6 py-2.5 rounded-lg text-xs sm:text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors text-center cursor-pointer">
+                  class="flex-1 sm:flex-none sm:min-w-[130px] px-6 py-2.5 rounded-lg text-xs sm:text-sm font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs transition-colors text-center cursor-pointer">
             ${isEdit ? (isKm ? 'រក្សាទុកមុខវិជ្ជា' : 'Update Course') : (isKm ? 'បង្កើតមុខវិជ្ជា' : 'Create Course')}
           </button>
         </div>
