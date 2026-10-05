@@ -5,6 +5,7 @@
  */
 import { i18n, t } from '../i18n/i18n.js';
 import { authService } from '../services/authService.js';
+import { fontService } from '../services/fontService.js';
 import { getIcon } from './icons.js';
 
 export class Sidebar {
@@ -13,9 +14,10 @@ export class Sidebar {
     this.isCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
     this.activeRoute = 'dashboard';
 
-    // Subscribe to language change and auth change to re-render dynamically
+    // Subscribe to language change, auth change, and font appearance/scale changes to re-render dynamically
     i18n.subscribe(() => this.render());
     authService.subscribe(() => this.render());
+    fontService.subscribe(() => this.render());
   }
 
   init(initialRoute = 'dashboard') {
@@ -46,12 +48,18 @@ export class Sidebar {
 
     if (this.isCollapsed) {
       this.container.classList.add('collapsed');
-      this.container.style.width = '72px';
-      if (contentArea) contentArea.style.marginLeft = '72px';
+      this.container.style.width = 'var(--sidebar-collapsed-width, 4.5rem)';
+      if (contentArea) {
+        contentArea.classList.add('sidebar-collapsed');
+        contentArea.style.marginLeft = 'var(--sidebar-collapsed-width, 4.5rem)';
+      }
     } else {
       this.container.classList.remove('collapsed');
-      this.container.style.width = '260px';
-      if (contentArea) contentArea.style.marginLeft = '260px';
+      this.container.style.width = 'var(--sidebar-width, 16.5rem)';
+      if (contentArea) {
+        contentArea.classList.remove('sidebar-collapsed');
+        contentArea.style.marginLeft = 'var(--sidebar-width, 16.5rem)';
+      }
     }
 
     // Toggle label visibility
@@ -90,6 +98,7 @@ export class Sidebar {
 
     const isKm = i18n.getLocale() === 'km';
     const currentUser = authService.getCurrentUser();
+    const fontClass = isKm ? 'font-khmer' : 'font-sans';
 
     // Role color scheme
     let roleBadgeColor = 'bg-primary/10 text-primary border-primary/20';
@@ -110,12 +119,12 @@ export class Sidebar {
           </div>
           <div class="header-details flex-1 min-w-0 transition-opacity duration-200">
             <div class="flex items-center gap-1.5">
-              <span class="font-bold text-base tracking-tight truncate text-foreground">${t('app.name')}</span>
-              <span class="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded-sm ${roleBadgeColor} border">
+              <span class="font-bold text-base tracking-tight truncate text-foreground ${fontClass}">${t('app.name')}</span>
+              <span class="text-[0.6875rem] uppercase font-semibold px-1.5 py-0.5 rounded-sm ${roleBadgeColor} border">
                 ${currentUser ? currentUser.role : t('app.badge')}
               </span>
             </div>
-            <p class="text-xs text-muted-foreground truncate leading-none mt-0.5">${t('app.tagline')}</p>
+            <p class="text-xs text-muted-foreground truncate leading-tight mt-0.5 ${fontClass}">${t('app.tagline')}</p>
           </div>
         </div>
 
@@ -135,7 +144,7 @@ export class Sidebar {
                 <div class="flex-shrink-0 flex items-center justify-center w-5 h-5">
                   ${getIcon(item.icon, 'w-4 h-4')}
                 </div>
-                <span class="nav-label truncate tracking-wide ${isKm ? 'font-khmer text-[13.5px]' : ''}">
+                <span class="nav-label truncate tracking-wide ${fontClass} text-sm leading-normal">
                   ${t(item.labelKey)}
                 </span>
                 ${isActive ? `<span class="active-indicator absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-primary hidden"></span>` : ''}

@@ -151,9 +151,9 @@ html[data-font-size="xl"]  { font-size: 20px; }
   
   --radius: 0.5rem;
 
-  --sidebar-width: 260px;
-  --sidebar-collapsed-width: 72px;
-  --topbar-height: 64px;
+  --sidebar-width: 16.5rem;
+  --sidebar-collapsed-width: 4.5rem;
+  --topbar-height: 4rem;
 
   --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }
@@ -203,9 +203,17 @@ html[data-font-size="xl"]  { font-size: 20px; }
 }
 
 /* Global Typographic Scaling System
-   Controls root font-size across entire application (Small, Normal, Large, Extra Large)
+   Controls root font-size across entire application (10px, 12px, 14px, 16px, 18px, 20px)
    Scales all Tailwind rem units proportionately
 */
+html[data-font-size="2xs"] {
+  font-size: 10px;
+}
+
+html[data-font-size="xs"] {
+  font-size: 12px;
+}
+
 html[data-font-size="sm"] {
   font-size: 14px;
 }
@@ -309,13 +317,49 @@ div:has(> table)::-webkit-scrollbar {
   background: hsl(var(--muted-foreground) / 0.45);
 }
 
-/* Transitions */
+/* Transitions & Proportional Layout Dimensions */
 .sidebar-transition {
   transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .content-transition {
   transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#sidebar-container {
+  width: var(--sidebar-width, 16.5rem);
+}
+
+#sidebar-container.collapsed {
+  width: var(--sidebar-collapsed-width, 4.5rem);
+}
+
+#main-content-wrapper {
+  margin-left: var(--sidebar-width, 16.5rem);
+}
+
+#main-content-wrapper.sidebar-collapsed,
+#sidebar-container.collapsed ~ #main-content-wrapper {
+  margin-left: var(--sidebar-collapsed-width, 4.5rem);
+}
+
+.nav-link {
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.nav-label {
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+[lang="km"] .nav-label,
+html[lang="km"] .nav-label,
+.font-khmer.nav-label,
+.font-khmer .nav-label,
+.nav-label.font-khmer {
+  font-family: var(--font-khmer);
+  line-height: 1.5;
 }
 
 /* Collapsed Sidebar Alignment & Justification */

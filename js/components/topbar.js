@@ -1,6 +1,7 @@
 import { i18n, t } from '../i18n/i18n.js';
 import { themeService } from '../services/themeService.js';
 import { authService } from '../services/authService.js';
+import { fontService } from '../services/fontService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { StudentService } from '../services/studentService.js';
 import { getIcon } from './icons.js';
@@ -21,6 +22,7 @@ export class Topbar {
     });
     themeService.subscribe(() => this.render());
     authService.subscribe(() => this.render());
+    fontService.subscribe(() => this.render());
 
     window.addEventListener('app:refresh-data', async () => {
       try {
