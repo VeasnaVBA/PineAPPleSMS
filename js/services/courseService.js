@@ -8,6 +8,7 @@ import { db } from '../database/db.js';
 import { SettingsService } from './settingsService.js';
 import { syncStateManager } from './syncStateManager.js';
 import { i18n } from '../i18n/i18n.js';
+import { AdminDataService } from './adminDataService.js';
 
 export const DEFAULT_COURSES = [
   {
@@ -402,6 +403,9 @@ export const CourseService = {
     } catch (_) {}
 
     syncStateManager.markDirty('courses.create');
+    try {
+      AdminDataService.queueAutoSync();
+    } catch (_) {}
     return newCourse;
   },
 
@@ -465,6 +469,9 @@ export const CourseService = {
     } catch (_) {}
 
     syncStateManager.markDirty('courses.update');
+    try {
+      AdminDataService.queueAutoSync();
+    } catch (_) {}
     return updatedCourse;
   },
 
@@ -492,6 +499,9 @@ export const CourseService = {
     } catch (_) {}
 
     syncStateManager.markDirty('courses.delete');
+    try {
+      AdminDataService.queueAutoSync();
+    } catch (_) {}
     return true;
   }
 };
