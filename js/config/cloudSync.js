@@ -21,7 +21,7 @@
  */
 
 export const CLOUD_SYNC_CONFIG_KEY = 'GOOGLE_SCRIPT_WEBAPP_URL';
-export const DEFAULT_GOOGLE_SCRIPT_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxmlV7OChJ4u7NxxgSXkJJSTB1buHcnGD-k9svY-aasglZ2mHBBybIlpZV9XSubG29m/exec';
+export const DEFAULT_GOOGLE_SCRIPT_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbw3k8bbZt4D-VOECMPfp5LRggsZstSn7A-qwyIIHYTHPJauiMdkOso3CFfuGkhuihRB/exec';
 
 export const ADMIN_SPREADSHEET_NAME = 'SchoolSystem_AdminData';
 export const ADMIN_DATA_LAST_SYNC_KEY = 'SCHOOL_ADMIN_DATA_LAST_SYNC';
