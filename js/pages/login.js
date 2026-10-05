@@ -76,24 +76,19 @@ export class LoginPage {
         <!-- Main Login Card -->
         <div class="w-full max-w-[420px] border rounded-[28px] p-7 sm:p-9 relative z-10 my-auto animate-fade-in ${cardBgClass} transition-colors duration-200">
           
-          <!-- Top Brand Header -->
-          <div class="flex items-center justify-between mb-8">
-            <div class="flex items-center gap-2.5 font-medium text-lg tracking-tight ${brandTextClass}">
-              <div class="w-8 h-8 flex items-center justify-center flex-shrink-0">
-                <img src="${APP_LOGO_BASE64}" alt="Logo" class="w-full h-full object-contain" />
-              </div>
-              <span class="font-bold tracking-tight">PineAPPleSMS</span>
+          <!-- Title & Logo Header Section -->
+          <div class="mb-6 flex items-center justify-between gap-4">
+            <div class="text-left flex-1 min-w-0">
+              <h1 class="text-3xl font-semibold tracking-tight mb-1.5 ${titleClass} ${isKm ? 'font-khmer text-2xl' : ''}">
+                ${isKm ? 'ចូលប្រព័ន្ធ' : 'Log in'}
+              </h1>
+              <p class="text-xs font-normal ${subtitleClass} ${isKm ? 'font-khmer' : ''}">
+                ${isKm ? 'សូមបញ្ចូលឈ្មោះគណនី និងពាក្យសម្ងាត់ដើម្បីបន្ត' : 'Proceed to Admin Panel'}
+              </p>
             </div>
-          </div>
-
-          <!-- Title Section -->
-          <div class="mb-6 text-left">
-            <h1 class="text-3xl font-semibold tracking-tight mb-1.5 ${titleClass} ${isKm ? 'font-khmer text-2xl' : ''}">
-              ${isKm ? 'ចូលប្រព័ន្ធ' : 'Log in'}
-            </h1>
-            <p class="text-xs font-normal ${subtitleClass} ${isKm ? 'font-khmer' : ''}">
-              ${isKm ? 'សូមបញ្ចូលឈ្មោះគណនី និងពាក្យសម្ងាត់ដើម្បីបន្ត' : 'Proceed to Admin Panel'}
-            </p>
+            <div class="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 flex items-center justify-center">
+              <img src="${APP_LOGO_BASE64}" alt="Logo" class="w-full h-full object-contain" />
+            </div>
           </div>
 
           <!-- Error Alert Banner -->
