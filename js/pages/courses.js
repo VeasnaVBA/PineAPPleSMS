@@ -143,17 +143,17 @@ export const CoursesPage = {
                       ${getIcon('graduationCap', 'w-4 h-4')}
                     </div>
                   </th>
-                  <th scope="col" rowspan="2" class="px-4 py-3 min-w-[110px] font-semibold text-foreground border-r border-border/50">
-                    ${t('courses.courseId') || 'Course ID'}
+                  <th scope="col" rowspan="2" class="px-4 py-3 min-w-[110px] font-semibold text-foreground border-r border-border/50 ${fontClass}">
+                    ${t('courses.courseId') || 'លេខកូដមុខវិជ្ជា'}
                   </th>
                   <th scope="col" rowspan="2" class="px-4 py-3 min-w-[160px] font-semibold text-foreground border-r border-border/50 ${fontClass}">
                     ${t('courses.courseName') || 'ឈ្មោះមុខវិជ្ជា'}
                   </th>
                   <th scope="col" colspan="6" class="px-4 py-2 text-center font-bold text-foreground bg-muted/20 border-r border-border/50 ${fontClass}">
-                    ${t('courses.scoreByGrade') || 'Score (by Grade)'}
+                    ${t('courses.scoreByGrade') || 'ពិន្ទុតាមកម្រិតថ្នាក់'}
                   </th>
                   <th scope="col" rowspan="2" class="px-4 py-3 min-w-[280px] font-semibold text-foreground border-r border-border/50 ${fontClass}">
-                    ${t('courses.gradingScale') || 'Grading Scale (A-F)'}
+                    ${t('courses.gradingScale') || 'កម្រិតពិន្ទុតាមនិទ្ទេស'}
                   </th>
                   <th scope="col" rowspan="2" class="px-4 py-3 text-center min-w-[90px] font-semibold text-foreground ${fontClass}">
                     ${t('courses.actions') || 'ការកំណត់'}
@@ -337,7 +337,7 @@ export const CoursesPage = {
     const scores = existingCourse?.scores || { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 };
 
     const activeGradeName = isKm ? 'ថ្នាក់ទី ៨' : 'Grade 8';
-    const scalePreviewLabel = (t('courses.scalePreviewTitle') || 'ការគណនា Grading Scale (A-F) គំរូ {grade}:').replace('{grade}', activeGradeName);
+    const scalePreviewLabel = (t('courses.scalePreviewTitle') || (isKm ? 'ការគណនាកម្រិតពិន្ទុតាមនិទ្ទេស (A-F) គំរូ {grade}:' : 'Grading Scale Calculation Preview (A-F) for {grade}:')).replace('{grade}', activeGradeName);
 
     const modalContent = `
       <div class="space-y-4 p-5 select-none ${fontClass}">
@@ -345,7 +345,7 @@ export const CoursesPage = {
           <!-- Course ID -->
           <div>
             <label class="block text-xs font-semibold text-foreground mb-1">
-              ${t('courses.courseId') || 'Course ID'} <span class="text-rose-500">*</span>
+              ${t('courses.courseId') || (isKm ? 'លេខកូដមុខវិជ្ជា' : 'Course ID')} <span class="text-rose-500">*</span>
             </label>
             <input type="text"
                    id="modal-course-id"
@@ -405,7 +405,7 @@ export const CoursesPage = {
         <!-- Scores per Grade level (G7-G12) -->
         <div class="pt-2 border-t border-border">
           <label class="block text-xs font-bold text-foreground mb-2">
-            ${t('courses.scoreByGradeSubtitle') || (isKm ? 'ពិន្ទុអតិបរមាតាមកម្រិតថ្នាក់ (Score by Grade)' : 'Maximum Score by Grade Level (G7-G12)')}
+            ${t('courses.scoreByGradeSubtitle') || (isKm ? 'ពិន្ទុតាមកម្រិតថ្នាក់' : 'Maximum Score by Grade Level (G7-G12)')}
           </label>
           <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
             ${GRADE_KEYS.map(g => `
