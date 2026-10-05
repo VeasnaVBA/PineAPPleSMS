@@ -467,23 +467,23 @@ export const SubjectsPage = {
           </h3>
         </div>
 
-        <!-- Row 1: Course ID with Auto Button & Subject Name -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <!-- Course ID with integrated Auto-Generate Button -->
+        <!-- Row 1: Course ID with Embedded Auto Button & Subject Name -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Course ID with embedded Auto-Generate Button -->
           <div>
             <label class="block text-[11px] font-bold text-muted-foreground mb-1 ${fontClass}">
               ${isKm ? 'លេខកូដមុខវិជ្ជា' : 'Course ID'} <span class="text-rose-500">*</span>
             </label>
-            <div class="flex items-center gap-1.5">
+            <div class="relative flex items-center">
               <input type="text"
                      id="modal-subject-code"
                      value="${defaultCode}"
                      placeholder="SUB-101"
-                     class="flex-1 px-3 py-2 text-xs sm:text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary uppercase font-mono shadow-2xs" />
+                     class="w-full pl-3 pr-10 py-2 text-xs sm:text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary uppercase font-mono shadow-2xs" />
               <button type="button"
                       id="btn-auto-code"
                       title="${isKm ? 'បង្កើតកូដស្វ័យប្រវត្តិ' : 'Auto-generate ID'}"
-                      class="flex items-center justify-center w-10 h-9 rounded-lg border border-border bg-muted/30 hover:bg-primary/10 active:scale-95 text-primary hover:border-primary/40 transition-all flex-shrink-0 shadow-2xs cursor-pointer group">
+                      class="absolute right-1.5 p-1.5 rounded-md hover:bg-muted active:scale-95 text-primary hover:text-primary/80 transition-all cursor-pointer group">
                 <span class="group-hover:rotate-12 transition-transform duration-200">
                   ${getIcon('graduationCap', 'w-4 h-4') || getIcon('bookOpen', 'w-4 h-4')}
                 </span>
