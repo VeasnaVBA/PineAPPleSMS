@@ -307,6 +307,41 @@ function getOrCreateAdminSpreadsheet() {
   }
   permSheet.getRange(1, 1, permMatrix.length, permHeaders.length).setValues(permMatrix);
   formatSheetHeader(permSheet, permHeaders.length);
+
+  // 4. Seed Default Courses Sheet
+  var coursesSheet = spreadsheet.getSheetByName('courses');
+  if (!coursesSheet) coursesSheet = spreadsheet.insertSheet('courses');
+  coursesSheet.clear();
+  var courseHeaders = ['courseId', 'name', 'nameEn', 'category', 'G7', 'G8', 'G9', 'G10', 'G11', 'G12', 'gradingScaleG8', 'creditHours', 'updatedAt'];
+  var courseMatrix = [courseHeaders];
+  var seedCourses = [
+    ["CRS-544", "សរសេរតាមអាន", "Dictation", "ភាសាខ្មែរ", 40, 40, 40, 0, 0, 0, "Grade 8 (Full: 40): A≥36 | B≥32 | C≥28 | D≥24 | E≥20 | F<20", 2],
+    ["CRS-466", "តែងសេចក្តី", "Essay Writing", "ភាសាខ្មែរ", 60, 60, 60, 0, 0, 0, "Grade 8 (Full: 60): A≥54 | B≥48 | C≥42 | D≥36 | E≥30 | F<30", 2],
+    ["CRS-929", "ភាសាខ្មែរ", "Khmer Literature", "ភាសាខ្មែរ", 100, 100, 100, 0, 0, 0, "Grade 8 (Full: 100): A≥90 | B≥80 | C≥70 | D≥60 | E≥50 | F<50", 4],
+    ["CRS-197", "គណិតវិទ្យា", "Mathematics", "វិទ្យាសាស្ត្រពិត", 100, 100, 100, 0, 0, 0, "Grade 8 (Full: 100): A≥90 | B≥80 | C≥70 | D≥60 | E≥50 | F<50", 6],
+    ["CRS-648", "រូបវិទ្យា", "Physics", "វិទ្យាសាស្ត្រពិត", 50, 50, 35, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
+    ["CRS-341", "គីមីវិទ្យា", "Chemistry", "វិទ្យាសាស្ត្រពិត", 50, 50, 25, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
+    ["CRS-104", "ជីវវិទ្យា", "Biology", "វិទ្យាសាស្ត្រពិត", 50, 50, 35, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
+    ["CRS-767", "ប្រវត្តិវិទ្យា", "History", "វិទ្យាសាស្ត្រសង្គម", 50, 50, 33, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
+    ["CRS-358", "ព័ត៌មានវិទ្យា", "Information Technology", "បច្ចេកវិទ្យា", 50, 50, 50, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
+    ["CRS-404", "សីលធម៌-ពលរដ្ឋវិទ្យា", "Moral & Civics", "វិទ្យាសាស្ត្រសង្គម", 50, 50, 35, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
+    ["CRS-954", "ផែនដីវិទ្យា", "Earth Science", "វិទ្យាសាស្ត្រពិត", 50, 50, 25, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
+    ["CRS-445", "ភូមិវិទ្យា", "Geography", "វិទ្យាសាស្ត្រសង្គម", 50, 50, 32, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
+    ["CRS-338", "គេហវិជ្ជា", "Home Economics", "បំណិនជីវិត", 50, 50, 50, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
+    ["CRS-948", "អប់រំកាយ", "Physical Education", "កីឡា និងសិល្បៈ", 50, 50, 50, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
+    ["CRS-447", "បំណិនជីវិត", "Life Skills", "បំណិនជីវិត", 50, 50, 50, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
+    ["CRS-111", "សេដ្ឋកិច្ច", "Economics", "វិទ្យាសាស្ត្រសង្គម", 50, 50, 50, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
+    ["CRS-760", "សិល្បៈ", "Arts", "កីឡា និងសិល្បៈ", 50, 50, 50, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
+    ["CRS-647", "កសិកម្ម", "Agriculture", "បំណិនជីវិត", 50, 50, 50, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
+    ["CRS-845", "ភាសាបរទេស", "Foreign Languages", "ភាសាបរទេស", 50, 50, 50, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 4]
+  ];
+  for (var c = 0; c < seedCourses.length; c++) {
+    var crsRow = seedCourses[c].slice();
+    crsRow.push(new Date().toISOString());
+    courseMatrix.push(crsRow);
+  }
+  coursesSheet.getRange(1, 1, courseMatrix.length, courseHeaders.length).setValues(courseMatrix);
+  formatSheetHeader(coursesSheet, courseHeaders.length);
   
   var defaultSheet = spreadsheet.getSheetByName('Sheet1');
   if (defaultSheet && spreadsheet.getSheets().length > 1) {
@@ -358,6 +393,8 @@ function handleSaveAdminData(data) {
       }
     }
   }
+
+  var coursesList = Array.isArray(data.courses) ? data.courses : [];
   
   var settingsSheet = spreadsheet.getSheetByName('settings');
   if (!settingsSheet) settingsSheet = spreadsheet.insertSheet('settings');
@@ -417,6 +454,35 @@ function handleSaveAdminData(data) {
   }
   permSheet.getRange(1, 1, permMatrix.length, permHeaders.length).setValues(permMatrix);
   formatSheetHeader(permSheet, permHeaders.length);
+
+  // Courses Sheet
+  if (coursesList.length > 0) {
+    var coursesSheet = spreadsheet.getSheetByName('courses');
+    if (!coursesSheet) coursesSheet = spreadsheet.insertSheet('courses');
+    coursesSheet.clear();
+    var courseHeaders = ['courseId', 'name', 'nameEn', 'category', 'G7', 'G8', 'G9', 'G10', 'G11', 'G12', 'creditHours', 'updatedAt'];
+    var courseMatrix = [courseHeaders];
+    for (var cr = 0; cr < coursesList.length; cr++) {
+      var cObj = coursesList[cr];
+      var sc = cObj.scores || {};
+      courseMatrix.push([
+        cObj.courseId || '',
+        cObj.name || '',
+        cObj.nameEn || '',
+        cObj.category || '',
+        sc.G7 !== undefined ? sc.G7 : (cObj.G7 !== undefined ? cObj.G7 : 0),
+        sc.G8 !== undefined ? sc.G8 : (cObj.G8 !== undefined ? cObj.G8 : 0),
+        sc.G9 !== undefined ? sc.G9 : (cObj.G9 !== undefined ? cObj.G9 : 0),
+        sc.G10 !== undefined ? sc.G10 : (cObj.G10 !== undefined ? cObj.G10 : 0),
+        sc.G11 !== undefined ? sc.G11 : (cObj.G11 !== undefined ? cObj.G11 : 0),
+        sc.G12 !== undefined ? sc.G12 : (cObj.G12 !== undefined ? cObj.G12 : 0),
+        cObj.creditHours || 2,
+        cObj.updatedAt || new Date().toISOString()
+      ]);
+    }
+    coursesSheet.getRange(1, 1, courseMatrix.length, courseHeaders.length).setValues(courseMatrix);
+    formatSheetHeader(coursesSheet, courseHeaders.length);
+  }
   
   var defaultSheet = spreadsheet.getSheetByName('Sheet1');
   if (defaultSheet && spreadsheet.getSheets().length > 1) {
@@ -431,7 +497,8 @@ function handleSaveAdminData(data) {
     counts: {
       settings: settingsList.length,
       users: usersList.length,
-      permissions: permissionsList.length
+      permissions: permissionsList.length,
+      courses: coursesList.length
     }
   });
 }
@@ -443,6 +510,7 @@ function handleGetAdminData() {
   var resultSettings = {};
   var resultUsers = [];
   var resultPermissions = {};
+  var resultCourses = [];
   
   var settingsSheet = spreadsheet.getSheetByName('settings');
   if (settingsSheet) {
@@ -503,6 +571,30 @@ function handleGetAdminData() {
       }
     }
   }
+
+  var coursesSheet = spreadsheet.getSheetByName('courses');
+  if (coursesSheet) {
+    var cValues = coursesSheet.getDataRange().getValues();
+    if (cValues.length > 1) {
+      var cHeaders = cValues[0];
+      for (var cr = 1; cr < cValues.length; cr++) {
+        var cRow = cValues[cr];
+        var cObj = { scores: {} };
+        for (var cc = 0; cc < cHeaders.length; cc++) {
+          var hKey = String(cHeaders[cc]).trim();
+          var cellVal = cRow[cc];
+          if (['G7', 'G8', 'G9', 'G10', 'G11', 'G12'].indexOf(hKey) !== -1) {
+            cObj.scores[hKey] = Number(cellVal) || 0;
+          } else {
+            cObj[hKey] = cellVal;
+          }
+        }
+        if (cObj.courseId || cObj.name) {
+          resultCourses.push(cObj);
+        }
+      }
+    }
+  }
   
   return jsonResponse({
     success: true,
@@ -514,7 +606,8 @@ function handleGetAdminData() {
     data: {
       settings: resultSettings,
       users: resultUsers,
-      permissions: resultPermissions
+      permissions: resultPermissions,
+      courses: resultCourses
     }
   });
 }

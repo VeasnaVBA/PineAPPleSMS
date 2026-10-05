@@ -20,8 +20,8 @@ export const DEFAULT_COURSES = [
     notes: ''
   },
   {
-    id: 'crs_465',
-    courseId: 'CRS-465',
+    id: 'crs_466',
+    courseId: 'CRS-466',
     name: 'តែងសេចក្តី',
     nameEn: 'Essay Writing',
     category: 'ភាសាខ្មែរ',
@@ -65,7 +65,7 @@ export const DEFAULT_COURSES = [
     name: 'គីមីវិទ្យា',
     nameEn: 'Chemistry',
     category: 'វិទ្យាសាស្ត្រពិត',
-    scores: { G7: 50, G8: 50, G9: 35, G10: 0, G11: 0, G12: 0 },
+    scores: { G7: 50, G8: 50, G9: 25, G10: 0, G11: 0, G12: 0 },
     creditHours: 2,
     notes: ''
   },
@@ -80,38 +80,28 @@ export const DEFAULT_COURSES = [
     notes: ''
   },
   {
-    id: 'crs_215',
-    courseId: 'CRS-215',
-    name: 'ផែនដីនិងបរិស្ថានវិទ្យា',
-    nameEn: 'Earth Science',
-    category: 'វិទ្យាសាស្ត្រពិត',
-    scores: { G7: 50, G8: 50, G9: 35, G10: 0, G11: 0, G12: 0 },
-    creditHours: 2,
-    notes: ''
-  },
-  {
-    id: 'crs_782',
-    courseId: 'CRS-782',
+    id: 'crs_767',
+    courseId: 'CRS-767',
     name: 'ប្រវត្តិវិទ្យា',
     nameEn: 'History',
     category: 'វិទ្យាសាស្ត្រសង្គម',
-    scores: { G7: 50, G8: 50, G9: 35, G10: 0, G11: 0, G12: 0 },
+    scores: { G7: 50, G8: 50, G9: 33, G10: 0, G11: 0, G12: 0 },
     creditHours: 2,
     notes: ''
   },
   {
-    id: 'crs_831',
-    courseId: 'CRS-831',
-    name: 'ភូមិវិទ្យា',
-    nameEn: 'Geography',
-    category: 'វិទ្យាសាស្ត្រសង្គម',
-    scores: { G7: 50, G8: 50, G9: 35, G10: 0, G11: 0, G12: 0 },
+    id: 'crs_358',
+    courseId: 'CRS-358',
+    name: 'ព័ត៌មានវិទ្យា',
+    nameEn: 'Information Technology',
+    category: 'បច្ចេកវិទ្យា',
+    scores: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     creditHours: 2,
     notes: ''
   },
   {
-    id: 'crs_420',
-    courseId: 'CRS-420',
+    id: 'crs_404',
+    courseId: 'CRS-404',
     name: 'សីលធម៌-ពលរដ្ឋវិទ្យា',
     nameEn: 'Moral & Civics',
     category: 'វិទ្យាសាស្ត្រសង្គម',
@@ -120,40 +110,90 @@ export const DEFAULT_COURSES = [
     notes: ''
   },
   {
-    id: 'crs_319',
-    courseId: 'CRS-319',
-    name: 'គេហវិទ្យា/សេដ្ឋកិច្ច',
+    id: 'crs_954',
+    courseId: 'CRS-954',
+    name: 'ផែនដីវិទ្យា',
+    nameEn: 'Earth Science',
+    category: 'វិទ្យាសាស្ត្រពិត',
+    scores: { G7: 50, G8: 50, G9: 25, G10: 0, G11: 0, G12: 0 },
+    creditHours: 2,
+    notes: ''
+  },
+  {
+    id: 'crs_445',
+    courseId: 'CRS-445',
+    name: 'ភូមិវិទ្យា',
+    nameEn: 'Geography',
+    category: 'វិទ្យាសាស្ត្រសង្គម',
+    scores: { G7: 50, G8: 50, G9: 32, G10: 0, G11: 0, G12: 0 },
+    creditHours: 2,
+    notes: ''
+  },
+  {
+    id: 'crs_338',
+    courseId: 'CRS-338',
+    name: 'គេហវិជ្ជា',
     nameEn: 'Home Economics',
     category: 'បំណិនជីវិត',
-    scores: { G7: 50, G8: 50, G9: 35, G10: 0, G11: 0, G12: 0 },
+    scores: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     creditHours: 2,
     notes: ''
   },
   {
-    id: 'crs_512',
-    courseId: 'CRS-512',
-    name: 'អប់រំកាយនិងកីឡា',
+    id: 'crs_948',
+    courseId: 'CRS-948',
+    name: 'អប់រំកាយ',
     nameEn: 'Physical Education',
     category: 'កីឡា និងសិល្បៈ',
-    scores: { G7: 50, G8: 50, G9: 35, G10: 0, G11: 0, G12: 0 },
+    scores: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     creditHours: 2,
     notes: ''
   },
   {
-    id: 'crs_603',
-    courseId: 'CRS-603',
-    name: 'ព័ត៌មានវិទ្យា (ICT)',
-    nameEn: 'Information Tech',
-    category: 'បច្ចេកវិទ្យា',
-    scores: { G7: 50, G8: 50, G9: 35, G10: 0, G11: 0, G12: 0 },
+    id: 'crs_447',
+    courseId: 'CRS-447',
+    name: 'បំណិនជីវិត',
+    nameEn: 'Life Skills',
+    category: 'បំណិនជីវិត',
+    scores: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     creditHours: 2,
     notes: ''
   },
   {
-    id: 'crs_777',
-    courseId: 'CRS-777',
-    name: 'ភាសាអង់គ្លេស',
-    nameEn: 'English Language',
+    id: 'crs_111',
+    courseId: 'CRS-111',
+    name: 'សេដ្ឋកិច្ច',
+    nameEn: 'Economics',
+    category: 'វិទ្យាសាស្ត្រសង្គម',
+    scores: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
+    creditHours: 2,
+    notes: ''
+  },
+  {
+    id: 'crs_760',
+    courseId: 'CRS-760',
+    name: 'សិល្បៈ',
+    nameEn: 'Arts',
+    category: 'កីឡា និងសិល្បៈ',
+    scores: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
+    creditHours: 2,
+    notes: ''
+  },
+  {
+    id: 'crs_647',
+    courseId: 'CRS-647',
+    name: 'កសិកម្ម',
+    nameEn: 'Agriculture',
+    category: 'បំណិនជីវិត',
+    scores: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
+    creditHours: 2,
+    notes: ''
+  },
+  {
+    id: 'crs_845',
+    courseId: 'CRS-845',
+    name: 'ភាសាបរទេស',
+    nameEn: 'Foreign Languages',
     category: 'ភាសាបរទេស',
     scores: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     creditHours: 4,
@@ -187,6 +227,54 @@ export const CourseService = {
   },
 
   /**
+   * Automatically resolve the appropriate grade level (G7-G12) for a user account
+   * based on their assigned classroom (e.g. 7B -> G7, 8A -> G8, 9C -> G9, etc.)
+   */
+  async resolveActiveGradeForUser(user) {
+    if (!user) return 'G8';
+    
+    // 1. Check user.assignedClassId or user.classId
+    const classId = user.classId || user.assignedClassId;
+    let className = '';
+
+    if (classId) {
+      try {
+        const cls = await db.get('classes', classId);
+        if (cls?.name) className = cls.name;
+        else if (cls?.grade) {
+          const num = String(cls.grade).replace(/\D/g, '');
+          if (num && GRADE_KEYS.includes(`G${num}`)) return `G${num}`;
+        }
+      } catch (_) {}
+    }
+
+    if (!className && user.className) {
+      className = user.className;
+    }
+
+    if (className) {
+      const match = className.match(/(?:ថ្នាក់ទី|Grade|\b)?\s*([7-9]|1[0-2])\b/i) || className.match(/\b([7-9]|1[0-2])/);
+      if (match && match[1]) {
+        return `G${match[1]}`;
+      }
+    }
+
+    // 2. If teacher account, check classes store for classes associated with this teacher
+    if (user.role === 'TEACHER') {
+      try {
+        const allClasses = await db.getAll('classes');
+        const teacherClass = allClasses.find(c => c.userId === user.id || c.accountId === user.id || c.teacherId === user.id);
+        if (teacherClass?.name) {
+          const match = teacherClass.name.match(/\b([7-9]|1[0-2])/);
+          if (match && match[1]) return `G${match[1]}`;
+        }
+      } catch (_) {}
+    }
+
+    return 'G8';
+  },
+
+  /**
    * Generate next Course ID (e.g. CRS-544)
    */
   async generateCourseId() {
@@ -202,7 +290,7 @@ export const CourseService = {
   },
 
   /**
-   * Get all courses, automatically seeding default MoEYS catalog if store is newly initialized
+   * Get all courses, automatically seeding full 19 MoEYS catalog if store is newly initialized
    */
   async getAll() {
     try {

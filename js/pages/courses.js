@@ -34,6 +34,10 @@ export const CoursesPage = {
   async loadData() {
     try {
       this.state.courses = await CourseService.getAll();
+      const currentUser = authService.getCurrentUser();
+      if (currentUser) {
+        this.state.activeGrade = await CourseService.resolveActiveGradeForUser(currentUser);
+      }
     } catch (err) {
       console.error('Error loading courses:', err);
       toast.error(t('common.errorLoading') || 'Failed to load courses');
