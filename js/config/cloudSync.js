@@ -201,6 +201,111 @@ var DEFAULT_SEED_COURSES = [
   ["CRS-845", "ភាសាបរទេស", "Foreign Languages", "ភាសាបរទេស", 50, 50, 50, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 4]
 ];
 
+function doGet(e) {
+  try {
+    var params = (e && e.parameter) ? e.parameter : {};
+    var action = params.action || 'PING';
+    
+    if (action === 'PING') {
+      return jsonResponse({
+        success: true,
+        message: 'Google Apps Script is online and active!',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    if (action === 'GET_ADMIN_DATA') {
+      return handleGetAdminData();
+    }
+    
+    if (action === 'PUSH_TO_APP') {
+      var username = params.username || 'admin';
+      var fileName = params.fileName || ('SchoolWorkspace_' + username);
+      return handlePushToApp(fileName, username);
+    }
+    
+    if (action === 'LIST_ALL_WORKSPACE_FILES') {
+      return handleListAllWorkspaceFiles();
+    }
+    
+    return jsonResponse({
+      success: true,
+      message: 'Google Apps Script is active.',
+      action: action
+    });
+  } catch (err) {
+    return jsonResponse({
+      success: false,
+      error: err.toString()
+    });
+  }
+}
+
+function doPost(e) {
+  try {
+    var payload = {};
+    if (e && e.postData && e.postData.contents) {
+      try {
+        payload = JSON.parse(e.postData.contents);
+      } catch (parseErr) {
+        payload = e.parameter || {};
+      }
+    } else if (e && e.parameter) {
+      payload = e.parameter;
+    }
+    
+    var action = payload.action || '';
+    
+    if (action === 'PING') {
+      return jsonResponse({
+        success: true,
+        message: 'Google Apps Script is online and active!',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    if (action === 'SAVE_ADMIN_DATA') {
+      return handleSaveAdminData(payload.data || {});
+    }
+    
+    if (action === 'GET_ADMIN_DATA') {
+      return handleGetAdminData();
+    }
+    
+    if (action === 'PULL_TO_DRIVE') {
+      var username = payload.username || 'admin';
+      var fileName = payload.fileName || ('SchoolWorkspace_' + username);
+      return handlePullToDrive(fileName, username, payload.data || {});
+    }
+    
+    if (action === 'PUSH_TO_APP') {
+      var username = payload.username || 'admin';
+      var fileName = payload.fileName || ('SchoolWorkspace_' + username);
+      return handlePushToApp(fileName, username);
+    }
+    
+    if (action === 'DELETE_USER_DRIVE_FILE') {
+      var username = payload.username || '';
+      var fileName = payload.fileName || '';
+      return handleDeleteUserDriveFile(fileName, username);
+    }
+    
+    if (action === 'LIST_ALL_WORKSPACE_FILES') {
+      return handleListAllWorkspaceFiles();
+    }
+    
+    return jsonResponse({
+      success: false,
+      error: 'Unknown action: ' + action
+    });
+  } catch (err) {
+    return jsonResponse({
+      success: false,
+      error: err.toString()
+    });
+  }
+}
+
 function initAdminSheet() {
   var res = getOrCreateAdminSpreadsheet();
   Logger.log("Admin Spreadsheet created/verified at URL: " + res.spreadsheet.getUrl());
