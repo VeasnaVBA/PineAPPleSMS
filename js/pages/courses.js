@@ -73,7 +73,14 @@ export const CoursesPage = {
       );
     });
 
-    const activeGradeNum = this.state.activeGrade.replace(/\D/g, '') || '8';
+    const formatGradeLabel = (g) => {
+      const num = g.replace(/\D/g, '');
+      if (isKm) {
+        const kmDigits = { '7': '៧', '8': '៨', '9': '៩', '10': '១០', '11': '១១', '12': '១២' };
+        return `ថ្នាក់ទី ${kmDigits[num] || num} (${g})`;
+      }
+      return `Grade ${num} (${g})`;
+    };
 
     this.container.innerHTML = `
       <div class="space-y-6 animate-fade-in pb-12">
@@ -93,13 +100,12 @@ export const CoursesPage = {
                 ${getIcon('settings', 'w-3.5 h-3.5')}
                 ${t('courses.actions') || 'ការកំណត់'}:
               </span>
-              <select id="select-active-grade" class="bg-transparent text-xs font-bold text-primary focus:outline-none cursor-pointer">
-                <option value="G7" ${this.state.activeGrade === 'G7' ? 'selected' : ''}>ថ្នាក់ទី ៧ (G7)</option>
-                <option value="G8" ${this.state.activeGrade === 'G8' ? 'selected' : ''}>ថ្នាក់ទី ៨ (G8)</option>
-                <option value="G9" ${this.state.activeGrade === 'G9' ? 'selected' : ''}>ថ្នាក់ទី ៩ (G9)</option>
-                <option value="G10" ${this.state.activeGrade === 'G10' ? 'selected' : ''}>ថ្នាក់ទី ១០ (G10)</option>
-                <option value="G11" ${this.state.activeGrade === 'G11' ? 'selected' : ''}>ថ្នាក់ទី ១១ (G11)</option>
-                <option value="G12" ${this.state.activeGrade === 'G12' ? 'selected' : ''}>ថ្នាក់ទី ១២ (G12)</option>
+              <select id="select-active-grade" class="bg-transparent text-xs font-bold text-primary focus:outline-none cursor-pointer ${fontClass}">
+                ${GRADE_KEYS.map(g => `
+                  <option value="${g}" ${this.state.activeGrade === g ? 'selected' : ''}>
+                    ${formatGradeLabel(g)}
+                  </option>
+                `).join('')}
               </select>
             </div>
 
@@ -143,10 +149,10 @@ export const CoursesPage = {
                   <th scope="col" rowspan="2" class="px-4 py-3 min-w-[160px] font-semibold text-foreground border-r border-border/50 ${fontClass}">
                     ${t('courses.courseName') || 'ឈ្មោះមុខវិជ្ជា'}
                   </th>
-                  <th scope="col" colspan="6" class="px-4 py-2 text-center font-bold text-foreground bg-muted/20 border-r border-border/50">
+                  <th scope="col" colspan="6" class="px-4 py-2 text-center font-bold text-foreground bg-muted/20 border-r border-border/50 ${fontClass}">
                     ${t('courses.scoreByGrade') || 'Score (by Grade)'}
                   </th>
-                  <th scope="col" rowspan="2" class="px-4 py-3 min-w-[280px] font-semibold text-foreground border-r border-border/50">
+                  <th scope="col" rowspan="2" class="px-4 py-3 min-w-[280px] font-semibold text-foreground border-r border-border/50 ${fontClass}">
                     ${t('courses.gradingScale') || 'Grading Scale (A-F)'}
                   </th>
                   <th scope="col" rowspan="2" class="px-4 py-3 text-center min-w-[90px] font-semibold text-foreground ${fontClass}">
@@ -178,6 +184,8 @@ export const CoursesPage = {
                   const scores = item.scores || {};
                   const activeScore = scores[this.state.activeGrade] !== undefined ? scores[this.state.activeGrade] : 0;
                   const scaleText = CourseService.getGradingScaleText(this.state.activeGrade, activeScore);
+                  const mainName = isKm ? item.name : (item.nameEn || item.name);
+                  const subName = isKm ? item.nameEn : (item.nameEn ? item.name : '');
 
                   return `
                     <tr class="hover:bg-muted/20 transition-colors group">
@@ -195,8 +203,8 @@ export const CoursesPage = {
 
                       <!-- Course Name -->
                       <td class="px-4 py-3.5 border-r border-border/40 ${fontClass}">
-                        <div class="font-medium text-foreground text-sm">${item.name}</div>
-                        ${item.nameEn ? `<div class="text-[11px] text-muted-foreground/80">${item.nameEn}</div>` : ''}
+                        <div class="font-medium text-foreground text-sm">${mainName}</div>
+                        ${subName ? `<div class="text-[11px] text-muted-foreground/80">${subName}</div>` : ''}
                       </td>
 
                       <!-- G7 Score -->
@@ -328,6 +336,9 @@ export const CoursesPage = {
     const defaultId = isEdit ? existingCourse.courseId : await CourseService.generateCourseId();
     const scores = existingCourse?.scores || { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 };
 
+    const activeGradeName = isKm ? 'ថ្នាក់ទី ៨' : 'Grade 8';
+    const scalePreviewLabel = (t('courses.scalePreviewTitle') || 'ការគណនា Grading Scale (A-F) គំរូ {grade}:').replace('{grade}', activeGradeName);
+
     const modalContent = `
       <div class="space-y-4 p-5 select-none ${fontClass}">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -350,29 +361,30 @@ export const CoursesPage = {
             </label>
             <input type="text"
                    id="modal-course-category"
-                   value="${existingCourse?.category || 'វិទ្យាសាស្ត្រពិត'}"
+                   value="${existingCourse?.category || (isKm ? 'វិទ្យាសាស្ត្រពិត' : 'Natural Science')}"
                    list="category-presets"
                    class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
             <datalist id="category-presets">
-              <option value="ភាសាខ្មែរ"></option>
-              <option value="វិទ្យាសាស្ត្រពិត"></option>
-              <option value="វិទ្យាសាស្ត្រសង្គម"></option>
-              <option value="ភាសាបរទេស"></option>
-              <option value="បំណិនជីវិត"></option>
-              <option value="បច្ចេកវិទ្យា"></option>
-              <option value="កីឡា និងសិល្បៈ"></option>
+              <option value="${t('courses.catKhmer') || 'ភាសាខ្មែរ'}"></option>
+              <option value="${t('courses.catScience') || 'វិទ្យាសាស្ត្រពិត'}"></option>
+              <option value="${t('courses.catSocial') || 'វិទ្យាសាស្ត្រសង្គម'}"></option>
+              <option value="${t('courses.catForeign') || 'ភាសាបរទេស'}"></option>
+              <option value="${t('courses.catLifeSkill') || 'បំណិនជីវិត'}"></option>
+              <option value="${t('courses.catTech') || 'បច្ចេកវិទ្យា'}"></option>
+              <option value="${t('courses.catSportArt') || 'កីឡា និងសិល្បៈ'}"></option>
+              <option value="${t('courses.catGeneral') || 'ទូទៅ'}"></option>
             </datalist>
           </div>
 
           <!-- Course Name (Khmer) -->
           <div class="sm:col-span-2">
             <label class="block text-xs font-semibold text-foreground mb-1">
-              ${t('courses.courseName') || 'ឈ្មោះមុខវិជ្ជា (ខ្មែរ)'} <span class="text-rose-500">*</span>
+              ${t('courses.courseNameKhmer') || (isKm ? 'ឈ្មោះមុខវិជ្ជា (ខ្មែរ)' : 'Course Name (Khmer)')} <span class="text-rose-500">*</span>
             </label>
             <input type="text"
                    id="modal-course-name"
                    value="${existingCourse?.name || ''}"
-                   placeholder="ឧ. គណិតវិទ្យា"
+                   placeholder="${isKm ? 'ឧ. គណិតវិទ្យា' : 'e.g. គណិតវិទ្យា'}"
                    class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
             <p id="modal-name-err" class="text-[11px] text-rose-500 mt-1 hidden"></p>
           </div>
@@ -380,12 +392,12 @@ export const CoursesPage = {
           <!-- English Name -->
           <div class="sm:col-span-2">
             <label class="block text-xs font-semibold text-foreground mb-1">
-              ${t('courses.courseNameEn') || 'ឈ្មោះជាភាសាអង់គ្លេស (English Name)'}
+              ${t('courses.courseNameEn') || (isKm ? 'ឈ្មោះជាភាសាអង់គ្លេស (English Name)' : 'English Name')}
             </label>
             <input type="text"
                    id="modal-course-name-en"
                    value="${existingCourse?.nameEn || ''}"
-                   placeholder="e.g. Mathematics"
+                   placeholder="${isKm ? 'ឧ. Mathematics' : 'e.g. Mathematics'}"
                    class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
           </div>
         </div>
@@ -393,7 +405,7 @@ export const CoursesPage = {
         <!-- Scores per Grade level (G7-G12) -->
         <div class="pt-2 border-t border-border">
           <label class="block text-xs font-bold text-foreground mb-2">
-            ${t('courses.scoreByGrade') || 'ពិន្ទុអតិបរមាតាមកម្រិតថ្នាក់ (Score by Grade)'}
+            ${t('courses.scoreByGradeSubtitle') || (isKm ? 'ពិន្ទុអតិបរមាតាមកម្រិតថ្នាក់ (Score by Grade)' : 'Maximum Score by Grade Level (G7-G12)')}
           </label>
           <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
             ${GRADE_KEYS.map(g => `
@@ -415,7 +427,7 @@ export const CoursesPage = {
         <div class="p-3 rounded-lg bg-primary/10 border border-primary/20 text-xs space-y-1">
           <div class="font-bold text-primary flex items-center gap-1.5">
             ${getIcon('badgeCheck', 'w-3.5 h-3.5')}
-            <span>ការគណនា Grading Scale (A-F) គំរូថ្នាក់ទី ៨:</span>
+            <span>${scalePreviewLabel}</span>
           </div>
           <p id="modal-preview-scale" class="font-mono text-[11px] text-foreground leading-relaxed">
             ${CourseService.getGradingScaleText('G8', scores.G8 || 50)}
@@ -484,7 +496,7 @@ export const CoursesPage = {
 
       if (!courseId) {
         if (idErr) {
-          idErr.textContent = 'Please enter Course ID';
+          idErr.textContent = t('courses.enterCourseId') || (isKm ? 'សូមបញ្ចូល Course ID' : 'Please enter Course ID');
           idErr.classList.remove('hidden');
         }
         idInput?.focus();
@@ -510,7 +522,7 @@ export const CoursesPage = {
         courseId,
         name,
         nameEn: nameEnInput?.value.trim() || '',
-        category: catInput?.value.trim() || 'ទូទៅ',
+        category: catInput?.value.trim() || (isKm ? 'ទូទៅ' : 'General'),
         scores: rawScores
       };
 
@@ -545,14 +557,19 @@ export const CoursesPage = {
     const isKm = i18n.getLocale() === 'km';
     const fontClass = isKm ? 'font-khmer' : '';
 
+    const courseDisplayName = isKm ? course.name : (course.nameEn || course.name);
+    const confirmMessage = (t('courses.deleteConfirmMessage') || 'តើអ្នកពិតជាចង់លុបមុខវិជ្ជា "{name}" ({code}) នេះមែនទេ?')
+      .replace('{name}', courseDisplayName)
+      .replace('{code}', course.courseId);
+
     const content = `
       <div class="p-5 space-y-4 select-none ${fontClass}">
-        <p class="text-sm text-foreground">
-          ${t('courses.deleteConfirm') || 'តើអ្នកពិតជាចង់លុបមុខវិជ្ជានេះមែនទេ?'}
+        <p class="text-sm text-foreground leading-relaxed">
+          ${confirmMessage}
         </p>
         <div class="p-3 rounded-lg bg-muted/40 border border-border text-xs space-y-1">
-          <div class="font-bold text-foreground">${course.name}</div>
-          <div class="font-mono text-muted-foreground">${course.courseId} (${course.category})</div>
+          <div class="font-bold text-foreground">${course.name}${course.nameEn ? ` (${course.nameEn})` : ''}</div>
+          <div class="font-mono text-muted-foreground">${course.courseId} • ${course.category || ''}</div>
         </div>
         <div class="flex items-center justify-end gap-2 pt-2">
           <button type="button"
@@ -570,7 +587,7 @@ export const CoursesPage = {
     `;
 
     const modal = Modal.show({
-      title: isKm ? 'បញ្ជាក់ការលុប' : 'Confirm Delete',
+      title: t('courses.deleteConfirmTitle') || (isKm ? 'បញ្ជាក់ការលុបមុខវិជ្ជា' : 'Confirm Course Deletion'),
       content,
       width: 'max-w-md',
       onClose: () => {}

@@ -7,6 +7,7 @@
 import { db } from '../database/db.js';
 import { SettingsService } from './settingsService.js';
 import { syncStateManager } from './syncStateManager.js';
+import { i18n } from '../i18n/i18n.js';
 
 export const DEFAULT_COURSES = [
   {
@@ -209,10 +210,14 @@ export const CourseService = {
    * e.g. Grade 8 (Full: 40): A≥36 | B≥32 | C≥28 | D≥24 | E≥20 | F<20
    */
   getGradingScaleText(gradeKey = 'G8', fullScore = 0) {
+    const isKm = i18n?.getLocale?.() === 'km';
     const gradeNum = String(gradeKey).replace(/\D/g, '') || '8';
     const score = Number(fullScore) || 0;
+    const gradePrefix = isKm ? `ថ្នាក់ទី ${gradeNum}` : `Grade ${gradeNum}`;
+    const fullPrefix = isKm ? `ពិន្ទុពេញ: ${score}` : `Full: ${score}`;
+
     if (score <= 0) {
-      return `Grade ${gradeNum} (Full: 0): —`;
+      return `${gradePrefix} (${fullPrefix}): —`;
     }
 
     const fmt = (num) => (num % 1 === 0 ? String(num) : num.toFixed(1));
@@ -223,7 +228,7 @@ export const CourseService = {
     const d = fmt(score * 0.6);
     const e = fmt(score * 0.5);
 
-    return `Grade ${gradeNum} (Full: ${score}): A≥${a} | B≥${b} | C≥${c} | D≥${d} | E≥${e} | F<${e}`;
+    return `${gradePrefix} (${fullPrefix}): A≥${a} | B≥${b} | C≥${c} | D≥${d} | E≥${e} | F<${e}`;
   },
 
   /**
