@@ -94,7 +94,7 @@ export const SubjectsPage = {
   renderLayout() {
     if (!this.container) return;
     const isKm = i18n.getLocale() === 'km';
-    const fontClass = isKm ? 'font-khmer' : '';
+    const fontClass = isKm ? 'font-khmer' : 'font-sans';
     const q = (this.state.searchQuery || '').trim().toLowerCase();
     const isTeacher = this.state.isTeacher;
     const teacherClass = this.state.teacherClass;
@@ -115,7 +115,7 @@ export const SubjectsPage = {
     const scalePreview = SubjectService.getGradingScaleSummary(this.state.previewScore || 50);
 
     this.container.innerHTML = `
-      <div class="space-y-6 animate-fade-in pb-12">
+      <div class="space-y-6 animate-fade-in pb-12 ${fontClass}">
         <!-- Top Title Bar -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-1">
           <div>
