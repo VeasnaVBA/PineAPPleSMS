@@ -134,9 +134,9 @@ export const CoursesPage = {
         <!-- Courses Table -->
         <div class="border border-border/80 rounded-xl bg-card overflow-hidden shadow-2xs">
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs sm:text-sm">
+            <table class="w-full text-left border-collapse text-xs sm:text-sm ${fontClass}">
               <!-- Table Header with Sub-headers for Grade Scores -->
-              <thead class="bg-muted/40 text-muted-foreground text-[11px] sm:text-xs font-semibold uppercase tracking-wider select-none border-b border-border">
+              <thead class="bg-muted/40 text-muted-foreground text-[11px] sm:text-xs font-semibold uppercase tracking-wider select-none border-b border-border ${fontClass}">
                 <tr>
                   <th scope="col" rowspan="2" class="w-12 px-3 py-3 text-center border-r border-border/50">
                     <div class="flex justify-center text-muted-foreground/80">
@@ -170,7 +170,7 @@ export const CoursesPage = {
               </thead>
 
               <!-- Table Body -->
-              <tbody class="divide-y divide-border/60 font-sans">
+              <tbody class="divide-y divide-border/60 ${fontClass}">
                 ${filtered.length === 0 ? `
                   <tr>
                     <td colspan="11" class="text-center py-12 text-muted-foreground ${fontClass}">
@@ -208,38 +208,38 @@ export const CoursesPage = {
                       </td>
 
                       <!-- G7 Score -->
-                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 font-mono text-xs ${this.state.activeGrade === 'G7' ? 'font-bold text-primary bg-primary/5' : 'text-muted-foreground'}">
+                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 text-xs ${this.state.activeGrade === 'G7' ? 'font-bold text-primary bg-primary/5' : 'text-muted-foreground'}">
                         ${scores.G7 !== undefined ? scores.G7 : 0}
                       </td>
 
                       <!-- G8 Score -->
-                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 font-mono text-xs ${this.state.activeGrade === 'G8' ? 'font-bold text-primary bg-primary/5' : 'text-muted-foreground'}">
+                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 text-xs ${this.state.activeGrade === 'G8' ? 'font-bold text-primary bg-primary/5' : 'text-muted-foreground'}">
                         ${scores.G8 !== undefined ? scores.G8 : 0}
                       </td>
 
                       <!-- G9 Score -->
-                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 font-mono text-xs ${this.state.activeGrade === 'G9' ? 'font-bold text-primary bg-primary/5' : 'text-muted-foreground'}">
+                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 text-xs ${this.state.activeGrade === 'G9' ? 'font-bold text-primary bg-primary/5' : 'text-muted-foreground'}">
                         ${scores.G9 !== undefined ? scores.G9 : 0}
                       </td>
 
                       <!-- G10 Score -->
-                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 font-mono text-xs ${this.state.activeGrade === 'G10' ? 'font-bold text-primary bg-primary/5' : 'text-muted-foreground'}">
+                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 text-xs ${this.state.activeGrade === 'G10' ? 'font-bold text-primary bg-primary/5' : 'text-muted-foreground'}">
                         ${scores.G10 !== undefined ? scores.G10 : 0}
                       </td>
 
                       <!-- G11 Score -->
-                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 font-mono text-xs ${this.state.activeGrade === 'G11' ? 'font-bold text-primary bg-primary/5' : 'text-muted-foreground'}">
+                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 text-xs ${this.state.activeGrade === 'G11' ? 'font-bold text-primary bg-primary/5' : 'text-muted-foreground'}">
                         ${scores.G11 !== undefined ? scores.G11 : 0}
                       </td>
 
                       <!-- G12 Score -->
-                      <td class="px-2.5 py-3.5 text-center border-r border-border/50 font-mono text-xs ${this.state.activeGrade === 'G12' ? 'font-bold text-primary bg-primary/5' : 'text-muted-foreground'}">
+                      <td class="px-2.5 py-3.5 text-center border-r border-border/50 text-xs ${this.state.activeGrade === 'G12' ? 'font-bold text-primary bg-primary/5' : 'text-muted-foreground'}">
                         ${scores.G12 !== undefined ? scores.G12 : 0}
                       </td>
 
                       <!-- Grading Scale (A-F) -->
-                      <td class="px-4 py-3.5 text-xs text-foreground border-r border-border/40 font-mono leading-relaxed">
-                        <span class="text-muted-foreground">${scaleText}</span>
+                      <td class="px-4 py-3.5 text-xs text-foreground border-r border-border/40 leading-relaxed ${fontClass}">
+                        <span class="text-muted-foreground ${fontClass}">${scaleText}</span>
                       </td>
 
                       <!-- Actions -->
@@ -417,7 +417,7 @@ export const CoursesPage = {
                        data-grade="${g}"
                        id="modal-score-${g}"
                        value="${scores[g] !== undefined ? scores[g] : 0}"
-                       class="score-input w-full text-center px-1.5 py-1 text-xs font-mono font-semibold rounded border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+                       class="score-input w-full text-center px-1.5 py-1 text-xs font-semibold rounded border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary ${fontClass}" />
               </div>
             `).join('')}
           </div>
@@ -429,7 +429,7 @@ export const CoursesPage = {
             ${getIcon('badgeCheck', 'w-3.5 h-3.5')}
             <span>${scalePreviewLabel}</span>
           </div>
-          <p id="modal-preview-scale" class="font-mono text-[11px] text-foreground leading-relaxed">
+          <p id="modal-preview-scale" class="text-xs text-foreground leading-relaxed ${fontClass}">
             ${CourseService.getGradingScaleText('G8', scores.G8 || 50)}
           </p>
         </div>
