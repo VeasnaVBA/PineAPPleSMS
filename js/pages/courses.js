@@ -23,11 +23,13 @@ export const CoursesPage = {
     this.container = typeof containerId === 'string' ? document.getElementById(containerId) : containerId;
     if (!this.container) return;
 
-    this.state.loading = true;
-    this.renderLoading();
+    // 1. Instant render if courses are already present in memory (eliminates language change & tab switch flicker)
+    if (this.state.courses && this.state.courses.length > 0) {
+      this.renderLayout();
+    }
 
+    // 2. Fetch fresh data and render smoothly
     await this.loadData();
-    this.state.loading = false;
     this.renderLayout();
   },
 
@@ -35,25 +37,16 @@ export const CoursesPage = {
     try {
       this.state.courses = await CourseService.getAll();
       const currentUser = authService.getCurrentUser();
-      if (currentUser) {
+      if (currentUser && !this.state.activeGrade) {
         this.state.activeGrade = await CourseService.resolveActiveGradeForUser(currentUser);
       }
     } catch (err) {
       console.error('Error loading courses:', err);
-      toast.error(t('common.errorLoading') || 'Failed to load courses');
-      this.state.courses = [];
+      if (!this.state.courses || this.state.courses.length === 0) {
+        toast.error(t('common.errorLoading') || 'Failed to load courses');
+        this.state.courses = [];
+      }
     }
-  },
-
-  renderLoading() {
-    this.container.innerHTML = `
-      <div class="flex items-center justify-center min-h-[400px]">
-        <div class="flex flex-col items-center gap-3 text-muted-foreground">
-          ${getIcon('loader2', 'w-8 h-8 animate-spin text-primary')}
-          <span class="text-sm font-medium ${i18n.getLocale() === 'km' ? 'font-khmer' : ''}">${t('common.loading')}...</span>
-        </div>
-      </div>
-    `;
   },
 
   renderLayout() {
