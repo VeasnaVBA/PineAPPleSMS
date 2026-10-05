@@ -219,26 +219,41 @@ export const SubjectsPage = {
         <!-- Subjects Table with Multi-column Header for Score by Grade -->
         <div class="border border-border rounded-xl bg-card overflow-hidden shadow-2xs">
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs sm:text-sm ${fontClass}">
+            <table class="w-full min-w-[780px] table-fixed text-left border-collapse text-xs sm:text-sm ${fontClass}">
+              <!-- Explicit Fixed Column Widths -->
+              <colgroup>
+                <col style="width: 44px;">
+                <col style="width: 110px;">
+                <col style="width: auto;">
+                <col style="width: 54px;">
+                <col style="width: 54px;">
+                <col style="width: 54px;">
+                <col style="width: 54px;">
+                <col style="width: 54px;">
+                <col style="width: 54px;">
+                <col style="width: 86px;">
+                <col style="width: 86px;">
+              </colgroup>
+
               <thead class="bg-muted/40 text-muted-foreground select-none border-b border-border">
                 <!-- Top Header Row -->
                 <tr>
-                  <th scope="col" rowspan="2" class="w-12 px-3 py-2.5 text-center font-semibold text-foreground border-r border-border/60 align-middle">
+                  <th scope="col" rowspan="2" class="px-2 py-2.5 text-center font-semibold text-foreground border-r border-border/60 align-middle">
                     ${t('common.no') || 'ល.រ'}
                   </th>
-                  <th scope="col" rowspan="2" class="px-4 py-2.5 min-w-[120px] font-semibold text-foreground border-r border-border/60 align-middle ${fontClass}">
+                  <th scope="col" rowspan="2" class="px-3 py-2.5 font-semibold text-foreground border-r border-border/60 align-middle ${fontClass}">
                     ${t('subjects.code') || 'កូដមុខវិជ្ជា'}
                   </th>
-                  <th scope="col" rowspan="2" class="px-4 py-2.5 min-w-[200px] font-semibold text-foreground border-r border-border/60 align-middle ${fontClass}">
+                  <th scope="col" rowspan="2" class="px-3.5 py-2.5 font-semibold text-foreground border-r border-border/60 align-middle ${fontClass}">
                     ${isKm ? 'ឈ្មោះមុខវិជ្ជា' : 'Subject Name'}
                   </th>
-                  <th scope="col" colspan="6" class="px-3 py-2 text-center font-bold text-foreground border-r border-b border-border/60 bg-muted/20 ${fontClass}">
+                  <th scope="col" colspan="6" class="px-2 py-2 text-center font-bold text-foreground border-r border-b border-border/60 bg-muted/20 ${fontClass}">
                     ${isKm ? 'ពិន្ទុតាមកម្រិតថ្នាក់ (Score by Grade)' : 'Score (by Grade)'}
                   </th>
-                  <th scope="col" rowspan="2" class="px-3 py-2.5 text-center min-w-[95px] font-semibold text-foreground border-r border-border/60 align-middle ${fontClass}">
+                  <th scope="col" rowspan="2" class="px-2 py-2.5 text-center font-semibold text-foreground border-r border-border/60 align-middle ${fontClass}">
                     ${isKm ? 'ម៉ោង/សប្តាហ៍' : 'Hours/wk'}
                   </th>
-                  <th scope="col" rowspan="2" class="px-4 py-2.5 text-center min-w-[90px] font-semibold text-foreground align-middle ${fontClass}">
+                  <th scope="col" rowspan="2" class="px-2 py-2.5 text-center font-semibold text-foreground align-middle ${fontClass}">
                     ${t('common.actions') || 'សកម្មភាព'}
                   </th>
                 </tr>
@@ -248,7 +263,7 @@ export const SubjectsPage = {
                   ${GRADES.map(g => {
                     const isColActive = g === activeGrade;
                     const canClick = !isTeacher;
-                    let headerClasses = 'px-2.5 py-1.5 text-center min-w-[50px] border-r border-border/60 font-mono tracking-tight transition-colors ';
+                    let headerClasses = 'px-1 py-1.5 text-center border-r border-border/60 font-mono tracking-tight transition-colors ';
                     
                     if (isColActive) {
                       headerClasses += 'text-primary font-bold bg-primary/15 ';
@@ -292,22 +307,22 @@ export const SubjectsPage = {
                   return `
                     <tr class="hover:bg-muted/20 transition-colors group">
                       <!-- Row No -->
-                      <td class="px-3 py-3.5 text-center text-muted-foreground border-r border-border/40 font-mono text-xs">
+                      <td class="px-2 py-3 text-center text-muted-foreground border-r border-border/40 font-mono text-xs">
                         ${idx + 1}
                       </td>
 
                       <!-- Subject Code -->
-                      <td class="px-4 py-3.5 font-semibold text-foreground border-r border-border/40 whitespace-nowrap">
+                      <td class="px-3 py-3 font-semibold text-foreground border-r border-border/40 whitespace-nowrap">
                         <span class="font-mono text-xs px-2 py-0.5 rounded bg-muted/50 border border-border text-foreground tracking-tight">${item.code || ''}</span>
                       </td>
 
                       <!-- Subject Name (Khmer & English) -->
-                      <td class="px-4 py-3.5 border-r border-border/40 ${fontClass}">
+                      <td class="px-3.5 py-3 border-r border-border/40 ${fontClass}">
                         <div class="font-semibold text-foreground text-sm flex items-center gap-1.5">
                           ${getIcon('bookOpen', 'w-3.5 h-3.5 text-primary flex-shrink-0')}
-                          <span>${mainName}</span>
+                          <span class="truncate">${mainName}</span>
                         </div>
-                        ${subName ? `<div class="text-[11px] text-muted-foreground/80 mt-0.5 pl-5">${subName}</div>` : ''}
+                        ${subName ? `<div class="text-[11px] text-muted-foreground/80 mt-0.5 pl-5 truncate">${subName}</div>` : ''}
                       </td>
 
                       <!-- Grade Scores G7 - G12 with Active Column Highlighting -->
@@ -316,7 +331,7 @@ export const SubjectsPage = {
                         const isZero = Number(scoreVal) === 0;
                         const isColActive = g === activeGrade;
 
-                        let cellClasses = 'px-2.5 py-3 text-center border-r border-border/40 font-mono text-xs transition-colors ';
+                        let cellClasses = 'px-1 py-3 text-center border-r border-border/40 font-mono text-xs transition-colors ';
                         let textClasses = '';
 
                         if (isColActive) {
@@ -338,12 +353,12 @@ export const SubjectsPage = {
                       }).join('')}
 
                       <!-- Weekly Credit Hours -->
-                      <td class="px-3 py-3 text-center border-r border-border/40 text-xs font-medium text-muted-foreground">
+                      <td class="px-2 py-3 text-center border-r border-border/40 text-xs font-medium text-muted-foreground">
                         <span class="font-mono text-foreground">${item.creditHours || 2}</span>
                       </td>
 
                       <!-- Actions -->
-                      <td class="px-4 py-3 text-center whitespace-nowrap">
+                      <td class="px-2 py-3 text-center whitespace-nowrap">
                         <div class="flex items-center justify-center gap-1.5">
                           <button type="button"
                                   data-action="edit"
