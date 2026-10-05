@@ -71,26 +71,29 @@ export const UsersPage = {
           </div>
 
           <!-- Action Buttons (Only on Accounts tab) -->
-          <div class="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+          <div id="users-header-actions" class="${this.activeTab === 'tab-accounts' ? 'flex' : 'hidden'} items-center gap-2 flex-wrap self-start sm:self-auto">
             <!-- Sync to Admin Sheet Button -->
             <button id="btn-users-save-sheet" 
+                    type="button"
                     title="${isKm ? 'រក្សាទុកគណនី និងសិទ្ធិទាំងអស់ទៅកាន់ Google Sheet' : 'Save all user accounts and permissions to Google Sheet'}"
-                    class="${this.activeTab === 'tab-accounts' ? 'inline-flex' : 'hidden'} items-center gap-1.5 px-3 py-2 rounded-lg border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary font-semibold text-xs sm:text-sm shadow-2xs transition-all cursor-pointer">
+                    class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary font-semibold text-xs sm:text-sm shadow-2xs transition-all cursor-pointer">
               ${getIcon('cloudUpload', 'w-4 h-4')}
               <span>${isKm ? 'Sync ទៅ Sheet' : 'Save to Sheet'}</span>
             </button>
 
             <!-- Pull from Admin Sheet Button -->
             <button id="btn-users-pull-sheet" 
+                    type="button"
                     title="${isKm ? 'ទាញគណនី និងសិទ្ធិពី Google Sheet' : 'Pull user accounts from Google Sheet'}"
-                    class="${this.activeTab === 'tab-accounts' ? 'inline-flex' : 'hidden'} items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground font-semibold text-xs sm:text-sm shadow-2xs transition-all cursor-pointer">
+                    class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground font-semibold text-xs sm:text-sm shadow-2xs transition-all cursor-pointer">
               ${getIcon('cloudDownload', 'w-4 h-4 text-primary')}
               <span>${isKm ? 'ទាញពី Sheet' : 'Pull from Sheet'}</span>
             </button>
 
             <!-- Add User Button -->
             <button id="btn-add-user" 
-                    class="${this.activeTab === 'tab-accounts' ? 'inline-flex' : 'hidden'} items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs sm:text-sm shadow-sm transition-all cursor-pointer">
+                    type="button"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs sm:text-sm shadow-sm transition-all cursor-pointer">
               ${getIcon('plus', 'w-4 h-4')}
               <span>${isKm ? 'បង្កើតគណនីថ្មី' : 'Add New User'}</span>
             </button>
@@ -192,10 +195,10 @@ export const UsersPage = {
                 </p>
               </div>
               <div class="flex items-center gap-2">
-                <button id="btn-reset-perms" class="px-3 py-1.5 rounded-lg border border-border hover:bg-muted text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+                <button id="btn-reset-perms" type="button" class="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
                   ${isKm ? 'កំណត់លំនាំដើមឡើងវិញ' : 'Reset Defaults'}
                 </button>
-                <button id="btn-save-perms" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs shadow-sm transition-all">
+                <button id="btn-save-perms" type="button" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs shadow-sm transition-all cursor-pointer">
                   ${getIcon('check', 'w-4 h-4')}
                   <span>${isKm ? 'រក្សាទុកការកំណត់' : 'Save Permissions'}</span>
                 </button>
@@ -553,15 +556,13 @@ export const UsersPage = {
           pane.classList.toggle('hidden', pane.id !== target);
         });
 
-        // Toggle action buttons in header
-        const addUserBtn = document.getElementById('btn-add-user');
-        const saveSheetBtn = document.getElementById('btn-users-save-sheet');
-        const pullSheetBtn = document.getElementById('btn-users-pull-sheet');
+        // Toggle action buttons container in header
+        const headerActions = document.getElementById('users-header-actions');
         const isAccountsTab = target === 'tab-accounts';
-        
-        if (addUserBtn) addUserBtn.className = isAccountsTab ? 'inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs sm:text-sm shadow-sm transition-all cursor-pointer' : 'hidden';
-        if (saveSheetBtn) saveSheetBtn.className = isAccountsTab ? 'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary font-semibold text-xs sm:text-sm shadow-2xs transition-all cursor-pointer' : 'hidden';
-        if (pullSheetBtn) pullSheetBtn.className = isAccountsTab ? 'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground font-semibold text-xs sm:text-sm shadow-2xs transition-all cursor-pointer' : 'hidden';
+        if (headerActions) {
+          headerActions.classList.toggle('hidden', !isAccountsTab);
+          headerActions.classList.toggle('flex', isAccountsTab);
+        }
       });
     });
 
