@@ -218,21 +218,6 @@ export const SubjectsPage = {
 
         <!-- Subjects Table Card -->
         <div class="border border-border rounded-xl bg-card overflow-hidden shadow-2xs">
-          <!-- Table Card Top Header -->
-          <div class="px-4 py-3 bg-muted/20 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-primary"></span>
-              <h4 class="text-xs sm:text-sm font-bold text-foreground ${fontClass}">
-                ${isKm ? 'បញ្ជីមុខវិជ្ជា និងពិន្ទុតាមកម្រិតថ្នាក់ (G7 - G12)' : 'Subjects & Scores by Grade (G7 - G12)'}
-              </h4>
-            </div>
-            <div class="text-xs text-muted-foreground ${fontClass}">
-              ${isTeacher && teacherClass 
-                ? (isKm ? `ថ្នាក់សកម្ម៖ <span class="font-bold text-primary font-mono">${teacherClass.name} (${activeGrade})</span>` : `Active Class: <span class="font-bold text-primary font-mono">${teacherClass.name} (${activeGrade})</span>`) 
-                : (isKm ? 'ចុចលើជួរឈរ G7-G12 ដើម្បីផ្ដោត' : 'Click G7-G12 columns to focus')}
-            </div>
-          </div>
-
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs sm:text-sm ${fontClass}">
               <thead class="bg-muted/50 text-muted-foreground select-none border-b border-border">
