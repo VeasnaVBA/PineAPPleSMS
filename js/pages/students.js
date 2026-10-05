@@ -30,175 +30,16 @@ import {
   formatKhmerSolarDate, 
   calculateAge 
 } from '../utils/dateUtils.js';
+import { openInactiveReasonPrompt } from '../components/inactiveReasonModal.js';
 
 export { 
   formatDisplayDate, 
   toInputDateFormat, 
   toKhmerNumerals, 
   formatKhmerSolarDate, 
-  calculateAge 
+  calculateAge,
+  openInactiveReasonPrompt
 };
-
-/**
- * Clean overlay prompt for "មូលហេតុនៃការបោះបង់ (Inactive Reason)" dialog (matching Image 2)
- */
-function openInactiveReasonPrompt({ initialData = null, isKm = true, onConfirm, onCancel }) {
-  const defaultDate = toInputDateFormat(initialData?.dropoutDate);
-  const currentSemester = initialData?.dropoutSemester || 'ឆមាសទី១';
-  const currentReason = initialData?.dropoutReason || '';
-  const currentRemarks = initialData?.dropoutRemarks || '';
-
-  const overlay = document.createElement('div');
-  overlay.className = 'fixed inset-0 z-[70] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in select-none';
-  overlay.innerHTML = `
-    <div class="relative w-full max-w-lg bg-card border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden animate-slide-down">
-      <!-- Header: Graduation Cap icon + Title + Close (X) button -->
-      <div class="flex items-center justify-between px-6 py-4 border-b border-border select-none">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-            ${getIcon('graduationCap', 'w-5 h-5')}
-          </div>
-          <h3 class="text-base font-bold tracking-tight text-foreground font-khmer">
-            មូលហេតុនៃការបោះបង់ <span class="text-xs font-normal text-muted-foreground font-sans">(Inactive Reason)</span>
-          </h3>
-        </div>
-        <button type="button" id="btn-dropout-close" class="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer" title="Close">
-          ${getIcon('x', 'w-4 h-4')}
-        </button>
-      </div>
-
-      <!-- Body -->
-      <div class="p-6 space-y-4 text-foreground">
-        <!-- Date & Semester Row -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-2 border-b border-border/60">
-          <!-- Calendar icon + Date input -->
-          <div class="space-y-1.5">
-            <label class="flex items-center gap-1.5 text-xs font-semibold text-foreground font-khmer">
-              ${getIcon('calendar', 'w-3.5 h-3.5 text-primary')}
-              <span>កាលបរិច្ឆេទ (ថ្ងៃនេះ):</span>
-            </label>
-            <input type="date" 
-                   id="input-dropout-date" 
-                   value="${defaultDate}" 
-                   class="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-xs font-mono font-medium text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs" />
-          </div>
-
-          <!-- Semester Selector (ឆមាសទី១ / ឆមាសទី២) -->
-          <div class="space-y-1.5">
-            <label class="block text-xs font-semibold text-foreground font-khmer">
-              ឆមាស <span class="text-destructive">*</span>
-            </label>
-            <div class="grid grid-cols-2 gap-2 h-10">
-              <button type="button" 
-                      id="btn-semester-1" 
-                      class="semester-toggle-btn h-full px-2 rounded-md border text-xs font-medium font-khmer transition-all flex items-center justify-center gap-1 shadow-xs cursor-pointer ${currentSemester === 'ឆមាសទី១' ? 'border-primary bg-primary text-primary-foreground font-bold' : 'border-input bg-background hover:bg-muted text-foreground'}">
-                <span>ឆមាសទី១</span>
-              </button>
-              <button type="button" 
-                      id="btn-semester-2" 
-                      class="semester-toggle-btn h-full px-2 rounded-md border text-xs font-medium font-khmer transition-all flex items-center justify-center gap-1 shadow-xs cursor-pointer ${currentSemester === 'ឆមាសទី២' ? 'border-primary bg-primary text-primary-foreground font-bold' : 'border-input bg-background hover:bg-muted text-foreground'}">
-                <span>ឆមាសទី២</span>
-              </button>
-            </div>
-            <input type="hidden" id="input-dropout-semester" value="${currentSemester}" />
-          </div>
-        </div>
-
-        <!-- Main Input: Reason (Required) -->
-        <div class="space-y-1.5">
-          <label class="block text-xs font-semibold text-foreground font-khmer">
-            មូលហេតុបោះបង់ការសិក្សា <span class="text-destructive font-bold">*</span>
-          </label>
-          <textarea id="input-dropout-reason" 
-                    rows="3" 
-                    placeholder="បញ្ចូលមូលហេតុនៃការបោះបង់ (ឧ. ជីវភាពគ្រួសារ, ផ្លាស់ប្តូរទីលំនៅ, ទៅធ្វើការ...)" 
-                    class="w-full px-3 py-2 rounded-md border border-input bg-background text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-khmer resize-none box-border shadow-xs leading-relaxed">${currentReason}</textarea>
-          <p id="err-dropout-reason" class="text-xs text-destructive font-khmer hidden">សូមបញ្ចូលមូលហេតុនៃការបោះបង់ការសិក្សា</p>
-        </div>
-
-        <!-- Secondary Input: Remarks (Optional) -->
-        <div class="space-y-1.5">
-          <label class="block text-xs font-semibold text-muted-foreground font-khmer">
-            សម្គាល់ផ្សេងៗ (ប្រសិនបើមាន)
-          </label>
-          <input type="text" 
-                 id="input-dropout-remarks" 
-                 value="${currentRemarks}" 
-                 placeholder="សម្គាល់ផ្សេងៗ..." 
-                 class="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-khmer box-border shadow-xs" />
-        </div>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-border bg-muted/20 select-none">
-        <button type="button" 
-                id="btn-dropout-cancel" 
-                class="px-4 py-2 rounded-md border border-input bg-card hover:bg-muted text-xs font-medium text-foreground transition-colors font-khmer shadow-xs cursor-pointer">
-          បោះបង់
-        </button>
-        <button type="button" 
-                id="btn-dropout-submit" 
-                class="px-4 py-2 rounded-md bg-primary hover:bg-primary/90 text-xs font-semibold text-primary-foreground shadow-xs transition-colors font-khmer flex items-center gap-1.5 cursor-pointer">
-          ${getIcon('check', 'w-3.5 h-3.5')}
-          <span>យល់ព្រម</span>
-        </button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(overlay);
-
-  const reasonInput = overlay.querySelector('#input-dropout-reason');
-  const remarksInput = overlay.querySelector('#input-dropout-remarks');
-  const dateInput = overlay.querySelector('#input-dropout-date');
-  const semInput = overlay.querySelector('#input-dropout-semester');
-  const errReason = overlay.querySelector('#err-dropout-reason');
-  const btnSem1 = overlay.querySelector('#btn-semester-1');
-  const btnSem2 = overlay.querySelector('#btn-semester-2');
-
-  setTimeout(() => reasonInput?.focus(), 50);
-
-  btnSem1?.addEventListener('click', () => {
-    semInput.value = 'ឆមាសទី១';
-    btnSem1.className = 'semester-toggle-btn h-full px-2 rounded-md border text-xs font-medium font-khmer transition-all flex items-center justify-center gap-1 shadow-xs border-primary bg-primary text-primary-foreground font-bold cursor-pointer';
-    btnSem2.className = 'semester-toggle-btn h-full px-2 rounded-md border text-xs font-medium font-khmer transition-all flex items-center justify-center gap-1 shadow-xs border-input bg-background hover:bg-muted text-foreground cursor-pointer';
-  });
-
-  btnSem2?.addEventListener('click', () => {
-    semInput.value = 'ឆមាសទី២';
-    btnSem2.className = 'semester-toggle-btn h-full px-2 rounded-md border text-xs font-medium font-khmer transition-all flex items-center justify-center gap-1 shadow-xs border-primary bg-primary text-primary-foreground font-bold cursor-pointer';
-    btnSem1.className = 'semester-toggle-btn h-full px-2 rounded-md border text-xs font-medium font-khmer transition-all flex items-center justify-center gap-1 shadow-xs border-input bg-background hover:bg-muted text-foreground cursor-pointer';
-  });
-
-  // Modal safety: do NOT close on click outside or mouseleave!
-  const handleCancel = () => {
-    overlay.remove();
-    if (onCancel) onCancel();
-  };
-
-  overlay.querySelector('#btn-dropout-close')?.addEventListener('click', handleCancel);
-  overlay.querySelector('#btn-dropout-cancel')?.addEventListener('click', handleCancel);
-
-  overlay.querySelector('#btn-dropout-submit')?.addEventListener('click', () => {
-    const reasonVal = reasonInput?.value.trim();
-    if (!reasonVal) {
-      errReason?.classList.remove('hidden');
-      reasonInput?.focus();
-      return;
-    }
-    errReason?.classList.add('hidden');
-
-    const result = {
-      dropoutDate: dateInput?.value || defaultDate,
-      dropoutSemester: semInput?.value || 'ឆមាសទី១',
-      dropoutReason: reasonVal,
-      dropoutRemarks: remarksInput?.value.trim() || ''
-    };
-
-    overlay.remove();
-    if (onConfirm) onConfirm(result);
-  });
-}
 
 /**
  * Clean overlay prompt to add a new location item
@@ -1288,9 +1129,14 @@ export const StudentsPage = {
 
           <!-- 1. ស្ថានភាព (status) -->
           <td class="px-3 py-2.5">
-            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusBadgeClasses}">
-              ${student.status || 'Active'}
-            </span>
+            <button type="button" 
+                    class="btn-toggle-student-status inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-transform hover:scale-105 cursor-pointer ${statusBadgeClasses}" 
+                    data-id="${student.id}" 
+                    data-status="${student.status || 'Active'}"
+                    title="${student.status === 'Inactive' ? (student.dropoutReason ? `${student.dropoutSemester || 'ឆមាសទី១'}: ${student.dropoutReason}` : (isKm ? 'ចុចដើម្បីកែប្រែមូលហេតុបោះបង់' : 'Click to edit inactive reason')) : (isKm ? 'ចុចដើម្បីប្តូរស្ថានភាព' : 'Click to change status')}">
+              <span>${student.status || 'Active'}</span>
+              ${student.status === 'Inactive' ? getIcon('info', 'w-3 h-3 text-zinc-500') : ''}
+            </button>
           </td>
 
           <!-- 2. ល.រ (rowNumber) -->
@@ -1482,6 +1328,50 @@ export const StudentsPage = {
                     if (s) this.openStudentFormModal(s);
                   }
                 },
+                student.status === 'Inactive' ? {
+                  label: isKm ? 'កែប្រែមូលហេតុបោះបង់' : 'Edit Inactive Reason',
+                  icon: 'fileText',
+                  onClick: async () => {
+                    const s = await StudentService.getById(student.id);
+                    if (!s) return;
+                    openInactiveReasonPrompt({
+                      initialData: s,
+                      isKm,
+                      onConfirm: async (res) => {
+                        await StudentService.updateStatus(student.id, 'Inactive', res);
+                        toast.success(isKm ? 'បានកែប្រែមូលហេតុបោះបង់ដោយជោគជ័យ' : 'Updated inactive reason successfully');
+                        await this.loadData(true);
+                      }
+                    });
+                  }
+                } : {
+                  label: isKm ? 'ប្តូរជាសិស្សបោះបង់ (Inactive)' : 'Mark as Inactive',
+                  icon: 'userX',
+                  onClick: async () => {
+                    const s = await StudentService.getById(student.id);
+                    if (!s) return;
+                    openInactiveReasonPrompt({
+                      initialData: s,
+                      isKm,
+                      onConfirm: async (res) => {
+                        await StudentService.updateStatus(student.id, 'Inactive', res);
+                        toast.success(isKm ? `បានប្តូរស្ថានភាពសិស្ស "${s.khmerName || s.name}" ទៅជាបោះបង់` : `Marked student "${s.khmerName || s.name}" as inactive`);
+                        await this.loadData(true);
+                      }
+                    });
+                  }
+                },
+                student.status === 'Inactive' ? {
+                  label: isKm ? 'ប្តូរជាសិស្សសកម្មវិញ (Active)' : 'Reactivate Student',
+                  icon: 'userCheck',
+                  onClick: async () => {
+                    const s = await StudentService.getById(student.id);
+                    if (!s) return;
+                    await StudentService.updateStatus(student.id, 'Active');
+                    toast.success(isKm ? `បានប្តូរស្ថានភាពសិស្ស "${s.khmerName || s.name}" ទៅជាសកម្មវិញ` : `Reactivated student "${s.khmerName || s.name}"`);
+                    await this.loadData(true);
+                  }
+                } : null,
                 {
                   label: isKm ? 'លុប' : 'Delete',
                   icon: 'trash2',
@@ -1503,7 +1393,7 @@ export const StudentsPage = {
                     });
                   }
                 }
-              ]
+              ].filter(Boolean)
             })}
           </td>
         </tr>
@@ -1951,14 +1841,58 @@ export const StudentsPage = {
       const status = e.target.value;
       if (!status) return;
       const ids = Array.from(this.state.selectedIds);
-      await StudentService.bulkUpdateStatus(ids, status);
-      toast.success(`Updated status of ${ids.length} students to ${status}`);
-      e.target.value = '';
-      await this.loadData(true);
+      if (ids.length === 0) {
+        e.target.value = '';
+        return;
+      }
+      const isKm = i18n.getLocale() === 'km';
+
+      if (status === 'Inactive') {
+        openInactiveReasonPrompt({
+          initialData: null,
+          isKm,
+          onConfirm: async (res) => {
+            await StudentService.bulkUpdateStatus(ids, 'Inactive', res);
+            toast.success(isKm ? `បានប្តូរស្ថានភាពសិស្ស ${ids.length} នាក់ជាបោះបង់` : `Updated status of ${ids.length} students to Inactive`);
+            e.target.value = '';
+            await this.loadData(true);
+          },
+          onCancel: () => {
+            e.target.value = '';
+          }
+        });
+      } else {
+        await StudentService.bulkUpdateStatus(ids, status);
+        toast.success(isKm ? `បានប្តូរស្ថានភាពសិស្ស ${ids.length} នាក់ជា ${status}` : `Updated status of ${ids.length} students to ${status}`);
+        e.target.value = '';
+        await this.loadData(true);
+      }
     });
   },
 
   bindTableEvents() {
+    const isKm = i18n.getLocale() === 'km';
+
+    // Click on status badge to view/edit inactive reason or toggle status
+    this.container.querySelectorAll('.btn-toggle-student-status').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        const currentStatus = btn.getAttribute('data-status');
+        const s = await StudentService.getById(id);
+        if (!s) return;
+
+        openInactiveReasonPrompt({
+          initialData: s,
+          isKm,
+          onConfirm: async (res) => {
+            await StudentService.updateStatus(id, 'Inactive', res);
+            toast.success(isKm ? 'បានធ្វើបច្ចុប្បន្នភាពស្ថានភាពសិស្សដោយជោគជ័យ' : 'Updated student status successfully');
+            await this.loadData(true);
+          }
+        });
+      });
+    });
     // Individual row checkbox selection
     this.container.querySelectorAll('.row-select-checkbox').forEach(cb => {
       cb.addEventListener('change', (e) => {

@@ -19,8 +19,9 @@ import { toast } from './toast.js';
 import { t, i18n } from '../i18n/i18n.js';
 import { getIcon } from './icons.js';
 import { calculateAge, toInputDateFormat, formatDisplayDate } from '../utils/dateUtils.js';
+import { openInactiveReasonPrompt } from './inactiveReasonModal.js';
 
-export { calculateAge };
+export { calculateAge, openInactiveReasonPrompt };
 
 function openDeleteLocationConfirm({ title, message, isKm, onConfirm }) {
   const overlay = document.createElement('div');
@@ -316,16 +317,33 @@ export const StudentFormModal = {
             <!-- Identity and Name Grid -->
             <div class="flex-1 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <!-- 1. Status -->
-              <div>
-                <label class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 block leading-relaxed ${isKm ? 'font-khmer' : ''}">
-                  ${t('students.status')} <span class="text-destructive">*</span>
-                </label>
+              <div class="space-y-1">
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-semibold text-muted-foreground uppercase tracking-wide block leading-relaxed ${isKm ? 'font-khmer' : ''}">
+                    ${t('students.status')} <span class="text-destructive">*</span>
+                  </label>
+                  <button type="button" 
+                          id="btn-edit-inactive-reason" 
+                          class="${student?.status === 'Inactive' ? '' : 'hidden'} text-[11px] font-medium text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 cursor-pointer font-khmer">
+                    ${getIcon('pencil', 'w-3 h-3')}
+                    <span>${isKm ? 'មូលហេតុ' : 'Reason'}</span>
+                  </button>
+                </div>
                 <select id="form-status" class="w-full h-10 px-3 py-2 pr-9 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-medium box-border shadow-xs ${isKm ? 'font-khmer' : ''}">
                   <option value="Active" ${student?.status === 'Active' || !student ? 'selected' : ''}>${t('common.active')}</option>
                   <option value="Inactive" ${student?.status === 'Inactive' ? 'selected' : ''}>${t('common.inactive')}</option>
                   <option value="Transferred" ${student?.status === 'Transferred' ? 'selected' : ''}>${t('common.transferred')}</option>
                   <option value="Graduated" ${student?.status === 'Graduated' ? 'selected' : ''}>${t('common.graduated')}</option>
                 </select>
+                <div id="form-inactive-summary" class="${student?.status === 'Inactive' && student?.dropoutReason ? '' : 'hidden'}">
+                  <div class="mt-1.5 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs">
+                    <div class="flex items-center justify-between font-bold text-amber-700 dark:text-amber-300 font-khmer">
+                      <span>${student?.dropoutSemester || 'ឆមាសទី១'}</span>
+                      <span class="text-[10px] text-muted-foreground font-normal">${formatDisplayDate(student?.dropoutDate) || ''}</span>
+                    </div>
+                    <p class="text-foreground font-khmer text-xs mt-0.5 truncate">${student?.dropoutReason || ''}</p>
+                  </div>
+                </div>
               </div>
 
               <!-- 4. Student ID -->
@@ -839,6 +857,67 @@ export const StudentFormModal = {
       if (sidInput) sidInput.value = sid;
     });
 
+    // Inactive dropout state management
+    let dropoutData = {
+      dropoutDate: student?.dropoutDate || new Date().toISOString().split('T')[0],
+      dropoutSemester: student?.dropoutSemester || 'ឆមាសទី១',
+      dropoutReason: student?.dropoutReason || '',
+      dropoutRemarks: student?.dropoutRemarks || ''
+    };
+
+    const statusSelect = modal.element.querySelector('#form-status');
+    const editReasonBtn = modal.element.querySelector('#btn-edit-inactive-reason');
+    const inactiveSummaryEl = modal.element.querySelector('#form-inactive-summary');
+
+    const updateInactiveUI = () => {
+      const isInactive = statusSelect?.value === 'Inactive';
+      if (editReasonBtn) {
+        editReasonBtn.classList.toggle('hidden', !isInactive);
+      }
+      if (inactiveSummaryEl) {
+        if (isInactive && dropoutData.dropoutReason) {
+          inactiveSummaryEl.classList.remove('hidden');
+          inactiveSummaryEl.innerHTML = `
+            <div class="mt-1.5 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs">
+              <div class="flex items-center justify-between font-bold text-amber-700 dark:text-amber-300 font-khmer">
+                <span>${dropoutData.dropoutSemester || 'ឆមាសទី១'}</span>
+                <span class="text-[10px] text-muted-foreground font-normal">${formatDisplayDate(dropoutData.dropoutDate) || ''}</span>
+              </div>
+              <p class="text-foreground font-khmer text-xs mt-0.5 truncate">${dropoutData.dropoutReason}</p>
+            </div>
+          `;
+        } else {
+          inactiveSummaryEl.classList.add('hidden');
+          inactiveSummaryEl.innerHTML = '';
+        }
+      }
+    };
+
+    const triggerInactivePrompt = () => {
+      openInactiveReasonPrompt({
+        initialData: dropoutData,
+        isKm,
+        onConfirm: (res) => {
+          dropoutData = { ...res };
+          updateInactiveUI();
+        },
+        onCancel: () => {
+          updateInactiveUI();
+        }
+      });
+    };
+
+    statusSelect?.addEventListener('change', (e) => {
+      if (e.target.value === 'Inactive') {
+        triggerInactivePrompt();
+      }
+      updateInactiveUI();
+    });
+
+    editReasonBtn?.addEventListener('click', () => {
+      triggerInactivePrompt();
+    });
+
     // Automatically sync academic year dropdown with the selected class's academic year
     modal.element.querySelector('#form-classId')?.addEventListener('change', (e) => {
       const selectedClassId = e.target.value;
@@ -1080,7 +1159,11 @@ export const StudentFormModal = {
         guardianPhone,
         notes,
         photoBlob: tempBlob,
-        photo: tempBlob ? '(Photo attached)' : (student?.photo || '')
+        photo: tempBlob ? '(Photo attached)' : (student?.photo || ''),
+        dropoutDate: status === 'Inactive' ? (dropoutData.dropoutDate || new Date().toISOString().split('T')[0]) : null,
+        dropoutSemester: status === 'Inactive' ? (dropoutData.dropoutSemester || 'ឆមាសទី១') : null,
+        dropoutReason: status === 'Inactive' ? (dropoutData.dropoutReason || 'បោះបង់ការសិក្សា') : null,
+        dropoutRemarks: status === 'Inactive' ? (dropoutData.dropoutRemarks || '') : null
       };
 
       if (isAdmissionMode) {

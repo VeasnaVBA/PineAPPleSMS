@@ -217,11 +217,41 @@ export const StudentService = {
     return true;
   },
 
-  async bulkUpdateStatus(ids, status) {
+  async updateStatus(id, status, extraData = {}) {
+    const student = await this.getById(id);
+    if (!student) throw new Error('Student not found');
+    student.status = status;
+    if (status === 'Inactive' || status === 'បោះបង់') {
+      student.dropoutDate = extraData.dropoutDate || new Date().toISOString().split('T')[0];
+      student.dropoutSemester = extraData.dropoutSemester || 'ឆមាសទី១';
+      student.dropoutReason = extraData.dropoutReason || 'បោះបង់ការសិក្សា';
+      student.dropoutRemarks = extraData.dropoutRemarks || '';
+    } else {
+      student.dropoutDate = null;
+      student.dropoutSemester = null;
+      student.dropoutReason = null;
+      student.dropoutRemarks = null;
+    }
+    const updated = await this.update(id, student);
+    return updated;
+  },
+
+  async bulkUpdateStatus(ids, status, extraData = {}) {
     for (const id of ids) {
       const student = await this.getById(id);
       if (student) {
         student.status = status;
+        if (status === 'Inactive' || status === 'បោះបង់') {
+          student.dropoutDate = extraData.dropoutDate || new Date().toISOString().split('T')[0];
+          student.dropoutSemester = extraData.dropoutSemester || 'ឆមាសទី១';
+          student.dropoutReason = extraData.dropoutReason || 'បោះបង់ការសិក្សា';
+          student.dropoutRemarks = extraData.dropoutRemarks || '';
+        } else {
+          student.dropoutDate = null;
+          student.dropoutSemester = null;
+          student.dropoutReason = null;
+          student.dropoutRemarks = null;
+        }
         await db.put('students', normalizeStudentRecord(student));
       }
     }
