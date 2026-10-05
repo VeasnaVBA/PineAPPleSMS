@@ -455,52 +455,52 @@ export const SubjectsPage = {
     };
 
     const modalTitleText = isEdit 
-      ? (isKm ? 'កែប្រែមុខវិជ្ជា (Edit Course)' : 'Edit Course') 
-      : (isKm ? 'បន្ថែមមុខវិជ្ជាថ្មី (Add New Course)' : 'Add New Course');
+      ? (isKm ? 'កែប្រែមុខវិជ្ជា' : 'Edit Course') 
+      : (isKm ? 'បន្ថែមមុខវិជ្ជាថ្មី' : 'Add New Course');
 
     const modalContent = `
       <div class="space-y-4 p-5 select-none ${fontClass}">
         <!-- App Theme Title -->
         <div>
-          <h3 class="text-sm sm:text-base font-bold text-primary">
+          <h3 class="text-sm sm:text-base font-bold text-primary ${fontClass}">
             ${modalTitleText}
           </h3>
         </div>
 
-        <!-- Row 1: Course ID, Icon, Subject Name -->
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
-          <!-- Course ID -->
-          <div class="flex-1">
-            <label class="block text-[11px] font-bold text-muted-foreground uppercase mb-1">
-              ${isKm ? 'លេខកូដមុខវិជ្ជា (COURSE ID)' : 'COURSE ID'} <span class="text-rose-500">*</span>
+        <!-- Row 1: Course ID with Auto Button & Subject Name -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <!-- Course ID with integrated Auto-Generate Button -->
+          <div>
+            <label class="block text-[11px] font-bold text-muted-foreground mb-1 ${fontClass}">
+              ${isKm ? 'លេខកូដមុខវិជ្ជា' : 'Course ID'} <span class="text-rose-500">*</span>
             </label>
-            <input type="text"
-                   id="modal-subject-code"
-                   value="${defaultCode}"
-                   placeholder="E.G. CRS-101"
-                   class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary uppercase font-mono shadow-2xs" />
+            <div class="flex items-center gap-1.5">
+              <input type="text"
+                     id="modal-subject-code"
+                     value="${defaultCode}"
+                     placeholder="SUB-101"
+                     class="flex-1 px-3 py-2 text-xs sm:text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary uppercase font-mono shadow-2xs" />
+              <button type="button"
+                      id="btn-auto-code"
+                      title="${isKm ? 'បង្កើតកូដស្វ័យប្រវត្តិ' : 'Auto-generate ID'}"
+                      class="flex items-center justify-center w-10 h-9 rounded-lg border border-border bg-muted/30 hover:bg-primary/10 active:scale-95 text-primary hover:border-primary/40 transition-all flex-shrink-0 shadow-2xs cursor-pointer group">
+                <span class="group-hover:rotate-12 transition-transform duration-200">
+                  ${getIcon('graduationCap', 'w-4 h-4') || getIcon('bookOpen', 'w-4 h-4')}
+                </span>
+              </button>
+            </div>
             <p id="modal-code-err" class="text-[11px] text-rose-500 mt-1 hidden"></p>
           </div>
 
-          <!-- Middle Graduation / Auto Generate Code Button -->
-          <button type="button"
-                  id="btn-auto-code"
-                  title="${isKm ? 'ចុចដើម្បីបង្កើតកូដស្វ័យប្រវត្តិ (Auto-generate ID)' : 'Click to auto-generate Subject ID'}"
-                  class="hidden sm:flex items-center justify-center w-10 h-10 rounded-lg border border-border bg-card hover:bg-primary/10 active:scale-95 text-primary hover:border-primary/40 transition-all flex-shrink-0 mb-0.5 shadow-2xs cursor-pointer group">
-            <span class="group-hover:rotate-12 transition-transform duration-200">
-              ${getIcon('graduationCap', 'w-5 h-5') || getIcon('bookOpen', 'w-5 h-5')}
-            </span>
-          </button>
-
           <!-- Subject Name (ឈ្មោះមុខវិជ្ជា) -->
-          <div class="flex-1">
+          <div>
             <label class="block text-[11px] font-bold text-muted-foreground mb-1 ${fontClass}">
               ${isKm ? 'ឈ្មោះមុខវិជ្ជា' : 'Subject Name'} <span class="text-rose-500">*</span>
             </label>
             <input type="text"
                    id="modal-subject-name"
                    value="${existingSubject?.name || ''}"
-                   placeholder="${isKm ? 'ឧ. ភាសាខ្មែរ, English' : 'e.g. English'}"
+                   placeholder="${isKm ? 'ឧ. ភាសាខ្មែរ, គណិតវិទ្យា' : 'e.g. English, Mathematics'}"
                    class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-2xs ${fontClass}" />
             <p id="modal-name-err" class="text-[11px] text-rose-500 mt-1 hidden"></p>
           </div>
@@ -509,11 +509,11 @@ export const SubjectsPage = {
         <!-- Row 2: SCORES BY GRADE -->
         <div>
           <div class="flex items-center justify-between mb-2">
-            <label class="block text-[11px] font-bold text-muted-foreground uppercase">
-              ${isKm ? 'ពិន្ទុតាមកម្រិតថ្នាក់ (SCORES BY GRADE)' : 'SCORES BY GRADE'}
+            <label class="block text-[11px] font-bold text-muted-foreground ${fontClass}">
+              ${isKm ? 'ពិន្ទុតាមកម្រិតថ្នាក់' : 'Scores by Grade'}
             </label>
             <div class="flex items-center gap-1.5 text-[10px]">
-              <span class="text-muted-foreground">${isKm ? 'ដាក់ពិន្ទុរហ័ស៖' : 'Quick fill:'}</span>
+              <span class="text-muted-foreground ${fontClass}">${isKm ? 'ដាក់ពិន្ទុរហ័ស៖' : 'Quick fill:'}</span>
               <button type="button" data-fill="50" class="btn-quick-fill px-1.5 py-0.5 rounded bg-muted/60 hover:bg-muted font-mono cursor-pointer">50</button>
               <button type="button" data-fill="100" class="btn-quick-fill px-1.5 py-0.5 rounded bg-muted/60 hover:bg-muted font-mono cursor-pointer">100</button>
             </div>
@@ -595,13 +595,13 @@ export const SubjectsPage = {
 
         <!-- Row 4: SUM OF COURSES (optional) -->
         <div>
-          <label class="block text-[11px] font-bold text-muted-foreground mb-1 uppercase">
-            ${isKm ? 'SUM OF COURSES' : 'SUM OF COURSES'} <span class="text-muted-foreground/80 font-normal lowercase">(optional)</span>
+          <label class="block text-[11px] font-bold text-muted-foreground mb-1 ${fontClass}">
+            ${isKm ? 'បូកសរុបពិន្ទុមុខវិជ្ជា (មិនទាមទារ)' : 'Sum of Courses (optional)'}
           </label>
           <input type="text"
                  id="modal-subject-sum"
                  value="${existingSubject?.sumOfCourses || ''}"
-                 placeholder="e.g. CRS-010, CRS-011"
+                 placeholder="${isKm ? 'ឧ. SUB-001, SUB-002' : 'e.g. CRS-010, CRS-011'}"
                  class="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary uppercase font-mono shadow-2xs" />
           <p class="text-[11px] text-muted-foreground mt-1 leading-relaxed ${fontClass}">
             ${isKm 
@@ -619,7 +619,7 @@ export const SubjectsPage = {
           </button>
           <button type="button"
                   id="modal-btn-save"
-                  class="flex-1 sm:flex-none sm:min-w-[130px] px-6 py-2.5 rounded-lg text-xs sm:text-sm font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs transition-colors text-center cursor-pointer">
+                  class="flex-1 sm:flex-none sm:min-w-[130px] px-6 py-2.5 rounded-lg text-xs sm:text-sm font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs transition-colors text-center cursor-pointer ${fontClass}">
             ${isEdit ? (isKm ? 'រក្សាទុកមុខវិជ្ជា' : 'Update Course') : (isKm ? 'បង្កើតមុខវិជ្ជា' : 'Create Course')}
           </button>
         </div>
