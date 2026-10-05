@@ -216,54 +216,42 @@ export const SubjectsPage = {
           </div>
         </div>
 
-        <!-- Subjects Table with Multi-column Header for Score by Grade -->
+        <!-- Subjects Table Card -->
         <div class="border border-border rounded-xl bg-card overflow-hidden shadow-2xs">
-          <div class="overflow-x-auto">
-            <table class="w-full min-w-[780px] table-fixed text-left border-collapse text-xs sm:text-sm ${fontClass}">
-              <!-- Explicit Fixed Column Widths -->
-              <colgroup>
-                <col style="width: 44px;">
-                <col style="width: 110px;">
-                <col style="width: auto;">
-                <col style="width: 54px;">
-                <col style="width: 54px;">
-                <col style="width: 54px;">
-                <col style="width: 54px;">
-                <col style="width: 54px;">
-                <col style="width: 54px;">
-                <col style="width: 86px;">
-                <col style="width: 86px;">
-              </colgroup>
+          <!-- Table Card Top Header -->
+          <div class="px-4 py-3 bg-muted/20 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-primary"></span>
+              <h4 class="text-xs sm:text-sm font-bold text-foreground ${fontClass}">
+                ${isKm ? 'បញ្ជីមុខវិជ្ជា និងពិន្ទុតាមកម្រិតថ្នាក់ (G7 - G12)' : 'Subjects & Scores by Grade (G7 - G12)'}
+              </h4>
+            </div>
+            <div class="text-xs text-muted-foreground ${fontClass}">
+              ${isTeacher && teacherClass 
+                ? (isKm ? `ថ្នាក់សកម្ម៖ <span class="font-bold text-primary font-mono">${teacherClass.name} (${activeGrade})</span>` : `Active Class: <span class="font-bold text-primary font-mono">${teacherClass.name} (${activeGrade})</span>`) 
+                : (isKm ? 'ចុចលើជួរឈរ G7-G12 ដើម្បីផ្ដោត' : 'Click G7-G12 columns to focus')}
+            </div>
+          </div>
 
-              <thead class="bg-muted/40 text-muted-foreground select-none border-b border-border">
-                <!-- Top Header Row -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs sm:text-sm ${fontClass}">
+              <thead class="bg-muted/50 text-muted-foreground select-none border-b border-border">
                 <tr>
-                  <th scope="col" rowspan="2" class="px-2 py-2.5 text-center font-semibold text-foreground border-r border-border/60 align-middle">
+                  <th scope="col" class="w-12 px-3 py-3 text-center font-semibold text-foreground border-r border-border/60">
                     ${t('common.no') || 'ល.រ'}
                   </th>
-                  <th scope="col" rowspan="2" class="px-3 py-2.5 font-semibold text-foreground border-r border-border/60 align-middle ${fontClass}">
+                  <th scope="col" class="w-28 px-3.5 py-3 font-semibold text-foreground border-r border-border/60 whitespace-nowrap ${fontClass}">
                     ${t('subjects.code') || 'កូដមុខវិជ្ជា'}
                   </th>
-                  <th scope="col" rowspan="2" class="px-3.5 py-2.5 font-semibold text-foreground border-r border-border/60 align-middle ${fontClass}">
+                  <th scope="col" class="px-4 py-3 font-semibold text-foreground border-r border-border/60 min-w-[200px] ${fontClass}">
                     ${isKm ? 'ឈ្មោះមុខវិជ្ជា' : 'Subject Name'}
                   </th>
-                  <th scope="col" colspan="6" class="px-2 py-2 text-center font-bold text-foreground border-r border-b border-border/60 bg-muted/20 ${fontClass}">
-                    ${isKm ? 'ពិន្ទុតាមកម្រិតថ្នាក់ (Score by Grade)' : 'Score (by Grade)'}
-                  </th>
-                  <th scope="col" rowspan="2" class="px-2 py-2.5 text-center font-semibold text-foreground border-r border-border/60 align-middle ${fontClass}">
-                    ${isKm ? 'ម៉ោង/សប្តាហ៍' : 'Hours/wk'}
-                  </th>
-                  <th scope="col" rowspan="2" class="px-2 py-2.5 text-center font-semibold text-foreground align-middle ${fontClass}">
-                    ${t('common.actions') || 'សកម្មភាព'}
-                  </th>
-                </tr>
 
-                <!-- Sub Header Row for G7 - G12 -->
-                <tr class="bg-muted/20 text-[11px] font-medium">
+                  <!-- Grade Columns G7 to G12 -->
                   ${GRADES.map(g => {
                     const isColActive = g === activeGrade;
                     const canClick = !isTeacher;
-                    let headerClasses = 'px-1 py-1.5 text-center border-r border-border/60 font-mono tracking-tight transition-colors ';
+                    let headerClasses = 'w-14 min-w-[56px] px-1 py-2.5 text-center border-r border-border/60 transition-colors ';
                     
                     if (isColActive) {
                       headerClasses += 'text-primary font-bold bg-primary/15 ';
@@ -272,7 +260,7 @@ export const SubjectsPage = {
                     }
 
                     if (canClick) {
-                      headerClasses += 'cursor-pointer hover:bg-muted/60 hover:text-foreground ';
+                      headerClasses += 'cursor-pointer hover:bg-muted/70 hover:text-foreground ';
                     } else {
                       headerClasses += 'cursor-default ';
                     }
@@ -282,10 +270,20 @@ export const SubjectsPage = {
                           data-grade="${g}"
                           title="${isTeacher ? (isColActive ? (isKm ? `ថ្នាក់រៀនរបស់អ្នក (${activeGrade})` : `Your assigned classroom (${activeGrade})`) : (isKm ? 'ថ្នាក់ផ្សេងទៀតត្រូវបានចាក់សោ' : 'Locked for teacher account')) : (isKm ? `ចុចដើម្បីផ្ដោតលើកម្រិតថ្នាក់ ${g}` : `Click to focus on ${g}`)}"
                           class="${canClick ? 'btn-select-grade' : ''} ${headerClasses}">
-                        ${g}
+                        <div class="flex flex-col items-center justify-center leading-tight">
+                          <span class="font-mono font-bold text-xs">${g}</span>
+                          <span class="text-[9px] ${isColActive ? 'text-primary font-semibold' : 'text-muted-foreground/70'} ${fontClass}">${isKm ? 'ពិន្ទុ' : 'Score'}</span>
+                        </div>
                       </th>
                     `;
                   }).join('')}
+
+                  <th scope="col" class="w-24 px-3 py-3 text-center font-semibold text-foreground border-r border-border/60 whitespace-nowrap ${fontClass}">
+                    ${isKm ? 'ម៉ោង/សប្តាហ៍' : 'Hours/wk'}
+                  </th>
+                  <th scope="col" class="w-24 px-3 py-3 text-center font-semibold text-foreground whitespace-nowrap ${fontClass}">
+                    ${t('common.actions') || 'សកម្មភាព'}
+                  </th>
                 </tr>
               </thead>
 
