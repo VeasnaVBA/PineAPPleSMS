@@ -80,7 +80,7 @@ export const CoursesPage = {
         <!-- Top Title Bar & Settings Bar -->
         <div class="flex items-center justify-between gap-4 pt-1">
           <div>
-            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-emerald-600 dark:text-emerald-500 ${fontClass}">
+            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-foreground ${fontClass}">
               ${t('courses.title') || 'គ្រប់គ្រងមុខវិជ្ជា'}
             </h1>
           </div>
@@ -88,12 +88,12 @@ export const CoursesPage = {
           <div class="flex items-center gap-3">
             <!-- Active Grade Context Selector / Settings -->
             <div class="flex items-center gap-2 bg-card border border-border px-3 py-1.5 rounded-lg shadow-xs">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
               <span class="text-xs text-muted-foreground font-medium flex items-center gap-1 ${fontClass}">
                 ${getIcon('settings', 'w-3.5 h-3.5')}
                 ${t('courses.actions') || 'ការកំណត់'}:
               </span>
-              <select id="select-active-grade" class="bg-transparent text-xs font-bold text-emerald-600 dark:text-emerald-400 focus:outline-none cursor-pointer">
+              <select id="select-active-grade" class="bg-transparent text-xs font-bold text-primary focus:outline-none cursor-pointer">
                 <option value="G7" ${this.state.activeGrade === 'G7' ? 'selected' : ''}>ថ្នាក់ទី ៧ (G7)</option>
                 <option value="G8" ${this.state.activeGrade === 'G8' ? 'selected' : ''}>ថ្នាក់ទី ៨ (G8)</option>
                 <option value="G9" ${this.state.activeGrade === 'G9' ? 'selected' : ''}>ថ្នាក់ទី ៩ (G9)</option>
@@ -106,7 +106,7 @@ export const CoursesPage = {
             <!-- Add Course Button -->
             <button id="btn-add-course"
                     type="button"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs sm:text-sm font-semibold shadow-sm transition-all cursor-pointer ${fontClass}">
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 active:bg-primary/95 text-primary-foreground text-xs sm:text-sm font-semibold shadow-sm transition-all cursor-pointer ${fontClass}">
               ${getIcon('plus', 'w-4 h-4')}
               <span>${t('courses.addCourse') || 'មុខវិជ្ជាថ្មី'}</span>
             </button>
@@ -122,7 +122,7 @@ export const CoursesPage = {
                  id="input-course-search"
                  value="${this.state.searchQuery || ''}"
                  placeholder="${t('courses.searchPlaceholder') || 'ស្វែងរកមុខវិជ្ជា...'}"
-                 class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs transition-all ${fontClass}" />
+                 class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-2xs transition-all ${fontClass}" />
         </div>
 
         <!-- Courses Table -->
@@ -154,12 +154,12 @@ export const CoursesPage = {
                   </th>
                 </tr>
                 <tr class="border-t border-border/40 text-[10px] sm:text-[11px] font-bold">
-                  <th class="px-2.5 py-1.5 text-center border-r border-border/40 ${this.state.activeGrade === 'G7' ? 'bg-emerald-500/10 text-emerald-600 font-extrabold' : ''}">G7</th>
-                  <th class="px-2.5 py-1.5 text-center border-r border-border/40 ${this.state.activeGrade === 'G8' ? 'bg-emerald-500/10 text-emerald-600 font-extrabold' : ''}">G8</th>
-                  <th class="px-2.5 py-1.5 text-center border-r border-border/40 ${this.state.activeGrade === 'G9' ? 'bg-emerald-500/10 text-emerald-600 font-extrabold' : ''}">G9</th>
-                  <th class="px-2.5 py-1.5 text-center border-r border-border/40 ${this.state.activeGrade === 'G10' ? 'bg-emerald-500/10 text-emerald-600 font-extrabold' : ''}">G10</th>
-                  <th class="px-2.5 py-1.5 text-center border-r border-border/40 ${this.state.activeGrade === 'G11' ? 'bg-emerald-500/10 text-emerald-600 font-extrabold' : ''}">G11</th>
-                  <th class="px-2.5 py-1.5 text-center border-r border-border/50 ${this.state.activeGrade === 'G12' ? 'bg-emerald-500/10 text-emerald-600 font-extrabold' : ''}">G12</th>
+                  <th class="px-2.5 py-1.5 text-center border-r border-border/40 ${this.state.activeGrade === 'G7' ? 'bg-primary/10 text-primary font-extrabold' : ''}">G7</th>
+                  <th class="px-2.5 py-1.5 text-center border-r border-border/40 ${this.state.activeGrade === 'G8' ? 'bg-primary/10 text-primary font-extrabold' : ''}">G8</th>
+                  <th class="px-2.5 py-1.5 text-center border-r border-border/40 ${this.state.activeGrade === 'G9' ? 'bg-primary/10 text-primary font-extrabold' : ''}">G9</th>
+                  <th class="px-2.5 py-1.5 text-center border-r border-border/40 ${this.state.activeGrade === 'G10' ? 'bg-primary/10 text-primary font-extrabold' : ''}">G10</th>
+                  <th class="px-2.5 py-1.5 text-center border-r border-border/40 ${this.state.activeGrade === 'G11' ? 'bg-primary/10 text-primary font-extrabold' : ''}">G11</th>
+                  <th class="px-2.5 py-1.5 text-center border-r border-border/50 ${this.state.activeGrade === 'G12' ? 'bg-primary/10 text-primary font-extrabold' : ''}">G12</th>
                 </tr>
               </thead>
 
@@ -183,7 +183,7 @@ export const CoursesPage = {
                     <tr class="hover:bg-muted/20 transition-colors group">
                       <!-- Icon -->
                       <td class="px-3 py-3.5 text-center text-muted-foreground border-r border-border/40">
-                        <div class="flex justify-center group-hover:text-emerald-600 transition-colors">
+                        <div class="flex justify-center group-hover:text-primary transition-colors">
                           ${getIcon('graduationCap', 'w-4 h-4')}
                         </div>
                       </td>
@@ -200,32 +200,32 @@ export const CoursesPage = {
                       </td>
 
                       <!-- G7 Score -->
-                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 font-mono text-xs ${this.state.activeGrade === 'G7' ? 'font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/5' : 'text-muted-foreground'}">
+                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 font-mono text-xs ${this.state.activeGrade === 'G7' ? 'font-bold text-primary bg-primary/5' : 'text-muted-foreground'}">
                         ${scores.G7 !== undefined ? scores.G7 : 0}
                       </td>
 
                       <!-- G8 Score -->
-                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 font-mono text-xs ${this.state.activeGrade === 'G8' ? 'font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/5' : 'text-muted-foreground'}">
+                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 font-mono text-xs ${this.state.activeGrade === 'G8' ? 'font-bold text-primary bg-primary/5' : 'text-muted-foreground'}">
                         ${scores.G8 !== undefined ? scores.G8 : 0}
                       </td>
 
                       <!-- G9 Score -->
-                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 font-mono text-xs ${this.state.activeGrade === 'G9' ? 'font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/5' : 'text-muted-foreground'}">
+                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 font-mono text-xs ${this.state.activeGrade === 'G9' ? 'font-bold text-primary bg-primary/5' : 'text-muted-foreground'}">
                         ${scores.G9 !== undefined ? scores.G9 : 0}
                       </td>
 
                       <!-- G10 Score -->
-                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 font-mono text-xs ${this.state.activeGrade === 'G10' ? 'font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/5' : 'text-muted-foreground'}">
+                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 font-mono text-xs ${this.state.activeGrade === 'G10' ? 'font-bold text-primary bg-primary/5' : 'text-muted-foreground'}">
                         ${scores.G10 !== undefined ? scores.G10 : 0}
                       </td>
 
                       <!-- G11 Score -->
-                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 font-mono text-xs ${this.state.activeGrade === 'G11' ? 'font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/5' : 'text-muted-foreground'}">
+                      <td class="px-2.5 py-3.5 text-center border-r border-border/40 font-mono text-xs ${this.state.activeGrade === 'G11' ? 'font-bold text-primary bg-primary/5' : 'text-muted-foreground'}">
                         ${scores.G11 !== undefined ? scores.G11 : 0}
                       </td>
 
                       <!-- G12 Score -->
-                      <td class="px-2.5 py-3.5 text-center border-r border-border/50 font-mono text-xs ${this.state.activeGrade === 'G12' ? 'font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/5' : 'text-muted-foreground'}">
+                      <td class="px-2.5 py-3.5 text-center border-r border-border/50 font-mono text-xs ${this.state.activeGrade === 'G12' ? 'font-bold text-primary bg-primary/5' : 'text-muted-foreground'}">
                         ${scores.G12 !== undefined ? scores.G12 : 0}
                       </td>
 
@@ -241,7 +241,7 @@ export const CoursesPage = {
                                   data-action="edit"
                                   data-id="${item.id}"
                                   title="${t('common.edit') || 'Edit'}"
-                                  class="p-1.5 rounded-md text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors cursor-pointer">
+                                  class="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer">
                             ${getIcon('pencil', 'w-3.5 h-3.5')}
                           </button>
                           <button type="button"
@@ -339,7 +339,7 @@ export const CoursesPage = {
             <input type="text"
                    id="modal-course-id"
                    value="${defaultId}"
-                   class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 uppercase font-mono" />
+                   class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary uppercase font-mono" />
             <p id="modal-id-err" class="text-[11px] text-rose-500 mt-1 hidden"></p>
           </div>
 
@@ -352,7 +352,7 @@ export const CoursesPage = {
                    id="modal-course-category"
                    value="${existingCourse?.category || 'វិទ្យាសាស្ត្រពិត'}"
                    list="category-presets"
-                   class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" />
+                   class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
             <datalist id="category-presets">
               <option value="ភាសាខ្មែរ"></option>
               <option value="វិទ្យាសាស្ត្រពិត"></option>
@@ -373,7 +373,7 @@ export const CoursesPage = {
                    id="modal-course-name"
                    value="${existingCourse?.name || ''}"
                    placeholder="ឧ. គណិតវិទ្យា"
-                   class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" />
+                   class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
             <p id="modal-name-err" class="text-[11px] text-rose-500 mt-1 hidden"></p>
           </div>
 
@@ -386,7 +386,7 @@ export const CoursesPage = {
                    id="modal-course-name-en"
                    value="${existingCourse?.nameEn || ''}"
                    placeholder="e.g. Mathematics"
-                   class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" />
+                   class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
           </div>
         </div>
 
@@ -398,22 +398,22 @@ export const CoursesPage = {
           <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
             ${GRADE_KEYS.map(g => `
               <div class="bg-muted/30 p-2 rounded-lg border border-border text-center">
-                <span class="block text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mb-1">${g}</span>
+                <span class="block text-[11px] font-bold text-primary mb-1">${g}</span>
                 <input type="number"
                        min="0"
                        max="200"
                        data-grade="${g}"
                        id="modal-score-${g}"
                        value="${scores[g] !== undefined ? scores[g] : 0}"
-                       class="score-input w-full text-center px-1.5 py-1 text-xs font-mono font-semibold rounded border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-500" />
+                       class="score-input w-full text-center px-1.5 py-1 text-xs font-mono font-semibold rounded border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
               </div>
             `).join('')}
           </div>
         </div>
 
         <!-- Dynamic Grading Scale Live Preview -->
-        <div class="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-1">
-          <div class="font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+        <div class="p-3 rounded-lg bg-primary/10 border border-primary/20 text-xs space-y-1">
+          <div class="font-bold text-primary flex items-center gap-1.5">
             ${getIcon('badgeCheck', 'w-3.5 h-3.5')}
             <span>ការគណនា Grading Scale (A-F) គំរូថ្នាក់ទី ៨:</span>
           </div>
@@ -431,7 +431,7 @@ export const CoursesPage = {
           </button>
           <button type="button"
                   id="modal-btn-save"
-                  class="px-5 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors cursor-pointer">
+                  class="px-5 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-colors cursor-pointer">
             ${t('common.save') || 'រក្សាទុក'}
           </button>
         </div>
