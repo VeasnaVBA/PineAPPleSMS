@@ -15,6 +15,7 @@ import { UsersPage } from './pages/users.js';
 import { SchoolsPage } from './pages/schools.js';
 import { RegistrationPage } from './pages/registration.js';
 import { PromotionPage } from './pages/promotion.js';
+import { SubjectsPage } from './pages/subjects.js';
 import { DownloadDataPage } from './pages/downloadData.js';
 import { authService } from './services/authService.js';
 import { WorkspaceSetupService } from './services/workspaceSetupService.js';
@@ -28,6 +29,7 @@ const routes = {
   schools: SchoolsPage,
   classes: ClassesPage,
   teachers: TeachersPage,
+  subjects: SubjectsPage,
   students: StudentsPage,
   attendance: AttendancePage,
   scores: ScoresPage,
