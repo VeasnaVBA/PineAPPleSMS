@@ -130,7 +130,7 @@ var DEFAULT_SEED_USERS = [
     role: "DIRECTOR",
     status: "ACTIVE",
     classId: "",
-    permissions: JSON.stringify({ dashboard: true, schools: true, registration: true, promotion: true, students: true, teachers: true, classes: true, attendance: true, scores: true, reports: true, settings: true })
+    permissions: JSON.stringify({ dashboard: true, schools: true, registration: true, promotion: true, students: true, teachers: true, classes: true, courses: true, attendance: true, scores: true, reports: true, settings: true })
   },
   {
     id: "usr_teacher_01",
@@ -140,7 +140,7 @@ var DEFAULT_SEED_USERS = [
     role: "TEACHER",
     status: "ACTIVE",
     classId: "class_7a",
-    permissions: JSON.stringify({ dashboard: true, schools: true, students: true, classes: true, attendance: true, scores: true, reports: true })
+    permissions: JSON.stringify({ dashboard: true, schools: true, students: true, classes: true, teachers: true, courses: true, attendance: true, scores: true, reports: true })
   },
   {
     id: "usr_director_02",
@@ -150,7 +150,7 @@ var DEFAULT_SEED_USERS = [
     role: "DIRECTOR",
     status: "ACTIVE",
     classId: "",
-    permissions: JSON.stringify({ dashboard: true, schools: true, registration: true, promotion: true, students: true, teachers: true, classes: true, attendance: true, scores: true, reports: true, settings: true })
+    permissions: JSON.stringify({ dashboard: true, schools: true, registration: true, promotion: true, students: true, teachers: true, classes: true, courses: true, attendance: true, scores: true, reports: true, settings: true })
   }
 ];
 
@@ -171,11 +171,11 @@ var DEFAULT_SEED_SETTINGS = [
 var DEFAULT_SEED_PERMISSIONS = [
   {
     role: "DIRECTOR",
-    permissionsJson: JSON.stringify({ dashboard: true, schools: true, registration: true, promotion: true, students: true, teachers: true, classes: true, attendance: true, scores: true, reports: true, settings: true })
+    permissionsJson: JSON.stringify({ dashboard: true, schools: true, registration: true, promotion: true, students: true, teachers: true, classes: true, courses: true, attendance: true, scores: true, reports: true, settings: true })
   },
   {
     role: "TEACHER",
-    permissionsJson: JSON.stringify({ dashboard: true, schools: true, registration: false, promotion: false, students: true, teachers: false, classes: true, attendance: true, scores: true, reports: true, settings: false })
+    permissionsJson: JSON.stringify({ dashboard: true, schools: true, registration: false, promotion: false, students: true, teachers: true, classes: true, courses: true, attendance: true, scores: true, reports: true, settings: false })
   }
 ];
 

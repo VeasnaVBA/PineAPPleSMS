@@ -285,10 +285,13 @@ export const UsersPage = {
 
     const menuLabels = {
       dashboard: isKm ? 'ផ្ទាំងព័ត៌មាន' : 'Dashboard',
+      registration: isKm ? 'ចុះឈ្មោះសិស្សថ្មី' : 'Admissions & Registration',
+      promotion: isKm ? 'កំណត់សិស្សឡើងថ្នាក់' : 'Yearly Promotion',
       schools: isKm ? 'គ្រប់គ្រងសាលារៀន' : 'Schools Management',
-      students: isKm ? 'គ្រប់គ្រងសិស្ស' : 'Students Management',
-      teachers: isKm ? 'គ្រប់គ្រងគ្រូបង្រៀន' : 'Teachers Directory',
       classes: isKm ? 'គ្រប់គ្រងថ្នាក់រៀន' : 'Classes Management',
+      teachers: isKm ? 'គ្រប់គ្រងគ្រូបង្រៀន' : 'Teachers Directory',
+      courses: isKm ? 'គ្រប់គ្រងមុខវិជ្ជា' : 'Courses / Subjects',
+      students: isKm ? 'គ្រប់គ្រងសិស្ស' : 'Students Management',
       attendance: isKm ? 'កត់ត្រាវត្តមាន' : 'Attendance Roll-Call',
       scores: isKm ? 'ពិន្ទុ និងការវាយតម្លៃ' : 'Scores & Grading',
       reports: isKm ? 'មជ្ឈមណ្ឌលរបាយការណ៍' : 'Reports & Printouts',

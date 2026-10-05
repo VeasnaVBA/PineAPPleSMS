@@ -41,14 +41,17 @@ export const DEFAULT_USERS = [
     classId: null,
     permissions: {
       dashboard: true,
+      schools: true,
+      registration: true,
+      promotion: true,
       students: true,
       teachers: true,
       classes: true,
-      schools: true,
+      courses: true,
       attendance: true,
       scores: true,
       reports: true,
-      settings: false
+      settings: true
     }
   },
   {
@@ -61,10 +64,11 @@ export const DEFAULT_USERS = [
     classId: "class_7a",
     permissions: {
       dashboard: true,
+      schools: true,
       students: true,
       teachers: true,
       classes: true,
-      schools: true,
+      courses: true,
       attendance: true,
       scores: true,
       reports: true,
@@ -81,14 +85,17 @@ export const DEFAULT_USERS = [
     classId: null,
     permissions: {
       dashboard: true,
+      schools: true,
+      registration: true,
+      promotion: true,
       students: true,
       teachers: true,
       classes: true,
-      schools: true,
+      courses: true,
       attendance: true,
       scores: true,
       reports: true,
-      settings: false
+      settings: true
     }
   }
 ];
