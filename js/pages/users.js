@@ -164,7 +164,6 @@ export const UsersPage = {
                     <th class="px-4 py-3">ID</th>
                     <th class="px-4 py-3">${isKm ? 'ឈ្មោះ & ឈ្មោះគណនី' : 'Name & Username'}</th>
                     <th class="px-4 py-3">${isKm ? 'តួនាទី' : 'Role'}</th>
-                    <th class="px-4 py-3">${isKm ? 'បន្ទប់រៀនដែលបានចាត់តាំង' : 'Assigned Classroom'}</th>
                     <th class="px-4 py-3">${isKm ? 'ស្ថានភាព' : 'Status'}</th>
                     <th class="px-4 py-3">${isKm ? 'ការចូលចុងក្រោយ' : 'Last Login'}</th>
                     <th class="w-[50px] px-2 py-3 text-center">${isKm ? 'សកម្មភាព' : 'Actions'}</th>
@@ -421,7 +420,7 @@ export const UsersPage = {
     if (filtered.length === 0) {
       return `
         <tr>
-          <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
+          <td colspan="6" class="px-4 py-12 text-center text-muted-foreground">
             <div class="flex flex-col items-center justify-center gap-2">
               ${getIcon('users', 'w-8 h-8 text-muted-foreground/50')}
               <p class="font-medium">${isKm ? 'រកមិនឃើញគណនីអ្នកប្រើប្រាស់ទេ' : 'No user accounts found'}</p>
@@ -439,15 +438,6 @@ export const UsersPage = {
         roleBadge = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-500/10 text-purple-500 border border-purple-500/20">DIRECTOR</span>`;
       } else {
         roleBadge = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-500/10 text-blue-500 border border-blue-500/20">TEACHER</span>`;
-      }
-
-      let classDisplay = '<span class="text-muted-foreground">—</span>';
-      if (u.role === 'TEACHER') {
-        const classId = u.classId || u.assignedClassId;
-        const cls = this.classes.find(c => c.id === classId);
-        classDisplay = cls 
-          ? `<span class="font-medium text-foreground">${cls.name}</span>`
-          : `<span class="text-amber-500 font-medium">${isKm ? 'មិនទាន់ចាត់តាំង' : 'Unassigned'}</span>`;
       }
 
       const statusBadge = u.status === 'ACTIVE'
@@ -470,7 +460,6 @@ export const UsersPage = {
             <div class="text-[11px] text-muted-foreground">@${u.username}</div>
           </td>
           <td class="px-4 py-3">${roleBadge}</td>
-          <td class="px-4 py-3">${classDisplay}</td>
           <td class="px-4 py-3">${statusBadge}</td>
           <td class="px-4 py-3 text-xs text-muted-foreground">${lastLoginStr}</td>
           <td class="w-[50px] px-2 py-2 text-center">
@@ -762,22 +751,6 @@ export const UsersPage = {
     const isKm = i18n.getLocale() === 'km';
     const isEdit = Boolean(userToEdit);
 
-    // Refresh classes list from database to ensure newly added classes appear
-    try {
-      this.classes = await db.getAll('classes');
-    } catch (e) {
-      console.warn('Could not reload classes:', e);
-    }
-
-    const assignedClassId = userToEdit ? (userToEdit.classId || userToEdit.assignedClassId || '') : '';
-    const classOptions = this.classes.length > 0
-      ? this.classes.map(c => `
-          <option value="${c.id}" ${assignedClassId === c.id ? 'selected' : ''}>
-            ${c.name} (${c.academicYear})
-          </option>
-        `).join('')
-      : `<option value="" disabled>${isKm ? '-- មិនទាន់មានទិន្នន័យបន្ទប់រៀននៅឡើយ --' : '-- No classes available yet --'}</option>`;
-
     const content = `
       <form id="user-form" class="space-y-4 text-xs sm:text-sm">
         <!-- Display Name -->
@@ -814,25 +787,6 @@ export const UsersPage = {
             <option value="DIRECTOR" ${userToEdit?.role === 'DIRECTOR' ? 'selected' : ''}>Director</option>
             <option value="ADMIN" ${userToEdit?.role === 'ADMIN' ? 'selected' : ''}>Admin</option>
           </select>
-        </div>
-
-        <!-- Classroom Assignment (Optional for Teacher) -->
-        <div id="modal-class-group" class="${userToEdit?.role === 'DIRECTOR' || userToEdit?.role === 'ADMIN' ? 'hidden' : ''}">
-          <label class="block font-semibold text-foreground mb-1">
-            ${isKm ? 'បន្ទប់រៀនដែលត្រូវចាត់តាំង' : 'Assigned Classroom'}
-            <span class="text-muted-foreground font-normal text-xs">(${isKm ? 'ស្រេចចិត្ត' : 'Optional'})</span>
-          </label>
-          <select id="modal-user-class" 
-                  class="w-full h-10 px-3 py-2 pr-9 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs">
-            <option value="">${isKm ? '-- មិនទាន់ចាត់តាំងបន្ទប់រៀន --' : '-- No Assigned Classroom --'}</option>
-            ${classOptions}
-          </select>
-          <p class="text-[11px] text-muted-foreground mt-1">
-            ${this.classes.length === 0 
-              ? (isKm ? 'ពុំទាន់មានបន្ទប់រៀនត្រូវបានបង្កើតនៅក្នុងប្រព័ន្ធទេ។ លោកអ្នកអាចបង្កើតគណនីបាន ហើយចាត់តាំងបន្ទប់រៀននៅពេលក្រោយ។' : 'No classes exist in the system yet. You can create the account now and assign a classroom later.')
-              : (isKm ? 'ជ្រើសរើសបន្ទប់រៀនប្រសិនបើគ្រូបង្រៀននេះគ្រប់គ្រងថ្នាក់ជាក់លាក់ណាមួយ ឬទុកនៅទទេបាន។' : 'Select a classroom if this teacher is assigned to a specific class, or leave unassigned.')
-            }
-          </p>
         </div>
 
         <!-- Password -->
@@ -883,17 +837,6 @@ export const UsersPage = {
     });
 
     const roleSelect = document.getElementById('modal-user-role');
-    const classGroup = document.getElementById('modal-class-group');
-    const classSelect = document.getElementById('modal-user-class');
-
-    roleSelect?.addEventListener('change', (e) => {
-      if (e.target.value === 'TEACHER') {
-        classGroup?.classList.remove('hidden');
-      } else {
-        classGroup?.classList.add('hidden');
-        if (classSelect) classSelect.value = '';
-      }
-    });
 
     document.getElementById('btn-modal-cancel')?.addEventListener('click', () => modal.close());
 
@@ -905,7 +848,6 @@ export const UsersPage = {
       const displayName = document.getElementById('modal-user-name')?.value || '';
       const username = document.getElementById('modal-user-username')?.value || '';
       const role = roleSelect?.value || 'TEACHER';
-      const classId = classSelect?.value || null;
       const pass = document.getElementById('modal-user-password')?.value || '';
       const confirmPass = document.getElementById('modal-user-confirm-password')?.value || '';
 
@@ -922,7 +864,6 @@ export const UsersPage = {
           await UserService.update(userToEdit.id, {
             displayName,
             role,
-            classId,
             password: pass || null
           });
           toast.success(isKm ? 'គណនីត្រូវបានកែប្រែដោយជោគជ័យ' : 'Account updated successfully.');
@@ -931,8 +872,7 @@ export const UsersPage = {
             displayName,
             username,
             password: pass,
-            role,
-            classId
+            role
           });
           toast.success(isKm ? 'បានបង្កើតគណនីថ្មីដោយជោគជ័យ' : 'Account created successfully.');
         }
