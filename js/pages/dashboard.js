@@ -20,12 +20,6 @@ export const DashboardPage = {
             <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">${t('dashboard.title')}</h1>
             <p class="text-sm text-muted-foreground mt-1">${t('dashboard.subtitle')}</p>
           </div>
-          <div class="flex items-center gap-2 self-start sm:self-auto">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-              ${t('dashboard.offlineReady')}
-            </span>
-          </div>
         </div>
 
         <!-- Metric Stat Cards (Calculated from IndexedDB) -->
