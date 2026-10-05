@@ -211,8 +211,8 @@ export const SubjectsPage = {
           </div>
 
           <!-- Total Count Badge -->
-          <div class="text-xs text-muted-foreground font-mono self-end sm:self-center">
-            ${isKm ? `សរុប៖ ${filtered.length} មុខវិជ្ជា` : `Total: ${filtered.length} Subjects`}
+          <div class="text-xs text-muted-foreground self-end sm:self-center ${fontClass}">
+            ${isKm ? `សរុប៖ <span class="font-semibold text-foreground">${filtered.length}</span> មុខវិជ្ជា` : `Total: <span class="font-semibold text-foreground">${filtered.length}</span> Subjects`}
           </div>
         </div>
 
