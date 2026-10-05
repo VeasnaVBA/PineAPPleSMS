@@ -1,6 +1,6 @@
 export const km = {
   app: {
-    name: "SMS",
+    name: "PineAPPleSMS",
     badge: "ជំនាន់ក្រៅបណ្តាញ",
     tagline: "ប្រព័ន្ធគ្រប់គ្រងសាលារៀន"
   },

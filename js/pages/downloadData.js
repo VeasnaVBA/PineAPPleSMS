@@ -854,7 +854,7 @@ export const DownloadDataPage = {
 
       if (mode === 'both' || mode === 'json') {
         const jsonBackupPayload = {
-          app: 'SmartSchool Management System',
+          app: 'PineAPPleSMS Management System',
           version: '1.0.0',
           username,
           exportedAt: new Date().toISOString(),
@@ -958,7 +958,7 @@ export const DownloadDataPage = {
     }
 
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'SmartSchool Management System';
+    workbook.creator = 'PineAPPleSMS Management System';
     workbook.lastModifiedBy = 'Administrator';
     workbook.created = new Date();
     workbook.modified = new Date();

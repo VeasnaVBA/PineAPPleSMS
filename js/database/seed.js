@@ -79,11 +79,11 @@ export async function seedWorkspaceBaseline() {
     }
     const schoolEn = await db.get('settings', 'school_name_en');
     if (!schoolEn) {
-      await db.put('settings', { key: 'school_name_en', value: 'SmartSchool Management' });
+      await db.put('settings', { key: 'school_name_en', value: 'PineAPPleSMS' });
     }
     const schoolKm = await db.get('settings', 'school_name_km');
     if (!schoolKm) {
-      await db.put('settings', { key: 'school_name_km', value: 'ប្រព័ន្ធគ្រប់គ្រងសាលារៀន ស្មាតស្គូល' });
+      await db.put('settings', { key: 'school_name_km', value: 'ប្រព័ន្ធគ្រប់គ្រងសាលារៀន PineAPPleSMS' });
     }
 
     // 3. Ensure default Subjects exist in active workspace

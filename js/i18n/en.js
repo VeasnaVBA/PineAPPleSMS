@@ -1,6 +1,6 @@
 export const en = {
   app: {
-    name: "SMS",
+    name: "PineAPPleSMS",
     badge: "Offline Ed.",
     tagline: "School Management System"
   },

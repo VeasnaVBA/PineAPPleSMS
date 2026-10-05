@@ -24,8 +24,8 @@
     "tailwindcss": "^3.4.17"
   },
   "build": {
-    "appId": "com.schoolflow.management",
-    "productName": "School Management System",
+    "appId": "com.pineapplesms.app",
+    "productName": "PineAPPleSMS",
     "directories": {
       "output": "dist"
     },

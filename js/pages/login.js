@@ -82,7 +82,7 @@ export class LoginPage {
               <div class="w-8 h-8 rounded-lg overflow-hidden bg-primary/10 border border-primary/20 flex items-center justify-center shadow-2xs">
                 <img src="${APP_LOGO_BASE64}" alt="Logo" class="w-full h-full object-contain p-0.5" />
               </div>
-              <span class="font-bold tracking-tight">SmartSchool</span>
+              <span class="font-bold tracking-tight">PineAPPleSMS</span>
             </div>
           </div>
 
