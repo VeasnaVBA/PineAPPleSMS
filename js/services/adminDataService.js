@@ -343,6 +343,7 @@ export const AdminDataService = {
         const userRecord = {
           id: u.id || ('usr_' + Date.now() + '_' + Math.random().toString(36).substring(2, 5)),
           username: cleanUsername,
+          password: u.password ? String(u.password).trim() : '',
           passwordHash: passwordHash || '',
           displayName: u.displayName || cleanUsername,
           role: (u.role || 'TEACHER').trim().toUpperCase(),
@@ -356,7 +357,7 @@ export const AdminDataService = {
 
         // If no passwordHash at all, generate default seed hash
         if (!userRecord.passwordHash) {
-          userRecord.passwordHash = await hashPassword('123123');
+          userRecord.passwordHash = await hashPassword(userRecord.password || '123123');
         }
 
         await globalDb.put('users', userRecord);

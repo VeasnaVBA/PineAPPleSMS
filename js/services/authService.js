@@ -115,37 +115,35 @@ class AuthService {
    */
   async login(username, password) {
     const cleanUsername = (username || '').trim().toLowerCase();
-    if (!cleanUsername || !password) {
+    const cleanPassword = (password || '').trim();
+    if (!cleanUsername || !cleanPassword) {
       throw new Error('Please enter both username and password.');
     }
 
-    // 1. Authenticate against central system database (SchoolSystem_Global)
-    let allUsers = await globalDb.getAll('users');
-    let user = allUsers.find(u => u.username.toLowerCase() === cleanUsername);
-    let computedHash = await hashPassword(password);
+    const computedHash = await hashPassword(cleanPassword);
 
-    // If user not found locally or password mismatch, try syncing from Admin Google Sheet if online
-    if (!user || user.passwordHash !== computedHash) {
+    // 1. Cloud-First: Always sync/pull latest accounts & credentials from SchoolSystem_AdminData if online
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
       try {
-        if (typeof navigator !== 'undefined' && navigator.onLine) {
-          const { AdminDataService } = await import('./adminDataService.js');
-          const syncRes = await AdminDataService.pullFromGoogleSheet({ silent: true });
-          if (syncRes && syncRes.success) {
-            allUsers = await globalDb.getAll('users');
-            user = allUsers.find(u => u.username.toLowerCase() === cleanUsername);
-            computedHash = await hashPassword(password);
-          }
-        }
+        const { AdminDataService } = await import('./adminDataService.js');
+        await AdminDataService.pullFromGoogleSheet({ silent: true });
       } catch (syncErr) {
-        console.warn('[Auth] Cloud fallback sync error during login:', syncErr);
+        console.warn('[Auth] Cloud check notice during login:', syncErr);
       }
     }
+
+    // 2. Authenticate against central system database (SchoolSystem_Global)
+    const allUsers = await globalDb.getAll('users');
+    const user = allUsers.find(u => u.username.toLowerCase() === cleanUsername);
 
     if (!user) {
       throw new Error('Invalid username or password.');
     }
 
-    if (user.passwordHash !== computedHash) {
+    const isPasswordValid = (user.passwordHash && user.passwordHash === computedHash) ||
+                            (user.password && String(user.password).trim() === cleanPassword);
+
+    if (!isPasswordValid) {
       throw new Error('Invalid username or password.');
     }
 
@@ -153,18 +151,18 @@ class AuthService {
       throw new Error('This account has been disabled. Please contact the administrator.');
     }
 
-    // 2. Update lastLogin in SchoolSystem_Global
+    // 3. Update lastLogin in SchoolSystem_Global
     user.lastLogin = new Date().toISOString();
     await globalDb.put('users', user);
 
-    // 3. Clear existing in-memory caches before loading the new workspace
+    // 4. Clear existing in-memory caches before loading the new workspace
     this.clearServiceCaches();
 
-    // 4. Initialize the user's private, isolated workspace database
+    // 5. Initialize the user's private, isolated workspace database
     await initUserDatabase(user.id);
     await seedWorkspaceBaseline();
 
-    // 5. Save session in localStorage
+    // 6. Save session in localStorage
     const sessionData = {
       id: user.id,
       username: user.username,

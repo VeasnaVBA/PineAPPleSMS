@@ -78,6 +78,7 @@ export const UserService = {
     const newUser = {
       id,
       username: cleanUsername,
+      password: password.trim(),
       passwordHash,
       displayName: displayName.trim(),
       role: cleanRole,
@@ -130,6 +131,7 @@ export const UserService = {
       if (password.trim().length < 4) {
         throw new Error('Password must be at least 4 characters long.');
       }
+      user.password = password.trim();
       user.passwordHash = await hashPassword(password.trim());
     }
 
