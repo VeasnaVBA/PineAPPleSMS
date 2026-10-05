@@ -42,30 +42,63 @@ class GlobalDatabase {
     if (this.db) return this.db;
     if (this.initPromise) return this.initPromise;
 
-    this.initPromise = new Promise((resolve, reject) => {
-      const request = indexedDB.open(GLOBAL_DB_NAME, GLOBAL_DB_VERSION);
-
-      request.onupgradeneeded = (event) => {
-        const db = event.target.result;
-        if (!db.objectStoreNames.contains('users')) {
-          const userStore = db.createObjectStore('users', { keyPath: 'id' });
-          userStore.createIndex('username', 'username', { unique: true });
-          userStore.createIndex('role', 'role', { unique: false });
-          userStore.createIndex('status', 'status', { unique: false });
+    this.initPromise = new Promise((resolve) => {
+      let isSettled = false;
+      const timer = setTimeout(() => {
+        if (!isSettled) {
+          isSettled = true;
+          console.warn('[IndexedDB] Global database open timed out. Using fallback.');
+          resolve(this.db || { objectStoreNames: { contains: () => false } });
         }
-      };
+      }, 3000);
 
-      request.onsuccess = async (event) => {
-        this.db = event.target.result;
-        // Check and migrate legacy users if present
-        await this._migrateLegacyUsersIfNeeded();
-        resolve(this.db);
-      };
+      try {
+        const request = indexedDB.open(GLOBAL_DB_NAME, GLOBAL_DB_VERSION);
 
-      request.onerror = (event) => {
-        console.error('Global IndexedDB open error:', event.target.error);
-        reject(event.target.error);
-      };
+        request.onblocked = () => {
+          console.warn('[IndexedDB] Global database open was blocked by another open connection.');
+        };
+
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains('users')) {
+            const userStore = db.createObjectStore('users', { keyPath: 'id' });
+            userStore.createIndex('username', 'username', { unique: true });
+            userStore.createIndex('role', 'role', { unique: false });
+            userStore.createIndex('status', 'status', { unique: false });
+          }
+        };
+
+        request.onsuccess = async (event) => {
+          if (isSettled) return;
+          clearTimeout(timer);
+          isSettled = true;
+          const database = event.target.result;
+          database.onversionchange = () => {
+            database.close();
+            this.db = null;
+            this.initPromise = null;
+          };
+          this.db = database;
+          // Check and migrate legacy users if present
+          await this._migrateLegacyUsersIfNeeded();
+          resolve(this.db);
+        };
+
+        request.onerror = (event) => {
+          if (isSettled) return;
+          clearTimeout(timer);
+          isSettled = true;
+          console.error('Global IndexedDB open error:', event.target?.error);
+          resolve(this.db || { objectStoreNames: { contains: () => false } });
+        };
+      } catch (err) {
+        if (isSettled) return;
+        clearTimeout(timer);
+        isSettled = true;
+        console.error('Global IndexedDB open exception:', err);
+        resolve(this.db || { objectStoreNames: { contains: () => false } });
+      }
     });
 
     return this.initPromise;
@@ -280,129 +313,162 @@ class WorkspaceDatabase {
     if (this.db) return this.db;
     if (this.initPromise) return this.initPromise;
 
-    this.initPromise = new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, WORKSPACE_DB_VERSION);
-
-      request.onupgradeneeded = (event) => {
-        const db = event.target.result;
-
-        // 1. Students (29 columns support)
-        if (!db.objectStoreNames.contains('students')) {
-          const studentStore = db.createObjectStore('students', { keyPath: 'id' });
-          studentStore.createIndex('studentId', 'studentId', { unique: true });
-          studentStore.createIndex('academicYear', 'academicYear', { unique: false });
-          studentStore.createIndex('classId', 'classId', { unique: false });
-          studentStore.createIndex('status', 'status', { unique: false });
-          studentStore.createIndex('khmerName', 'khmerName', { unique: false });
-          studentStore.createIndex('englishName', 'englishName', { unique: false });
+    this.initPromise = new Promise((resolve) => {
+      let isSettled = false;
+      const timer = setTimeout(() => {
+        if (!isSettled) {
+          isSettled = true;
+          console.warn(`[IndexedDB] Workspace database ${this.dbName} open timed out. Using fallback.`);
+          resolve(this.db || { objectStoreNames: { contains: () => false } });
         }
+      }, 3000);
 
-        // 2. Teachers
-        if (!db.objectStoreNames.contains('teachers')) {
-          const teacherStore = db.createObjectStore('teachers', { keyPath: 'id' });
-          teacherStore.createIndex('teacherId', 'teacherId', { unique: true });
-          teacherStore.createIndex('status', 'status', { unique: false });
-          teacherStore.createIndex('khmerName', 'khmerName', { unique: false });
-          teacherStore.createIndex('englishName', 'englishName', { unique: false });
-        }
+      try {
+        const request = indexedDB.open(this.dbName, WORKSPACE_DB_VERSION);
 
-        // 3. Classes
-        if (!db.objectStoreNames.contains('classes')) {
-          const classStore = db.createObjectStore('classes', { keyPath: 'id' });
-          classStore.createIndex('name', 'name', { unique: false });
-          classStore.createIndex('academicYear', 'academicYear', { unique: false });
-        }
+        request.onblocked = () => {
+          console.warn(`[IndexedDB] Workspace database ${this.dbName} open was blocked by another open connection.`);
+        };
 
-        // 4. Groups
-        if (!db.objectStoreNames.contains('groups')) {
-          const groupStore = db.createObjectStore('groups', { keyPath: 'id' });
-          groupStore.createIndex('classId', 'classId', { unique: false });
-          groupStore.createIndex('academicYear', 'academicYear', { unique: false });
-        }
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
 
-        // 5. Academic Years
-        if (!db.objectStoreNames.contains('academicYears')) {
-          const yearStore = db.createObjectStore('academicYears', { keyPath: 'id' });
-          yearStore.createIndex('name', 'name', { unique: true });
-          yearStore.createIndex('isActive', 'isActive', { unique: false });
-        }
+          // 1. Students (29 columns support)
+          if (!db.objectStoreNames.contains('students')) {
+            const studentStore = db.createObjectStore('students', { keyPath: 'id' });
+            studentStore.createIndex('studentId', 'studentId', { unique: true });
+            studentStore.createIndex('academicYear', 'academicYear', { unique: false });
+            studentStore.createIndex('classId', 'classId', { unique: false });
+            studentStore.createIndex('status', 'status', { unique: false });
+            studentStore.createIndex('khmerName', 'khmerName', { unique: false });
+            studentStore.createIndex('englishName', 'englishName', { unique: false });
+          }
 
-        // 6. Attendance
-        if (!db.objectStoreNames.contains('attendance')) {
-          const attendanceStore = db.createObjectStore('attendance', { keyPath: 'id' });
-          attendanceStore.createIndex('date', 'date', { unique: false });
-          attendanceStore.createIndex('classId', 'classId', { unique: false });
-          attendanceStore.createIndex('studentId', 'studentId', { unique: false });
-          attendanceStore.createIndex('academicYear', 'academicYear', { unique: false });
-        }
+          // 2. Teachers
+          if (!db.objectStoreNames.contains('teachers')) {
+            const teacherStore = db.createObjectStore('teachers', { keyPath: 'id' });
+            teacherStore.createIndex('teacherId', 'teacherId', { unique: true });
+            teacherStore.createIndex('status', 'status', { unique: false });
+            teacherStore.createIndex('khmerName', 'khmerName', { unique: false });
+            teacherStore.createIndex('englishName', 'englishName', { unique: false });
+          }
 
-        // 7. Scores
-        if (!db.objectStoreNames.contains('scores')) {
-          const scoreStore = db.createObjectStore('scores', { keyPath: 'id' });
-          scoreStore.createIndex('studentId', 'studentId', { unique: false });
-          scoreStore.createIndex('classId', 'classId', { unique: false });
-          scoreStore.createIndex('academicYear', 'academicYear', { unique: false });
-          scoreStore.createIndex('subjectId', 'subjectId', { unique: false });
-        }
+          // 3. Classes
+          if (!db.objectStoreNames.contains('classes')) {
+            const classStore = db.createObjectStore('classes', { keyPath: 'id' });
+            classStore.createIndex('name', 'name', { unique: false });
+            classStore.createIndex('academicYear', 'academicYear', { unique: false });
+          }
 
-        // 8. Subjects
-        if (!db.objectStoreNames.contains('subjects')) {
-          const subjectStore = db.createObjectStore('subjects', { keyPath: 'id' });
-          subjectStore.createIndex('name', 'name', { unique: false });
-          subjectStore.createIndex('code', 'code', { unique: true });
-        }
+          // 4. Groups
+          if (!db.objectStoreNames.contains('groups')) {
+            const groupStore = db.createObjectStore('groups', { keyPath: 'id' });
+            groupStore.createIndex('classId', 'classId', { unique: false });
+            groupStore.createIndex('academicYear', 'academicYear', { unique: false });
+          }
 
-        // 9. Settings (Private user preferences, active year, etc.)
-        if (!db.objectStoreNames.contains('settings')) {
-          db.createObjectStore('settings', { keyPath: 'key' });
-        }
+          // 5. Academic Years
+          if (!db.objectStoreNames.contains('academicYears')) {
+            const yearStore = db.createObjectStore('academicYears', { keyPath: 'id' });
+            yearStore.createIndex('name', 'name', { unique: true });
+            yearStore.createIndex('isActive', 'isActive', { unique: false });
+          }
 
-        // 10. Activity Logs
-        if (!db.objectStoreNames.contains('activityLogs')) {
-          const logStore = db.createObjectStore('activityLogs', { keyPath: 'id' });
-          logStore.createIndex('timestamp', 'timestamp', { unique: false });
-        }
+          // 6. Attendance
+          if (!db.objectStoreNames.contains('attendance')) {
+            const attendanceStore = db.createObjectStore('attendance', { keyPath: 'id' });
+            attendanceStore.createIndex('date', 'date', { unique: false });
+            attendanceStore.createIndex('classId', 'classId', { unique: false });
+            attendanceStore.createIndex('studentId', 'studentId', { unique: false });
+            attendanceStore.createIndex('academicYear', 'academicYear', { unique: false });
+          }
 
-        // 11. Schools
-        if (!db.objectStoreNames.contains('schools')) {
-          const schoolStore = db.createObjectStore('schools', { keyPath: 'id' });
-          schoolStore.createIndex('code', 'code', { unique: true });
-          schoolStore.createIndex('name', 'name', { unique: false });
-        }
+          // 7. Scores
+          if (!db.objectStoreNames.contains('scores')) {
+            const scoreStore = db.createObjectStore('scores', { keyPath: 'id' });
+            scoreStore.createIndex('studentId', 'studentId', { unique: false });
+            scoreStore.createIndex('classId', 'classId', { unique: false });
+            scoreStore.createIndex('academicYear', 'academicYear', { unique: false });
+            scoreStore.createIndex('subjectId', 'subjectId', { unique: false });
+          }
 
-        // 12. Report Settings / Presets
-        if (!db.objectStoreNames.contains('report_settings')) {
-          db.createObjectStore('report_settings', { keyPath: 'id' });
-        }
+          // 8. Subjects
+          if (!db.objectStoreNames.contains('subjects')) {
+            const subjectStore = db.createObjectStore('subjects', { keyPath: 'id' });
+            subjectStore.createIndex('name', 'name', { unique: false });
+            subjectStore.createIndex('code', 'code', { unique: true });
+          }
 
-        // 13. Registration Queue (Admissions & Transfer Staging)
-        if (!db.objectStoreNames.contains('registration_queue')) {
-          const regStore = db.createObjectStore('registration_queue', { keyPath: 'id' });
-          regStore.createIndex('tempStudentId', 'tempStudentId', { unique: false });
-          regStore.createIndex('verificationStatus', 'verificationStatus', { unique: false });
-          regStore.createIndex('targetGrade', 'targetGrade', { unique: false });
-          regStore.createIndex('name', 'name', { unique: false });
-          regStore.createIndex('importedAt', 'importedAt', { unique: false });
-        }
+          // 9. Settings (Private user preferences, active year, etc.)
+          if (!db.objectStoreNames.contains('settings')) {
+            db.createObjectStore('settings', { keyPath: 'key' });
+          }
 
-        // 14. Courses (Curriculum Subjects & Max Scores G7-G12)
-        if (!db.objectStoreNames.contains('courses')) {
-          const courseStore = db.createObjectStore('courses', { keyPath: 'id' });
-          courseStore.createIndex('courseId', 'courseId', { unique: false });
-          courseStore.createIndex('name', 'name', { unique: false });
-          courseStore.createIndex('category', 'category', { unique: false });
-        }
-      };
+          // 10. Activity Logs
+          if (!db.objectStoreNames.contains('activityLogs')) {
+            const logStore = db.createObjectStore('activityLogs', { keyPath: 'id' });
+            logStore.createIndex('timestamp', 'timestamp', { unique: false });
+          }
 
-      request.onsuccess = (event) => {
-        this.db = event.target.result;
-        resolve(this.db);
-      };
+          // 11. Schools
+          if (!db.objectStoreNames.contains('schools')) {
+            const schoolStore = db.createObjectStore('schools', { keyPath: 'id' });
+            schoolStore.createIndex('code', 'code', { unique: true });
+            schoolStore.createIndex('name', 'name', { unique: false });
+          }
 
-      request.onerror = (event) => {
-        console.error(`Workspace IndexedDB open error (${this.dbName}):`, event.target.error);
-        reject(event.target.error);
-      };
+          // 12. Report Settings / Presets
+          if (!db.objectStoreNames.contains('report_settings')) {
+            db.createObjectStore('report_settings', { keyPath: 'id' });
+          }
+
+          // 13. Registration Queue (Admissions & Transfer Staging)
+          if (!db.objectStoreNames.contains('registration_queue')) {
+            const regStore = db.createObjectStore('registration_queue', { keyPath: 'id' });
+            regStore.createIndex('tempStudentId', 'tempStudentId', { unique: false });
+            regStore.createIndex('verificationStatus', 'verificationStatus', { unique: false });
+            regStore.createIndex('targetGrade', 'targetGrade', { unique: false });
+            regStore.createIndex('name', 'name', { unique: false });
+            regStore.createIndex('importedAt', 'importedAt', { unique: false });
+          }
+
+          // 14. Courses (Curriculum Subjects & Max Scores G7-G12)
+          if (!db.objectStoreNames.contains('courses')) {
+            const courseStore = db.createObjectStore('courses', { keyPath: 'id' });
+            courseStore.createIndex('courseId', 'courseId', { unique: false });
+            courseStore.createIndex('name', 'name', { unique: false });
+            courseStore.createIndex('category', 'category', { unique: false });
+          }
+        };
+
+        request.onsuccess = (event) => {
+          if (isSettled) return;
+          clearTimeout(timer);
+          isSettled = true;
+          const database = event.target.result;
+          database.onversionchange = () => {
+            database.close();
+            this.db = null;
+            this.initPromise = null;
+          };
+          this.db = database;
+          resolve(this.db);
+        };
+
+        request.onerror = (event) => {
+          if (isSettled) return;
+          clearTimeout(timer);
+          isSettled = true;
+          console.error(`Workspace IndexedDB open error (${this.dbName}):`, event.target?.error);
+          resolve(this.db || { objectStoreNames: { contains: () => false } });
+        };
+      } catch (err) {
+        if (isSettled) return;
+        clearTimeout(timer);
+        isSettled = true;
+        console.error(`Workspace IndexedDB exception (${this.dbName}):`, err);
+        resolve(this.db || { objectStoreNames: { contains: () => false } });
+      }
     });
 
     return this.initPromise;

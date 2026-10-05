@@ -314,7 +314,7 @@ export const CourseService = {
   async getAll() {
     try {
       const database = await db.open();
-      if (database.objectStoreNames.contains('courses')) {
+      if (database && database.objectStoreNames && database.objectStoreNames.contains('courses')) {
         const list = await db.getAll('courses');
         if (list && list.length > 0) {
           return list;
@@ -330,7 +330,10 @@ export const CourseService = {
             });
           } catch (_) {}
         }
-        return await db.getAll('courses');
+        const freshList = await db.getAll('courses');
+        if (freshList && freshList.length > 0) {
+          return freshList;
+        }
       }
     } catch (err) {
       console.warn('Courses store access error, falling back:', err);
