@@ -66,37 +66,12 @@ export class LoginPage {
       ? 'bg-zinc-800/70 hover:bg-zinc-700/90 text-zinc-300 hover:text-white border-zinc-700/40'
       : 'bg-zinc-100 hover:bg-zinc-200/80 text-zinc-700 hover:text-zinc-900 border-zinc-200';
 
-    // Top Controls
-    const topControlClass = isDark
-      ? 'bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800'
-      : 'bg-white/90 border-zinc-200 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100';
-
     // Footer
     const footerLinkClass = isDark ? 'text-zinc-500 hover:text-zinc-400' : 'text-zinc-400 hover:text-zinc-600';
 
     this.container.innerHTML = `
-      <div class="min-h-screen w-full flex flex-col justify-between items-center p-4 sm:p-6 ${bgClass} relative overflow-x-hidden select-none font-sans transition-colors duration-200">
+      <div class="min-h-screen w-full flex flex-col justify-center items-center p-4 sm:p-6 ${bgClass} relative overflow-x-hidden select-none font-sans transition-colors duration-200">
         
-        <!-- Top Controls (Theme & Language) -->
-        <div class="w-full max-w-[420px] flex items-center justify-end gap-2 pt-2 z-10">
-          <!-- Language Toggle -->
-          <button id="login-btn-lang" 
-                  type="button"
-                  title="${isKm ? 'Switch to English' : 'ប្តូរទៅភាសាខ្មែរ'}"
-                  class="flex items-center gap-1.5 px-2.5 py-1 rounded-md border ${topControlClass} text-xs transition-all cursor-pointer">
-            ${getIcon('globe', 'w-3.5 h-3.5')}
-            <span class="font-semibold text-[11px]">${isKm ? 'ខ្មែរ' : 'EN'}</span>
-          </button>
-
-          <!-- Theme Toggle (Light / Dark) -->
-          <button id="login-btn-theme" 
-                  type="button"
-                  title="${isDark ? (isKm ? 'ប្តូរទៅផ្ទៃភ្លឺ' : 'Switch to Light Mode') : (isKm ? 'ប្តូរទៅផ្ទៃងងឹត' : 'Switch to Dark Mode')}"
-                  class="p-1.5 rounded-md border ${topControlClass} text-xs transition-all cursor-pointer">
-            ${getIcon(isDark ? 'sun' : 'moon', 'w-3.5 h-3.5')}
-          </button>
-        </div>
-
         <!-- Main Login Card -->
         <div class="w-full max-w-[420px] border rounded-[28px] p-7 sm:p-9 relative z-10 my-auto animate-fade-in ${cardBgClass} transition-colors duration-200">
           
@@ -208,7 +183,7 @@ export class LoginPage {
         </div>
 
         <!-- Bottom Footer Links -->
-        <div class="w-full max-w-[420px] flex items-center justify-center gap-6 text-xs pb-4 z-10">
+        <div class="w-full max-w-[420px] flex items-center justify-center gap-6 text-xs pb-4 z-10 mt-6">
           <button type="button" class="footer-link transition-colors bg-transparent border-none p-0 cursor-pointer ${footerLinkClass}">Customer Centre</button>
           <button type="button" class="footer-link transition-colors bg-transparent border-none p-0 cursor-pointer ${footerLinkClass}">Terms</button>
           <button type="button" class="footer-link transition-colors bg-transparent border-none p-0 cursor-pointer ${footerLinkClass}">Privacy</button>
@@ -220,19 +195,6 @@ export class LoginPage {
   }
 
   bindEvents() {
-    // Theme Toggle
-    const themeBtn = document.getElementById('login-btn-theme');
-    themeBtn?.addEventListener('click', () => {
-      themeService.toggle();
-    });
-
-    // Language Toggle
-    const langBtn = document.getElementById('login-btn-lang');
-    langBtn?.addEventListener('click', () => {
-      const nextLang = i18n.getLocale() === 'km' ? 'en' : 'km';
-      i18n.setLocale(nextLang);
-    });
-
     // Cloud Sync Accounts click on login page
     const syncBtn = document.getElementById('btn-login-cloud-sync');
     const syncText = document.getElementById('btn-login-cloud-sync-text');
