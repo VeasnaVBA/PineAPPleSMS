@@ -21,7 +21,7 @@
  */
 
 export const CLOUD_SYNC_CONFIG_KEY = 'GOOGLE_SCRIPT_WEBAPP_URL';
-export const DEFAULT_GOOGLE_SCRIPT_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbw3k8bbZt4D-VOECMPfp5LRggsZstSn7A-qwyIIHYTHPJauiMdkOso3CFfuGkhuihRB/exec';
+export const DEFAULT_GOOGLE_SCRIPT_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyt7OarmmPwiUr3nDnYUjNqnB7D-3hcbh3CXCNZATKEiLeY3tgoUS0pucuxqAEjsfq2/exec';
 
 export const ADMIN_SPREADSHEET_NAME = 'SchoolSystem_AdminData';
 export const ADMIN_DATA_LAST_SYNC_KEY = 'SCHOOL_ADMIN_DATA_LAST_SYNC';
@@ -180,25 +180,25 @@ var DEFAULT_SEED_PERMISSIONS = [
 ];
 
 var DEFAULT_SEED_COURSES = [
-  ["CRS-544", "សរសេរតាមអាន", "Dictation", "ភាសាខ្មែរ", 40, 40, 40, 0, 0, 0, "Grade 8 (Full: 40): A≥36 | B≥32 | C≥28 | D≥24 | E≥20 | F<20", 2],
-  ["CRS-466", "តែងសេចក្តី", "Essay Writing", "ភាសាខ្មែរ", 60, 60, 60, 0, 0, 0, "Grade 8 (Full: 60): A≥54 | B≥48 | C≥42 | D≥36 | E≥30 | F<30", 2],
-  ["CRS-929", "ភាសាខ្មែរ", "Khmer Literature", "ភាសាខ្មែរ", 100, 100, 100, 0, 0, 0, "Grade 8 (Full: 100): A≥90 | B≥80 | C≥70 | D≥60 | E≥50 | F<50", 4],
-  ["CRS-197", "គណិតវិទ្យា", "Mathematics", "វិទ្យាសាស្ត្រពិត", 100, 100, 100, 0, 0, 0, "Grade 8 (Full: 100): A≥90 | B≥80 | C≥70 | D≥60 | E≥50 | F<50", 6],
-  ["CRS-648", "រូបវិទ្យា", "Physics", "វិទ្យាសាស្ត្រពិត", 50, 50, 35, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
-  ["CRS-341", "គីមីវិទ្យា", "Chemistry", "វិទ្យាសាស្ត្រពិត", 50, 50, 25, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
-  ["CRS-104", "ជីវវិទ្យា", "Biology", "វិទ្យាសាស្ត្រពិត", 50, 50, 35, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
-  ["CRS-767", "ប្រវត្តិវិទ្យា", "History", "វិទ្យាសាស្ត្រសង្គម", 50, 50, 33, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
-  ["CRS-358", "ព័ត៌មានវិទ្យា", "Information Technology", "បច្ចេកវិទ្យា", 50, 50, 50, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
-  ["CRS-404", "សីលធម៌-ពលរដ្ឋវិទ្យា", "Moral & Civics", "វិទ្យាសាស្ត្រសង្គម", 50, 50, 35, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
-  ["CRS-954", "ផែនដីវិទ្យា", "Earth Science", "វិទ្យាសាស្ត្រពិត", 50, 50, 25, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
-  ["CRS-445", "ភូមិវិទ្យា", "Geography", "វិទ្យាសាស្ត្រសង្គម", 50, 50, 32, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
-  ["CRS-338", "គេហវិជ្ជា", "Home Economics", "បំណិនជីវិត", 50, 50, 50, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
-  ["CRS-948", "អប់រំកាយ", "Physical Education", "កីឡា និងសិល្បៈ", 50, 50, 50, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
-  ["CRS-447", "បំណិនជីវិត", "Life Skills", "បំណិនជីវិត", 50, 50, 50, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
-  ["CRS-111", "សេដ្ឋកិច្ច", "Economics", "វិទ្យាសាស្ត្រសង្គម", 50, 50, 50, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
-  ["CRS-760", "សិល្បៈ", "Arts", "កីឡា និងសិល្បៈ", 50, 50, 50, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
-  ["CRS-647", "កសិកម្ម", "Agriculture", "បំណិនជីវិត", 50, 50, 50, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 2],
-  ["CRS-845", "ភាសាបរទេស", "Foreign Languages", "ភាសាបរទេស", 50, 50, 50, 0, 0, 0, "Grade 8 (Full: 50): A≥45 | B≥40 | C≥35 | D≥30 | E≥25 | F<25", 4]
+  ["CRS-544", "សរសេរតាមអាន", "Dictation", "ភាសាខ្មែរ", 40, 40, 40, 0, 0, 0, 2],
+  ["CRS-466", "តែងសេចក្តី", "Essay Writing", "ភាសាខ្មែរ", 60, 60, 60, 0, 0, 0, 2],
+  ["CRS-929", "ភាសាខ្មែរ", "Khmer Literature", "ភាសាខ្មែរ", 100, 100, 100, 0, 0, 0, 4],
+  ["CRS-197", "គណិតវិទ្យា", "Mathematics", "វិទ្យាសាស្ត្រពិត", 100, 100, 100, 0, 0, 0, 6],
+  ["CRS-648", "រូបវិទ្យា", "Physics", "វិទ្យាសាស្ត្រពិត", 50, 50, 35, 0, 0, 0, 2],
+  ["CRS-341", "គីមីវិទ្យា", "Chemistry", "វិទ្យាសាស្ត្រពិត", 50, 50, 25, 0, 0, 0, 2],
+  ["CRS-104", "ជីវវិទ្យា", "Biology", "វិទ្យាសាស្ត្រពិត", 50, 50, 35, 0, 0, 0, 2],
+  ["CRS-767", "ប្រវត្តិវិទ្យា", "History", "វិទ្យាសាស្ត្រសង្គម", 50, 50, 33, 0, 0, 0, 2],
+  ["CRS-358", "ព័ត៌មានវិទ្យា", "Information Technology", "បច្ចេកវិទ្យា", 50, 50, 50, 0, 0, 0, 2],
+  ["CRS-404", "សីលធម៌-ពលរដ្ឋវិទ្យា", "Moral & Civics", "វិទ្យាសាស្ត្រសង្គម", 50, 50, 35, 0, 0, 0, 2],
+  ["CRS-954", "ផែនដីវិទ្យា", "Earth Science", "វិទ្យាសាស្ត្រពិត", 50, 50, 25, 0, 0, 0, 2],
+  ["CRS-445", "ភូមិវិទ្យា", "Geography", "វិទ្យាសាស្ត្រសង្គម", 50, 50, 32, 0, 0, 0, 2],
+  ["CRS-338", "គេហវិជ្ជា", "Home Economics", "បំណិនជីវិត", 50, 50, 50, 0, 0, 0, 2],
+  ["CRS-948", "អប់រំកាយ", "Physical Education", "កីឡា និងសិល្បៈ", 50, 50, 50, 0, 0, 0, 2],
+  ["CRS-447", "បំណិនជីវិត", "Life Skills", "បំណិនជីវិត", 50, 50, 50, 0, 0, 0, 2],
+  ["CRS-111", "សេដ្ឋកិច្ច", "Economics", "វិទ្យាសាស្ត្រសង្គម", 50, 50, 50, 0, 0, 0, 2],
+  ["CRS-760", "សិល្បៈ", "Arts", "កីឡា និងសិល្បៈ", 50, 50, 50, 0, 0, 0, 2],
+  ["CRS-647", "កសិកម្ម", "Agriculture", "បំណិនជីវិត", 50, 50, 50, 0, 0, 0, 2],
+  ["CRS-845", "ភាសាបរទេស", "Foreign Languages", "ភាសាបរទេស", 50, 50, 50, 0, 0, 0, 4]
 ];
 
 function doGet(e) {
@@ -374,7 +374,7 @@ function ensureAdminSheetTabs(spreadsheet) {
   if (!coursesSheet || coursesSheet.getDataRange().getValues().length <= 1) {
     if (!coursesSheet) coursesSheet = spreadsheet.insertSheet('courses');
     coursesSheet.clear();
-    var courseHeaders = ['courseId', 'name', 'nameEn', 'category', 'G7', 'G8', 'G9', 'G10', 'G11', 'G12', 'gradingScaleG8', 'creditHours', 'updatedAt'];
+    var courseHeaders = ['courseId', 'name', 'nameEn', 'category', 'G7', 'G8', 'G9', 'G10', 'G11', 'G12', 'creditHours', 'updatedAt'];
     var courseMatrix = [courseHeaders];
     for (var c = 0; c < DEFAULT_SEED_COURSES.length; c++) {
       var crsRow = DEFAULT_SEED_COURSES[c].slice();
