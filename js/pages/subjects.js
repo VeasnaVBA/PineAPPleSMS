@@ -482,10 +482,15 @@ export const SubjectsPage = {
             <p id="modal-code-err" class="text-[11px] text-rose-500 mt-1 hidden"></p>
           </div>
 
-          <!-- Middle Graduation / Book Icon -->
-          <div class="hidden sm:flex items-center justify-center w-10 h-10 rounded-lg border border-border bg-muted/30 text-primary flex-shrink-0 mb-0.5 shadow-2xs">
-            ${getIcon('graduationCap', 'w-5 h-5') || getIcon('bookOpen', 'w-5 h-5')}
-          </div>
+          <!-- Middle Graduation / Auto Generate Code Button -->
+          <button type="button"
+                  id="btn-auto-code"
+                  title="${isKm ? 'ចុចដើម្បីបង្កើតកូដស្វ័យប្រវត្តិ (Auto-generate ID)' : 'Click to auto-generate Subject ID'}"
+                  class="hidden sm:flex items-center justify-center w-10 h-10 rounded-lg border border-border bg-card hover:bg-primary/10 active:scale-95 text-primary hover:border-primary/40 transition-all flex-shrink-0 mb-0.5 shadow-2xs cursor-pointer group">
+            <span class="group-hover:rotate-12 transition-transform duration-200">
+              ${getIcon('graduationCap', 'w-5 h-5') || getIcon('bookOpen', 'w-5 h-5')}
+            </span>
+          </button>
 
           <!-- Subject Name (ឈ្មោះមុខវិជ្ជា) -->
           <div class="flex-1">
@@ -630,6 +635,16 @@ export const SubjectsPage = {
 
     const modalEl = modal.element;
     if (!modalEl) return;
+
+    // Auto Generate Subject ID Button
+    modalEl.querySelector('#btn-auto-code')?.addEventListener('click', async () => {
+      const codeInput = modalEl.querySelector('#modal-subject-code');
+      if (codeInput) {
+        codeInput.value = await SubjectService.generateCode();
+        codeInput.classList.add('ring-2', 'ring-primary/40');
+        setTimeout(() => codeInput.classList.remove('ring-2', 'ring-primary/40'), 600);
+      }
+    });
 
     // Quick fill buttons
     modalEl.querySelectorAll('.btn-quick-fill').forEach(btn => {
