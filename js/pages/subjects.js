@@ -24,7 +24,8 @@ export const SubjectsPage = {
     searchQuery: '',
     previewScore: 50,
     activeGrade: 'G7',
-    selectedClassId: 'all'
+    selectedClassId: 'all',
+    expandedSubjectId: null
   },
 
   async render(container) {
@@ -138,66 +139,7 @@ export const SubjectsPage = {
           </div>
         </div>
 
-        <!-- Grading Formula & Scale Banner (MoEYS Standard A-F) -->
-        <div class="p-4 rounded-xl bg-card border border-border shadow-2xs space-y-3">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-2.5">
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <h3 class="text-xs sm:text-sm font-bold text-foreground ${fontClass}">
-                ${isKm ? 'រូបមន្តគណនានិទ្ទេស' : 'Grading Scale Formula (A-F)'}
-              </h3>
-              <span class="text-[11px] text-muted-foreground hidden sm:inline">•</span>
-              <span class="text-[11px] text-muted-foreground hidden sm:inline ${fontClass}">
-                ${isTeacher && teacherClass 
-                  ? (isKm ? `គណនាផ្អែកលើថ្នាក់ ${teacherClass.name} កម្រិត ${activeGrade}` : `Calculated for class ${teacherClass.name} (${activeGrade})`)
-                  : (isKm ? 'យោងតាមកម្រិតថ្នាក់ជាក់ស្តែង' : 'Matched by classroom name (e.g. 7A = Grade 7)')}
-              </span>
-            </div>
-
-            <!-- Score Preview Selector -->
-            <div class="flex items-center gap-1.5 text-xs">
-              <span class="text-muted-foreground ${fontClass}">${isKm ? 'គំរូពិន្ទុពេញ៖' : 'Sample Full Score:'}</span>
-              ${[100, 50, 40, 60, 35, 25].map(pts => `
-                <button type="button"
-                        data-score="${pts}"
-                        class="btn-preview-score px-2 py-0.5 rounded text-xs font-mono font-medium transition-colors cursor-pointer ${this.state.previewScore === pts ? 'bg-primary text-primary-foreground shadow-2xs' : 'bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground'}">
-                  ${pts}
-                </button>
-              `).join('')}
-            </div>
-          </div>
-
-          <!-- Grade Brackets Cards -->
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-            ${scalePreview.map(item => {
-              let badgeColor = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
-              if (item.grade === 'B') badgeColor = 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20';
-              if (item.grade === 'C') badgeColor = 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20';
-              if (item.grade === 'D') badgeColor = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
-              if (item.grade === 'E') badgeColor = 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20';
-              if (item.grade === 'F') badgeColor = 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20';
-
-              return `
-                <div class="p-2.5 rounded-lg border bg-muted/20 border-border/80 flex flex-col justify-between space-y-1 text-center">
-                  <div class="flex items-center justify-between">
-                    <span class="px-2 py-0.5 rounded font-mono font-bold text-xs border ${badgeColor}">
-                      ${item.grade}
-                    </span>
-                    <span class="text-[10px] font-mono text-muted-foreground">${item.percentRange}</span>
-                  </div>
-                  <div class="font-bold text-xs text-foreground ${fontClass}">
-                    ${isKm ? item.labelKm : item.labelEn}
-                  </div>
-                  <div class="text-[11px] font-mono font-semibold text-primary pt-0.5">
-                    ${item.grade === 'F' ? `< ${item.maxScore + 0.1}` : `${item.minScore} - ${item.maxScore}`} pts
-                  </div>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-
-        <!-- Search Bar -->
+        <!-- Search Bar & Count -->
         <div class="flex flex-col sm:flex-row gap-3 items-center justify-between">
           <div class="relative w-full sm:max-w-md">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground">
@@ -266,7 +208,7 @@ export const SubjectsPage = {
                   <th scope="col" class="w-24 px-3 py-3 text-center font-semibold text-foreground border-r border-border/60 whitespace-nowrap ${fontClass}">
                     ${isKm ? 'ម៉ោង/សប្តាហ៍' : 'Hours/wk'}
                   </th>
-                  <th scope="col" class="w-24 px-3 py-3 text-center font-semibold text-foreground whitespace-nowrap ${fontClass}">
+                  <th scope="col" class="w-28 px-3 py-3 text-center font-semibold text-foreground whitespace-nowrap ${fontClass}">
                     ${t('common.actions') || 'សកម្មភាព'}
                   </th>
                 </tr>
@@ -286,9 +228,12 @@ export const SubjectsPage = {
                   const mainName = isKm ? item.name : (item.nameEn || item.name);
                   const subName = isKm ? item.nameEn : (item.nameEn ? item.name : '');
                   const scores = item.scoreByGrade || {};
+                  const isExpanded = this.state.expandedSubjectId === item.id;
+                  const activeFullScore = SubjectService.getSubjectFullScore(item, activeGrade);
+                  const brackets = SubjectService.getGradingScaleSummary(activeFullScore);
 
                   return `
-                    <tr class="hover:bg-muted/20 transition-colors group">
+                    <tr class="hover:bg-muted/20 transition-colors group ${isExpanded ? 'bg-muted/10' : ''}">
                       <!-- Row No -->
                       <td class="px-2 py-3 text-center text-muted-foreground border-r border-border/40 font-mono text-xs">
                         ${idx + 1}
@@ -301,9 +246,9 @@ export const SubjectsPage = {
 
                       <!-- Subject Name (Khmer & English) -->
                       <td class="px-3.5 py-3 border-r border-border/40 ${fontClass}">
-                        <div class="font-semibold text-foreground text-sm flex items-center gap-1.5">
+                        <div class="font-semibold text-foreground text-sm flex items-center gap-1.5 cursor-pointer" data-action="toggle-scale" data-id="${item.id}" title="${isKm ? 'ចុចដើម្បីមើលរូបមន្តគណនានិទ្ទេស' : 'Click to view grading scale'}">
                           ${getIcon('bookOpen', 'w-3.5 h-3.5 text-primary flex-shrink-0')}
-                          <span class="truncate">${mainName}</span>
+                          <span class="truncate hover:underline hover:text-primary transition-colors">${mainName}</span>
                         </div>
                         ${subName ? `<div class="text-[11px] text-muted-foreground/80 mt-0.5 pl-5 truncate">${subName}</div>` : ''}
                       </td>
@@ -342,7 +287,16 @@ export const SubjectsPage = {
 
                       <!-- Actions -->
                       <td class="px-2 py-3 text-center whitespace-nowrap">
-                        <div class="flex items-center justify-center gap-1.5">
+                        <div class="flex items-center justify-center gap-1">
+                          <!-- Toggle Grading Scale Formula Button -->
+                          <button type="button"
+                                  data-action="toggle-scale"
+                                  data-id="${item.id}"
+                                  title="${isKm ? 'រូបមន្តគណនានិទ្ទេស' : 'Grading Formula Scale'}"
+                                  class="p-1.5 rounded-md ${isExpanded ? 'text-primary bg-primary/15 shadow-2xs' : 'text-muted-foreground hover:text-primary hover:bg-primary/10'} transition-all cursor-pointer">
+                            ${getIcon('award', 'w-3.5 h-3.5') || getIcon('clipboardList', 'w-3.5 h-3.5')}
+                          </button>
+
                           <button type="button"
                                   data-action="edit"
                                   data-id="${item.id}"
@@ -360,6 +314,55 @@ export const SubjectsPage = {
                         </div>
                       </td>
                     </tr>
+
+                    <!-- Per-Subject Expandable Grading Formula Scale Row -->
+                    ${isExpanded ? `
+                      <tr class="bg-muted/15 border-b border-border/70 animate-fade-in">
+                        <td colspan="11" class="p-3.5 sm:px-6">
+                          <div class="space-y-2.5">
+                            <div class="flex items-center justify-between text-xs">
+                              <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                <span class="font-bold text-foreground ${fontClass}">
+                                  ${isKm ? 'រូបមន្តគណនានិទ្ទេសមុខវិជ្ជា៖' : 'Grading Scale for:'} 
+                                  <span class="text-primary font-bold">${mainName}</span>
+                                  <span class="text-muted-foreground font-normal text-[11px]">(${isKm ? 'ពិន្ទុពេញ' : 'Full Score'}: <strong class="text-primary font-mono">${activeFullScore}</strong> pts / ${activeGrade})</span>
+                                </span>
+                              </div>
+                            </div>
+
+                            <!-- Grade Brackets Cards A-F -->
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                              ${brackets.map(bracket => {
+                                let badgeColor = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
+                                if (bracket.grade === 'B') badgeColor = 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20';
+                                if (bracket.grade === 'C') badgeColor = 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20';
+                                if (bracket.grade === 'D') badgeColor = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
+                                if (bracket.grade === 'E') badgeColor = 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20';
+                                if (bracket.grade === 'F') badgeColor = 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20';
+
+                                return `
+                                  <div class="p-2.5 rounded-lg border bg-card border-border/80 flex flex-col justify-between space-y-1 text-center shadow-2xs">
+                                    <div class="flex items-center justify-between">
+                                      <span class="px-2 py-0.5 rounded font-mono font-bold text-xs border ${badgeColor}">
+                                        ${bracket.grade}
+                                      </span>
+                                      <span class="text-[10px] font-mono text-muted-foreground">${bracket.percentRange}</span>
+                                    </div>
+                                    <div class="font-bold text-xs text-foreground ${fontClass}">
+                                      ${isKm ? bracket.labelKm : bracket.labelEn}
+                                    </div>
+                                    <div class="text-[11px] font-mono font-semibold text-primary pt-0.5">
+                                      ${bracket.grade === 'F' ? `< ${bracket.maxScore + 0.1}` : `${bracket.minScore} - ${bracket.maxScore}`} pts
+                                    </div>
+                                  </div>
+                                `;
+                              }).join('')}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ` : ''}
                   `;
                 }).join('')}
               </tbody>
@@ -419,15 +422,18 @@ export const SubjectsPage = {
       });
     }
 
-    // Edit and Delete buttons on table rows
-    this.container.querySelectorAll('button[data-action]').forEach(btn => {
+    // Actions on table rows (toggle-scale, edit, delete)
+    this.container.querySelectorAll('[data-action]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const action = btn.getAttribute('data-action');
         const id = btn.getAttribute('data-id');
         const subject = this.state.subjects.find(s => s.id === id);
 
-        if (action === 'edit' && subject) {
+        if (action === 'toggle-scale' && id) {
+          this.state.expandedSubjectId = this.state.expandedSubjectId === id ? null : id;
+          this.renderLayout();
+        } else if (action === 'edit' && subject) {
           this.openSubjectModal(subject);
         } else if (action === 'delete' && subject) {
           this.confirmDeleteSubject(subject);
