@@ -129,6 +129,7 @@ export const km = {
     activeYear: "ឆ្នាំសិក្សាបច្ចុប្បន្ន"
   },
   common: {
+    no: "ល.រ",
     active: "សកម្ម",
     inactive: "បោះបង់",
     transferred: "ផ្ទេរចេញ",

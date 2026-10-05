@@ -223,7 +223,7 @@ export const SubjectsPage = {
               <thead class="bg-muted/50 text-muted-foreground select-none border-b border-border">
                 <tr>
                   <th scope="col" class="w-12 px-3 py-3 text-center font-semibold text-foreground border-r border-border/60">
-                    ${t('common.no') || 'ល.រ'}
+                    ${isKm ? 'ល.រ' : 'No.'}
                   </th>
                   <th scope="col" class="w-28 px-3.5 py-3 font-semibold text-foreground border-r border-border/60 whitespace-nowrap ${fontClass}">
                     ${t('subjects.code') || 'កូដមុខវិជ្ជា'}

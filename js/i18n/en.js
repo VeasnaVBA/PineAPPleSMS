@@ -129,6 +129,7 @@ export const en = {
     activeYear: "Active Year"
   },
   common: {
+    no: "No.",
     active: "Active",
     inactive: "Inactive",
     transferred: "Transferred",
