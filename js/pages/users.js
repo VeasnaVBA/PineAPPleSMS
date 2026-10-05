@@ -289,7 +289,6 @@ export const UsersPage = {
       schools: isKm ? 'គ្រប់គ្រងសាលារៀន' : 'Schools Management',
       classes: isKm ? 'គ្រប់គ្រងថ្នាក់រៀន' : 'Classes Management',
       teachers: isKm ? 'គ្រប់គ្រងគ្រូបង្រៀន' : 'Teachers Directory',
-      courses: isKm ? 'គ្រប់គ្រងមុខវិជ្ជា' : 'Courses / Subjects',
       students: isKm ? 'គ្រប់គ្រងសិស្ស' : 'Students Management',
       attendance: isKm ? 'កត់ត្រាវត្តមាន' : 'Attendance Roll-Call',
       scores: isKm ? 'ពិន្ទុ និងការវាយតម្លៃ' : 'Scores & Grading',

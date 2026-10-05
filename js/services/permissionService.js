@@ -12,7 +12,6 @@ export const MENU_KEYS = [
   'schools',
   'classes',
   'teachers',
-  'courses',
   'students',
   'attendance',
   'scores',
@@ -25,10 +24,6 @@ export const GRANULAR_PERMISSIONS = [
   'schools.create',
   'schools.edit',
   'schools.delete',
-  'courses.view',
-  'courses.create',
-  'courses.edit',
-  'courses.delete',
   'registration.view',
   'registration.import',
   'registration.verify',
@@ -70,7 +65,6 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     students: false,
     teachers: false,
     classes: false,
-    courses: false,
     attendance: false,
     scores: false,
     reports: false,
@@ -86,7 +80,6 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     students: true,
     teachers: true,
     classes: true,
-    courses: true,
     attendance: true,
     scores: true,
     reports: true,
@@ -102,7 +95,6 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     students: true,
     teachers: true,
     classes: true,
-    courses: true,
     attendance: true,
     scores: true,
     reports: true,
@@ -129,12 +121,10 @@ class PermissionService {
         if (this.customPermissions.TEACHER) {
           if (this.customPermissions.TEACHER.schools === undefined) this.customPermissions.TEACHER.schools = true;
           if (this.customPermissions.TEACHER.teachers === undefined) this.customPermissions.TEACHER.teachers = true;
-          if (this.customPermissions.TEACHER.courses === undefined) this.customPermissions.TEACHER.courses = true;
         }
         if (this.customPermissions.DIRECTOR) {
           if (this.customPermissions.DIRECTOR.schools === undefined) this.customPermissions.DIRECTOR.schools = true;
           if (this.customPermissions.DIRECTOR.teachers === undefined) this.customPermissions.DIRECTOR.teachers = true;
-          if (this.customPermissions.DIRECTOR.courses === undefined) this.customPermissions.DIRECTOR.courses = true;
         }
       } else {
         this.customPermissions = JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS));
@@ -193,8 +183,8 @@ class PermissionService {
       return role === 'DIRECTOR';
     }
 
-    // Teachers and Directors always have access to Schools & Courses module
-    if ((role === 'TEACHER' || role === 'DIRECTOR') && (routeKey === 'schools' || routeKey === 'courses')) {
+    // Teachers and Directors always have access to Schools module
+    if ((role === 'TEACHER' || role === 'DIRECTOR') && routeKey === 'schools') {
       return true;
     }
 
@@ -223,8 +213,8 @@ class PermissionService {
       return true;
     }
 
-    // Allow schools & courses module management for both TEACHER and DIRECTOR
-    if (action.startsWith('schools.') || action.startsWith('courses.')) {
+    // Allow schools module management for both TEACHER and DIRECTOR
+    if (action.startsWith('schools.')) {
       return true;
     }
 

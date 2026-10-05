@@ -32,7 +32,6 @@ export const CLOUD_SYNC_SHEET_NAMES = {
   SCHOOLS: 'schools',
   CLASSES: 'classes',
   TEACHERS: 'teachers',
-  COURSES: 'courses',
   ATTENDANCE: 'attendance',
   SCORES: 'scores',
   ACADEMIC_YEARS: 'academicYears',

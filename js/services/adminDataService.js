@@ -19,7 +19,6 @@ import { SettingsService } from './settingsService.js';
 import { BackupService } from './backupService.js';
 import { permissionService } from './permissionService.js';
 import { CloudSyncService } from './cloudSyncService.js';
-import { CourseService } from './courseService.js';
 import { 
   getCloudSyncUrl, 
   setCloudSyncUrl,
@@ -120,19 +119,10 @@ export const AdminDataService = {
       console.warn('Error reading permissions for admin data export:', e);
     }
 
-    // 4. Default Courses Catalog
-    let courses = [];
-    try {
-      courses = await CourseService.getAll();
-    } catch (e) {
-      console.warn('Error reading courses for admin data export:', e);
-    }
-
     return {
       settings,
       users: cleanUsers,
-      permissions,
-      courses
+      permissions
     };
   },
 
@@ -382,34 +372,7 @@ export const AdminDataService = {
       }
     }
 
-    // 4. Apply Default Courses
-    const incomingCourses = incomingData.courses || [];
-    if (Array.isArray(incomingCourses) && incomingCourses.length > 0) {
-      try {
-        const database = await db.open();
-        if (database.objectStoreNames.contains('courses')) {
-          for (const c of incomingCourses) {
-            if (!c.courseId && !c.name) continue;
-            await db.put('courses', {
-              id: c.id || ('crs_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4)),
-              courseId: String(c.courseId).toUpperCase(),
-              name: c.name || '',
-              nameEn: c.nameEn || '',
-              category: c.category || 'ទូទៅ',
-              scores: c.scores || { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
-              creditHours: Number(c.creditHours) || 2,
-              notes: c.notes || '',
-              updatedAt: new Date().toISOString()
-            });
-          }
-        }
-        await SettingsService.set('courses_catalog', incomingCourses);
-      } catch (e) {
-        console.warn('Could not apply incoming courses:', e);
-      }
-    }
-
-    // 5. Dispatch refresh events
+    // 4. Dispatch refresh events
     window.dispatchEvent(new CustomEvent('app:refresh-data', {
       detail: {
         adminSync: true,

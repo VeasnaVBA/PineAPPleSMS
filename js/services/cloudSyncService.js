@@ -168,7 +168,6 @@ export const CloudSyncService = {
         delete clean.photoBlob;
         return clean;
       });
-      const courses = await db.getAll('courses').catch(() => []);
       const attendance = await db.getAll('attendance');
       const scores = await db.getAll('scores');
       const academicYears = await db.getAll('academicYears');
@@ -192,7 +191,6 @@ export const CloudSyncService = {
           schools,
           classes,
           teachers,
-          courses,
           attendance,
           scores,
           academicYears,
@@ -473,20 +471,6 @@ export const CloudSyncService = {
           };
           await db.put('subjects', cleanItem);
           subjectCount++;
-        }
-      }
-
-      // 8.1. Courses (Curriculum Courses & Max Scores G7-G12)
-      if (Array.isArray(data.courses)) {
-        for (const item of data.courses) {
-          if (!item.id && !item.courseId && !item.name) continue;
-          const cleanItem = {
-            ...item,
-            id: item.id ? String(item.id).trim() : `crs-${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-            courseId: item.courseId ? String(item.courseId).trim().toUpperCase() : '',
-            name: item.name ? String(item.name).trim() : ''
-          };
-          await db.put('courses', cleanItem);
         }
       }
 

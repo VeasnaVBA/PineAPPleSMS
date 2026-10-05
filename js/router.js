@@ -7,7 +7,6 @@ import { DashboardPage } from './pages/dashboard.js';
 import { StudentsPage } from './pages/students.js';
 import { TeachersPage } from './pages/teachers.js';
 import { ClassesPage } from './pages/classes.js';
-import { CoursesPage } from './pages/courses.js';
 import { AttendancePage } from './pages/attendance.js';
 import { ScoresPage } from './pages/scores.js';
 import { ReportsPage } from './pages/reports.js';
@@ -29,7 +28,6 @@ const routes = {
   schools: SchoolsPage,
   classes: ClassesPage,
   teachers: TeachersPage,
-  courses: CoursesPage,
   students: StudentsPage,
   attendance: AttendancePage,
   scores: ScoresPage,

@@ -81,7 +81,6 @@ export class Sidebar {
       { id: 'schools', labelKey: 'nav.schools', icon: 'school', href: '#schools', isSetupStep: 1 },
       { id: 'classes', labelKey: 'nav.classes', icon: 'classes', href: '#classes', isSetupStep: 2 },
       { id: 'teachers', labelKey: 'nav.teachers', icon: 'teachers', href: '#teachers', isSetupStep: 3 },
-      { id: 'courses', labelKey: 'nav.courses', icon: 'graduationCap', href: '#courses' },
       { id: 'students', labelKey: 'nav.students', icon: 'students', href: '#students' },
       { id: 'registration', labelKey: 'nav.registration', icon: 'fileCheck', href: '#registration' },
       { id: 'promotion', labelKey: 'nav.promotion', icon: 'badgeCheck', href: '#promotion' },

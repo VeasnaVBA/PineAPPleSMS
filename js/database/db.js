@@ -431,14 +431,6 @@ class WorkspaceDatabase {
             regStore.createIndex('name', 'name', { unique: false });
             regStore.createIndex('importedAt', 'importedAt', { unique: false });
           }
-
-          // 14. Courses (Curriculum Subjects & Max Scores G7-G12)
-          if (!db.objectStoreNames.contains('courses')) {
-            const courseStore = db.createObjectStore('courses', { keyPath: 'id' });
-            courseStore.createIndex('courseId', 'courseId', { unique: false });
-            courseStore.createIndex('name', 'name', { unique: false });
-            courseStore.createIndex('category', 'category', { unique: false });
-          }
         };
 
         request.onsuccess = (event) => {
