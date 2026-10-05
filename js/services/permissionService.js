@@ -129,10 +129,12 @@ class PermissionService {
         if (this.customPermissions.TEACHER) {
           if (this.customPermissions.TEACHER.schools === undefined) this.customPermissions.TEACHER.schools = true;
           if (this.customPermissions.TEACHER.teachers === undefined) this.customPermissions.TEACHER.teachers = true;
+          if (this.customPermissions.TEACHER.courses === undefined) this.customPermissions.TEACHER.courses = true;
         }
         if (this.customPermissions.DIRECTOR) {
           if (this.customPermissions.DIRECTOR.schools === undefined) this.customPermissions.DIRECTOR.schools = true;
           if (this.customPermissions.DIRECTOR.teachers === undefined) this.customPermissions.DIRECTOR.teachers = true;
+          if (this.customPermissions.DIRECTOR.courses === undefined) this.customPermissions.DIRECTOR.courses = true;
         }
       } else {
         this.customPermissions = JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS));
@@ -191,8 +193,8 @@ class PermissionService {
       return role === 'DIRECTOR';
     }
 
-    // Teachers and Directors always have access to Schools module
-    if ((role === 'TEACHER' || role === 'DIRECTOR') && routeKey === 'schools') {
+    // Teachers and Directors always have access to Schools & Courses module
+    if ((role === 'TEACHER' || role === 'DIRECTOR') && (routeKey === 'schools' || routeKey === 'courses')) {
       return true;
     }
 
@@ -221,8 +223,8 @@ class PermissionService {
       return true;
     }
 
-    // Allow schools module management for both TEACHER and DIRECTOR
-    if (action.startsWith('schools.')) {
+    // Allow schools & courses module management for both TEACHER and DIRECTOR
+    if (action.startsWith('schools.') || action.startsWith('courses.')) {
       return true;
     }
 

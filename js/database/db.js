@@ -105,90 +105,154 @@ class GlobalDatabase {
 
   async getAll(storeName) {
     const db = await this.open();
+    if (!db.objectStoreNames.contains(storeName)) {
+      return [];
+    }
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readonly');
-      const store = tx.objectStore(storeName);
-      const req = store.getAll();
-      req.onsuccess = () => resolve(req.result || []);
-      req.onerror = () => reject(req.error);
+      try {
+        const tx = db.transaction(storeName, 'readonly');
+        const store = tx.objectStore(storeName);
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      } catch (err) {
+        console.warn(`GlobalDatabase getAll error on ${storeName}:`, err);
+        resolve([]);
+      }
     });
   }
 
   async get(storeName, key) {
     const db = await this.open();
+    if (!db.objectStoreNames.contains(storeName)) {
+      return null;
+    }
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readonly');
-      const store = tx.objectStore(storeName);
-      const req = store.get(key);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+      try {
+        const tx = db.transaction(storeName, 'readonly');
+        const store = tx.objectStore(storeName);
+        const req = store.get(key);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      } catch (err) {
+        console.warn(`GlobalDatabase get error on ${storeName}:`, err);
+        resolve(null);
+      }
     });
   }
 
   async add(storeName, item) {
     const db = await this.open();
+    if (!db.objectStoreNames.contains(storeName)) {
+      return item;
+    }
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readwrite');
-      const store = tx.objectStore(storeName);
-      const req = store.add(item);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+      try {
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        const req = store.add(item);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      } catch (err) {
+        console.warn(`GlobalDatabase add error on ${storeName}:`, err);
+        resolve(item);
+      }
     });
   }
 
   async put(storeName, item) {
     const db = await this.open();
+    if (!db.objectStoreNames.contains(storeName)) {
+      return item;
+    }
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readwrite');
-      const store = tx.objectStore(storeName);
-      const req = store.put(item);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+      try {
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        const req = store.put(item);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      } catch (err) {
+        console.warn(`GlobalDatabase put error on ${storeName}:`, err);
+        resolve(item);
+      }
     });
   }
 
   async delete(storeName, key) {
     const db = await this.open();
+    if (!db.objectStoreNames.contains(storeName)) {
+      return true;
+    }
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readwrite');
-      const store = tx.objectStore(storeName);
-      const req = store.delete(key);
-      req.onsuccess = () => resolve(true);
-      req.onerror = () => reject(req.error);
+      try {
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        const req = store.delete(key);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+      } catch (err) {
+        console.warn(`GlobalDatabase delete error on ${storeName}:`, err);
+        resolve(true);
+      }
     });
   }
 
   async count(storeName) {
     const db = await this.open();
+    if (!db.objectStoreNames.contains(storeName)) {
+      return 0;
+    }
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readonly');
-      const store = tx.objectStore(storeName);
-      const req = store.count();
-      req.onsuccess = () => resolve(req.result || 0);
-      req.onerror = () => reject(req.error);
+      try {
+        const tx = db.transaction(storeName, 'readonly');
+        const store = tx.objectStore(storeName);
+        const req = store.count();
+        req.onsuccess = () => resolve(req.result || 0);
+        req.onerror = () => reject(req.error);
+      } catch (err) {
+        console.warn(`GlobalDatabase count error on ${storeName}:`, err);
+        resolve(0);
+      }
     });
   }
 
   async queryByIndex(storeName, indexName, value) {
     const db = await this.open();
+    if (!db.objectStoreNames.contains(storeName)) {
+      return [];
+    }
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readonly');
-      const store = tx.objectStore(storeName);
-      const index = store.index(indexName);
-      const req = index.getAll(value);
-      req.onsuccess = () => resolve(req.result || []);
-      req.onerror = () => reject(req.error);
+      try {
+        const tx = db.transaction(storeName, 'readonly');
+        const store = tx.objectStore(storeName);
+        const index = store.index(indexName);
+        const req = index.getAll(value);
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      } catch (err) {
+        console.warn(`GlobalDatabase queryByIndex error on ${storeName}:`, err);
+        resolve([]);
+      }
     });
   }
 
   async clear(storeName) {
     const db = await this.open();
+    if (!db.objectStoreNames.contains(storeName)) {
+      return true;
+    }
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readwrite');
-      const store = tx.objectStore(storeName);
-      const req = store.clear();
-      req.onsuccess = () => resolve(true);
-      req.onerror = () => reject(req.error);
+      try {
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        const req = store.clear();
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+      } catch (err) {
+        console.warn(`GlobalDatabase clear error on ${storeName}:`, err);
+        resolve(true);
+      }
     });
   }
 
@@ -346,90 +410,154 @@ class WorkspaceDatabase {
 
   async getAll(storeName) {
     const db = await this.open();
+    if (!db.objectStoreNames.contains(storeName)) {
+      return [];
+    }
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readonly');
-      const store = tx.objectStore(storeName);
-      const req = store.getAll();
-      req.onsuccess = () => resolve(req.result || []);
-      req.onerror = () => reject(req.error);
+      try {
+        const tx = db.transaction(storeName, 'readonly');
+        const store = tx.objectStore(storeName);
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      } catch (err) {
+        console.warn(`getAll error on ${storeName}:`, err);
+        resolve([]);
+      }
     });
   }
 
   async get(storeName, key) {
     const db = await this.open();
+    if (!db.objectStoreNames.contains(storeName)) {
+      return null;
+    }
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readonly');
-      const store = tx.objectStore(storeName);
-      const req = store.get(key);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+      try {
+        const tx = db.transaction(storeName, 'readonly');
+        const store = tx.objectStore(storeName);
+        const req = store.get(key);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      } catch (err) {
+        console.warn(`get error on ${storeName}:`, err);
+        resolve(null);
+      }
     });
   }
 
   async add(storeName, item) {
     const db = await this.open();
+    if (!db.objectStoreNames.contains(storeName)) {
+      return item;
+    }
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readwrite');
-      const store = tx.objectStore(storeName);
-      const req = store.add(item);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+      try {
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        const req = store.add(item);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      } catch (err) {
+        console.warn(`add error on ${storeName}:`, err);
+        resolve(item);
+      }
     });
   }
 
   async put(storeName, item) {
     const db = await this.open();
+    if (!db.objectStoreNames.contains(storeName)) {
+      return item;
+    }
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readwrite');
-      const store = tx.objectStore(storeName);
-      const req = store.put(item);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+      try {
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        const req = store.put(item);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      } catch (err) {
+        console.warn(`put error on ${storeName}:`, err);
+        resolve(item);
+      }
     });
   }
 
   async delete(storeName, key) {
     const db = await this.open();
+    if (!db.objectStoreNames.contains(storeName)) {
+      return true;
+    }
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readwrite');
-      const store = tx.objectStore(storeName);
-      const req = store.delete(key);
-      req.onsuccess = () => resolve(true);
-      req.onerror = () => reject(req.error);
+      try {
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        const req = store.delete(key);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+      } catch (err) {
+        console.warn(`delete error on ${storeName}:`, err);
+        resolve(true);
+      }
     });
   }
 
   async count(storeName) {
     const db = await this.open();
+    if (!db.objectStoreNames.contains(storeName)) {
+      return 0;
+    }
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readonly');
-      const store = tx.objectStore(storeName);
-      const req = store.count();
-      req.onsuccess = () => resolve(req.result || 0);
-      req.onerror = () => reject(req.error);
+      try {
+        const tx = db.transaction(storeName, 'readonly');
+        const store = tx.objectStore(storeName);
+        const req = store.count();
+        req.onsuccess = () => resolve(req.result || 0);
+        req.onerror = () => reject(req.error);
+      } catch (err) {
+        console.warn(`count error on ${storeName}:`, err);
+        resolve(0);
+      }
     });
   }
 
   async queryByIndex(storeName, indexName, value) {
     const db = await this.open();
+    if (!db.objectStoreNames.contains(storeName)) {
+      return [];
+    }
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readonly');
-      const store = tx.objectStore(storeName);
-      const index = store.index(indexName);
-      const req = index.getAll(value);
-      req.onsuccess = () => resolve(req.result || []);
-      req.onerror = () => reject(req.error);
+      try {
+        const tx = db.transaction(storeName, 'readonly');
+        const store = tx.objectStore(storeName);
+        const index = store.index(indexName);
+        const req = index.getAll(value);
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      } catch (err) {
+        console.warn(`queryByIndex error on ${storeName}:`, err);
+        resolve([]);
+      }
     });
   }
 
   async clear(storeName) {
     const db = await this.open();
+    if (!db.objectStoreNames.contains(storeName)) {
+      return true;
+    }
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readwrite');
-      const store = tx.objectStore(storeName);
-      const req = store.clear();
-      req.onsuccess = () => resolve(true);
-      req.onerror = () => reject(req.error);
+      try {
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        const req = store.clear();
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+      } catch (err) {
+        console.warn(`clear error on ${storeName}:`, err);
+        resolve(true);
+      }
     });
   }
 

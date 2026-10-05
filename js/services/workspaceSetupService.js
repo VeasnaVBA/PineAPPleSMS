@@ -109,6 +109,7 @@ export const WorkspaceSetupService = {
    * Returns true if the route is part of the initial setup workflow or basic settings
    */
   isSetupAllowedRoute(routeId) {
-    return ['schools', 'classes', 'teachers', 'settings', 'download-data'].includes(routeId);
+    return ['schools', 'classes', 'teachers', 'courses', 'settings', 'download-data'].includes(routeId);
   }
 };
+
