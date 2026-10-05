@@ -274,7 +274,7 @@ export const SubjectService = {
     if (percentage >= 50) {
       return { grade: 'E', labelKm: 'មធ្យម', labelEn: 'Passing / Average', color: 'orange', percentage };
     }
-    return { grade: 'F', labelKm: 'ខ្សោយ (ធ្លាក់)', labelEn: 'Needs Improvement / Fail', color: 'rose', percentage };
+    return { grade: 'F', labelKm: 'ធ្លាក់', labelEn: 'Needs Improvement / Fail', color: 'rose', percentage };
   },
 
   /**
@@ -290,7 +290,7 @@ export const SubjectService = {
       { grade: 'C', labelKm: 'ល្អ', labelEn: 'Good', percentRange: '70% - 79.9%', minScore: round1(fs * 0.70), maxScore: round1(fs * 0.799), color: 'indigo' },
       { grade: 'D', labelKm: 'ល្អបង្គួរ', labelEn: 'Satisfactory', percentRange: '60% - 69.9%', minScore: round1(fs * 0.60), maxScore: round1(fs * 0.699), color: 'amber' },
       { grade: 'E', labelKm: 'មធ្យម', labelEn: 'Passing', percentRange: '50% - 59.9%', minScore: round1(fs * 0.50), maxScore: round1(fs * 0.599), color: 'orange' },
-      { grade: 'F', labelKm: 'ខ្សោយ (ធ្លាក់)', labelEn: 'Fail', percentRange: '< 50%', minScore: 0, maxScore: round1(fs * 0.499), color: 'rose' }
+      { grade: 'F', labelKm: 'ធ្លាក់', labelEn: 'Fail', percentRange: '< 50%', minScore: 0, maxScore: round1(fs * 0.499), color: 'rose' }
     ];
   },
 

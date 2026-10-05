@@ -144,13 +144,13 @@ export const SubjectsPage = {
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
               <h3 class="text-xs sm:text-sm font-bold text-foreground ${fontClass}">
-                ${isKm ? 'រូបមន្តគណនានិទ្ទេស (Grading Scale Formula A-F)' : 'Grading Scale Formula (A-F)'}
+                ${isKm ? 'រូបមន្តគណនានិទ្ទេស' : 'Grading Scale Formula (A-F)'}
               </h3>
               <span class="text-[11px] text-muted-foreground hidden sm:inline">•</span>
               <span class="text-[11px] text-muted-foreground hidden sm:inline ${fontClass}">
                 ${isTeacher && teacherClass 
-                  ? (isKm ? `គណនាផ្អែកលើថ្នាក់ ${teacherClass.name} (កម្រិត ${activeGrade})` : `Calculated for class ${teacherClass.name} (${activeGrade})`)
-                  : (isKm ? 'យោងតាមឈ្មោះថ្នាក់ (ឧ. 7A គឺថ្នាក់ទី៧)' : 'Matched by classroom name (e.g. 7A = Grade 7)')}
+                  ? (isKm ? `គណនាផ្អែកលើថ្នាក់ ${teacherClass.name} កម្រិត ${activeGrade}` : `Calculated for class ${teacherClass.name} (${activeGrade})`)
+                  : (isKm ? 'យោងតាមកម្រិតថ្នាក់ជាក់ស្តែង' : 'Matched by classroom name (e.g. 7A = Grade 7)')}
               </span>
             </div>
 
@@ -253,7 +253,7 @@ export const SubjectsPage = {
                     return `
                       <th scope="col" 
                           data-grade="${g}"
-                          title="${isTeacher ? (isColActive ? (isKm ? `ថ្នាក់រៀនរបស់អ្នក (${activeGrade})` : `Your assigned classroom (${activeGrade})`) : (isKm ? 'ថ្នាក់ផ្សេងទៀតត្រូវបានចាក់សោ' : 'Locked for teacher account')) : (isKm ? `ចុចដើម្បីផ្ដោតលើកម្រិតថ្នាក់ ${g}` : `Click to focus on ${g}`)}"
+                          title="${isTeacher ? (isColActive ? (isKm ? `ថ្នាក់រៀនរបស់អ្នក កម្រិត ${activeGrade}` : `Your assigned classroom (${activeGrade})`) : (isKm ? 'ថ្នាក់ផ្សេងទៀតត្រូវបានចាក់សោ' : 'Locked for teacher account')) : (isKm ? `ចុចដើម្បីផ្ដោតលើកម្រិតថ្នាក់ ${g}` : `Click to focus on ${g}`)}"
                           class="${canClick ? 'btn-select-grade' : ''} ${headerClasses}">
                         <div class="flex flex-col items-center justify-center leading-tight">
                           <span class="font-mono font-bold text-xs">${g}</span>
