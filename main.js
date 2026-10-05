@@ -12,7 +12,8 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 700,
     show: false,
-    title: 'SchoolFlow — Offline School Management System',
+    title: 'SmartSchool — Offline School Management System',
+    icon: path.join(__dirname, 'assets', 'icon.png'),
     backgroundColor: '#090d16',
     webPreferences: {
       preload: path.join(__dirname, 'electron', 'preload.js'),

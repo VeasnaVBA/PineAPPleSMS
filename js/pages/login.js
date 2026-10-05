@@ -76,10 +76,12 @@ export class LoginPage {
         <div class="w-full max-w-[420px] border rounded-[28px] p-7 sm:p-9 relative z-10 my-auto animate-fade-in ${cardBgClass} transition-colors duration-200">
           
           <!-- Top Brand Header -->
-          <div class="flex items-center justify-between mb-10">
-            <div class="flex items-center gap-2 font-medium text-lg tracking-tight ${brandTextClass}">
-              <span>Resident X</span>
-              <span class="flex items-center ${scanIconClass}">${getIcon('scanBarcode', 'w-4 h-4')}</span>
+          <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-2.5 font-medium text-lg tracking-tight ${brandTextClass}">
+              <div class="w-8 h-8 rounded-lg overflow-hidden bg-primary/10 border border-primary/20 flex items-center justify-center shadow-2xs">
+                <img src="./assets/images/app_logo.png" alt="Logo" class="w-full h-full object-contain p-0.5" onerror="this.outerHTML='<span class=\\'text-primary\\'>${getIcon('school', 'w-4 h-4')}</span>'" />
+              </div>
+              <span class="font-bold tracking-tight">SmartSchool</span>
             </div>
           </div>
 
