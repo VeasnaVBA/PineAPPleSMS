@@ -1,7 +1,8 @@
 /**
  * Login Page Component
- * Clean, modern dark aesthetic matching Resident X UI
- * with full authentication, show/hide password, language toggle, and quick-fill options.
+ * Minimalist Resident X UI with full Light & Dark mode support:
+ * - Dark Mode: Deep dark obsidian (#0c0c0e) with dark card (#18181b) and white button
+ * - Light Mode: Clean crisp white background (#f4f4f5) with white card (#ffffff) and black button
  */
 import { authService } from '../services/authService.js';
 import { themeService } from '../services/themeService.js';
@@ -17,56 +18,109 @@ export class LoginPage {
     this.showPassword = false;
     this.errorMessage = '';
     this.isLoading = false;
-    this.showDemoDrawer = false;
+
+    // Re-render when theme or language changes
+    themeService.subscribe(() => this.render());
+    i18n.subscribe(() => this.render());
   }
 
   render() {
     if (!this.container) return;
 
     const currentLocale = i18n.getLocale();
-    const currentTheme = themeService.getTheme();
     const isKm = currentLocale === 'km';
+    const isDark = themeService.isDark();
+
+    // Theme-dependent design tokens
+    const bgClass = isDark ? 'bg-[#0c0c0e] text-zinc-100' : 'bg-[#f4f4f5] text-zinc-900';
+    const cardBgClass = isDark 
+      ? 'bg-[#18181b] border-zinc-800/80 shadow-2xl' 
+      : 'bg-white border-zinc-200/90 shadow-xl shadow-zinc-900/5';
+    const brandTextClass = isDark ? 'text-white' : 'text-zinc-900';
+    const scanIconClass = isDark ? 'text-zinc-400' : 'text-zinc-500';
+    const titleClass = isDark ? 'text-white' : 'text-zinc-900';
+    const subtitleClass = isDark ? 'text-zinc-400' : 'text-zinc-500';
+    
+    // Inputs
+    const inputClass = isDark
+      ? 'bg-[#27272a] text-white placeholder:text-zinc-500 border border-transparent focus:border-zinc-500 focus:ring-1 focus:ring-zinc-400'
+      : 'bg-zinc-100/90 text-zinc-900 placeholder:text-zinc-400 border border-zinc-200 focus:border-zinc-400 focus:ring-1 focus:ring-zinc-300';
+    const eyeIconClass = isDark ? 'text-zinc-400 hover:text-white' : 'text-zinc-500 hover:text-zinc-800';
+    const forgotPassClass = isDark ? 'text-zinc-300 hover:text-white' : 'text-zinc-500 hover:text-zinc-900';
+
+    // Submit Button
+    const btnSubmitClass = isDark
+      ? 'bg-white hover:bg-zinc-200 text-black shadow-md'
+      : 'bg-zinc-900 hover:bg-black text-white shadow-md';
+    const btnSpinnerBorder = isDark ? 'border-black' : 'border-white';
+
+    // Request Access Link
+    const newToTextClass = isDark ? 'text-zinc-400' : 'text-zinc-500';
+    const requestAccessClass = isDark ? 'text-[#3b82f6] hover:text-blue-400' : 'text-blue-600 hover:text-blue-700';
+
+    // Demo Chips & Divider
+    const dividerClass = isDark ? 'border-zinc-800/80' : 'border-zinc-200/80';
+    const demoLabelClass = isDark ? 'text-zinc-500' : 'text-zinc-400';
+    const demoSyncClass = isDark ? 'text-zinc-400 hover:text-white' : 'text-zinc-500 hover:text-zinc-900';
+    const demoChipClass = isDark
+      ? 'bg-zinc-800/70 hover:bg-zinc-700/90 text-zinc-300 hover:text-white border-zinc-700/40'
+      : 'bg-zinc-100 hover:bg-zinc-200/80 text-zinc-700 hover:text-zinc-900 border-zinc-200';
+
+    // Top Controls
+    const topControlClass = isDark
+      ? 'bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800'
+      : 'bg-white/90 border-zinc-200 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100';
+
+    // Footer
+    const footerLinkClass = isDark ? 'text-zinc-500 hover:text-zinc-400' : 'text-zinc-400 hover:text-zinc-600';
 
     this.container.innerHTML = `
-      <div class="min-h-screen w-full flex flex-col justify-between items-center p-4 sm:p-6 bg-[#0c0c0e] text-zinc-100 relative overflow-x-hidden select-none font-sans">
-        <!-- Ambient Subtle Background Glow -->
-        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-zinc-800/10 rounded-full blur-3xl pointer-events-none"></div>
-
-        <!-- Top Controls (Language & Quick Actions) -->
+      <div class="min-h-screen w-full flex flex-col justify-between items-center p-4 sm:p-6 ${bgClass} relative overflow-x-hidden select-none font-sans transition-colors duration-200">
+        
+        <!-- Top Controls (Theme & Language) -->
         <div class="w-full max-w-[420px] flex items-center justify-end gap-2 pt-2 z-10">
           <!-- Language Toggle -->
           <button id="login-btn-lang" 
                   type="button"
                   title="${isKm ? 'Switch to English' : 'ប្តូរទៅភាសាខ្មែរ'}"
-                  class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900/80 border border-zinc-800 hover:bg-zinc-800 text-xs text-zinc-400 hover:text-white transition-all cursor-pointer">
-            ${getIcon('globe', 'w-3.5 h-3.5 text-zinc-400')}
+                  class="flex items-center gap-1.5 px-2.5 py-1 rounded-md border ${topControlClass} text-xs transition-all cursor-pointer">
+            ${getIcon('globe', 'w-3.5 h-3.5')}
             <span class="font-semibold text-[11px]">${isKm ? 'ខ្មែរ' : 'EN'}</span>
+          </button>
+
+          <!-- Theme Toggle (Light / Dark) -->
+          <button id="login-btn-theme" 
+                  type="button"
+                  title="${isDark ? (isKm ? 'ប្តូរទៅផ្ទៃភ្លឺ' : 'Switch to Light Mode') : (isKm ? 'ប្តូរទៅផ្ទៃងងឹត' : 'Switch to Dark Mode')}"
+                  class="p-1.5 rounded-md border ${topControlClass} text-xs transition-all cursor-pointer">
+            ${getIcon(isDark ? 'sun' : 'moon', 'w-3.5 h-3.5')}
           </button>
         </div>
 
         <!-- Main Login Card -->
-        <div class="w-full max-w-[420px] bg-[#18181b] border border-zinc-800/80 rounded-[28px] shadow-2xl p-7 sm:p-9 relative z-10 my-auto animate-fade-in">
+        <div class="w-full max-w-[420px] border rounded-[28px] p-7 sm:p-9 relative z-10 my-auto animate-fade-in ${cardBgClass} transition-colors duration-200">
+          
           <!-- Top Brand Header -->
           <div class="flex items-center justify-between mb-10">
-            <div class="flex items-center gap-2 text-white font-medium text-lg tracking-tight">
+            <div class="flex items-center gap-2 font-medium text-lg tracking-tight ${brandTextClass}">
               <span>Resident X</span>
-              <span class="text-zinc-400 flex items-center">${getIcon('scanBarcode', 'w-4 h-4 text-zinc-400')}</span>
+              <span class="flex items-center ${scanIconClass}">${getIcon('scanBarcode', 'w-4 h-4')}</span>
             </div>
           </div>
 
           <!-- Title Section -->
           <div class="mb-6 text-left">
-            <h1 class="text-3xl font-semibold tracking-tight text-white mb-1.5 ${isKm ? 'font-khmer text-2xl' : ''}">
+            <h1 class="text-3xl font-semibold tracking-tight mb-1.5 ${titleClass} ${isKm ? 'font-khmer text-2xl' : ''}">
               ${isKm ? 'ចូលប្រព័ន្ធ' : 'Log in'}
             </h1>
-            <p class="text-xs text-zinc-400 font-normal ${isKm ? 'font-khmer' : ''}">
+            <p class="text-xs font-normal ${subtitleClass} ${isKm ? 'font-khmer' : ''}">
               ${isKm ? 'សូមបញ្ចូលឈ្មោះគណនី និងពាក្យសម្ងាត់ដើម្បីបន្ត' : 'Proceed to Admin Panel'}
             </p>
           </div>
 
           <!-- Error Alert Banner -->
-          <div id="login-error-alert" class="${this.errorMessage ? '' : 'hidden'} mb-4 p-3 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 text-xs flex items-center gap-2">
-            ${getIcon('alert', 'w-4 h-4 flex-shrink-0 text-red-400')}
+          <div id="login-error-alert" class="${this.errorMessage ? '' : 'hidden'} mb-4 p-3 rounded-lg border border-red-500/30 bg-red-500/10 text-red-500 text-xs flex items-center gap-2">
+            ${getIcon('alert', 'w-4 h-4 flex-shrink-0')}
             <span id="login-error-text">${this.errorMessage}</span>
           </div>
 
@@ -79,7 +133,7 @@ export class LoginPage {
                      required 
                      autocomplete="username"
                      placeholder="${isKm ? 'ឈ្មោះគណនី (Username)' : 'Username'}" 
-                     class="w-full h-12 px-4 rounded-lg bg-[#27272a] text-white placeholder:text-zinc-500 border border-transparent focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400 text-sm transition-all" />
+                     class="w-full h-12 px-4 rounded-lg text-sm transition-all ${inputClass}" />
             </div>
 
             <!-- Password Input -->
@@ -89,10 +143,10 @@ export class LoginPage {
                      required 
                      autocomplete="current-password"
                      placeholder="${isKm ? 'ពាក្យសម្ងាត់ (Password)' : 'Password'}" 
-                     class="w-full h-12 pl-4 pr-11 rounded-lg bg-[#27272a] text-white placeholder:text-zinc-500 border border-transparent focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400 text-sm transition-all" />
+                     class="w-full h-12 pl-4 pr-11 rounded-lg text-sm transition-all ${inputClass}" />
               <button type="button" 
                       id="btn-toggle-password" 
-                      class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-400 hover:text-white cursor-pointer transition-colors"
+                      class="absolute inset-y-0 right-0 pr-3.5 flex items-center cursor-pointer transition-colors ${eyeIconClass}"
                       title="${this.showPassword ? 'Hide password' : 'Show password'}">
                 ${getIcon(this.showPassword ? 'eye' : 'eyeClosedLashes', 'w-4 h-4')}
               </button>
@@ -100,18 +154,18 @@ export class LoginPage {
 
             <!-- Forgot Password Link -->
             <div class="pt-0.5 pb-1 text-left">
-              <button type="button" id="link-forgot-password" class="text-xs text-zinc-300 hover:text-white transition-colors cursor-pointer inline-block bg-transparent border-none p-0">
+              <button type="button" id="link-forgot-password" class="text-xs transition-colors cursor-pointer inline-block bg-transparent border-none p-0 ${forgotPassClass}">
                 ${isKm ? 'ភ្លេចពាក្យសម្ងាត់?' : 'Forgot password?'}
               </button>
             </div>
 
-            <!-- Submit Button (Solid White with Black Text) -->
+            <!-- Submit Button -->
             <button type="submit" 
                     id="btn-login-submit"
                     ${this.isLoading ? 'disabled' : ''}
-                    class="w-full h-12 rounded-lg bg-white hover:bg-zinc-200 text-black font-semibold text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50 mt-2">
+                    class="w-full h-12 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50 mt-2 ${btnSubmitClass}">
               ${this.isLoading ? `
-                <div class="w-4 h-4 rounded-full border-2 border-black border-t-transparent animate-spin"></div>
+                <div class="w-4 h-4 rounded-full border-2 ${btnSpinnerBorder} border-t-transparent animate-spin"></div>
                 <span>${isKm ? 'កំពុងផ្ទៀងផ្ទាត់...' : 'Logging in...'}</span>
               ` : `
                 <span>${isKm ? 'ចូលប្រព័ន្ធ' : 'Log in'}</span>
@@ -120,33 +174,33 @@ export class LoginPage {
           </form>
 
           <!-- Request Access Link -->
-          <div class="mt-4 text-center text-xs text-zinc-400">
+          <div class="mt-4 text-center text-xs ${newToTextClass}">
             <span>${isKm ? 'មិនទាន់មានគណនី?' : 'New to Resident X?'}</span>
-            <button type="button" id="btn-request-access" class="text-[#3b82f6] hover:text-blue-400 hover:underline cursor-pointer font-medium ml-1 bg-transparent border-none p-0">
+            <button type="button" id="btn-request-access" class="hover:underline cursor-pointer font-medium ml-1 bg-transparent border-none p-0 ${requestAccessClass}">
               ${isKm ? 'ស្នើសុំសិទ្ធិចូល' : 'Request access'}
             </button>
           </div>
 
           <!-- Quick Demo Accounts Bar -->
-          <div class="mt-6 pt-4 border-t border-zinc-800/80">
-            <div class="flex items-center justify-between text-[11px] text-zinc-500 mb-2">
+          <div class="mt-6 pt-4 border-t ${dividerClass}">
+            <div class="flex items-center justify-between text-[11px] ${demoLabelClass} mb-2">
               <span>${isKm ? 'គណនីគំរូរហ័ស:' : 'Demo quick fill:'}</span>
-              <button type="button" id="btn-login-cloud-sync" class="text-zinc-400 hover:text-white inline-flex items-center gap-1 transition-colors cursor-pointer text-[11px] bg-transparent border-none p-0">
+              <button type="button" id="btn-login-cloud-sync" class="inline-flex items-center gap-1 transition-colors cursor-pointer text-[11px] bg-transparent border-none p-0 ${demoSyncClass}">
                 <span class="btn-login-sync-icon flex items-center">${getIcon('cloudDownload', 'w-3 h-3')}</span>
                 <span id="btn-login-cloud-sync-text">${isKm ? 'Sync គណនី' : 'Sync Sheet'}</span>
               </button>
             </div>
             <div class="grid grid-cols-3 gap-1.5">
               <button type="button" data-demo="admin" data-demo-pass="admin123" 
-                      class="px-2 py-1.5 rounded-md bg-zinc-800/70 hover:bg-zinc-700/90 text-zinc-300 hover:text-white text-[11px] font-medium transition-all text-center border border-zinc-700/40 cursor-pointer">
+                      class="px-2 py-1.5 rounded-md text-[11px] font-medium transition-all text-center border cursor-pointer ${demoChipClass}">
                 Admin
               </button>
               <button type="button" data-demo="director1" data-demo-pass="director123" 
-                      class="px-2 py-1.5 rounded-md bg-zinc-800/70 hover:bg-zinc-700/90 text-zinc-300 hover:text-white text-[11px] font-medium transition-all text-center border border-zinc-700/40 cursor-pointer">
+                      class="px-2 py-1.5 rounded-md text-[11px] font-medium transition-all text-center border cursor-pointer ${demoChipClass}">
                 Director
               </button>
               <button type="button" data-demo="teacher1" data-demo-pass="teacher123" 
-                      class="px-2 py-1.5 rounded-md bg-zinc-800/70 hover:bg-zinc-700/90 text-zinc-300 hover:text-white text-[11px] font-medium transition-all text-center border border-zinc-700/40 cursor-pointer">
+                      class="px-2 py-1.5 rounded-md text-[11px] font-medium transition-all text-center border cursor-pointer ${demoChipClass}">
                 Teacher
               </button>
             </div>
@@ -154,10 +208,10 @@ export class LoginPage {
         </div>
 
         <!-- Bottom Footer Links -->
-        <div class="w-full max-w-[420px] flex items-center justify-center gap-6 text-xs text-zinc-500 pb-4 z-10">
-          <button type="button" class="footer-link hover:text-zinc-400 transition-colors bg-transparent border-none p-0 cursor-pointer">Customer Centre</button>
-          <button type="button" class="footer-link hover:text-zinc-400 transition-colors bg-transparent border-none p-0 cursor-pointer">Terms</button>
-          <button type="button" class="footer-link hover:text-zinc-400 transition-colors bg-transparent border-none p-0 cursor-pointer">Privacy</button>
+        <div class="w-full max-w-[420px] flex items-center justify-center gap-6 text-xs pb-4 z-10">
+          <button type="button" class="footer-link transition-colors bg-transparent border-none p-0 cursor-pointer ${footerLinkClass}">Customer Centre</button>
+          <button type="button" class="footer-link transition-colors bg-transparent border-none p-0 cursor-pointer ${footerLinkClass}">Terms</button>
+          <button type="button" class="footer-link transition-colors bg-transparent border-none p-0 cursor-pointer ${footerLinkClass}">Privacy</button>
         </div>
       </div>
     `;
@@ -166,6 +220,19 @@ export class LoginPage {
   }
 
   bindEvents() {
+    // Theme Toggle
+    const themeBtn = document.getElementById('login-btn-theme');
+    themeBtn?.addEventListener('click', () => {
+      themeService.toggle();
+    });
+
+    // Language Toggle
+    const langBtn = document.getElementById('login-btn-lang');
+    langBtn?.addEventListener('click', () => {
+      const nextLang = i18n.getLocale() === 'km' ? 'en' : 'km';
+      i18n.setLocale(nextLang);
+    });
+
     // Cloud Sync Accounts click on login page
     const syncBtn = document.getElementById('btn-login-cloud-sync');
     const syncText = document.getElementById('btn-login-cloud-sync-text');
@@ -195,14 +262,6 @@ export class LoginPage {
         passInput.type = this.showPassword ? 'text' : 'password';
       }
       toggleBtn.innerHTML = getIcon(this.showPassword ? 'eye' : 'eyeClosedLashes', 'w-4 h-4');
-    });
-
-    // Language Toggle
-    const langBtn = document.getElementById('login-btn-lang');
-    langBtn?.addEventListener('click', () => {
-      const nextLang = i18n.getLocale() === 'km' ? 'en' : 'km';
-      i18n.setLocale(nextLang);
-      this.render();
     });
 
     // Forgot password info
@@ -260,6 +319,8 @@ export class LoginPage {
     const username = userInput?.value || '';
     const password = passInput?.value || '';
     const isKm = i18n.getLocale() === 'km';
+    const isDark = themeService.isDark();
+    const btnSpinnerBorder = isDark ? 'border-black' : 'border-white';
 
     this.errorMessage = '';
     if (errorAlert) errorAlert.classList.add('hidden');
@@ -274,7 +335,7 @@ export class LoginPage {
       if (submitBtn) {
         submitBtn.setAttribute('disabled', 'true');
         submitBtn.innerHTML = `
-          <div class="w-4 h-4 rounded-full border-2 border-black border-t-transparent animate-spin"></div>
+          <div class="w-4 h-4 rounded-full border-2 ${btnSpinnerBorder} border-t-transparent animate-spin"></div>
           <span>${isKm ? 'កំពុងផ្ទៀងផ្ទាត់...' : 'Logging in...'}</span>
         `;
       }
