@@ -98,6 +98,14 @@
   line-height: 1.8 !important; /* Muol requires higher line-height to prevent clipping */
 }
 
+/* Root Typographic Scaling & Display Density */
+html[data-font-size="2xs"] { font-size: 10px; }
+html[data-font-size="xs"]  { font-size: 12px; }
+html[data-font-size="sm"]  { font-size: 14px; }
+html[data-font-size="base"]{ font-size: 16px; }
+html[data-font-size="lg"]  { font-size: 18px; }
+html[data-font-size="xl"]  { font-size: 20px; }
+
 :root {
   --font-en: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-km: 'Kantumruy Pro', 'Khmer OS Siemreap', 'Siemreap', 'Khmer OS', 'Battambang', system-ui, sans-serif;

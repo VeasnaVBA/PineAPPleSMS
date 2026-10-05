@@ -214,7 +214,7 @@ export const SettingsPage = {
             </div>
 
             <!-- Segmented Font Size Radio/Buttons matching shadcn/ui -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
               ${Object.keys(FONT_SIZES).map(key => {
                 const opt = FONT_SIZES[key];
                 const isSelected = currentFontSize === key;

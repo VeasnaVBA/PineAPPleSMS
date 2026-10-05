@@ -50,6 +50,8 @@
         // Immediate Font Size Initialization (Prevents Layout Jump / FOUT)
         const fontSizeKey = localStorage.getItem('app_font_size') || 'base';
         const fontSizes = {
+          '2xs': { size: '10px', scale: 0.625 },
+          'xs': { size: '12px', scale: 0.75 },
           'sm': { size: '14px', scale: 0.875 },
           'base': { size: '16px', scale: 1.0 },
           'lg': { size: '18px', scale: 1.125 },

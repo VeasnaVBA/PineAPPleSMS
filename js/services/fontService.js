@@ -53,6 +53,22 @@ export const KHMER_FONTS = {
 };
 
 export const FONT_SIZES = {
+  '2xs': {
+    id: '2xs',
+    size: '10px',
+    percent: '62.5%',
+    labelEn: 'Micro',
+    labelKm: 'តូចបំផុត',
+    scale: 0.625
+  },
+  'xs': {
+    id: 'xs',
+    size: '12px',
+    percent: '75%',
+    labelEn: 'Extra Small',
+    labelKm: 'តូចខ្លាំង',
+    scale: 0.75
+  },
   'sm': {
     id: 'sm',
     size: '14px',
