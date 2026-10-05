@@ -14,6 +14,7 @@ import { Sidebar } from './components/sidebar.js';
 import { Topbar } from './components/topbar.js';
 import { Router } from './router.js';
 import { LoginPage } from './pages/login.js';
+import { syncStateManager } from './services/syncStateManager.js';
 import { AdminDataService } from './services/adminDataService.js';
 
 class SchoolApp {
@@ -131,10 +132,7 @@ function bootstrap() {
   app.init().catch(err => {
     console.error('Fatal initialization error:', err);
     // Fallback: force show login page on error so screen is never blank
-    const appShell = document.getElementById('app');
-    const loginContainer = document.getElementById('login-container');
-    if (appShell) appShell.classList.add('hidden');
-    if (loginContainer) loginContainer.classList.remove('hidden');
+    app.showLogin();
   });
 }
 
