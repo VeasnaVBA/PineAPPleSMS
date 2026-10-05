@@ -107,7 +107,6 @@ export const AdminDataService = {
       displayName: u.displayName || u.username || '',
       role: (u.role || 'TEACHER').toUpperCase(),
       status: (u.status || 'ACTIVE').toUpperCase(),
-      classId: u.classId || '',
       permissions: u.permissions || {},
       createdAt: u.createdAt || new Date().toISOString(),
       updatedAt: u.updatedAt || new Date().toISOString()
@@ -358,7 +357,6 @@ export const AdminDataService = {
           displayName: u.displayName || cleanUsername,
           role: (u.role || 'TEACHER').trim().toUpperCase(),
           status: (u.status || 'ACTIVE').trim().toUpperCase(),
-          classId: u.classId || null,
           permissions: typeof u.permissions === 'object' ? u.permissions : {},
           createdAt: u.createdAt || new Date().toISOString(),
           updatedAt: u.updatedAt || new Date().toISOString(),

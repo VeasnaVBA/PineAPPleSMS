@@ -119,7 +119,6 @@ var DEFAULT_SEED_USERS = [
     displayName: "System Administrator",
     role: "ADMIN",
     status: "ACTIVE",
-    classId: "",
     permissions: JSON.stringify({ settings: true, users: true })
   },
   {
@@ -129,7 +128,6 @@ var DEFAULT_SEED_USERS = [
     displayName: "School Director",
     role: "DIRECTOR",
     status: "ACTIVE",
-    classId: "",
     permissions: JSON.stringify({ dashboard: true, schools: true, registration: true, promotion: true, students: true, teachers: true, classes: true, courses: true, attendance: true, scores: true, reports: true, settings: true })
   },
   {
@@ -139,7 +137,6 @@ var DEFAULT_SEED_USERS = [
     displayName: "Lead Teacher",
     role: "TEACHER",
     status: "ACTIVE",
-    classId: "class_7a",
     permissions: JSON.stringify({ dashboard: true, schools: true, students: true, classes: true, teachers: true, courses: true, attendance: true, scores: true, reports: true })
   },
   {
@@ -149,7 +146,6 @@ var DEFAULT_SEED_USERS = [
     displayName: "Director King",
     role: "DIRECTOR",
     status: "ACTIVE",
-    classId: "",
     permissions: JSON.stringify({ dashboard: true, schools: true, registration: true, promotion: true, students: true, teachers: true, classes: true, courses: true, attendance: true, scores: true, reports: true, settings: true })
   }
 ];
@@ -333,7 +329,7 @@ function ensureAdminSheetTabs(spreadsheet) {
   var usersSheet = spreadsheet.getSheetByName('users');
   if (!usersSheet) {
     usersSheet = spreadsheet.insertSheet('users');
-    var usersHeaders = ['id', 'username', 'password', 'passwordHash', 'displayName', 'role', 'status', 'classId', 'permissions', 'createdAt', 'updatedAt'];
+    var usersHeaders = ['id', 'username', 'password', 'passwordHash', 'displayName', 'role', 'status', 'permissions', 'createdAt', 'updatedAt'];
     var usersMatrix = [usersHeaders];
     for (var u = 0; u < DEFAULT_SEED_USERS.length; u++) {
       var usr = DEFAULT_SEED_USERS[u];
@@ -345,7 +341,6 @@ function ensureAdminSheetTabs(spreadsheet) {
         usr.displayName,
         usr.role,
         usr.status,
-        usr.classId,
         usr.permissions,
         new Date().toISOString(),
         new Date().toISOString()
@@ -474,7 +469,7 @@ function handleSaveAdminData(data) {
   if (!usersSheet) usersSheet = spreadsheet.insertSheet('users');
   usersSheet.clear();
   
-  var usersHeaders = ['id', 'username', 'password', 'passwordHash', 'displayName', 'role', 'status', 'classId', 'permissions', 'createdAt', 'updatedAt'];
+  var usersHeaders = ['id', 'username', 'password', 'passwordHash', 'displayName', 'role', 'status', 'permissions', 'createdAt', 'updatedAt'];
   var usersMatrix = [usersHeaders];
   for (var u = 0; u < usersList.length; u++) {
     var uItem = usersList[u];
@@ -486,7 +481,6 @@ function handleSaveAdminData(data) {
       uItem.displayName || '',
       uItem.role || 'TEACHER',
       uItem.status || 'ACTIVE',
-      uItem.classId || '',
       typeof uItem.permissions === 'object' ? JSON.stringify(uItem.permissions) : (uItem.permissions || ''),
       uItem.createdAt || new Date().toISOString(),
       uItem.updatedAt || new Date().toISOString()
