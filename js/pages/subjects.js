@@ -317,48 +317,61 @@ export const SubjectsPage = {
 
                     <!-- Per-Subject Expandable Grading Formula Scale Row -->
                     ${isExpanded ? `
-                      <tr class="bg-muted/15 border-b border-border/70 animate-fade-in">
-                        <td colspan="11" class="p-3.5 sm:px-6">
-                          <div class="space-y-2.5">
-                            <div class="flex items-center justify-between text-xs">
-                              <div class="flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                <span class="font-bold text-foreground ${fontClass}">
-                                  ${isKm ? 'រូបមន្តគណនានិទ្ទេសមុខវិជ្ជា៖' : 'Grading Scale for:'} 
-                                  <span class="text-primary font-bold">${mainName}</span>
-                                  <span class="text-muted-foreground font-normal text-[11px]">(${isKm ? 'ពិន្ទុពេញ' : 'Full Score'}: <strong class="text-primary font-mono">${activeFullScore}</strong> pts / ${activeGrade})</span>
-                                </span>
-                              </div>
+                      <tr class="bg-muted/10 border-b border-border/70 animate-fade-in">
+                        <td colspan="11" class="py-2.5 px-3 sm:px-6">
+                          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2.5 p-2.5 sm:px-4 sm:py-2 rounded-lg bg-card/90 border border-border shadow-2xs">
+                            
+                            <!-- Left: Grade Level & Full Score -->
+                            <div class="flex items-center gap-2">
+                              <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                              <span class="text-xs font-bold text-foreground ${fontClass}">
+                                ${isKm 
+                                  ? `ថ្នាក់ទី ${activeGrade.replace('G', '')} ( ពិន្ទុពេញ៖ <span class="font-mono text-primary font-bold">${activeFullScore}</span> )៖` 
+                                  : `Grade ${activeGrade.replace('G', '')} ( Full: <span class="font-mono text-primary font-bold">${activeFullScore}</span> ):`}
+                              </span>
+                              <span class="text-[11px] text-muted-foreground hidden lg:inline truncate max-w-[240px] ${fontClass}">
+                                — ${mainName}
+                              </span>
                             </div>
 
-                            <!-- Grade Brackets Cards A-F -->
-                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-                              ${brackets.map(bracket => {
-                                let badgeColor = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
-                                if (bracket.grade === 'B') badgeColor = 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20';
-                                if (bracket.grade === 'C') badgeColor = 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20';
-                                if (bracket.grade === 'D') badgeColor = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
-                                if (bracket.grade === 'E') badgeColor = 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20';
-                                if (bracket.grade === 'F') badgeColor = 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20';
+                            <!-- Right: Clean Formula Scale (A≥... | B≥... | C≥... | D≥... | E≥... | F<...) -->
+                            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs font-mono select-none">
+                              <!-- Grade A -->
+                              <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded font-bold border bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25">
+                                A<span>&ge;</span><span>${brackets[0].minScore}</span>
+                              </span>
+                              <span class="text-border/80 text-xs">|</span>
 
-                                return `
-                                  <div class="p-2.5 rounded-lg border bg-card border-border/80 flex flex-col justify-between space-y-1 text-center shadow-2xs">
-                                    <div class="flex items-center justify-between">
-                                      <span class="px-2 py-0.5 rounded font-mono font-bold text-xs border ${badgeColor}">
-                                        ${bracket.grade}
-                                      </span>
-                                      <span class="text-[10px] font-mono text-muted-foreground">${bracket.percentRange}</span>
-                                    </div>
-                                    <div class="font-bold text-xs text-foreground ${fontClass}">
-                                      ${isKm ? bracket.labelKm : bracket.labelEn}
-                                    </div>
-                                    <div class="text-[11px] font-mono font-semibold text-primary pt-0.5">
-                                      ${bracket.grade === 'F' ? `< ${bracket.maxScore + 0.1}` : `${bracket.minScore} - ${bracket.maxScore}`} pts
-                                    </div>
-                                  </div>
-                                `;
-                              }).join('')}
+                              <!-- Grade B -->
+                              <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded font-bold border bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25">
+                                B<span>&ge;</span><span>${brackets[1].minScore}</span>
+                              </span>
+                              <span class="text-border/80 text-xs">|</span>
+
+                              <!-- Grade C -->
+                              <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded font-bold border bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/25">
+                                C<span>&ge;</span><span>${brackets[2].minScore}</span>
+                              </span>
+                              <span class="text-border/80 text-xs">|</span>
+
+                              <!-- Grade D -->
+                              <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded font-bold border bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25">
+                                D<span>&ge;</span><span>${brackets[3].minScore}</span>
+                              </span>
+                              <span class="text-border/80 text-xs">|</span>
+
+                              <!-- Grade E -->
+                              <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded font-bold border bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/25">
+                                E<span>&ge;</span><span>${brackets[4].minScore}</span>
+                              </span>
+                              <span class="text-border/80 text-xs">|</span>
+
+                              <!-- Grade F -->
+                              <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded font-bold border bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25">
+                                F<span>&lt;</span><span>${brackets[4].minScore}</span>
+                              </span>
                             </div>
+
                           </div>
                         </td>
                       </tr>
