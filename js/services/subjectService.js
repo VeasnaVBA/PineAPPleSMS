@@ -1,6 +1,6 @@
 /**
  * Subject Management Service
- * Manages school curriculum subjects, categories, max full scores, and weekly credit hours.
+ * Manages school curriculum subjects, max full scores, and weekly credit hours.
  * Persists data in the isolated user workspace IndexedDB (`subjects` store).
  */
 
@@ -14,7 +14,6 @@ export const DEFAULT_SUBJECTS = [
     code: 'SUB-101',
     name: 'ភាសាខ្មែរ',
     nameEn: 'Khmer Literature',
-    category: 'ភាសាខ្មែរ',
     maxScore: 100,
     creditHours: 4,
     notes: 'មុខវិជ្ជាស្នូល'
@@ -24,7 +23,6 @@ export const DEFAULT_SUBJECTS = [
     code: 'SUB-102',
     name: 'គណិតវិទ្យា',
     nameEn: 'Mathematics',
-    category: 'វិទ្យាសាស្ត្រពិត',
     maxScore: 100,
     creditHours: 6,
     notes: 'មុខវិជ្ជាស្នូល'
@@ -34,7 +32,6 @@ export const DEFAULT_SUBJECTS = [
     code: 'SUB-103',
     name: 'រូបវិទ្យា',
     nameEn: 'Physics',
-    category: 'វិទ្យាសាស្ត្រពិត',
     maxScore: 50,
     creditHours: 2,
     notes: ''
@@ -44,7 +41,6 @@ export const DEFAULT_SUBJECTS = [
     code: 'SUB-104',
     name: 'គីមីវិទ្យា',
     nameEn: 'Chemistry',
-    category: 'វិទ្យាសាស្ត្រពិត',
     maxScore: 50,
     creditHours: 2,
     notes: ''
@@ -54,7 +50,6 @@ export const DEFAULT_SUBJECTS = [
     code: 'SUB-105',
     name: 'ជីវវិទ្យា',
     nameEn: 'Biology',
-    category: 'វិទ្យាសាស្ត្រពិត',
     maxScore: 50,
     creditHours: 2,
     notes: ''
@@ -64,7 +59,6 @@ export const DEFAULT_SUBJECTS = [
     code: 'SUB-106',
     name: 'ប្រវត្តិវិទ្យា',
     nameEn: 'History',
-    category: 'វិទ្យាសាស្ត្រសង្គម',
     maxScore: 50,
     creditHours: 2,
     notes: ''
@@ -74,7 +68,6 @@ export const DEFAULT_SUBJECTS = [
     code: 'SUB-107',
     name: 'ភូមិវិទ្យា',
     nameEn: 'Geography',
-    category: 'វិទ្យាសាស្ត្រសង្គម',
     maxScore: 50,
     creditHours: 2,
     notes: ''
@@ -84,7 +77,6 @@ export const DEFAULT_SUBJECTS = [
     code: 'SUB-108',
     name: 'សីលធម៌-ពលរដ្ឋវិទ្យា',
     nameEn: 'Moral & Civics',
-    category: 'វិទ្យាសាស្ត្រសង្គម',
     maxScore: 50,
     creditHours: 2,
     notes: ''
@@ -94,7 +86,6 @@ export const DEFAULT_SUBJECTS = [
     code: 'SUB-109',
     name: 'ផែនដីវិទ្យា',
     nameEn: 'Earth Science',
-    category: 'វិទ្យាសាស្ត្រពិត',
     maxScore: 50,
     creditHours: 2,
     notes: ''
@@ -104,7 +95,6 @@ export const DEFAULT_SUBJECTS = [
     code: 'SUB-110',
     name: 'ព័ត៌មានវិទ្យា',
     nameEn: 'Information Technology',
-    category: 'បច្ចេកវិទ្យា',
     maxScore: 50,
     creditHours: 2,
     notes: ''
@@ -114,7 +104,6 @@ export const DEFAULT_SUBJECTS = [
     code: 'SUB-111',
     name: 'ភាសាបរទេស (អង់គ្លេស)',
     nameEn: 'English Language',
-    category: 'ភាសាបរទេស',
     maxScore: 50,
     creditHours: 4,
     notes: ''
@@ -124,7 +113,6 @@ export const DEFAULT_SUBJECTS = [
     code: 'SUB-112',
     name: 'អប់រំកាយ និងកីឡា',
     nameEn: 'Physical Education',
-    category: 'កីឡា និងសិល្បៈ',
     maxScore: 50,
     creditHours: 2,
     notes: ''
@@ -134,7 +122,6 @@ export const DEFAULT_SUBJECTS = [
     code: 'SUB-113',
     name: 'បំណិនជីវិត',
     nameEn: 'Life Skills',
-    category: 'បំណិនជីវិត',
     maxScore: 50,
     creditHours: 2,
     notes: ''
@@ -144,7 +131,6 @@ export const DEFAULT_SUBJECTS = [
     code: 'SUB-114',
     name: 'សិល្បៈ',
     nameEn: 'Arts & Music',
-    category: 'កីឡា និងសិល្បៈ',
     maxScore: 50,
     creditHours: 2,
     notes: ''
@@ -154,7 +140,6 @@ export const DEFAULT_SUBJECTS = [
     code: 'SUB-115',
     name: 'សេដ្ឋកិច្ច',
     nameEn: 'Economics',
-    category: 'វិទ្យាសាស្ត្រសង្គម',
     maxScore: 50,
     creditHours: 2,
     notes: ''
@@ -164,7 +149,6 @@ export const DEFAULT_SUBJECTS = [
     code: 'SUB-116',
     name: 'គេហវិជ្ជា',
     nameEn: 'Home Economics',
-    category: 'បំណិនជីវិត',
     maxScore: 50,
     creditHours: 2,
     notes: ''
@@ -174,7 +158,6 @@ export const DEFAULT_SUBJECTS = [
     code: 'SUB-117',
     name: 'កសិកម្ម',
     nameEn: 'Agriculture',
-    category: 'បំណិនជីវិត',
     maxScore: 50,
     creditHours: 2,
     notes: ''
@@ -276,7 +259,6 @@ export const SubjectService = {
       code: cleanCode,
       name: cleanName,
       nameEn: data.nameEn?.trim() || '',
-      category: data.category?.trim() || 'ទូទៅ',
       maxScore: Number(data.maxScore) > 0 ? Number(data.maxScore) : 100,
       creditHours: Number(data.creditHours) > 0 ? Number(data.creditHours) : 2,
       notes: data.notes?.trim() || '',
@@ -328,11 +310,10 @@ export const SubjectService = {
       ...existing,
       code: cleanCode,
       name: cleanName,
-      nameEn: data.nameEn !== undefined ? data.nameEn.trim() : existing.nameEn,
-      category: data.category !== undefined ? data.category.trim() : existing.category,
+      nameEn: data.nameEn !== undefined ? data.nameEn.trim() : (existing.nameEn || ''),
       maxScore: data.maxScore !== undefined && Number(data.maxScore) > 0 ? Number(data.maxScore) : existing.maxScore,
       creditHours: data.creditHours !== undefined && Number(data.creditHours) > 0 ? Number(data.creditHours) : existing.creditHours,
-      notes: data.notes !== undefined ? data.notes.trim() : existing.notes,
+      notes: data.notes !== undefined ? data.notes.trim() : (existing.notes || ''),
       updatedAt: new Date().toISOString()
     };
 

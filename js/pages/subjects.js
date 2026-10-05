@@ -1,6 +1,6 @@
 /**
  * Subjects Management Page
- * Standard curriculum subjects management with categories, max scores, and credit hours.
+ * Standard curriculum subjects management with max scores and credit hours.
  */
 
 import { SubjectService } from '../services/subjectService.js';
@@ -14,8 +14,7 @@ export const SubjectsPage = {
   container: null,
   state: {
     subjects: [],
-    searchQuery: '',
-    selectedCategory: 'all'
+    searchQuery: ''
   },
 
   async render(container) {
@@ -53,25 +52,18 @@ export const SubjectsPage = {
     const isKm = i18n.getLocale() === 'km';
     const fontClass = isKm ? 'font-khmer' : '';
     const q = (this.state.searchQuery || '').trim().toLowerCase();
-    const cat = this.state.selectedCategory || 'all';
 
     const subjectsList = Array.isArray(this.state.subjects) ? this.state.subjects : [];
 
-    // Filter subjects by search query and category
+    // Filter subjects by search query
     const filtered = subjectsList.filter(s => {
       if (!s) return false;
-      const matchQuery = !q || (
+      return !q || (
         (s.code && String(s.code).toLowerCase().includes(q)) ||
         (s.name && String(s.name).toLowerCase().includes(q)) ||
-        (s.nameEn && String(s.nameEn).toLowerCase().includes(q)) ||
-        (s.category && String(s.category).toLowerCase().includes(q))
+        (s.nameEn && String(s.nameEn).toLowerCase().includes(q))
       );
-      const matchCat = cat === 'all' || s.category === cat;
-      return matchQuery && matchCat;
     });
-
-    // Extract unique categories for filter tabs
-    const categories = ['all', ...new Set(subjectsList.map(s => s.category).filter(Boolean))];
 
     this.container.innerHTML = `
       <div class="space-y-6 animate-fade-in pb-12">
@@ -82,7 +74,7 @@ export const SubjectsPage = {
               ${t('subjects.title') || 'គ្រប់គ្រងមុខវិជ្ជា'}
             </h1>
             <p class="text-xs sm:text-sm text-muted-foreground mt-1 ${fontClass}">
-              ${t('subjects.subtitle') || 'បញ្ជីមុខវិជ្ជាកម្មវិធីសិក្សា ពិន្ទុពេញ និងចំនួនម៉ោងបង្រៀនប្រចាំសប្តាហ៍'}
+              ${t('subjects.subtitle') || 'បញ្ជីមុខវិជ្ជាកម្មវិធីសិក្សាជាតិ ពិន្ទុពេញ និងចំនួនម៉ោងបង្រៀនប្រចាំសប្តាហ៍'}
             </p>
           </div>
           
@@ -97,7 +89,7 @@ export const SubjectsPage = {
           </div>
         </div>
 
-        <!-- Search & Category Filters -->
+        <!-- Search Bar -->
         <div class="flex flex-col sm:flex-row gap-3 items-center justify-between">
           <div class="relative w-full sm:max-w-md">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground">
@@ -106,19 +98,13 @@ export const SubjectsPage = {
             <input type="text"
                    id="input-subject-search"
                    value="${this.state.searchQuery || ''}"
-                   placeholder="${t('subjects.searchPlaceholder') || 'ស្វែងរកមុខវិជ្ជា (ឈ្មោះ, កូដ, ក្រុម)...'}"
+                   placeholder="${t('subjects.searchPlaceholder') || 'ស្វែងរកមុខវិជ្ជា (ឈ្មោះ, កូដ)...'}"
                    class="w-full pl-10 pr-4 py-2 text-xs sm:text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-2xs transition-all ${fontClass}" />
           </div>
 
-          <!-- Category Filter Pills -->
-          <div class="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
-            ${categories.map(c => `
-              <button type="button"
-                      data-category="${c}"
-                      class="category-pill px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${this.state.selectedCategory === c ? 'bg-primary text-primary-foreground shadow-xs' : 'bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground'} ${fontClass}">
-                ${c === 'all' ? (t('common.all') || 'ទាំងអស់') : c}
-              </button>
-            `).join('')}
+          <!-- Total Count Badge -->
+          <div class="text-xs text-muted-foreground font-mono self-end sm:self-center">
+            ${isKm ? `សរុប៖ ${filtered.length} មុខវិជ្ជា` : `Total: ${filtered.length} Subjects`}
           </div>
         </div>
 
@@ -131,22 +117,19 @@ export const SubjectsPage = {
                   <th scope="col" class="w-12 px-3 py-3 text-center border-r border-border/50">
                     ${t('common.no') || 'ល.រ'}
                   </th>
-                  <th scope="col" class="px-4 py-3 min-w-[120px] font-semibold text-foreground border-r border-border/50 ${fontClass}">
+                  <th scope="col" class="px-4 py-3 min-w-[130px] font-semibold text-foreground border-r border-border/50 ${fontClass}">
                     ${t('subjects.code') || 'កូដមុខវិជ្ជា'}
                   </th>
-                  <th scope="col" class="px-4 py-3 min-w-[200px] font-semibold text-foreground border-r border-border/50 ${fontClass}">
+                  <th scope="col" class="px-4 py-3 min-w-[240px] font-semibold text-foreground border-r border-border/50 ${fontClass}">
                     ${t('subjects.name') || 'ឈ្មោះមុខវិជ្ជា'}
                   </th>
-                  <th scope="col" class="px-4 py-3 min-w-[150px] font-semibold text-foreground border-r border-border/50 ${fontClass}">
-                    ${t('subjects.category') || 'ក្រុមមុខវិជ្ជា'}
-                  </th>
-                  <th scope="col" class="px-4 py-3 text-center min-w-[100px] font-semibold text-foreground border-r border-border/50 ${fontClass}">
+                  <th scope="col" class="px-4 py-3 text-center min-w-[110px] font-semibold text-foreground border-r border-border/50 ${fontClass}">
                     ${t('subjects.maxScore') || 'ពិន្ទុពេញ'}
                   </th>
-                  <th scope="col" class="px-4 py-3 text-center min-w-[120px] font-semibold text-foreground border-r border-border/50 ${fontClass}">
+                  <th scope="col" class="px-4 py-3 text-center min-w-[140px] font-semibold text-foreground border-r border-border/50 ${fontClass}">
                     ${t('subjects.creditHours') || 'ម៉ោងបង្រៀន/សប្តាហ៍'}
                   </th>
-                  <th scope="col" class="px-4 py-3 text-center min-w-[90px] font-semibold text-foreground ${fontClass}">
+                  <th scope="col" class="px-4 py-3 text-center min-w-[100px] font-semibold text-foreground ${fontClass}">
                     ${t('common.actions') || 'សកម្មភាព'}
                   </th>
                 </tr>
@@ -155,7 +138,7 @@ export const SubjectsPage = {
               <tbody class="divide-y divide-border/60 ${fontClass}">
                 ${filtered.length === 0 ? `
                   <tr>
-                    <td colspan="7" class="text-center py-12 text-muted-foreground ${fontClass}">
+                    <td colspan="6" class="text-center py-12 text-muted-foreground ${fontClass}">
                       <div class="flex flex-col items-center justify-center gap-2">
                         ${getIcon('inbox', 'w-8 h-8 text-muted-foreground/50')}
                         <span>${t('subjects.noData') || 'មិនទាន់មានមុខវិជ្ជាណាមួយនៅឡើយទេ'}</span>
@@ -185,13 +168,6 @@ export const SubjectsPage = {
                           <span>${mainName}</span>
                         </div>
                         ${subName ? `<div class="text-[11px] text-muted-foreground/80 mt-0.5 pl-5">${subName}</div>` : ''}
-                      </td>
-
-                      <!-- Category Badge -->
-                      <td class="px-4 py-3.5 border-r border-border/40 whitespace-nowrap ${fontClass}">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                          ${item.category || 'ទូទៅ'}
-                        </span>
                       </td>
 
                       <!-- Max Score -->
@@ -255,14 +231,6 @@ export const SubjectsPage = {
       });
     }
 
-    // Category filter pills
-    this.container.querySelectorAll('.category-pill').forEach(btn => {
-      btn.addEventListener('click', () => {
-        this.state.selectedCategory = btn.getAttribute('data-category') || 'all';
-        this.renderLayout();
-      });
-    });
-
     // Add Subject button
     const addBtn = this.container.querySelector('#btn-add-subject');
     if (addBtn) {
@@ -302,7 +270,7 @@ export const SubjectsPage = {
       <div class="space-y-4 p-5 select-none ${fontClass}">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <!-- Subject Code -->
-          <div>
+          <div class="sm:col-span-2">
             <label class="block text-xs font-semibold text-foreground mb-1">
               ${t('subjects.code') || 'កូដមុខវិជ្ជា'} <span class="text-rose-500">*</span>
             </label>
@@ -311,28 +279,6 @@ export const SubjectsPage = {
                    value="${defaultCode}"
                    class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary uppercase font-mono" />
             <p id="modal-code-err" class="text-[11px] text-rose-500 mt-1 hidden"></p>
-          </div>
-
-          <!-- Category -->
-          <div>
-            <label class="block text-xs font-semibold text-foreground mb-1">
-              ${t('subjects.category') || 'ក្រុមមុខវិជ្ជា'}
-            </label>
-            <input type="text"
-                   id="modal-subject-category"
-                   value="${existingSubject?.category || (isKm ? 'វិទ្យាសាស្ត្រពិត' : 'Natural Science')}"
-                   list="category-presets"
-                   class="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-            <datalist id="category-presets">
-              <option value="${isKm ? 'ភាសាខ្មែរ' : 'Khmer Language'}"></option>
-              <option value="${isKm ? 'វិទ្យាសាស្ត្រពិត' : 'Natural Science'}"></option>
-              <option value="${isKm ? 'វិទ្យាសាស្ត្រសង្គម' : 'Social Science'}"></option>
-              <option value="${isKm ? 'ភាសាបរទេស' : 'Foreign Languages'}"></option>
-              <option value="${isKm ? 'បំណិនជីវិត' : 'Life Skills'}"></option>
-              <option value="${isKm ? 'បច្ចេកវិទ្យា' : 'Technology'}"></option>
-              <option value="${isKm ? 'កីឡា និងសិល្បៈ' : 'Sports & Arts'}"></option>
-              <option value="${isKm ? 'ទូទៅ' : 'General'}"></option>
-            </datalist>
           </div>
 
           <!-- Subject Name (Khmer) -->
@@ -423,7 +369,6 @@ export const SubjectsPage = {
       const codeInput = modalEl.querySelector('#modal-subject-code');
       const nameInput = modalEl.querySelector('#modal-subject-name');
       const nameEnInput = modalEl.querySelector('#modal-subject-name-en');
-      const catInput = modalEl.querySelector('#modal-subject-category');
       const scoreInput = modalEl.querySelector('#modal-subject-score');
       const hoursInput = modalEl.querySelector('#modal-subject-hours');
       const codeErr = modalEl.querySelector('#modal-code-err');
@@ -457,7 +402,6 @@ export const SubjectsPage = {
         code,
         name,
         nameEn: nameEnInput?.value.trim() || '',
-        category: catInput?.value.trim() || (isKm ? 'ទូទៅ' : 'General'),
         maxScore: Number(scoreInput?.value) > 0 ? Number(scoreInput.value) : 100,
         creditHours: Number(hoursInput?.value) > 0 ? Number(hoursInput.value) : 2
       };
@@ -505,7 +449,7 @@ export const SubjectsPage = {
         </p>
         <div class="p-3 rounded-lg bg-muted/40 border border-border text-xs space-y-1">
           <div class="font-bold text-foreground">${subject.name}${subject.nameEn ? ` (${subject.nameEn})` : ''}</div>
-          <div class="font-mono text-muted-foreground">${subject.code} • ${subject.category || ''} • ${subject.maxScore || 100} pts</div>
+          <div class="font-mono text-muted-foreground">${subject.code} • ${subject.maxScore || 100} pts • ${subject.creditHours || 2} hrs/wk</div>
         </div>
         <div class="flex items-center justify-end gap-2 pt-2">
           <button type="button"
