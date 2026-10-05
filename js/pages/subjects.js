@@ -15,7 +15,7 @@ export const SubjectsPage = {
   state: {
     subjects: [],
     searchQuery: '',
-    highlightedGrade: null
+    previewScore: 50
   },
 
   async render(container) {
@@ -66,6 +66,8 @@ export const SubjectsPage = {
       );
     });
 
+    const scalePreview = SubjectService.getGradingScaleSummary(this.state.previewScore || 50);
+
     this.container.innerHTML = `
       <div class="space-y-6 animate-fade-in pb-12">
         <!-- Top Title Bar -->
@@ -87,6 +89,63 @@ export const SubjectsPage = {
               ${getIcon('plus', 'w-4 h-4')}
               <span>${t('subjects.addSubject') || 'មុខវិជ្ជាថ្មី'}</span>
             </button>
+          </div>
+        </div>
+
+        <!-- Grading Formula & Scale Banner (MoEYS Standard A-F) -->
+        <div class="p-4 rounded-xl bg-card border border-border shadow-2xs space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <h3 class="text-xs sm:text-sm font-bold text-foreground ${fontClass}">
+                ${isKm ? 'រូបមន្តគណនានិទ្ទេស (Grading Scale Formula A-F)' : 'Grading Scale Formula (A-F)'}
+              </h3>
+              <span class="text-[11px] text-muted-foreground hidden sm:inline">•</span>
+              <span class="text-[11px] text-muted-foreground hidden sm:inline ${fontClass}">
+                ${isKm ? 'យោងតាមឈ្មោះថ្នាក់ (ឧ. 7A គឺថ្នាក់ទី៧)' : 'Matched by classroom name (e.g. 7A = Grade 7)'}
+              </span>
+            </div>
+
+            <!-- Score Preview Selector -->
+            <div class="flex items-center gap-1.5 text-xs">
+              <span class="text-muted-foreground ${fontClass}">${isKm ? 'គំរូពិន្ទុពេញ៖' : 'Sample Full Score:'}</span>
+              ${[100, 50, 40, 60, 35, 25].map(pts => `
+                <button type="button"
+                        data-score="${pts}"
+                        class="btn-preview-score px-2 py-0.5 rounded text-xs font-mono font-medium transition-colors cursor-pointer ${this.state.previewScore === pts ? 'bg-primary text-primary-foreground shadow-2xs' : 'bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground'}">
+                  ${pts}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Grade Brackets Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            ${scalePreview.map(item => {
+              let badgeColor = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
+              if (item.grade === 'B') badgeColor = 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20';
+              if (item.grade === 'C') badgeColor = 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20';
+              if (item.grade === 'D') badgeColor = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
+              if (item.grade === 'E') badgeColor = 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20';
+              if (item.grade === 'F') badgeColor = 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20';
+
+              return `
+                <div class="p-2.5 rounded-lg border bg-muted/20 border-border/80 flex flex-col justify-between space-y-1 text-center">
+                  <div class="flex items-center justify-between">
+                    <span class="px-2 py-0.5 rounded font-mono font-bold text-xs border ${badgeColor}">
+                      ${item.grade}
+                    </span>
+                    <span class="text-[10px] font-mono text-muted-foreground">${item.percentRange}</span>
+                  </div>
+                  <div class="font-bold text-xs text-foreground ${fontClass}">
+                    ${isKm ? item.labelKm : item.labelEn}
+                  </div>
+                  <div class="text-[11px] font-mono font-semibold text-primary pt-0.5">
+                    ${item.grade === 'F' ? `< ${item.maxScore + 0.1}` : `${item.minScore} - ${item.maxScore}`} pts
+                  </div>
+                </div>
+              `;
+            }).join('')}
           </div>
         </div>
 
@@ -164,17 +223,17 @@ export const SubjectsPage = {
                   return `
                     <tr class="hover:bg-muted/20 transition-colors group">
                       <!-- Row No -->
-                      <td class="px-3 py-3 text-center text-muted-foreground border-r border-border/40 font-mono text-xs">
+                      <td class="px-3 py-3.5 text-center text-muted-foreground border-r border-border/40 font-mono text-xs">
                         ${idx + 1}
                       </td>
 
                       <!-- Subject Code -->
-                      <td class="px-4 py-3 font-semibold text-foreground border-r border-border/40 whitespace-nowrap">
+                      <td class="px-4 py-3.5 font-semibold text-foreground border-r border-border/40 whitespace-nowrap">
                         <span class="font-mono text-xs px-2 py-0.5 rounded bg-muted/50 border border-border text-foreground tracking-tight">${item.code || ''}</span>
                       </td>
 
                       <!-- Subject Name (Khmer & English) -->
-                      <td class="px-4 py-3 border-r border-border/40 ${fontClass}">
+                      <td class="px-4 py-3.5 border-r border-border/40 ${fontClass}">
                         <div class="font-semibold text-foreground text-sm flex items-center gap-1.5">
                           ${getIcon('bookOpen', 'w-3.5 h-3.5 text-primary flex-shrink-0')}
                           <span>${mainName}</span>
@@ -248,6 +307,15 @@ export const SubjectsPage = {
         }
       });
     }
+
+    // Preview Score selector buttons
+    this.container.querySelectorAll('.btn-preview-score').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const val = Number(btn.getAttribute('data-score')) || 50;
+        this.state.previewScore = val;
+        this.renderLayout();
+      });
+    });
 
     // Add Subject button
     const addBtn = this.container.querySelector('#btn-add-subject');

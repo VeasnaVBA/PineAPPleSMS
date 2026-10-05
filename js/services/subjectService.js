@@ -1,6 +1,7 @@
 /**
  * Subject Management Service
  * Manages school curriculum subjects, max scores per grade level (G7-G12), and weekly credit hours.
+ * Includes Grade Detection from Classroom Names (e.g. 7A -> G7) and MoEYS Standard Grading Scale (A-F).
  * Persists data in the isolated user workspace IndexedDB (`subjects` store).
  */
 
@@ -204,6 +205,95 @@ export const DEFAULT_SUBJECTS = [
 ];
 
 export const SubjectService = {
+  /**
+   * Extract Grade code (G7 - G12) from Classroom Name or Grade string
+   * Examples: '7A' -> 'G7', '8-1' -> 'G8', 'ថ្នាក់ទី ៩ក' -> 'G9', '12A1' -> 'G12'
+   */
+  extractGradeFromClassName(className) {
+    if (!className) return 'G7';
+    const str = String(className).trim();
+
+    // Convert Khmer numerals to Western Arabic digits
+    const khmerNumMap = { '០': '0', '១': '1', '២': '2', '៣': '3', '៤': '4', '៥': '5', '៦': '6', '៧': '7', '៨': '8', '៩': '9' };
+    const normalized = str.replace(/[០-៩]/g, d => khmerNumMap[d] || d);
+
+    // Direct check G7-G12
+    const gMatch = normalized.match(/G\s*(1[0-2]|[7-9])/i);
+    if (gMatch) return `G${gMatch[1]}`;
+
+    // Match leading or isolated numbers 7, 8, 9, 10, 11, 12
+    const numMatch = normalized.match(/(?:grade|ថ្នាក់ទី|ថ្នាក់)?\s*(1[0-2]|[7-9])/i);
+    if (numMatch) return `G${numMatch[1]}`;
+
+    return 'G7';
+  },
+
+  /**
+   * Get subject full score for a specific classroom or grade level
+   */
+  getSubjectFullScore(subject, classNameOrGrade = 'G7') {
+    if (!subject) return 100;
+    const gradeKey = classNameOrGrade.startsWith('G') 
+      ? classNameOrGrade 
+      : this.extractGradeFromClassName(classNameOrGrade);
+
+    if (subject.scoreByGrade && subject.scoreByGrade[gradeKey] !== undefined) {
+      const val = Number(subject.scoreByGrade[gradeKey]);
+      return !isNaN(val) && val >= 0 ? val : (subject.maxScore || 100);
+    }
+    return Number(subject.maxScore) > 0 ? Number(subject.maxScore) : 100;
+  },
+
+  /**
+   * Calculate Letter Grade (A, B, C, D, E, F) and details based on score and full score
+   * Formula:
+   *  A: >= 85% of full score (ល្អប្រសើរ)
+   *  B: >= 80% and < 85% of full score (ល្អណាស់)
+   *  C: >= 70% and < 80% of full score (ល្អ)
+   *  D: >= 60% and < 70% of full score (ល្អបង្គួរ)
+   *  E: >= 50% and < 60% of full score (មធ្យម)
+   *  F: < 50% of full score (< S/2) (ធ្លាក់ / ខ្សោយ)
+   */
+  calculateGrade(score, fullScore = 100) {
+    const s = Number(score) || 0;
+    const fs = Number(fullScore) > 0 ? Number(fullScore) : 100;
+    const percentage = Math.max(0, (s / fs) * 100);
+
+    if (percentage >= 85) {
+      return { grade: 'A', labelKm: 'ល្អប្រសើរ', labelEn: 'Excellent', color: 'emerald', percentage };
+    }
+    if (percentage >= 80) {
+      return { grade: 'B', labelKm: 'ល្អណាស់', labelEn: 'Very Good', color: 'blue', percentage };
+    }
+    if (percentage >= 70) {
+      return { grade: 'C', labelKm: 'ល្អ', labelEn: 'Good', color: 'indigo', percentage };
+    }
+    if (percentage >= 60) {
+      return { grade: 'D', labelKm: 'ល្អបង្គួរ', labelEn: 'Fair / Satisfactory', color: 'amber', percentage };
+    }
+    if (percentage >= 50) {
+      return { grade: 'E', labelKm: 'មធ្យម', labelEn: 'Passing / Average', color: 'orange', percentage };
+    }
+    return { grade: 'F', labelKm: 'ខ្សោយ (ធ្លាក់)', labelEn: 'Needs Improvement / Fail', color: 'rose', percentage };
+  },
+
+  /**
+   * Get Grading Scale Ranges for a given full score (for preview & UI documentation)
+   */
+  getGradingScaleSummary(fullScore = 100) {
+    const fs = Number(fullScore) > 0 ? Number(fullScore) : 100;
+    const round1 = num => Math.round(num * 10) / 10;
+
+    return [
+      { grade: 'A', labelKm: 'ល្អប្រសើរ', labelEn: 'Excellent', percentRange: '85% - 100%', minScore: round1(fs * 0.85), maxScore: fs, color: 'emerald' },
+      { grade: 'B', labelKm: 'ល្អណាស់', labelEn: 'Very Good', percentRange: '80% - 84.9%', minScore: round1(fs * 0.80), maxScore: round1(fs * 0.849), color: 'blue' },
+      { grade: 'C', labelKm: 'ល្អ', labelEn: 'Good', percentRange: '70% - 79.9%', minScore: round1(fs * 0.70), maxScore: round1(fs * 0.799), color: 'indigo' },
+      { grade: 'D', labelKm: 'ល្អបង្គួរ', labelEn: 'Satisfactory', percentRange: '60% - 69.9%', minScore: round1(fs * 0.60), maxScore: round1(fs * 0.699), color: 'amber' },
+      { grade: 'E', labelKm: 'មធ្យម', labelEn: 'Passing', percentRange: '50% - 59.9%', minScore: round1(fs * 0.50), maxScore: round1(fs * 0.599), color: 'orange' },
+      { grade: 'F', labelKm: 'ខ្សោយ (ធ្លាក់)', labelEn: 'Fail', percentRange: '< 50%', minScore: 0, maxScore: round1(fs * 0.499), color: 'rose' }
+    ];
+  },
+
   /**
    * Helper to normalize scoreByGrade object
    */

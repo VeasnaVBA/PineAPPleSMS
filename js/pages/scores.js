@@ -29,9 +29,13 @@ export const ScoresPage = {
   async render(container) {
     this.container = container;
     this.state.classes = await ClassService.getAll();
-    this.state.subjects = ScoreService.getSubjects();
+    this.state.subjects = await ScoreService.getSubjects();
     this.state.months = ScoreService.getMonths();
     this.state.activeYear = await SettingsService.getActiveAcademicYear();
+
+    if (this.state.subjects.length > 0 && !this.state.selectedSubjectId) {
+      this.state.selectedSubjectId = this.state.subjects[0].id;
+    }
 
     if (authService.isTeacher()) {
       const teacherClassId = authService.getAssignedClassId();
@@ -272,16 +276,17 @@ export const ScoresPage = {
       const assignInput = row.querySelector('.input-assignment');
       const examInput = row.querySelector('.input-exam');
 
-      let assignVal = Math.min(40, Math.max(0, Number(assignInput.value) || 0));
-      let examVal = Math.min(60, Math.max(0, Number(examInput.value) || 0));
-
       const sc = this.state.scores.find(s => s.studentId === studentId);
       if (sc) {
+        const fullScore = Number(sc.fullScore) > 0 ? Number(sc.fullScore) : 100;
+        let assignVal = Math.max(0, Number(assignInput.value) || 0);
+        let examVal = Math.max(0, Number(examInput.value) || 0);
+
         sc.assignmentScore = assignVal;
         sc.examScore = examVal;
         sc.total = assignVal + examVal;
-        sc.percentage = Math.min(100, Math.round((sc.total / 100) * 100));
-        const gradeInfo = ScoreService.calculateGrade(sc.percentage);
+        sc.percentage = fullScore > 0 ? Math.min(100, Math.round((sc.total / fullScore) * 100)) : 0;
+        const gradeInfo = ScoreService.calculateGrade(sc.total, fullScore);
         sc.grade = gradeInfo.grade;
         sc.gradeColor = gradeInfo.color;
 
@@ -310,7 +315,7 @@ export const ScoresPage = {
       btn.addEventListener('click', async () => {
         const studentId = btn.getAttribute('data-student');
         const studentName = btn.getAttribute('data-name');
-        const history = await ScoreService.getStudentScoreHistory(studentId);
+        const history = await ScoreService.getStudentTranscript(studentId, this.state.activeYear);
         this.openTranscriptModal(studentName, history);
       });
     });
@@ -344,11 +349,13 @@ export const ScoresPage = {
     let sum = 0;
     let highest = 0;
     let passCount = 0;
+    const currentFullScore = Number(scores[0]?.fullScore) > 0 ? Number(scores[0].fullScore) : 100;
+    const passThreshold = currentFullScore / 2;
 
     for (const sc of scores) {
       sum += (sc.total || 0);
       if (sc.total > highest) highest = sc.total;
-      if (sc.total >= 50) passCount++;
+      if (sc.total >= passThreshold) passCount++;
     }
 
     const average = (sum / scores.length).toFixed(1);
@@ -358,8 +365,8 @@ export const ScoresPage = {
     const elHigh = document.getElementById('stat-highest-mark');
     const elPass = document.getElementById('stat-pass-rate');
 
-    if (elAvg) elAvg.textContent = `${average} / 100`;
-    if (elHigh) elHigh.textContent = `${highest} / 100`;
+    if (elAvg) elAvg.textContent = `${average} / ${currentFullScore}`;
+    if (elHigh) elHigh.textContent = `${highest} / ${currentFullScore}`;
     if (elPass) elPass.textContent = `${passRate}% (${passCount} passed)`;
   },
 

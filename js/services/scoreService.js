@@ -1,16 +1,31 @@
 import { db } from '../database/db.js';
 import { ClassService } from './classService.js';
+import { SubjectService } from './subjectService.js';
 import { authService } from './authService.js';
 
 export const ScoreService = {
-  getSubjects() {
+  async getSubjects() {
+    try {
+      const list = await SubjectService.getAll();
+      if (Array.isArray(list) && list.length > 0) {
+        return list.map(s => ({
+          id: s.id,
+          code: s.code,
+          nameEn: s.nameEn || s.name,
+          nameKm: s.name,
+          maxScore: s.maxScore || 100,
+          scoreByGrade: s.scoreByGrade || {}
+        }));
+      }
+    } catch (_) {}
+
     return [
       { id: 'sub-khmer', nameEn: 'Khmer Literature', nameKm: 'ភាសាខ្មែរ', maxScore: 100 },
       { id: 'sub-math', nameEn: 'Mathematics', nameKm: 'គណិតវិទ្យា', maxScore: 100 },
-      { id: 'sub-science', nameEn: 'Science & Physics', nameKm: 'រូបវិទ្យា និងវិទ្យាសាស្ត្រ', maxScore: 100 },
-      { id: 'sub-social', nameEn: 'Social Studies & History', nameKm: 'ប្រវត្តិវិទ្យា និងសង្គម', maxScore: 100 },
-      { id: 'sub-english', nameEn: 'English Language', nameKm: 'ភាសាអង់គ្លេស', maxScore: 100 },
-      { id: 'sub-pe', nameEn: 'Physical Education & Arts', nameKm: 'អប់រំកាយ និងសិល្បៈ', maxScore: 100 }
+      { id: 'sub-science', nameEn: 'Science & Physics', nameKm: 'រូបវិទ្យា និងវិទ្យាសាស្ត្រ', maxScore: 50 },
+      { id: 'sub-social', nameEn: 'Social Studies & History', nameKm: 'ប្រវត្តិវិទ្យា និងសង្គម', maxScore: 50 },
+      { id: 'sub-english', nameEn: 'English Language', nameKm: 'ភាសាអង់គ្លេស', maxScore: 50 },
+      { id: 'sub-pe', nameEn: 'Physical Education & Arts', nameKm: 'អប់រំកាយ និងសិល្បៈ', maxScore: 50 }
     ];
   },
 
@@ -22,15 +37,10 @@ export const ScoreService = {
   },
 
   /**
-   * Determine letter grade based on calculated percentage
+   * Determine letter grade based on calculated percentage / full score
    */
-  calculateGrade(percentage) {
-    if (percentage >= 90) return { grade: 'A', label: 'Excellent', color: 'emerald' };
-    if (percentage >= 80) return { grade: 'B', label: 'Very Good', color: 'blue' };
-    if (percentage >= 70) return { grade: 'C', label: 'Good', color: 'indigo' };
-    if (percentage >= 60) return { grade: 'D', label: 'Satisfactory', color: 'amber' };
-    if (percentage >= 50) return { grade: 'E', label: 'Passing', color: 'orange' };
-    return { grade: 'F', label: 'Needs Improvement', color: 'rose' };
+  calculateGrade(scoreOrPercentage, fullScore = 100) {
+    return SubjectService.calculateGrade(scoreOrPercentage, fullScore);
   },
 
   /**
@@ -63,6 +73,22 @@ export const ScoreService = {
     const students = await ClassService.getEnrolledStudents(classId);
     const activeStudents = students.filter(s => s.status === 'Active' || s.status === 'Inactive');
 
+    // Fetch class info to detect grade level (e.g. '7A' -> 'G7')
+    let className = '7A';
+    try {
+      const cls = await ClassService.getById(classId);
+      if (cls && cls.name) className = cls.name;
+    } catch (_) {}
+
+    // Fetch subject info to determine full score for this grade level
+    let fullScore = 100;
+    try {
+      const subject = await SubjectService.getById(subjectId);
+      if (subject) {
+        fullScore = SubjectService.getSubjectFullScore(subject, className);
+      }
+    } catch (_) {}
+
     const allScores = await db.getAll('scores');
     const existingScores = allScores.filter(s => 
       s.classId === classId && 
@@ -79,8 +105,8 @@ export const ScoreService = {
       const assignmentScore = existing ? Number(existing.assignmentScore) || 0 : 0;
       const examScore = existing ? Number(existing.examScore) || 0 : 0;
       const total = assignmentScore + examScore;
-      const percentage = Math.min(100, Math.round((total / 100) * 100));
-      const gradeInfo = this.calculateGrade(percentage);
+      const percentage = fullScore > 0 ? Math.min(100, Math.round((total / fullScore) * 100)) : 0;
+      const gradeInfo = SubjectService.calculateGrade(total, fullScore);
 
       return {
         studentId: stu.id,
@@ -89,7 +115,9 @@ export const ScoreService = {
         englishName: stu.englishName,
         gender: stu.gender,
         classId,
+        className,
         subjectId,
+        fullScore,
         academicYear,
         month,
         assessmentType,
@@ -98,6 +126,8 @@ export const ScoreService = {
         total,
         percentage,
         grade: gradeInfo.grade,
+        gradeLabelKm: gradeInfo.labelKm,
+        gradeLabelEn: gradeInfo.labelEn,
         gradeColor: gradeInfo.color,
         rank: 1,
         notes: existing ? existing.notes || '' : ''
@@ -130,6 +160,7 @@ export const ScoreService = {
         assignmentScore: Number(sc.assignmentScore) || 0,
         examScore: Number(sc.examScore) || 0,
         totalScore: Number(sc.total) || 0,
+        fullScore: Number(sc.fullScore) || 100,
         percentage: Number(sc.percentage) || 0,
         grade: sc.grade || 'F',
         notes: sc.notes || '',
