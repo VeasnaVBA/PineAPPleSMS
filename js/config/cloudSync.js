@@ -840,7 +840,7 @@ function handlePushToApp(fileName, username) {
         }
         item[colKey] = val;
       }
-      if (hasValue && (item.id || item.studentId || item.code || item.name || item.key || item.tempStudentId || item.date || item.classId || item.subjectId || item.teacherId)) {
+      if (hasValue && (item.id || item.studentId || item.code || item.name || item.courseId || item.key || item.tempStudentId || item.date || item.classId || item.subjectId || item.teacherId)) {
         items.push(item);
       }
     }

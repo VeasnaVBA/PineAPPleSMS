@@ -546,7 +546,7 @@ export const DownloadDataPage = {
                             <span class="font-bold text-xs text-foreground">Excel (.xlsx)</span>
                           </div>
                           <span class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                            6 Tabs
+                            7 Tabs
                           </span>
                         </div>
                         <p class="text-[11px] text-muted-foreground leading-relaxed">
@@ -557,6 +557,7 @@ export const DownloadDataPage = {
                           <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-mono">schools</span>
                           <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-mono">classes</span>
                           <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-mono">teachers</span>
+                          <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-mono">courses</span>
                           <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-mono">attendance</span>
                           <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-mono">scores</span>
                         </div>
@@ -863,6 +864,7 @@ export const DownloadDataPage = {
             schools: Array.isArray(rawData.schools) ? rawData.schools : [],
             classes: Array.isArray(rawData.classes) ? rawData.classes : [],
             teachers: Array.isArray(rawData.teachers) ? rawData.teachers : [],
+            courses: Array.isArray(rawData.courses) ? rawData.courses : [],
             attendance: Array.isArray(rawData.attendance) ? rawData.attendance : [],
             scores: Array.isArray(rawData.scores) ? rawData.scores : []
           }
@@ -1230,6 +1232,34 @@ export const DownloadDataPage = {
       scr.examType || ''
     ]);
     createStyledWorksheet('scores', scoreHeaders, scoreRows, new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]));
+
+    // 7. Courses tab (Curriculum courses & max scores G7-G12)
+    const courseHeaders = [
+      'ល.រ (No.)', 'លេខកូដមុខវិជ្ជា (Course ID)', 'ឈ្មោះមុខវិជ្ជា (Name Kh)',
+      'ឈ្មោះជាឡាតាំង (Name En)', 'ក្រុមមុខវិជ្ជា (Category)',
+      'ពិន្ទុ G7', 'ពិន្ទុ G8', 'ពិន្ទុ G9', 'ពិន្ទុ G10', 'ពិន្ទុ G11', 'ពិន្ទុ G12',
+      'ក្រេឌីត (Credit Hours)', 'កម្រិតពិន្ទុតាមនិទ្ទេស (Grading Scale G8)'
+    ];
+    const courseRows = (rawData.courses || []).map((crs, idx) => {
+      const sc = crs.scores || {};
+      const g7 = sc.G7 !== undefined ? sc.G7 : (crs.G7 !== undefined ? crs.G7 : 0);
+      const g8 = sc.G8 !== undefined ? sc.G8 : (crs.G8 !== undefined ? crs.G8 : 0);
+      const g9 = sc.G9 !== undefined ? sc.G9 : (crs.G9 !== undefined ? crs.G9 : 0);
+      const g10 = sc.G10 !== undefined ? sc.G10 : (crs.G10 !== undefined ? crs.G10 : 0);
+      const g11 = sc.G11 !== undefined ? sc.G11 : (crs.G11 !== undefined ? crs.G11 : 0);
+      const g12 = sc.G12 !== undefined ? sc.G12 : (crs.G12 !== undefined ? crs.G12 : 0);
+      return [
+        idx + 1,
+        crs.courseId || crs.id || '',
+        crs.name || '',
+        crs.nameEn || '',
+        crs.category || '',
+        g7, g8, g9, g10, g11, g12,
+        crs.creditHours || 2,
+        crs.gradingScaleG8 || `Grade 8 (Full: ${g8}): A≥${(g8 * 0.9).toFixed(0)} | B≥${(g8 * 0.8).toFixed(0)} | C≥${(g8 * 0.7).toFixed(0)} | D≥${(g8 * 0.6).toFixed(0)} | E≥${(g8 * 0.5).toFixed(0)} | F<${(g8 * 0.5).toFixed(0)}`
+      ];
+    });
+    createStyledWorksheet('courses', courseHeaders, courseRows, new Set([1, 2, 5, 6, 7, 8, 9, 10, 11, 12]));
 
     return await workbook.xlsx.writeBuffer();
   },
