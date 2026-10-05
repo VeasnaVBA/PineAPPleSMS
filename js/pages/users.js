@@ -14,6 +14,7 @@ import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
 import { Modal } from '../components/modal.js';
 import { SyncService } from '../services/syncService.js';
+import { AdminDataService } from '../services/adminDataService.js';
 import { renderActionDropdown } from '../components/actionDropdown.js';
 
 export const UsersPage = {
@@ -69,12 +70,31 @@ export const UsersPage = {
             </p>
           </div>
 
-          <!-- Add User Button (Only on Accounts tab) -->
-          <button id="btn-add-user" 
-                  class="${this.activeTab === 'tab-accounts' ? 'inline-flex' : 'hidden'} items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs sm:text-sm shadow-sm transition-all cursor-pointer">
-            ${getIcon('plus', 'w-4 h-4')}
-            <span>${isKm ? 'បង្កើតគណនីថ្មី' : 'Add New User'}</span>
-          </button>
+          <!-- Action Buttons (Only on Accounts tab) -->
+          <div class="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+            <!-- Sync to Admin Sheet Button -->
+            <button id="btn-users-save-sheet" 
+                    title="${isKm ? 'រក្សាទុកគណនី និងសិទ្ធិទាំងអស់ទៅកាន់ Google Sheet' : 'Save all user accounts and permissions to Google Sheet'}"
+                    class="${this.activeTab === 'tab-accounts' ? 'inline-flex' : 'hidden'} items-center gap-1.5 px-3 py-2 rounded-lg border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary font-semibold text-xs sm:text-sm shadow-2xs transition-all cursor-pointer">
+              ${getIcon('cloudUpload', 'w-4 h-4')}
+              <span>${isKm ? 'Sync ទៅ Sheet' : 'Save to Sheet'}</span>
+            </button>
+
+            <!-- Pull from Admin Sheet Button -->
+            <button id="btn-users-pull-sheet" 
+                    title="${isKm ? 'ទាញគណនី និងសិទ្ធិពី Google Sheet' : 'Pull user accounts from Google Sheet'}"
+                    class="${this.activeTab === 'tab-accounts' ? 'inline-flex' : 'hidden'} items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground font-semibold text-xs sm:text-sm shadow-2xs transition-all cursor-pointer">
+              ${getIcon('cloudDownload', 'w-4 h-4 text-primary')}
+              <span>${isKm ? 'ទាញពី Sheet' : 'Pull from Sheet'}</span>
+            </button>
+
+            <!-- Add User Button -->
+            <button id="btn-add-user" 
+                    class="${this.activeTab === 'tab-accounts' ? 'inline-flex' : 'hidden'} items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs sm:text-sm shadow-sm transition-all cursor-pointer">
+              ${getIcon('plus', 'w-4 h-4')}
+              <span>${isKm ? 'បង្កើតគណនីថ្មី' : 'Add New User'}</span>
+            </button>
+          </div>
         </div>
 
         <!-- Navigation Tabs -->
@@ -542,14 +562,56 @@ export const UsersPage = {
           pane.classList.toggle('hidden', pane.id !== target);
         });
 
-        // Toggle Add User button in header
+        // Toggle action buttons in header
         const addUserBtn = document.getElementById('btn-add-user');
-        if (addUserBtn) {
-          addUserBtn.className = target === 'tab-accounts' 
-            ? 'inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs sm:text-sm shadow-sm transition-all cursor-pointer'
-            : 'hidden';
-        }
+        const saveSheetBtn = document.getElementById('btn-users-save-sheet');
+        const pullSheetBtn = document.getElementById('btn-users-pull-sheet');
+        const isAccountsTab = target === 'tab-accounts';
+        
+        if (addUserBtn) addUserBtn.className = isAccountsTab ? 'inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs sm:text-sm shadow-sm transition-all cursor-pointer' : 'hidden';
+        if (saveSheetBtn) saveSheetBtn.className = isAccountsTab ? 'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary font-semibold text-xs sm:text-sm shadow-2xs transition-all cursor-pointer' : 'hidden';
+        if (pullSheetBtn) pullSheetBtn.className = isAccountsTab ? 'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground font-semibold text-xs sm:text-sm shadow-2xs transition-all cursor-pointer' : 'hidden';
       });
+    });
+
+    // Sync to Admin Sheet Button Click
+    const saveSheetBtn = document.getElementById('btn-users-save-sheet');
+    saveSheetBtn?.addEventListener('click', async () => {
+      saveSheetBtn.disabled = true;
+      const originalHtml = saveSheetBtn.innerHTML;
+      saveSheetBtn.innerHTML = `
+        <div class="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <span>${isKm ? 'កំពុង Sync...' : 'Syncing...'}</span>
+      `;
+      try {
+        const res = await AdminDataService.saveToGoogleSheet({ silent: false });
+        if (res.success) {
+          await this.reload();
+        }
+      } finally {
+        saveSheetBtn.disabled = false;
+        saveSheetBtn.innerHTML = originalHtml;
+      }
+    });
+
+    // Pull from Admin Sheet Button Click
+    const pullSheetBtn = document.getElementById('btn-users-pull-sheet');
+    pullSheetBtn?.addEventListener('click', async () => {
+      pullSheetBtn.disabled = true;
+      const originalHtml = pullSheetBtn.innerHTML;
+      pullSheetBtn.innerHTML = `
+        <div class="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <span>${isKm ? 'កំពុងទាញ...' : 'Pulling...'}</span>
+      `;
+      try {
+        const res = await AdminDataService.pullFromGoogleSheet({ silent: false });
+        if (res.success) {
+          await this.reload();
+        }
+      } finally {
+        pullSheetBtn.disabled = false;
+        pullSheetBtn.innerHTML = originalHtml;
+      }
     });
 
     // Save permissions button

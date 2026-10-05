@@ -771,7 +771,17 @@ export const en = {
     exitModalDesc: "You have unsynced changes. Would you like to save your data to Google Drive before exiting?",
     btnSyncAndExit: "Save to Drive & Exit",
     btnExitWithoutSaving: "Exit Without Saving",
-    btnCancel: "Cancel"
+    btnCancel: "Cancel",
+    adminDataTitle: "Admin Central Data Sheet (SchoolSystem_AdminData)",
+    adminDataDesc: "Store all admin settings, themes, font sizes, colors, and all user accounts (usernames, passwords, roles, permissions) in one central Google Sheet for multi-device & Vercel deployment.",
+    saveAdminToSheet: "Save Admin Data to Sheet",
+    pullAdminFromSheet: "Pull Admin Data from Sheet",
+    openAdminSheet: "Open Admin Google Sheet",
+    adminTargetSpreadsheet: "Master Admin Sheet",
+    adminDataSyncSuccess: "Admin data and user accounts successfully saved to Google Sheet!",
+    adminDataPullSuccess: "Admin data and user accounts successfully pulled from Google Sheet!",
+    adminAccountsSync: "Sync Accounts with Sheet",
+    lastSynced: "Last synced"
   },
   reportViewer: {
     title: "Report Viewer",

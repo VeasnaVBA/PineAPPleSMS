@@ -15,8 +15,9 @@ import { ThemeColorModal } from '../components/themeColorModal.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
 import { CloudSyncService } from '../services/cloudSyncService.js';
+import { AdminDataService } from '../services/adminDataService.js';
 import { db } from '../database/db.js';
-import { getCloudSyncUrl, setCloudSyncUrl, getWorkspaceSpreadsheetName, GOOGLE_APPS_SCRIPT_BACKEND_CODE } from '../config/cloudSync.js';
+import { getCloudSyncUrl, setCloudSyncUrl, getWorkspaceSpreadsheetName, GOOGLE_APPS_SCRIPT_BACKEND_CODE, ADMIN_SPREADSHEET_NAME } from '../config/cloudSync.js';
 
 export const SettingsPage = {
   async render(container) {
@@ -394,7 +395,74 @@ export const SettingsPage = {
           </div>
         </div>
 
-        <!-- Google Drive & Google Sheets Cloud Sync Settings -->
+        <!-- Admin Central Data Sheet (Master Cloud Sync for Settings, Accounts, Passwords & Roles) -->
+        <div class="p-6 rounded-xl border border-primary/30 bg-primary/5 shadow-sm space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <div class="p-1.5 rounded-md bg-primary text-primary-foreground shadow-xs">
+                  ${getIcon('fileSpreadsheet', 'w-4 h-4')}
+                </div>
+                <h3 class="text-base font-semibold text-foreground tracking-tight">${t('cloudSync.adminDataTitle')}</h3>
+              </div>
+              <p class="text-xs text-muted-foreground mt-1">${t('cloudSync.adminDataDesc')}</p>
+            </div>
+
+            <div class="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+              ${AdminDataService.getSpreadsheetUrl() ? `
+                <a href="${AdminDataService.getSpreadsheetUrl()}" target="_blank" rel="noopener noreferrer" 
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold shadow-xs transition-colors cursor-pointer">
+                  ${getIcon('fileSpreadsheet', 'w-3.5 h-3.5')}
+                  <span>${t('cloudSync.openAdminSheet')}</span>
+                </a>
+              ` : ''}
+            </div>
+          </div>
+
+          <div class="p-4 rounded-lg bg-card/80 border border-border/80 space-y-3.5 text-xs">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-2.5">
+              <div class="flex items-center gap-2">
+                <span class="text-muted-foreground font-medium">${t('cloudSync.adminTargetSpreadsheet')}:</span>
+                <span class="font-mono font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded border border-primary/20">${ADMIN_SPREADSHEET_NAME}</span>
+              </div>
+              <div class="text-[11px] text-muted-foreground">
+                <span>${t('cloudSync.lastSynced')}: </span>
+                <span class="font-medium text-foreground font-mono">${AdminDataService.getLastSyncTimestamp() ? new Date(AdminDataService.getLastSyncTimestamp()).toLocaleString() : (currentLocale === 'km' ? 'មិនទាន់ Sync' : 'Never')}</span>
+              </div>
+            </div>
+
+            <!-- Action buttons for Admin Sheet Sync -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+              <p class="text-[11px] text-muted-foreground leading-relaxed">
+                ${currentLocale === 'km' 
+                  ? 'ធ្វើសមកាលកម្មការកំណត់ទាំងអស់ (URL, Theme, Font Size, Color) និងគណនីទាំងអស់ (Admin, Director, Teachers, Passwords, Roles) ជាមួយ Google Drive ភ្លាមៗ។'
+                  : 'Sync all admin preferences (URL, theme, font size, colors) and all user accounts (Admin, Director, Teachers, passwords, roles) with Google Drive immediately.'}
+              </p>
+
+              <div class="flex items-center gap-2 shrink-0">
+                <button 
+                  id="btn-settings-save-admin-data" 
+                  type="button" 
+                  class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-xs transition-colors cursor-pointer whitespace-nowrap">
+                  <span class="btn-save-admin-icon flex items-center">${getIcon('cloudUpload', 'w-3.5 h-3.5')}</span>
+                  <span class="btn-save-admin-label">${t('cloudSync.saveAdminToSheet')}</span>
+                </button>
+
+                <button 
+                  id="btn-settings-pull-admin-data" 
+                  type="button" 
+                  class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md border border-input bg-background hover:bg-accent text-foreground text-xs font-semibold shadow-xs transition-colors cursor-pointer whitespace-nowrap">
+                  <span class="btn-pull-admin-icon flex items-center">${getIcon('cloudDownload', 'w-3.5 h-3.5 text-primary')}</span>
+                  <span class="btn-pull-admin-label">${t('cloudSync.pullAdminFromSheet')}</span>
+                </button>
+              </div>
+            </div>
+
+            <div id="settings-admin-cloud-feedback" class="hidden p-2.5 rounded-md text-xs"></div>
+          </div>
+        </div>
+
+        <!-- Google Drive & Google Sheets User Workspace Cloud Sync Settings -->
         <div class="p-6 rounded-xl border border-border bg-card shadow-sm space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
@@ -786,6 +854,51 @@ export const SettingsPage = {
         await SyncService.generateTeacherReturnPackage();
       } catch (err) {
         toast.error(err.message, 'Export Error');
+      }
+    });
+
+    // Save Admin Central Data to Sheet
+    const saveAdminBtn = container.querySelector('#btn-settings-save-admin-data');
+    const adminFeedback = container.querySelector('#settings-admin-cloud-feedback');
+    saveAdminBtn?.addEventListener('click', async () => {
+      const iconSpan = saveAdminBtn.querySelector('.btn-save-admin-icon');
+      const labelSpan = saveAdminBtn.querySelector('.btn-save-admin-label');
+
+      saveAdminBtn.disabled = true;
+      if (iconSpan) iconSpan.innerHTML = getIcon('loader2', 'w-3.5 h-3.5 animate-spin');
+      if (labelSpan) labelSpan.textContent = t('cloudSync.saving');
+
+      try {
+        const res = await AdminDataService.saveToGoogleSheet({ silent: false });
+        if (res.success) {
+          await this.render(container);
+        }
+      } finally {
+        saveAdminBtn.disabled = false;
+        if (iconSpan) iconSpan.innerHTML = getIcon('cloudUpload', 'w-3.5 h-3.5');
+        if (labelSpan) labelSpan.textContent = t('cloudSync.saveAdminToSheet');
+      }
+    });
+
+    // Pull Admin Central Data from Sheet
+    const pullAdminBtn = container.querySelector('#btn-settings-pull-admin-data');
+    pullAdminBtn?.addEventListener('click', async () => {
+      const iconSpan = pullAdminBtn.querySelector('.btn-pull-admin-icon');
+      const labelSpan = pullAdminBtn.querySelector('.btn-pull-admin-label');
+
+      pullAdminBtn.disabled = true;
+      if (iconSpan) iconSpan.innerHTML = getIcon('loader2', 'w-3.5 h-3.5 text-primary animate-spin');
+      if (labelSpan) labelSpan.textContent = t('cloudSync.restoring');
+
+      try {
+        const res = await AdminDataService.pullFromGoogleSheet({ silent: false });
+        if (res.success) {
+          await this.render(container);
+        }
+      } finally {
+        pullAdminBtn.disabled = false;
+        if (iconSpan) iconSpan.innerHTML = getIcon('cloudDownload', 'w-3.5 h-3.5 text-primary');
+        if (labelSpan) labelSpan.textContent = t('cloudSync.pullAdminFromSheet');
       }
     });
 

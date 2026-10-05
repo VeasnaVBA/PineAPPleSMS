@@ -771,7 +771,17 @@ export const km = {
     exitModalDesc: "អ្នកមានទិន្នន័យដែលមិនទាន់បាន Sync ទៅកាន់ Google Drive នៅឡើយទេ។ តើអ្នកចង់ Sync មុនពេលបិទកម្មវិធីដែរឬទេ?",
     btnSyncAndExit: "រក្សាទុក ហើយចាកចេញ",
     btnExitWithoutSaving: "ចាកចេញដោយមិនរក្សាទុក",
-    btnCancel: "បោះបង់"
+    btnCancel: "បោះបង់",
+    adminDataTitle: "ឯកសារទិន្នន័យគ្រប់គ្រង Admin (SchoolSystem_AdminData)",
+    adminDataDesc: "រក្សាទុកការកំណត់ទូទៅ រូបរាង ទំហំអក្សរ និងគណនីអ្នកប្រើប្រាស់ទាំងអស់ (Usernames, Passwords, Roles) ទៅកាន់ Google Sheet តែមួយដើម្បី Sync ឆ្លងឧបករណ៍ & Vercel",
+    saveAdminToSheet: "រក្សាទុកទិន្នន័យ Admin ទៅ Sheet",
+    pullAdminFromSheet: "ទាញទិន្នន័យ Admin ពី Sheet",
+    openAdminSheet: "បើក Google Sheet Admin",
+    adminTargetSpreadsheet: "ឯកសារ Google Sheet មេ",
+    adminDataSyncSuccess: "បាន Sync ទិន្នន័យ Admin ទៅកាន់ Google Sheet រួចរាល់!",
+    adminDataPullSuccess: "បានទាញទិន្នន័យ Admin និងគណនីអ្នកប្រើប្រាស់ទាំងអស់ដោយជោគជ័យ!",
+    adminAccountsSync: "Sync គណនីជាមួយ Sheet",
+    lastSynced: "Sync ចុងក្រោយ"
   },
   reportViewer: {
     title: "កម្មវិធីមើលរបាយការណ៍",

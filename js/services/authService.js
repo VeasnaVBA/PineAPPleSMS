@@ -120,14 +120,31 @@ class AuthService {
     }
 
     // 1. Authenticate against central system database (SchoolSystem_Global)
-    const allUsers = await globalDb.getAll('users');
-    const user = allUsers.find(u => u.username.toLowerCase() === cleanUsername);
+    let allUsers = await globalDb.getAll('users');
+    let user = allUsers.find(u => u.username.toLowerCase() === cleanUsername);
+    let computedHash = await hashPassword(password);
+
+    // If user not found locally or password mismatch, try syncing from Admin Google Sheet if online
+    if (!user || user.passwordHash !== computedHash) {
+      try {
+        if (typeof navigator !== 'undefined' && navigator.onLine) {
+          const { AdminDataService } = await import('./adminDataService.js');
+          const syncRes = await AdminDataService.pullFromGoogleSheet({ silent: true });
+          if (syncRes && syncRes.success) {
+            allUsers = await globalDb.getAll('users');
+            user = allUsers.find(u => u.username.toLowerCase() === cleanUsername);
+            computedHash = await hashPassword(password);
+          }
+        }
+      } catch (syncErr) {
+        console.warn('[Auth] Cloud fallback sync error during login:', syncErr);
+      }
+    }
 
     if (!user) {
       throw new Error('Invalid username or password.');
     }
 
-    const computedHash = await hashPassword(password);
     if (user.passwordHash !== computedHash) {
       throw new Error('Invalid username or password.');
     }

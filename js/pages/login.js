@@ -5,6 +5,7 @@
  */
 import { authService } from '../services/authService.js';
 import { themeService } from '../services/themeService.js';
+import { AdminDataService } from '../services/adminDataService.js';
 import { i18n, t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
@@ -173,6 +174,15 @@ export class LoginPage {
                 <span class="text-[10px] text-blue-600 dark:text-blue-400 font-medium group-hover:underline">${currentLocale === 'km' ? 'បំពេញ' : 'Fill'}</span>
               </button>
             </div>
+
+            <!-- Cloud Sync Accounts Button -->
+            <div class="mt-3.5 pt-3 border-t border-border/60 flex items-center justify-center">
+              <button type="button" id="btn-login-cloud-sync"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary text-xs font-semibold shadow-2xs transition-all cursor-pointer">
+                <span class="btn-login-sync-icon flex items-center">${getIcon('cloudDownload', 'w-3.5 h-3.5')}</span>
+                <span id="btn-login-cloud-sync-text">${currentLocale === 'km' ? 'Sync គណនីពី Google Sheet' : 'Sync Accounts from Google Sheet'}</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -187,6 +197,25 @@ export class LoginPage {
   }
 
   bindEvents() {
+    // Cloud Sync Accounts click on login page
+    const syncBtn = document.getElementById('btn-login-cloud-sync');
+    const syncText = document.getElementById('btn-login-cloud-sync-text');
+    const syncIcon = syncBtn?.querySelector('.btn-login-sync-icon');
+    syncBtn?.addEventListener('click', async () => {
+      syncBtn.disabled = true;
+      if (syncIcon) syncIcon.innerHTML = getIcon('loader2', 'w-3.5 h-3.5 animate-spin');
+      if (syncText) syncText.textContent = i18n.getLocale() === 'km' ? 'កំពុងទាញទិន្នន័យ...' : 'Pulling accounts...';
+      try {
+        const res = await AdminDataService.pullFromGoogleSheet({ silent: false });
+        if (res.success) {
+          this.render();
+        }
+      } finally {
+        syncBtn.disabled = false;
+        if (syncIcon) syncIcon.innerHTML = getIcon('cloudDownload', 'w-3.5 h-3.5');
+        if (syncText) syncText.textContent = i18n.getLocale() === 'km' ? 'Sync គណនីពី Google Sheet' : 'Sync Accounts from Google Sheet';
+      }
+    });
     // Password visibility toggle
     const toggleBtn = document.getElementById('btn-toggle-password');
     toggleBtn?.addEventListener('click', () => {

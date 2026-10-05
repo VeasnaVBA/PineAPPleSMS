@@ -14,7 +14,7 @@ import { Sidebar } from './components/sidebar.js';
 import { Topbar } from './components/topbar.js';
 import { Router } from './router.js';
 import { LoginPage } from './pages/login.js';
-import { syncStateManager } from './services/syncStateManager.js';
+import { AdminDataService } from './services/adminDataService.js';
 
 class SchoolApp {
   constructor() {
@@ -38,6 +38,11 @@ class SchoolApp {
       await db.open();
       await seedInitialData();
       await permissionService.load();
+      
+      // Background pull of latest admin data (settings, users, passwords) from Google Sheet
+      AdminDataService.checkAndSyncOnStartup().catch(e => {
+        console.warn('Initial admin data sync notice:', e);
+      });
     } catch (err) {
       console.error('Failed to initialize local IndexedDB:', err);
     }
