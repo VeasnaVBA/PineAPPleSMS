@@ -217,47 +217,47 @@ export const SubjectsPage = {
         </div>
 
         <!-- Subjects Table with Multi-column Header for Score by Grade -->
-        <div class="border border-border/80 rounded-xl bg-card overflow-hidden shadow-2xs">
+        <div class="border border-border rounded-xl bg-card overflow-hidden shadow-2xs">
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs sm:text-sm ${fontClass}">
-              <thead class="bg-muted/40 text-muted-foreground text-[11px] sm:text-xs font-semibold select-none border-b border-border ${fontClass}">
+              <thead class="bg-muted/40 text-muted-foreground select-none border-b border-border">
                 <!-- Top Header Row -->
-                <tr class="border-b border-border/60">
-                  <th scope="col" rowspan="2" class="w-12 px-3 py-3 text-center border-r border-border/50 align-middle">
+                <tr>
+                  <th scope="col" rowspan="2" class="w-12 px-3 py-2.5 text-center font-semibold text-foreground border-r border-border/60 align-middle">
                     ${t('common.no') || 'ល.រ'}
                   </th>
-                  <th scope="col" rowspan="2" class="px-4 py-3 min-w-[120px] font-semibold text-foreground border-r border-border/50 align-middle ${fontClass}">
+                  <th scope="col" rowspan="2" class="px-4 py-2.5 min-w-[120px] font-semibold text-foreground border-r border-border/60 align-middle ${fontClass}">
                     ${t('subjects.code') || 'កូដមុខវិជ្ជា'}
                   </th>
-                  <th scope="col" rowspan="2" class="px-4 py-3 min-w-[200px] font-semibold text-foreground border-r border-border/50 align-middle ${fontClass}">
+                  <th scope="col" rowspan="2" class="px-4 py-2.5 min-w-[200px] font-semibold text-foreground border-r border-border/60 align-middle ${fontClass}">
                     ${isKm ? 'ឈ្មោះមុខវិជ្ជា' : 'Subject Name'}
                   </th>
-                  <th scope="col" colspan="6" class="px-4 py-2 text-center font-semibold text-foreground border-r border-border/50 bg-muted/20 ${fontClass}">
+                  <th scope="col" colspan="6" class="px-3 py-2 text-center font-bold text-foreground border-r border-b border-border/60 bg-muted/20 ${fontClass}">
                     ${isKm ? 'ពិន្ទុតាមកម្រិតថ្នាក់ (Score by Grade)' : 'Score (by Grade)'}
                   </th>
-                  <th scope="col" rowspan="2" class="px-3 py-3 text-center min-w-[100px] font-semibold text-foreground border-r border-border/50 align-middle ${fontClass}">
+                  <th scope="col" rowspan="2" class="px-3 py-2.5 text-center min-w-[95px] font-semibold text-foreground border-r border-border/60 align-middle ${fontClass}">
                     ${isKm ? 'ម៉ោង/សប្តាហ៍' : 'Hours/wk'}
                   </th>
-                  <th scope="col" rowspan="2" class="px-4 py-3 text-center min-w-[90px] font-semibold text-foreground align-middle ${fontClass}">
+                  <th scope="col" rowspan="2" class="px-4 py-2.5 text-center min-w-[90px] font-semibold text-foreground align-middle ${fontClass}">
                     ${t('common.actions') || 'សកម្មភាព'}
                   </th>
                 </tr>
 
                 <!-- Sub Header Row for G7 - G12 -->
-                <tr class="bg-muted/30 text-[11px] font-medium text-muted-foreground">
+                <tr class="bg-muted/20 text-[11px] font-medium">
                   ${GRADES.map(g => {
                     const isColActive = g === activeGrade;
                     const canClick = !isTeacher;
-                    let headerClasses = 'px-2.5 py-1.5 text-center min-w-[50px] border-r border-border/40 font-mono tracking-tight transition-colors ';
+                    let headerClasses = 'px-2.5 py-1.5 text-center min-w-[50px] border-r border-border/60 font-mono tracking-tight transition-colors ';
                     
                     if (isColActive) {
-                      headerClasses += 'text-primary font-bold bg-primary/10 ';
+                      headerClasses += 'text-primary font-bold bg-primary/15 ';
                     } else {
-                      headerClasses += 'text-foreground/80 ';
+                      headerClasses += 'text-muted-foreground ';
                     }
 
                     if (canClick) {
-                      headerClasses += 'cursor-pointer hover:bg-muted/60 ';
+                      headerClasses += 'cursor-pointer hover:bg-muted/60 hover:text-foreground ';
                     } else {
                       headerClasses += 'cursor-default ';
                     }
