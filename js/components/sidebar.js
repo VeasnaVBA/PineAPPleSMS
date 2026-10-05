@@ -118,7 +118,7 @@ export class Sidebar {
         <!-- Sidebar Brand / Header -->
         <div class="h-16 flex items-center px-4 border-b border-border gap-3 overflow-hidden sidebar-header">
           <div class="w-10 h-10 rounded-lg overflow-hidden bg-primary/10 border border-primary/20 flex items-center justify-center font-bold text-lg shadow-2xs flex-shrink-0">
-            <img src="./assets/images/app_logo.png" alt="App Logo" class="w-full h-full object-contain p-0.5" onerror="this.outerHTML='<span class=\\'text-primary flex items-center justify-center\\'>${getIcon('school', 'w-5 h-5')}</span>'" />
+            <img src="assets/images/app_logo.png" alt="App Logo" class="w-full h-full object-contain p-0.5 rounded-lg" onerror="this.onerror=null; this.src='assets/icon.png';" />
           </div>
           <div class="header-details flex-1 min-w-0 transition-opacity duration-200">
             <div class="flex items-center gap-1.5">
