@@ -621,14 +621,14 @@ export const SubjectsPage = {
       </div>
     `;
 
-    const modal = Modal.show({
-      title: '', // Custom top header inside content
+    const modal = Modal.open({
+      title: '', // Custom styled top header inside content
       content: modalContent,
-      width: 'max-w-lg',
-      onClose: () => {}
+      maxWidth: 'max-w-lg',
+      backdropClose: false
     });
 
-    const modalEl = document.getElementById(modal.id);
+    const modalEl = modal.element;
     if (!modalEl) return;
 
     // Quick fill buttons
@@ -762,14 +762,13 @@ export const SubjectsPage = {
       </div>
     `;
 
-    const modal = Modal.show({
+    const modal = Modal.open({
       title: t('subjects.deleteConfirmTitle') || (isKm ? 'បញ្ជាក់ការលុបមុខវិជ្ជា' : 'Confirm Subject Deletion'),
       content,
-      width: 'max-w-md',
-      onClose: () => {}
+      maxWidth: 'max-w-md'
     });
 
-    const modalEl = document.getElementById(modal.id);
+    const modalEl = modal.element;
     if (!modalEl) return;
 
     modalEl.querySelector('#confirm-del-cancel')?.addEventListener('click', () => {
