@@ -10,6 +10,7 @@ import { authService } from './services/authService.js';
 import { permissionService } from './services/permissionService.js';
 import { db } from './database/db.js';
 import { seedInitialData } from './database/seed.js';
+import { WorkspaceSetupService } from './services/workspaceSetupService.js';
 import { Sidebar } from './components/sidebar.js';
 import { Topbar } from './components/topbar.js';
 import { Router } from './router.js';
@@ -85,7 +86,7 @@ class SchoolApp {
     }
   }
 
-  showAppShell() {
+  async showAppShell() {
     const appShell = document.getElementById('app');
     const loginContainer = document.getElementById('login-container');
 
@@ -96,14 +97,18 @@ class SchoolApp {
     const defaultRoute = currentUser?.role === 'ADMIN' ? 'users' : 'dashboard';
 
     // Role-based route guard on shell mount:
-    // If Admin, enforce redirect to #users unless on #settings; if Director/Teacher and hash is #users or unauthorized, fallback to #dashboard
     const currentHash = window.location.hash.replace('#', '').trim();
     if (currentUser?.role === 'ADMIN') {
-      if (currentHash !== 'users' && currentHash !== 'settings') {
+      if (currentHash !== 'users' && currentHash !== 'settings' && currentHash !== 'download-data') {
         window.location.hash = '#users';
       }
-    } else if (currentHash && !authService.canAccessRoute(currentHash)) {
-      window.location.hash = `#${defaultRoute}`;
+    } else if (currentUser) {
+      const setup = await WorkspaceSetupService.getSetupStatus();
+      if (!setup.isComplete && !WorkspaceSetupService.isSetupAllowedRoute(currentHash)) {
+        window.location.hash = '#' + (setup.firstIncompleteRoute || 'schools');
+      } else if (currentHash && !authService.canAccessRoute(currentHash)) {
+        window.location.hash = `#${defaultRoute}`;
+      }
     }
 
     if (!this.sidebar) {

@@ -17,6 +17,7 @@ import { RegistrationPage } from './pages/registration.js';
 import { PromotionPage } from './pages/promotion.js';
 import { DownloadDataPage } from './pages/downloadData.js';
 import { authService } from './services/authService.js';
+import { WorkspaceSetupService } from './services/workspaceSetupService.js';
 import { getIcon } from './components/icons.js';
 import { i18n } from './i18n/i18n.js';
 
@@ -66,16 +67,26 @@ export class Router {
     this.handleRoute();
   }
 
-  handleRoute() {
+  async handleRoute() {
     const rawHash = window.location.hash.replace('#', '').trim();
     const currentUser = authService.getCurrentUser();
     const defaultRoute = currentUser?.role === 'ADMIN' ? 'users' : 'dashboard';
-    const route = routes[rawHash] ? rawHash : defaultRoute;
+    let route = routes[rawHash] ? rawHash : defaultRoute;
 
     // Automatic redirect for Admin if attempting to navigate to non-admin routes
     if (currentUser?.role === 'ADMIN' && !authService.canAccessRoute(route)) {
       window.location.hash = '#users';
       return;
+    }
+
+    // Check mandatory initial setup for Director & Teacher accounts
+    if (currentUser && currentUser.role !== 'ADMIN') {
+      const setup = await WorkspaceSetupService.getSetupStatus();
+      if (!setup.isComplete && !WorkspaceSetupService.isSetupAllowedRoute(route)) {
+        const target = setup.firstIncompleteRoute || 'schools';
+        window.location.hash = `#${target}`;
+        return;
+      }
     }
 
     if (!window.location.hash || !routes[rawHash]) {
@@ -92,6 +103,16 @@ export class Router {
     if (currentUser?.role === 'ADMIN' && !authService.canAccessRoute(routeKey)) {
       window.location.hash = '#users';
       return;
+    }
+
+    // Check mandatory initial setup for Director & Teacher accounts
+    if (currentUser && currentUser.role !== 'ADMIN') {
+      const setup = await WorkspaceSetupService.getSetupStatus();
+      if (!setup.isComplete && !WorkspaceSetupService.isSetupAllowedRoute(routeKey)) {
+        const target = setup.firstIncompleteRoute || 'schools';
+        window.location.hash = `#${target}`;
+        return;
+      }
     }
 
     const defaultFallback = currentUser?.role === 'ADMIN' ? routes.users : routes.dashboard;

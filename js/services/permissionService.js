@@ -93,7 +93,7 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     registration: false,
     promotion: false,
     students: true,
-    teachers: false,
+    teachers: true,
     classes: true,
     attendance: true,
     scores: true,
@@ -118,11 +118,13 @@ class PermissionService {
       const record = await db.get('settings', 'role_permissions');
       if (record && record.value) {
         this.customPermissions = record.value;
-        if (this.customPermissions.TEACHER && (this.customPermissions.TEACHER.schools === undefined || this.customPermissions.TEACHER.schools === false)) {
-          this.customPermissions.TEACHER.schools = true;
+        if (this.customPermissions.TEACHER) {
+          if (this.customPermissions.TEACHER.schools === undefined) this.customPermissions.TEACHER.schools = true;
+          if (this.customPermissions.TEACHER.teachers === undefined) this.customPermissions.TEACHER.teachers = true;
         }
-        if (this.customPermissions.DIRECTOR && (this.customPermissions.DIRECTOR.schools === undefined || this.customPermissions.DIRECTOR.schools === false)) {
-          this.customPermissions.DIRECTOR.schools = true;
+        if (this.customPermissions.DIRECTOR) {
+          if (this.customPermissions.DIRECTOR.schools === undefined) this.customPermissions.DIRECTOR.schools = true;
+          if (this.customPermissions.DIRECTOR.teachers === undefined) this.customPermissions.DIRECTOR.teachers = true;
         }
       } else {
         this.customPermissions = JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS));
