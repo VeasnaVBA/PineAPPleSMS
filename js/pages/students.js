@@ -3399,10 +3399,20 @@ export const StudentsPage = {
                 docSolar.textContent = schoolName ? `${schoolName}, ${rawSolar}` : rawSolar;
               }
 
-              // Ensure top-left header block (មន្ទីរអប់រំ..., ខេត្ត..., សាលា...) has default nudge +30px bottom/down
-              const topLeftBlock = staging.querySelector('.moeys-report-document .text-left.space-y-0\\.5') || staging.querySelector('.text-left.space-y-0\\.5');
+              // Ensure top-left header block (មន្ទីរអប់រំ..., ខេត្ត..., សាលា...) updates province and school name, and has default nudge +30px bottom/down
+              const topLeftBlock = staging.querySelector('.moeys-report-document .text-left.space-y-0\\.5') || staging.querySelector('.text-left.space-y-0\\.5') || staging.querySelector('.text-left');
               if (topLeftBlock) {
-                Array.from(topLeftBlock.querySelectorAll('p')).forEach(p => {
+                const pList = Array.from(topLeftBlock.querySelectorAll('p'));
+                if (pList.length >= 2 && schoolProvince) {
+                  const provNudge = pList[1].querySelector('.report-nudge-box') || pList[1];
+                  provNudge.textContent = getDisplayProvince(schoolProvince);
+                }
+                if (pList.length >= 3 && schoolName) {
+                  const schNudge = pList[2].querySelector('.report-nudge-box') || pList[2];
+                  schNudge.textContent = schoolName;
+                }
+
+                pList.forEach(p => {
                   let nudgeBox = p.querySelector('.report-nudge-box') || (p.classList.contains('report-nudge-box') ? p : null);
                   if (!nudgeBox) {
                     const span = document.createElement('span');
