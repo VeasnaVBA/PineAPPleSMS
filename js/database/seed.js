@@ -6,6 +6,7 @@
 import { globalDb, db } from './db.js';
 import { DEFAULT_USERS } from '../config/defaultUsers.js';
 import { hashPassword } from '../services/authService.js';
+import { DEFAULT_SUBJECTS } from '../services/subjectService.js';
 
 export async function seedDefaultUsers() {
   try {
@@ -85,7 +86,19 @@ export async function seedWorkspaceBaseline() {
       await db.put('settings', { key: 'school_name_km', value: 'ប្រព័ន្ធគ្រប់គ្រងសាលារៀន ស្មាតស្គូល' });
     }
 
-    console.log('[Workspace] Baseline settings initialized for active workspace.');
+    // 3. Ensure default Subjects exist in active workspace
+    const subjectCount = await db.count('subjects');
+    if (subjectCount === 0) {
+      for (const item of DEFAULT_SUBJECTS) {
+        await db.put('subjects', {
+          ...item,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      }
+    }
+
+    console.log('[Workspace] Baseline settings and default subjects initialized for active workspace.');
   } catch (err) {
     console.error('Error in seedWorkspaceBaseline:', err);
   }

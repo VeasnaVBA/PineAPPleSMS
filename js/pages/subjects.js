@@ -128,7 +128,18 @@ export const SubjectsPage = {
             </p>
           </div>
           
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2.5">
+            ${!isTeacher ? `
+              <!-- Restore Defaults Button -->
+              <button id="btn-restore-default-subjects"
+                      type="button"
+                      title="${isKm ? 'កំណត់បញ្ជីមុខវិជ្ជាតាមលំនាំដើមជាតិ (១៩ មុខវិជ្ជា)' : 'Restore 19 standard default curriculum subjects'}"
+                      class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground text-xs sm:text-sm font-medium shadow-2xs transition-all cursor-pointer ${fontClass}">
+                ${getIcon('rotateCcw', 'w-3.5 h-3.5') || getIcon('refreshCw', 'w-3.5 h-3.5')}
+                <span>${isKm ? 'កំណត់លំនាំដើម' : 'Restore Defaults'}</span>
+              </button>
+            ` : ''}
+
             <!-- Add Subject Button -->
             <button id="btn-add-subject"
                     type="button"
@@ -426,6 +437,14 @@ export const SubjectsPage = {
         this.renderLayout();
       });
     });
+
+    // Restore Defaults button
+    const restoreBtn = this.container.querySelector('#btn-restore-default-subjects');
+    if (restoreBtn) {
+      restoreBtn.addEventListener('click', () => {
+        this.confirmRestoreDefaults();
+      });
+    }
 
     // Add Subject button
     const addBtn = this.container.querySelector('#btn-add-subject');
@@ -813,6 +832,61 @@ export const SubjectsPage = {
       try {
         await SubjectService.delete(subject.id);
         toast.success(t('subjects.deletedSuccess') || 'បានលុបមុខវិជ្ជាដោយជោគជ័យ');
+        modal.close();
+        await this.loadData();
+        this.renderLayout();
+      } catch (err) {
+        toast.error(err.message);
+      }
+    });
+  },
+
+  /**
+   * Restore defaults confirmation
+   */
+  async confirmRestoreDefaults() {
+    const isKm = i18n.getLocale() === 'km';
+    const fontClass = isKm ? 'font-khmer' : '';
+
+    const content = `
+      <div class="p-5 space-y-4 select-none ${fontClass}">
+        <p class="text-sm text-foreground leading-relaxed">
+          ${isKm 
+            ? 'តើអ្នកពិតជាចង់កំណត់បញ្ជីមុខវិជ្ជាឡើងវិញតាមលំនាំដើមស្តង់ដារជាតិ (១៩ មុខវិជ្ជា) មែនទេ? រាល់មុខវិជ្ជាដែលបានកែសម្រួលនឹងត្រូវបានកំណត់ឡើងវិញតាមលំនាំដើម។' 
+            : 'Are you sure you want to restore the 19 standard curriculum default subjects? Custom subjects will be replaced with standard defaults.'}
+        </p>
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button"
+                  id="confirm-restore-cancel"
+                  class="px-4 py-2 rounded-lg text-xs font-medium border border-border bg-background hover:bg-muted text-foreground transition-colors cursor-pointer">
+            ${t('common.cancel') || 'បោះបង់'}
+          </button>
+          <button type="button"
+                  id="confirm-restore-proceed"
+                  class="px-4 py-2 rounded-lg text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-colors cursor-pointer">
+            ${isKm ? 'យល់ព្រមកំណត់ឡើងវិញ' : 'Confirm Restore'}
+          </button>
+        </div>
+      </div>
+    `;
+
+    const modal = Modal.open({
+      title: isKm ? 'កំណត់មុខវិជ្ជាលំនាំដើមឡើងវិញ' : 'Restore Default Subjects',
+      content,
+      maxWidth: 'max-w-md'
+    });
+
+    const modalEl = modal.element;
+    if (!modalEl) return;
+
+    modalEl.querySelector('#confirm-restore-cancel')?.addEventListener('click', () => {
+      modal.close();
+    });
+
+    modalEl.querySelector('#confirm-restore-proceed')?.addEventListener('click', async () => {
+      try {
+        await SubjectService.restoreDefaults();
+        toast.success(isKm ? 'បានកំណត់មុខវិជ្ជាលំនាំដើមទាំង ១៩ ដោយជោគជ័យ' : 'Successfully restored 19 default subjects');
         modal.close();
         await this.loadData();
         this.renderLayout();

@@ -39,7 +39,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Khmer Literature',
     creditHours: 4,
     maxScore: 100,
-    scoreByGrade: { G7: 100, G8: 100, G9: 100, G10: 100, G11: 100, G12: 100 },
+    scoreByGrade: { G7: 100, G8: 100, G9: 100, G10: 0, G11: 0, G12: 0 },
     notes: 'មុខវិជ្ជាស្នូល'
   },
   {
@@ -49,7 +49,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Mathematics',
     creditHours: 6,
     maxScore: 100,
-    scoreByGrade: { G7: 100, G8: 100, G9: 100, G10: 100, G11: 100, G12: 100 },
+    scoreByGrade: { G7: 100, G8: 100, G9: 100, G10: 0, G11: 0, G12: 0 },
     notes: 'មុខវិជ្ជាស្នូល'
   },
   {
@@ -59,7 +59,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Physics',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 35, G10: 50, G11: 50, G12: 50 },
+    scoreByGrade: { G7: 50, G8: 50, G9: 35, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -69,7 +69,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Chemistry',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 25, G10: 50, G11: 50, G12: 50 },
+    scoreByGrade: { G7: 50, G8: 50, G9: 25, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -79,7 +79,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Biology',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 35, G10: 50, G11: 50, G12: 50 },
+    scoreByGrade: { G7: 50, G8: 50, G9: 35, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -89,17 +89,17 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'History',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 33, G10: 50, G11: 50, G12: 50 },
+    scoreByGrade: { G7: 50, G8: 50, G9: 33, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
-    id: 'sub_geography',
+    id: 'sub_ict',
     code: 'SUB-109',
-    name: 'ភូមិវិទ្យា',
-    nameEn: 'Geography',
+    name: 'ព័ត៌មានវិទ្យា',
+    nameEn: 'Information Technology',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 33, G10: 50, G11: 50, G12: 50 },
+    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -109,7 +109,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Moral & Civics',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 34, G10: 50, G11: 50, G12: 50 },
+    scoreByGrade: { G7: 50, G8: 50, G9: 35, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -119,37 +119,37 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Earth Science',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 35, G10: 50, G11: 50, G12: 50 },
+    scoreByGrade: { G7: 50, G8: 50, G9: 25, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
-    id: 'sub_ict',
+    id: 'sub_geography',
     code: 'SUB-112',
-    name: 'ព័ត៌មានវិទ្យា',
-    nameEn: 'Information Technology',
+    name: 'ភូមិវិទ្យា',
+    nameEn: 'Geography',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 50, G11: 50, G12: 50 },
+    scoreByGrade: { G7: 50, G8: 50, G9: 32, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
-    id: 'sub_foreign_lang',
+    id: 'sub_home_ec',
     code: 'SUB-113',
-    name: 'ភាសាបរទេស (អង់គ្លេស)',
-    nameEn: 'English Language',
-    creditHours: 4,
+    name: 'គេហវិជ្ជា',
+    nameEn: 'Home Economics',
+    creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 50, G11: 50, G12: 50 },
+    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
     id: 'sub_pe',
     code: 'SUB-114',
-    name: 'អប់រំកាយ និងកីឡា',
+    name: 'អប់រំកាយ',
     nameEn: 'Physical Education',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 50, G11: 50, G12: 50 },
+    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -159,47 +159,47 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Life Skills',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 50, G11: 50, G12: 50 },
-    notes: ''
-  },
-  {
-    id: 'sub_arts',
-    code: 'SUB-116',
-    name: 'សិល្បៈ',
-    nameEn: 'Arts & Music',
-    creditHours: 2,
-    maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 50, G11: 50, G12: 50 },
+    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
     id: 'sub_economics',
-    code: 'SUB-117',
+    code: 'SUB-116',
     name: 'សេដ្ឋកិច្ច',
     nameEn: 'Economics',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 50, G11: 50, G12: 50 },
+    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
-    id: 'sub_home_ec',
-    code: 'SUB-118',
-    name: 'គេហវិជ្ជា',
-    nameEn: 'Home Economics',
+    id: 'sub_arts',
+    code: 'SUB-117',
+    name: 'សិល្បៈ',
+    nameEn: 'Arts & Music',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 50, G11: 50, G12: 50 },
+    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
     id: 'sub_agriculture',
-    code: 'SUB-119',
+    code: 'SUB-118',
     name: 'កសិកម្ម',
     nameEn: 'Agriculture',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 50, G11: 50, G12: 50 },
+    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
+    notes: ''
+  },
+  {
+    id: 'sub_foreign_lang',
+    code: 'SUB-119',
+    name: 'ភាសាបរទេស',
+    nameEn: 'Foreign Language',
+    creditHours: 4,
+    maxScore: 50,
+    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     notes: ''
   }
 ];
@@ -523,5 +523,33 @@ export const SubjectService = {
 
     syncStateManager.markDirty('subjects.delete');
     return true;
+  },
+
+  /**
+   * Restore standard default curriculum subjects
+   */
+  async restoreDefaults() {
+    try {
+      const database = await db.open();
+      if (database && database.objectStoreNames && database.objectStoreNames.contains('subjects')) {
+        await db.clear('subjects');
+        for (const item of DEFAULT_SUBJECTS) {
+          await db.add('subjects', {
+            ...item,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Could not clear and re-seed IndexedDB subjects:', err);
+    }
+
+    try {
+      await SettingsService.set('subjects_catalog', DEFAULT_SUBJECTS);
+    } catch (_) {}
+
+    syncStateManager.markDirty('subjects.restore');
+    return DEFAULT_SUBJECTS;
   }
 };
