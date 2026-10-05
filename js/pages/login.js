@@ -79,8 +79,8 @@ export class LoginPage {
           <!-- Top Brand Header -->
           <div class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-2.5 font-medium text-lg tracking-tight ${brandTextClass}">
-              <div class="w-8 h-8 rounded-lg overflow-hidden bg-primary/10 border border-primary/20 flex items-center justify-center shadow-2xs">
-                <img src="${APP_LOGO_BASE64}" alt="Logo" class="w-full h-full object-contain p-0.5" />
+              <div class="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                <img src="${APP_LOGO_BASE64}" alt="Logo" class="w-full h-full object-contain" />
               </div>
               <span class="font-bold tracking-tight">PineAPPleSMS</span>
             </div>
