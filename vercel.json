@@ -1,9 +1,13 @@
 {
   "version": 2,
-  "builds": [
+  "cleanUrls": true,
+  "routes": [
     {
-      "src": "**",
-      "use": "@vercel/static"
+      "src": "/(.*)",
+      "headers": {
+        "cache-control": "s-maxage=0"
+      },
+      "dest": "/$1"
     }
   ]
 }

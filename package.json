@@ -5,6 +5,7 @@
   "scripts": {
     "start": "electron main.js",
     "electron": "electron main.js",
+    "build": "tailwindcss -i ./css/input.css -o ./css/tailwind.css --minify",
     "build:css": "tailwindcss -i ./css/input.css -o ./css/tailwind.css --minify",
     "watch:css": "tailwindcss -i ./css/input.css -o ./css/tailwind.css --watch",
     "serve": "npx serve .",
