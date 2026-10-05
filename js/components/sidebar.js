@@ -16,6 +16,7 @@ export class Sidebar {
     authService.subscribe(() => this.render());
     fontService.subscribe(() => this.render());
     window.addEventListener('app:refresh-data', () => this.render());
+    window.addEventListener('workspace:setup-updated', () => this.render());
   }
 
   async init(initialRoute = 'dashboard') {

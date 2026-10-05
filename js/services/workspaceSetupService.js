@@ -9,8 +9,19 @@
  */
 import { db } from '../database/db.js';
 import { authService } from './authService.js';
+import { SettingsService } from './settingsService.js';
 
 export const WorkspaceSetupService = {
+  /**
+   * Broadcast setup status change event to update UI in real-time
+   */
+  notifySetupChange() {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('workspace:setup-updated'));
+      window.dispatchEvent(new CustomEvent('app:refresh-data'));
+    }
+  },
+
   /**
    * Check whether the active user's workspace has completed the 3 mandatory setup steps.
    */
@@ -33,11 +44,21 @@ export const WorkspaceSetupService = {
     }
 
     try {
-      const [schools, classes, teachers] = await Promise.all([
+      let [schools, classes, teachers] = await Promise.all([
         db.getAll('schools').catch(() => []),
         db.getAll('classes').catch(() => []),
         db.getAll('teachers').catch(() => [])
       ]);
+
+      // Fallback check for schools in settings store if IndexedDB schools store is empty
+      if (!schools || schools.length === 0) {
+        try {
+          const fallbackSchools = await SettingsService.get('schools_catalog');
+          if (Array.isArray(fallbackSchools) && fallbackSchools.length > 0) {
+            schools = fallbackSchools;
+          }
+        } catch (_) {}
+      }
 
       const hasSchool = Array.isArray(schools) && schools.length > 0;
       const hasClass = Array.isArray(classes) && classes.length > 0;

@@ -7,6 +7,7 @@ import { db } from '../database/db.js';
 import { SettingsService } from './settingsService.js';
 import { authService } from './authService.js';
 import { syncStateManager } from './syncStateManager.js';
+import { WorkspaceSetupService } from './workspaceSetupService.js';
 
 const DEFAULT_SCHOOLS = [];
 
@@ -126,6 +127,7 @@ export const SchoolService = {
     } catch (_) {}
 
     syncStateManager.markDirty('schools.create');
+    WorkspaceSetupService.notifySetupChange();
     return newSchool;
   },
 
@@ -189,6 +191,7 @@ export const SchoolService = {
     } catch (_) {}
 
     syncStateManager.markDirty('schools.update');
+    WorkspaceSetupService.notifySetupChange();
     return updatedSchool;
   },
 
@@ -260,6 +263,7 @@ export const SchoolService = {
     } catch (_) {}
 
     syncStateManager.markDirty('schools.delete');
+    WorkspaceSetupService.notifySetupChange();
     return true;
   },
 

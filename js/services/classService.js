@@ -1,6 +1,7 @@
 import { db } from '../database/db.js';
 import { authService } from './authService.js';
 import { syncStateManager } from './syncStateManager.js';
+import { WorkspaceSetupService } from './workspaceSetupService.js';
 
 export const ClassService = {
   /**
@@ -127,6 +128,7 @@ export const ClassService = {
     }
     await db.add('classes', cls);
     syncStateManager.markDirty('classes.create');
+    WorkspaceSetupService.notifySetupChange();
 
     // Sync current user's classId in database and session for seamless offline workflows
     if (isTeacher && currentUser) {
@@ -181,6 +183,7 @@ export const ClassService = {
     const updated = { ...existing, ...data, id, updatedAt: new Date().toISOString() };
     await db.put('classes', updated);
     syncStateManager.markDirty('classes.update');
+    WorkspaceSetupService.notifySetupChange();
     return updated;
   },
 
@@ -194,6 +197,7 @@ export const ClassService = {
     }
     const res = await db.delete('classes', id);
     syncStateManager.markDirty('classes.delete');
+    WorkspaceSetupService.notifySetupChange();
     return res;
   },
 

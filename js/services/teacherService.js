@@ -7,6 +7,7 @@
 import { db } from '../database/db.js';
 import { authService } from './authService.js';
 import { syncStateManager } from './syncStateManager.js';
+import { WorkspaceSetupService } from './workspaceSetupService.js';
 import { calculateAge, calculateRetirementDate, formatDisplayDate, toInputDateFormat } from '../utils/dateUtils.js';
 import { ExcelExportService } from './excelExportService.js';
 
@@ -201,6 +202,7 @@ export const TeacherService = {
 
     await db.add('teachers', normalized);
     syncStateManager.markDirty('teachers.create');
+    WorkspaceSetupService.notifySetupChange();
     return normalized;
   },
 
@@ -233,6 +235,7 @@ export const TeacherService = {
 
     await db.put('teachers', merged);
     syncStateManager.markDirty('teachers.update');
+    WorkspaceSetupService.notifySetupChange();
     return merged;
   },
 
@@ -251,6 +254,7 @@ export const TeacherService = {
 
     const res = await db.delete('teachers', id);
     syncStateManager.markDirty('teachers.delete');
+    WorkspaceSetupService.notifySetupChange();
     return res;
   },
 

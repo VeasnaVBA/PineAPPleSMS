@@ -81,6 +81,9 @@ class SyncStateManager {
     this._isDirty = true;
     this.notify();
     this.scheduleAutoSync(this.DEBOUNCE_MS);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('app:refresh-data', { detail: { source } }));
+    }
   }
 
   /**
