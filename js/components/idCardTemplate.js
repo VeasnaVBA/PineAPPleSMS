@@ -77,7 +77,7 @@ export const DEFAULT_CARD_CONFIG = {
   headerOffsetX: 0, // px
   headerOffsetY: 0, // px
 
-  schoolLogo: '', // base64 or URL
+  schoolLogo: './assets/images/school_logo.png', // base64 or URL
   logoScale: 100, // 50 - 200%
   logoOffsetX: 0, // px
   logoOffsetY: 0, // px

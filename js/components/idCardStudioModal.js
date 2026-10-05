@@ -201,13 +201,16 @@ export const IDCardStudioModal = {
           const first = schools[0];
           appSchoolKh = first.name || first.schoolNameKh || '';
           appSchoolEn = first.latinName || first.nameLatin || first.schoolNameEn || '';
-          appSchoolLogo = first.logo || '';
+          appSchoolLogo = first.logo || './assets/images/school_logo.png';
         }
         if (!appSchoolKh) {
           appSchoolKh = (await SettingsService.get('school_name_km')) || (await SettingsService.get('moeys_report_school_name')) || '';
         }
         if (!appSchoolEn) {
           appSchoolEn = (await SettingsService.get('school_name_en')) || '';
+        }
+        if (!appSchoolLogo) {
+          appSchoolLogo = './assets/images/school_logo.png';
         }
       } catch (_) {}
 
