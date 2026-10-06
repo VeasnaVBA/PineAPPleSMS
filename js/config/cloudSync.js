@@ -20,8 +20,11 @@
  *   3. permissions (role permissions matrix)
  */
 
+import { GOOGLE_SCRIPT_URL } from './googleScriptUrl.js';
+
+export { GOOGLE_SCRIPT_URL };
 export const CLOUD_SYNC_CONFIG_KEY = 'GOOGLE_SCRIPT_WEBAPP_URL';
-export const DEFAULT_GOOGLE_SCRIPT_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyt7OarmmPwiUr3nDnYUjNqnB7D-3hcbh3CXCNZATKEiLeY3tgoUS0pucuxqAEjsfq2/exec';
+export const DEFAULT_GOOGLE_SCRIPT_WEBAPP_URL = GOOGLE_SCRIPT_URL;
 
 export const ADMIN_SPREADSHEET_NAME = 'SchoolSystem_AdminData';
 export const ADMIN_DATA_LAST_SYNC_KEY = 'SCHOOL_ADMIN_DATA_LAST_SYNC';
@@ -52,9 +55,12 @@ export function getWorkspaceSpreadsheetName(username) {
 }
 
 /**
- * Get configured Google Apps Script Web App URL from localStorage or default
+ * Get configured Google Apps Script Web App URL from googleScriptUrl.js
  */
 export function getCloudSyncUrl() {
+  if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL.trim()) {
+    return GOOGLE_SCRIPT_URL.trim();
+  }
   try {
     if (typeof localStorage !== 'undefined') {
       const stored = localStorage.getItem(CLOUD_SYNC_CONFIG_KEY);
@@ -63,7 +69,7 @@ export function getCloudSyncUrl() {
       }
     }
   } catch (_) {}
-  return DEFAULT_GOOGLE_SCRIPT_WEBAPP_URL;
+  return DEFAULT_GOOGLE_SCRIPT_WEBAPP_URL || '';
 }
 
 /**
