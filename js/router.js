@@ -75,9 +75,9 @@ export class Router {
     const defaultRoute = currentUser?.role === 'ADMIN' ? 'users' : 'dashboard';
     let route = routes[rawHash] ? rawHash : defaultRoute;
 
-    // Automatic redirect for Admin if attempting to navigate to non-admin routes
-    if (currentUser?.role === 'ADMIN' && !authService.canAccessRoute(route)) {
-      window.location.hash = '#users';
+    // Automatic redirect if user does not have permission to access this route
+    if (currentUser && !authService.canAccessRoute(route)) {
+      window.location.hash = `#${defaultRoute}`;
       return;
     }
 
@@ -100,10 +100,11 @@ export class Router {
 
   async loadRoute(routeKey, force = false) {
     const currentUser = authService.getCurrentUser();
+    const defaultRoute = currentUser?.role === 'ADMIN' ? 'users' : 'dashboard';
 
-    // Automatic redirect for Admin if attempting to load non-admin routes
-    if (currentUser?.role === 'ADMIN' && !authService.canAccessRoute(routeKey)) {
-      window.location.hash = '#users';
+    // Automatic redirect if user does not have permission to access this route
+    if (currentUser && !authService.canAccessRoute(routeKey)) {
+      window.location.hash = `#${defaultRoute}`;
       return;
     }
 

@@ -97,24 +97,33 @@ class SchoolApp {
     const defaultRoute = currentUser?.role === 'ADMIN' ? 'users' : 'dashboard';
 
     // Role-based route guard on shell mount:
+    let targetRoute = defaultRoute;
     const currentHash = window.location.hash.replace('#', '').trim();
+
     if (currentUser?.role === 'ADMIN') {
-      if (currentHash !== 'users' && currentHash !== 'settings' && currentHash !== 'download-data') {
-        window.location.hash = '#users';
+      if (currentHash === 'users' || currentHash === 'settings' || currentHash === 'download-data') {
+        targetRoute = currentHash;
+      } else {
+        targetRoute = 'users';
       }
     } else if (currentUser) {
       const setup = await WorkspaceSetupService.getSetupStatus();
       if (!setup.isComplete && !WorkspaceSetupService.isSetupAllowedRoute(currentHash)) {
-        window.location.hash = '#' + (setup.firstIncompleteRoute || 'schools');
-      } else if (currentHash && !authService.canAccessRoute(currentHash)) {
-        window.location.hash = `#${defaultRoute}`;
+        targetRoute = setup.firstIncompleteRoute || 'schools';
+      } else if (currentHash && authService.canAccessRoute(currentHash)) {
+        targetRoute = currentHash;
+      } else {
+        targetRoute = defaultRoute;
       }
     }
 
+    if (window.location.hash !== `#${targetRoute}`) {
+      window.location.hash = `#${targetRoute}`;
+    }
+
     if (!this.sidebar) {
-      const initialRoute = window.location.hash.replace('#', '').trim() || defaultRoute;
       this.sidebar = new Sidebar('sidebar-container');
-      this.sidebar.init(initialRoute);
+      this.sidebar.init(targetRoute);
 
       this.topbar = new Topbar('topbar-container', this.sidebar);
       this.topbar.init();

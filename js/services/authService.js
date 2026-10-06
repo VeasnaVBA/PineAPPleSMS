@@ -203,6 +203,19 @@ class AuthService {
     };
 
     localStorage.setItem(this.sessionKey, JSON.stringify(sessionData));
+
+    // 7. Ensure URL hash is valid for the logging in role before notifying UI
+    const currentHash = (typeof window !== 'undefined' && window.location.hash) ? window.location.hash.replace('#', '').trim() : '';
+    if (sessionData.role === 'ADMIN') {
+      if (currentHash !== 'users' && currentHash !== 'settings' && currentHash !== 'download-data') {
+        window.location.hash = '#users';
+      }
+    } else {
+      if (!currentHash || !permissionService.canRoleAccessRoute(sessionData.role, currentHash)) {
+        window.location.hash = '#dashboard';
+      }
+    }
+
     this.notify(sessionData);
 
     // If Admin logs in, auto verify and sync SchoolSystem_AdminData in Google Drive
@@ -263,6 +276,9 @@ class AuthService {
     localStorage.removeItem(this.sessionKey);
     closeUserDatabase();
     this.clearAllCaches();
+    if (typeof window !== 'undefined') {
+      window.location.hash = '';
+    }
     this.notify(null);
   }
 
