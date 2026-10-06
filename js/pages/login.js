@@ -86,8 +86,8 @@ export class LoginPage {
                 ${isKm ? 'សូមបញ្ចូលឈ្មោះគណនី និងពាក្យសម្ងាត់ដើម្បីបន្ត' : 'Proceed to Admin Panel'}
               </p>
             </div>
-            <div class="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 flex items-center justify-center">
-              <img src="${APP_LOGO_BASE64}" alt="Logo" class="w-full h-full object-contain" />
+            <div class="w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 flex items-center justify-center">
+              <img src="${APP_LOGO_BASE64}" alt="Logo" class="w-full h-full object-contain drop-shadow-sm transition-transform duration-200 hover:scale-105" />
             </div>
           </div>
 
