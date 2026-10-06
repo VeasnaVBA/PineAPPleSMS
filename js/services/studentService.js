@@ -437,14 +437,16 @@ export const StudentService = {
    * Import students from a JSON string, with duplicate skipping, missing-ID rejection,
    * unassigned classroom tracking, and teacher role enforcement.
    */
-  async importJSON(jsonString) {
-    const parsed = JSON.parse(jsonString);
+  async importJSON(jsonString, options = {}) {
+    const { targetClassId, targetAcademicYear } = options;
+    const parsed = typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
     if (!Array.isArray(parsed)) {
       throw new Error('Invalid student backup file: Expected an array of student records.');
     }
 
     const isTeacher = authService.isTeacher();
     const teacherClassId = authService.getAssignedClassId();
+    const effectiveClassId = targetClassId !== undefined ? targetClassId : (isTeacher ? teacherClassId : null);
 
     const existingStudents = await db.getAll('students');
     const existingByStudentIdMap = new Map();
@@ -509,9 +511,9 @@ export const StudentService = {
         normalized.id = 'stu-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6);
       }
 
-      // 3. Class handling & Teacher security
-      if (isTeacher && teacherClassId) {
-        normalized.classId = teacherClassId;
+      // 3. Class handling & Teacher confirmation
+      if (effectiveClassId) {
+        normalized.classId = effectiveClassId;
       } else {
         let rawClass = normalized.classId ? String(normalized.classId).trim() : '';
         if (rawClass && validClassIds.has(rawClass)) {
@@ -521,6 +523,11 @@ export const StudentService = {
         } else {
           normalized.classId = '';
         }
+      }
+
+      // 4. Study Year confirmation
+      if (targetAcademicYear) {
+        normalized.academicYear = targetAcademicYear;
       }
 
       normalized.createdAt = normalized.createdAt || new Date().toISOString();

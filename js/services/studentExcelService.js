@@ -619,14 +619,17 @@ export const StudentExcelService = {
   },
 
   /**
-   * Commit parsed students batch to IndexedDB with strict duplicate skipping
-   * and unassigned classroom tracking.
+   * Commit parsed students batch to IndexedDB with strict duplicate skipping,
+   * classroom & study year confirmation/override, and unassigned classroom tracking.
    * @param {Array} validRows 
    * @param {Array} missingIdRows 
+   * @param {Object} [options={}] - { targetClassId, targetAcademicYear }
    */
-  async commitImport(validRows = [], missingIdRows = []) {
+  async commitImport(validRows = [], missingIdRows = [], options = {}) {
+    const { targetClassId, targetAcademicYear } = options;
     const isTeacher = authService.isTeacher();
     const teacherClassId = authService.getAssignedClassId();
+    const effectiveClassId = targetClassId !== undefined ? targetClassId : (isTeacher ? teacherClassId : null);
 
     const existingStudents = await db.getAll('students');
     const existingByStudentIdMap = new Map();
@@ -660,14 +663,19 @@ export const StudentExcelService = {
 
       seenInBatch.add(cleanSid);
 
-      // Teacher role security enforcement
-      if (isTeacher && teacherClassId) {
-        record.classId = teacherClassId;
+      // Target classroom confirmation / teacher role enforcement
+      if (effectiveClassId) {
+        record.classId = effectiveClassId;
       } else {
         // If classroom does not exist in system, leave blank for unassigned resolution
         if (!record.classId || !validClassIds.has(record.classId)) {
           record.classId = '';
         }
+      }
+
+      // Target study year confirmation
+      if (targetAcademicYear) {
+        record.academicYear = targetAcademicYear;
       }
 
       // Create fresh record in IndexedDB

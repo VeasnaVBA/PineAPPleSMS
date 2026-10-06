@@ -1802,9 +1802,7 @@ export const StudentsPage = {
       if (!file) return;
       try {
         const text = await file.text();
-        const result = await StudentService.importJSON(text);
-        await this.loadData(true);
-        this.showImportSummaryModal(result);
+        this.openJsonImportModal(file, text);
       } catch (err) {
         console.error('JSON import error:', err);
         toast.error(t('students.importError') || err.message);
@@ -4742,14 +4740,30 @@ export const StudentsPage = {
     });
   },
 
-    /**
+  /**
    * Open Excel Import Modal with file upload, sample template download,
-   * 29-column data preview, and conflict resolution (skip vs overwrite).
+   * classroom & study year confirmation, 29-column data preview, and conflict resolution.
    */
-  openExcelImportModal() {
+  async openExcelImportModal() {
     const isKm = i18n.getLocale() === 'km';
     const isTeacher = authService.isTeacher();
     let parsedResult = null;
+
+    // Fetch classes & academic years
+    const classes = this.state.classes?.length ? this.state.classes : ((await db.getAll('classes')) || []);
+    const academicYears = this.state.academicYears?.length ? this.state.academicYears : ((await SettingsService.getAcademicYears()) || [{ name: '2024–2025' }]);
+    const activeYear = this.state.activeYear || (await SettingsService.getActiveAcademicYear()) || '2024–2025';
+    const teacherClassId = authService.getAssignedClassId();
+
+    const classOptionsHtml = isTeacher
+      ? classes.map(c => `<option value="${c.id}" ${c.id === teacherClassId ? 'selected' : ''}>${c.name} (${c.grade || ''})</option>`).join('')
+      : `<option value="">${t('students.keepFromFile')}</option>` + classes.map(c => `<option value="${c.id}">${c.name} (${c.grade || ''})</option>`).join('');
+
+    const yearOptionsHtml = academicYears.map(y => {
+      const yName = typeof y === 'string' ? y : y.name;
+      const isSelected = yName === activeYear;
+      return `<option value="${yName}" ${isSelected ? 'selected' : ''}>${yName}</option>`;
+    }).join('');
 
     const content = `
       <div class="space-y-4 text-xs sm:text-sm">
@@ -4757,11 +4771,43 @@ export const StudentsPage = {
           ${t('students.importExcelDesc')}
         </p>
 
-        ${isTeacher ? `
-          <div class="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs">
-            ${t('students.teacherClassNotice')}
+        <!-- Target Classroom & Academic Year Confirmation Card -->
+        <div class="p-3.5 rounded-xl border border-primary/20 bg-primary/5 space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 text-xs font-semibold text-primary">
+              ${getIcon('school', 'w-4 h-4')}
+              <span>${t('students.confirmClassAndYear')}</span>
+            </div>
+            ${isTeacher ? `
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary">
+                ${isKm ? 'គណនីគ្រូ' : 'Teacher'}
+              </span>
+            ` : ''}
           </div>
-        ` : ''}
+          <p class="text-[11px] text-muted-foreground">
+            ${t('students.confirmClassAndYearDesc')}
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <!-- Target Class Dropdown -->
+            <div>
+              <label for="excel-target-class" class="block text-[11px] font-medium text-foreground mb-1">
+                ${t('students.targetClass')} <span class="text-destructive">*</span>
+              </label>
+              <select id="excel-target-class" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground text-xs font-medium focus:ring-1 focus:ring-primary focus:border-primary">
+                ${classOptionsHtml}
+              </select>
+            </div>
+            <!-- Target Study Year Dropdown -->
+            <div>
+              <label for="excel-target-year" class="block text-[11px] font-medium text-foreground mb-1">
+                ${t('students.targetStudyYear')} <span class="text-destructive">*</span>
+              </label>
+              <select id="excel-target-year" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground text-xs font-medium focus:ring-1 focus:ring-primary focus:border-primary">
+                ${yearOptionsHtml}
+              </select>
+            </div>
+          </div>
+        </div>
 
         <!-- Template Download & File Upload Area -->
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 rounded-lg border border-border bg-muted/20">
@@ -4963,19 +5009,224 @@ export const StudentsPage = {
         return;
       }
 
+      const targetClassSelect = modal.element.querySelector('#excel-target-class');
+      const targetYearSelect = modal.element.querySelector('#excel-target-year');
+      const targetClassId = targetClassSelect?.value || (isTeacher ? teacherClassId : '');
+      const targetAcademicYear = targetYearSelect?.value || activeYear;
+
+      if (isTeacher && !targetClassId) {
+        toast.warning(isKm ? 'សូមជ្រើសរើស និងបញ្ជាក់ថ្នាក់រៀនគោលដៅជាមុនសិន។' : 'Please select and confirm a target classroom.');
+        return;
+      }
+
       confirmBtn.disabled = true;
-      confirmBtn.textContent = 'Importing...';
+      confirmBtn.textContent = isKm ? 'កំពុងបញ្ចូល...' : 'Importing...';
 
       try {
-        const result = await StudentExcelService.commitImport(parsedResult.validRows, parsedResult.missingIdRows);
+        const result = await StudentExcelService.commitImport(
+          parsedResult.validRows,
+          parsedResult.missingIdRows,
+          { targetClassId, targetAcademicYear }
+        );
         modal.close();
         await this.loadData(true);
         this.showImportSummaryModal(result);
+        toast.success(isKm ? `បាននាំចូលសិស្សចំនួន ${result.importedCount} នាក់ដោយជោគជ័យ!` : `Imported ${result.importedCount} students successfully!`);
       } catch (err) {
         console.error('Import commit error:', err);
         toast.error(err.message || 'Failed to save imported records.');
         confirmBtn.disabled = false;
         confirmBtn.textContent = t('students.btnConfirmImport', { count: parsedResult.validRows.length });
+      }
+    });
+  },
+
+  /**
+   * Open JSON Import Modal with file summary, classroom & study year confirmation,
+   * student preview, and conflict resolution before saving to database.
+   */
+  async openJsonImportModal(file, jsonText) {
+    const isKm = i18n.getLocale() === 'km';
+    const isTeacher = authService.isTeacher();
+    let parsedStudents = [];
+
+    try {
+      const parsed = JSON.parse(jsonText);
+      if (!Array.isArray(parsed)) {
+        throw new Error(isKm ? 'ឯកសារ JSON មិនត្រឹមត្រូវ (ត្រូវតែជា Array នៃទិន្នន័យសិស្ស)' : 'Invalid JSON file structure.');
+      }
+      parsedStudents = parsed;
+    } catch (e) {
+      toast.error(isKm ? 'ឯកសារ JSON មិនត្រឹមត្រូវ: ' + e.message : 'Invalid JSON: ' + e.message);
+      return;
+    }
+
+    if (parsedStudents.length === 0) {
+      toast.warning(isKm ? 'គ្មានទិន្នន័យសិស្សនៅក្នុងឯកសារ JSON នេះទេ។' : 'No student records found in JSON.');
+      return;
+    }
+
+    // Fetch classes & academic years
+    const classes = this.state.classes?.length ? this.state.classes : ((await db.getAll('classes')) || []);
+    const academicYears = this.state.academicYears?.length ? this.state.academicYears : ((await SettingsService.getAcademicYears()) || [{ name: '2024–2025' }]);
+    const activeYear = this.state.activeYear || (await SettingsService.getActiveAcademicYear()) || '2024–2025';
+    const teacherClassId = authService.getAssignedClassId();
+
+    const classOptionsHtml = isTeacher
+      ? classes.map(c => `<option value="${c.id}" ${c.id === teacherClassId ? 'selected' : ''}>${c.name} (${c.grade || ''})</option>`).join('')
+      : `<option value="">${t('students.keepFromFile')}</option>` + classes.map(c => `<option value="${c.id}">${c.name} (${c.grade || ''})</option>`).join('');
+
+    const yearOptionsHtml = academicYears.map(y => {
+      const yName = typeof y === 'string' ? y : y.name;
+      const isSelected = yName === activeYear;
+      return `<option value="${yName}" ${isSelected ? 'selected' : ''}>${yName}</option>`;
+    }).join('');
+
+    const previewRows = parsedStudents.slice(0, 10);
+
+    const content = `
+      <div class="space-y-4 text-xs sm:text-sm">
+        <p class="text-xs text-muted-foreground">
+          ${t('students.importJsonDesc')}
+        </p>
+
+        <!-- File Summary Header -->
+        <div class="flex items-center justify-between p-3.5 rounded-lg border border-border bg-muted/20">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="p-2.5 rounded-lg bg-primary/10 text-primary shrink-0">
+              ${getIcon('fileText', 'w-5 h-5')}
+            </div>
+            <div class="min-w-0">
+              <p class="font-semibold text-foreground text-xs truncate">${file.name}</p>
+              <p class="text-[11px] text-muted-foreground">${(file.size / 1024).toFixed(1)} KB • ${parsedStudents.length} ${isKm ? 'កំណត់ត្រាសិស្ស' : 'records found'}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Target Classroom & Academic Year Confirmation Card -->
+        <div class="p-3.5 rounded-xl border border-primary/20 bg-primary/5 space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 text-xs font-semibold text-primary">
+              ${getIcon('school', 'w-4 h-4')}
+              <span>${t('students.confirmClassAndYear')}</span>
+            </div>
+            ${isTeacher ? `
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary">
+                ${isKm ? 'គណនីគ្រូ' : 'Teacher'}
+              </span>
+            ` : ''}
+          </div>
+          <p class="text-[11px] text-muted-foreground">
+            ${t('students.confirmClassAndYearDesc')}
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <!-- Target Class Dropdown -->
+            <div>
+              <label for="json-target-class" class="block text-[11px] font-medium text-foreground mb-1">
+                ${t('students.targetClass')} <span class="text-destructive">*</span>
+              </label>
+              <select id="json-target-class" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground text-xs font-medium focus:ring-1 focus:ring-primary focus:border-primary">
+                ${classOptionsHtml}
+              </select>
+            </div>
+            <!-- Target Study Year Dropdown -->
+            <div>
+              <label for="json-target-year" class="block text-[11px] font-medium text-foreground mb-1">
+                ${t('students.targetStudyYear')} <span class="text-destructive">*</span>
+              </label>
+              <select id="json-target-year" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground text-xs font-medium focus:ring-1 focus:ring-primary focus:border-primary">
+                ${yearOptionsHtml}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Duplicate Skipping Info -->
+        <div class="p-3 rounded-lg border border-border bg-card flex items-center gap-2.5 text-xs text-muted-foreground">
+          ${getIcon('info', 'w-4 h-4 text-primary shrink-0')}
+          <span>${isKm ? 'អត្តលេខសិស្សដែលមានរួចហើយនៅក្នុងប្រព័ន្ធ នឹងត្រូវរំលងដោយស្វ័យប្រវត្តិដើម្បីការពារទិន្នន័យចាស់។' : 'Duplicate student IDs already in the system will automatically be skipped to preserve existing data.'}</span>
+        </div>
+
+        <!-- Preview Table -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-xs text-foreground">
+              ${t('students.previewParsedTitle', { count: parsedStudents.length })}
+            </span>
+            <span class="text-[11px] text-muted-foreground">Top ${previewRows.length} preview</span>
+          </div>
+          <div class="border border-border rounded-lg overflow-x-auto max-h-52">
+            <table class="w-full text-left text-xs whitespace-nowrap">
+              <thead class="bg-muted/60 border-b border-border sticky top-0 text-muted-foreground">
+                <tr>
+                  <th class="px-2.5 py-2">${t('students.previewRowNo')}</th>
+                  <th class="px-2.5 py-2">${t('students.previewStudentId')}</th>
+                  <th class="px-2.5 py-2">${t('students.previewKhmerName')}</th>
+                  <th class="px-2.5 py-2">${t('students.previewGender')}</th>
+                  <th class="px-2.5 py-2">${t('students.previewDob')}</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border bg-card">
+                ${previewRows.map((s, idx) => `
+                  <tr class="hover:bg-muted/40">
+                    <td class="px-2.5 py-1.5 font-mono">${idx + 1}</td>
+                    <td class="px-2.5 py-1.5 font-mono font-medium">${s.studentId || '—'}</td>
+                    <td class="px-2.5 py-1.5">${s.lastNameKh || ''} ${s.firstNameKh || ''}</td>
+                    <td class="px-2.5 py-1.5">${s.gender || '—'}</td>
+                    <td class="px-2.5 py-1.5 font-mono">${s.dateOfBirth || '—'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const footer = `
+      <button type="button" id="btn-cancel-json-import" class="px-4 py-2 rounded-lg border border-border hover:bg-muted text-xs sm:text-sm font-medium transition-colors">
+        ${t('common.cancel')}
+      </button>
+      <button type="button" id="btn-confirm-json-import" class="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-xs sm:text-sm font-semibold shadow-sm transition-all">
+        ${t('students.btnConfirmJsonImport', { count: parsedStudents.length })}
+      </button>
+    `;
+
+    const modal = Modal.open({
+      title: t('students.importJsonTitle'),
+      content,
+      footer,
+      maxWidth: 'max-w-2xl'
+    });
+
+    modal.element.querySelector('#btn-cancel-json-import')?.addEventListener('click', () => modal.close());
+
+    const confirmBtn = modal.element.querySelector('#btn-confirm-json-import');
+    confirmBtn?.addEventListener('click', async () => {
+      const targetClassSelect = modal.element.querySelector('#json-target-class');
+      const targetYearSelect = modal.element.querySelector('#json-target-year');
+      const targetClassId = targetClassSelect?.value || (isTeacher ? teacherClassId : '');
+      const targetAcademicYear = targetYearSelect?.value || activeYear;
+
+      if (isTeacher && !targetClassId) {
+        toast.warning(isKm ? 'សូមជ្រើសរើស និងបញ្ជាក់ថ្នាក់រៀនគោលដៅជាមុនសិន។' : 'Please select and confirm a target classroom.');
+        return;
+      }
+
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = isKm ? 'កំពុងបញ្ចូល...' : 'Importing...';
+
+      try {
+        const result = await StudentService.importJSON(jsonText, { targetClassId, targetAcademicYear });
+        modal.close();
+        await this.loadData(true);
+        this.showImportSummaryModal(result);
+        toast.success(isKm ? `បាននាំចូលសិស្សចំនួន ${result.importedCount} នាក់ដោយជោគជ័យ!` : `Imported ${result.importedCount} students successfully!`);
+      } catch (err) {
+        console.error('JSON import error:', err);
+        toast.error(err.message || 'Failed to import JSON data.');
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = t('students.btnConfirmJsonImport', { count: parsedStudents.length });
       }
     });
   },
