@@ -9,6 +9,7 @@ import { toast } from './toast.js';
 import { SearchModal } from './searchModal.js';
 import { NavbarSyncButtons } from './navbar.js';
 import { ThemeColorModal } from './themeColorModal.js';
+import { Modal } from './modal.js';
 
 export class Topbar {
   constructor(containerId, sidebar) {
@@ -160,7 +161,7 @@ export class Topbar {
                   </div>
                   ${getIcon('chevronDown', 'w-3 h-3 text-muted-foreground hidden lg:block')}
                 </button>
-                <div id="user-menu" class="hidden absolute right-0 mt-1 w-48 rounded-md shadow-md bg-popover border border-border py-1 z-50 animate-slide-down text-xs">
+                <div id="user-menu" class="hidden absolute right-0 mt-1 w-56 rounded-md shadow-md bg-popover border border-border py-1 z-50 animate-slide-down text-xs">
                   <div class="px-3 py-2 border-b border-border">
                     <p class="font-semibold text-foreground truncate">${userDisplayName}</p>
                     <p class="text-[11px] text-muted-foreground">@${user?.username || ''}</p>
@@ -168,8 +169,14 @@ export class Topbar {
                       ${userRole}
                     </span>
                   </div>
-                  <button id="btn-topbar-logout" class="w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-destructive/10 text-destructive font-medium transition-colors">
-                    ${getIcon('logout', 'w-3.5 h-3.5')}
+                  ${user?.role === 'TEACHER' ? `
+                    <button id="btn-topbar-clear-teacher-students" type="button" class="w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 font-medium transition-colors border-b border-border/40 cursor-pointer">
+                      ${getIcon('trash', 'w-3.5 h-3.5 shrink-0')}
+                      <span>${currentLocale === 'km' ? 'លុបទិន្នន័យសិស្សទាំងអស់' : 'Delete All Students'}</span>
+                    </button>
+                  ` : ''}
+                  <button id="btn-topbar-logout" type="button" class="w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-destructive/10 text-destructive font-medium transition-colors cursor-pointer">
+                    ${getIcon('logout', 'w-3.5 h-3.5 shrink-0')}
                     <span>${currentLocale === 'km' ? 'ចាកចេញពីគណនី' : 'Sign Out'}</span>
                   </button>
                 </div>
@@ -348,6 +355,14 @@ export class Topbar {
       document.getElementById('notifications-menu')?.classList.add('hidden');
     });
 
+    // Teacher student clear action
+    const clearTeacherStudentsBtn = document.getElementById('btn-topbar-clear-teacher-students');
+    clearTeacherStudentsBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      userMenu?.classList.add('hidden');
+      this.openTeacherDeleteStudentsModal();
+    });
+
     // Topbar logout
     const logoutBtn = document.getElementById('btn-topbar-logout');
     logoutBtn?.addEventListener('click', () => {
@@ -384,6 +399,162 @@ export class Topbar {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         SearchModal.open();
+      }
+    });
+  }
+
+  /**
+   * Password-protected dialog allowing teachers to wipe all student records in their workspace
+   */
+  openTeacherDeleteStudentsModal() {
+    const isKm = i18n.getLocale() === 'km';
+    
+    const contentHtml = `
+      <div class="space-y-4 text-xs select-none">
+        <div class="p-3.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 flex items-start gap-3">
+          <div class="shrink-0 mt-0.5">
+            ${getIcon('alertTriangle', 'w-5 h-5 text-rose-600 dark:text-rose-400')}
+          </div>
+          <div class="space-y-1 leading-relaxed">
+            <p class="font-bold text-sm ${isKm ? 'font-khmer' : ''}">
+              ${isKm ? 'តើអ្នកពិតជាចង់លុបទិន្នន័យសិស្សទាំងអស់មែនទេ?' : 'Permanently Delete All Student Records?'}
+            </p>
+            <p class="text-[11px] opacity-90 ${isKm ? 'font-khmer' : ''}">
+              ${isKm 
+                ? 'សកម្មភាពនេះនឹងលុបបញ្ជីសិស្សទាំងអស់ រួមទាំងពិន្ទុ និងវត្តមាននៅក្នុងគណនីរបស់អ្នកចោលជាអចិន្ត្រៃយ៍។ ព័ត៌មានសាលារៀន និងថ្នាក់រៀននឹងនៅរក្សាទុកដដែល។' 
+                : 'This action will wipe all student records, scores, and attendance in your account. School and classroom records will remain intact.'}
+            </p>
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="block font-medium text-foreground ${isKm ? 'font-khmer' : ''}">
+            ${isKm ? 'សូមបញ្ចូលពាក្យសម្ងាត់គណនីរបស់អ្នកដើម្បីបញ្ជាក់៖' : 'Enter your account password to confirm:'}
+          </label>
+          <div class="relative">
+            <input type="password" 
+                   id="input-teacher-del-pwd" 
+                   autocomplete="current-password"
+                   placeholder="${isKm ? 'ពាក្យសម្ងាត់គណនី' : 'Account password'}"
+                   class="w-full px-3 py-2 pr-10 rounded-md border border-input bg-background text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-destructive transition-all" />
+            <button type="button" 
+                    id="btn-toggle-del-pwd" 
+                    class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                    title="${isKm ? 'បង្ហាញ/លាក់ពាក្យសម្ងាត់' : 'Show/Hide password'}">
+              ${getIcon('eye', 'w-4 h-4')}
+            </button>
+          </div>
+          <p id="teacher-del-pwd-error" class="hidden text-[11px] text-destructive font-medium mt-1"></p>
+        </div>
+      </div>
+    `;
+
+    const footerHtml = `
+      <button id="btn-cancel-teacher-del" type="button" class="px-3.5 py-1.5 rounded-md border border-input bg-background hover:bg-accent text-foreground text-xs font-medium transition-colors cursor-pointer select-none">
+        ${isKm ? 'បោះបង់' : 'Cancel'}
+      </button>
+      <button id="btn-confirm-teacher-del" type="button" class="px-3.5 py-1.5 rounded-md bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer select-none">
+        ${getIcon('trash', 'w-3.5 h-3.5')}
+        <span>${isKm ? 'លុបទិន្នន័យសិស្សទាំងអស់' : 'Delete All Students'}</span>
+      </button>
+    `;
+
+    const modal = Modal.open({
+      title: isKm ? 'លុបទិន្នន័យសិស្សក្នុងគណនី' : 'Delete Account Student Data',
+      content: contentHtml,
+      footer: footerHtml,
+      maxWidth: 'max-w-md',
+      preventUnsavedClose: false
+    });
+
+    const modalEl = modal.element;
+    const pwdInput = modalEl.querySelector('#input-teacher-del-pwd');
+    const pwdToggleBtn = modalEl.querySelector('#btn-toggle-del-pwd');
+    const errEl = modalEl.querySelector('#teacher-del-pwd-error');
+    const cancelBtn = modalEl.querySelector('#btn-cancel-teacher-del');
+    const confirmBtn = modalEl.querySelector('#btn-confirm-teacher-del');
+
+    setTimeout(() => pwdInput?.focus(), 100);
+
+    let isShowingPassword = false;
+    pwdToggleBtn?.addEventListener('click', () => {
+      isShowingPassword = !isShowingPassword;
+      if (pwdInput) {
+        pwdInput.type = isShowingPassword ? 'text' : 'password';
+      }
+      if (pwdToggleBtn) {
+        pwdToggleBtn.innerHTML = isShowingPassword ? getIcon('eyeOff', 'w-4 h-4') : getIcon('eye', 'w-4 h-4');
+      }
+    });
+
+    const showError = (msg) => {
+      if (!errEl) return;
+      errEl.textContent = msg;
+      errEl.classList.remove('hidden');
+      pwdInput?.classList.add('border-destructive', 'focus:ring-destructive');
+      pwdInput?.focus();
+    };
+
+    const clearError = () => {
+      if (!errEl) return;
+      errEl.textContent = '';
+      errEl.classList.add('hidden');
+      pwdInput?.classList.remove('border-destructive');
+    };
+
+    pwdInput?.addEventListener('input', clearError);
+
+    const handleConfirm = async () => {
+      clearError();
+      const enteredPwd = (pwdInput?.value || '').trim();
+      if (!enteredPwd) {
+        showError(isKm ? 'សូមបញ្ចូលពាក្យសម្ងាត់របស់អ្នក' : 'Please enter your password');
+        return;
+      }
+
+      if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = `<div class="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin"></div> <span>${isKm ? 'កំពុងផ្ទៀងផ្ទាត់...' : 'Verifying...'}</span>`;
+      }
+
+      try {
+        const isValid = await authService.verifyCurrentPassword(enteredPwd);
+        if (!isValid) {
+          showError(isKm ? 'ពាក្យសម្ងាត់មិនត្រឹមត្រូវទេ សូមព្យាយាមម្តងទៀត' : 'Incorrect password. Please try again.');
+          if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = `${getIcon('trash', 'w-3.5 h-3.5')} <span>${isKm ? 'លុបទិន្នន័យសិស្សទាំងអស់' : 'Delete All Students'}</span>`;
+          }
+          return;
+        }
+
+        // Proceed to clear student data
+        if (confirmBtn) {
+          confirmBtn.innerHTML = `<div class="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin"></div> <span>${isKm ? 'កំពុងលុបទិន្នន័យ...' : 'Deleting...'}</span>`;
+        }
+        await StudentService.clearAllStudentData();
+
+        modal.forceClose();
+        toast.success(
+          isKm ? 'បានលុបទិន្នន័យសិស្សទាំងអស់ដោយជោគជ័យ' : 'All student records have been deleted successfully',
+          isKm ? 'ជោគជ័យ' : 'Success'
+        );
+      } catch (err) {
+        showError(err.message || (isKm ? 'ការផ្ទៀងផ្ទាត់បរាជ័យ' : 'Verification failed'));
+        if (confirmBtn) {
+          confirmBtn.disabled = false;
+          confirmBtn.innerHTML = `${getIcon('trash', 'w-3.5 h-3.5')} <span>${isKm ? 'លុបទិន្នន័យសិស្សទាំងអស់' : 'Delete All Students'}</span>`;
+        }
+      }
+    };
+
+    confirmBtn?.addEventListener('click', handleConfirm);
+    cancelBtn?.addEventListener('click', () => modal.close());
+
+    pwdInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleConfirm();
       }
     });
   }

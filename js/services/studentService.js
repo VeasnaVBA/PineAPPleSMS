@@ -561,5 +561,17 @@ export const StudentService = {
       unassignedClassStudents,
       importedStudents
     };
+  },
+
+  /**
+   * Delete / Wipe all student records and associated scores & attendance in active workspace
+   */
+  async clearAllStudentData() {
+    await db.clear('students');
+    await db.clear('scores');
+    await db.clear('attendance');
+    syncStateManager.markDirty('students.clearAll');
+    window.dispatchEvent(new CustomEvent('app:refresh-data'));
+    return true;
   }
 };

@@ -198,6 +198,31 @@ class AuthService {
   }
 
   /**
+   * Verify password of current logged-in user
+   * @param {string} plainPassword 
+   * @returns {Promise<boolean>}
+   */
+  async verifyCurrentPassword(plainPassword) {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser || !currentUser.username) {
+      throw new Error('No active user session.');
+    }
+    const cleanPassword = (plainPassword || '').trim();
+    if (!cleanPassword) {
+      throw new Error('Please enter your password.');
+    }
+    const computedHash = await hashPassword(cleanPassword);
+    const allUsers = await globalDb.getAll('users');
+    const user = allUsers.find(u => (u.username || '').toLowerCase() === (currentUser.username || '').toLowerCase());
+    if (!user) {
+      throw new Error('User record not found.');
+    }
+    const isPasswordValid = (user.passwordHash && user.passwordHash === computedHash) ||
+                            (user.password && String(user.password).trim() === cleanPassword);
+    return Boolean(isPasswordValid);
+  }
+
+  /**
    * Terminate user session:
    * 1. Remove session storage / localStorage auth tokens
    * 2. Close active workspace database instance

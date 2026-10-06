@@ -196,6 +196,11 @@ class PermissionService {
       return true;
     }
 
+    // Teachers cannot access settings page
+    if (role === 'TEACHER' && routeKey === 'settings') {
+      return false;
+    }
+
     const rolePerms = {
       ...(DEFAULT_ROLE_PERMISSIONS[role] || {}),
       ...(this.customPermissions?.[role] || {})
