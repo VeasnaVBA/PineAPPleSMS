@@ -1,4 +1,5 @@
 import { db } from '../database/db.js';
+import { authService } from './authService.js';
 
 export const SettingsService = {
   async get(key) {
@@ -51,6 +52,13 @@ export const SettingsService = {
     if (existing) {
       return existing;
     }
+
+    // Teacher role rule: Teacher account can create/have only 1 academic year
+    const isTeacher = authService.isTeacher();
+    if (isTeacher && years && years.length >= 1) {
+      throw new Error('គណនីគ្រូបង្រៀនអាចបង្កើតឆ្នាំសិក្សាបានត្រឹមតែ ១ ប៉ុណ្ណោះ (Teacher accounts can create only 1 study year).');
+    }
+
     const cleanSlug = trimmed.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').toLowerCase();
     const uniqueSuffix = Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 6);
     const newId = cleanSlug ? `ay-${cleanSlug}-${uniqueSuffix}` : `ay-${uniqueSuffix}`;
@@ -58,13 +66,59 @@ export const SettingsService = {
     const newYear = {
       id: newId,
       name: trimmed,
-      isActive: false,
+      isActive: years.length === 0, // Automatically active if first year
       startDate,
       endDate,
       createdAt: new Date().toISOString()
     };
     await db.put('academicYears', newYear);
+    if (newYear.isActive) {
+      await this.set('active_academic_year', trimmed);
+    }
     return newYear;
+  },
+
+  async updateAcademicYear(idOrName, { name, startDate = '', endDate = '' }) {
+    if (!idOrName) throw new Error('Academic year identifier is required for update');
+    if (!name || !name.trim()) throw new Error('Academic year name is required');
+    const trimmed = name.trim();
+    const normDash = (str) => String(str || '').replace(/[–—−]/g, '-').trim().toLowerCase();
+    const years = await db.getAll('academicYears');
+    const target = years.find(y => y.id === idOrName || y.name === idOrName || normDash(y.name) === normDash(idOrName));
+    if (!target) throw new Error('Academic year not found');
+
+    const oldName = target.name;
+    target.name = trimmed;
+    target.startDate = startDate;
+    target.endDate = endDate;
+    target.updatedAt = new Date().toISOString();
+    await db.put('academicYears', target);
+
+    if (target.isActive || normDash(oldName) === normDash(await this.getActiveAcademicYear())) {
+      await this.set('active_academic_year', trimmed);
+    }
+
+    // Cascade update in student & class records if renamed
+    if (normDash(oldName) !== normDash(trimmed)) {
+      try {
+        const students = await db.getAll('students');
+        for (const s of students) {
+          if (normDash(s.academicYear) === normDash(oldName)) {
+            s.academicYear = trimmed;
+            await db.put('students', s);
+          }
+        }
+        const classes = await db.getAll('classes');
+        for (const c of classes) {
+          if (normDash(c.academicYear) === normDash(oldName)) {
+            c.academicYear = trimmed;
+            await db.put('classes', c);
+          }
+        }
+      } catch (_) {}
+    }
+
+    return target;
   },
 
   async deleteAcademicYear(idOrName) {

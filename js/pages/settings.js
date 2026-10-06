@@ -301,20 +301,34 @@ export const SettingsPage = {
         <div class="p-6 rounded-xl border border-border bg-card shadow-sm space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h3 class="text-base font-semibold text-foreground tracking-tight">${t('settings.academicYearTitle')}</h3>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-semibold text-foreground tracking-tight">${t('settings.academicYearTitle')}</h3>
+                ${authService.isTeacher() ? `
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                    ${currentLocale === 'km' ? 'អតិបរមា ១ ឆ្នាំសិក្សា' : 'Max 1 study year'}
+                  </span>
+                ` : ''}
+              </div>
               <p class="text-xs text-muted-foreground">${t('settings.academicYearDesc')}</p>
             </div>
-            <button id="btn-add-ay" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium shadow-sm hover:bg-primary/90 transition-colors self-start sm:self-auto">
-              ${getIcon('plus', 'w-3.5 h-3.5')}
-              <span>${t('settings.addAcademicYear')}</span>
-            </button>
+            ${(!authService.isTeacher() || academicYears.length === 0) ? `
+              <button id="btn-add-ay" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium shadow-sm hover:bg-primary/90 transition-colors self-start sm:self-auto cursor-pointer">
+                ${getIcon('plus', 'w-3.5 h-3.5')}
+                <span>${t('settings.addAcademicYear')}</span>
+              </button>
+            ` : `
+              <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-muted text-muted-foreground text-xs font-medium self-start sm:self-auto" title="${t('settings.teacherOnlyOneYearNotice')}">
+                ${getIcon('info', 'w-3.5 h-3.5 text-primary')}
+                <span>${currentLocale === 'km' ? 'កំណត់ត្រឹម ១ ឆ្នាំសិក្សា' : 'Limited to 1 year'}</span>
+              </div>
+            `}
           </div>
 
           <div class="space-y-2 pt-1">
             ${academicYears.map(ay => {
               const normDash = (str) => String(str || '').replace(/[–—−]/g, '-').trim().toLowerCase();
               const isActive = (ay.isActive === true) || (normDash(ay.name) === normDash(activeYear)) || (ay.id === activeYear);
-              const canDelete = academicYears.length > 1;
+              const canDelete = !authService.isTeacher() && academicYears.length > 1;
 
               return `
                 <div class="p-3.5 rounded-lg border border-border flex items-center justify-between ${isActive ? 'bg-primary/5 border-primary/40' : 'bg-card'}">
@@ -326,6 +340,10 @@ export const SettingsPage = {
                     </div>
                   </div>
                   <div class="flex items-center gap-2">
+                    <!-- Edit Button -->
+                    <button type="button" class="btn-edit-ay p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer" data-id="${ay.id || ''}" data-name="${ay.name}" data-start="${ay.startDate || ''}" data-end="${ay.endDate || ''}" title="${t('settings.editAcademicYear')}">
+                      ${getIcon('edit', 'w-4 h-4')}
+                    </button>
                     ${isActive ? `
                       <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                         ${currentLocale === 'km' ? 'សកម្ម' : 'Active'}
@@ -339,11 +357,7 @@ export const SettingsPage = {
                       <button type="button" class="btn-delete-ay p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors cursor-pointer" data-id="${ay.id || ay.name}" data-name="${ay.name}" title="${t('settings.removeAcademicYear')}">
                         ${getIcon('trash', 'w-4 h-4')}
                       </button>
-                    ` : `
-                      <button type="button" class="p-1.5 rounded-md text-muted-foreground/30 cursor-not-allowed" disabled title="${currentLocale === 'km' ? 'ត្រូវមានឆ្នាំសិក្សាយ៉ាងហោចណាស់ ១ ក្នុងប្រព័ន្ធ' : 'At least one academic year must remain in the system'}">
-                        ${getIcon('trash', 'w-4 h-4')}
-                      </button>
-                    `}
+                    ` : ''}
                   </div>
                 </div>
               `;
@@ -846,8 +860,26 @@ export const SettingsPage = {
       });
     });
 
+    // Edit Academic Year
+    container.querySelectorAll('.btn-edit-ay').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        const startDate = btn.getAttribute('data-start') || '';
+        const endDate = btn.getAttribute('data-end') || '';
+        this.openEditYearModal(container, { id, name, startDate, endDate });
+      });
+    });
+
     // Add Academic Year Modal
-    container.querySelector('#btn-add-ay')?.addEventListener('click', () => {
+    container.querySelector('#btn-add-ay')?.addEventListener('click', async () => {
+      if (authService.isTeacher()) {
+        const currentYears = await SettingsService.getAcademicYears();
+        if (currentYears && currentYears.length >= 1) {
+          toast.warning(t('settings.teacherOnlyOneYearNotice'));
+          return;
+        }
+      }
       this.openAddYearModal(container);
     });
 
@@ -1250,6 +1282,69 @@ export const SettingsPage = {
         await SettingsService.createAcademicYear({ name, startDate, endDate });
         AdminDataService.queueAutoSync();
         toast.success(currentLocale === 'km' ? `បានបង្កើតឆ្នាំសិក្សា "${name}" ដោយជោគជ័យ` : `Academic year "${name}" created successfully`);
+        modal.close();
+        window.dispatchEvent(new CustomEvent('app:refresh-data'));
+        await this.render(container);
+      } catch (err) {
+        toast.error(err.message);
+      }
+    });
+  },
+
+  /**
+   * Edit Existing Academic Year Modal
+   */
+  openEditYearModal(container, ay) {
+    const currentLocale = i18n.getLocale();
+    const content = `
+      <form id="form-edit-ay" class="space-y-4 text-xs select-none">
+        <div>
+          <label class="block text-xs font-medium text-foreground mb-1">
+            ${currentLocale === 'km' ? 'ឈ្មោះឆ្នាំសិក្សា' : 'Academic Year Name'} <span class="text-destructive">*</span>
+          </label>
+          <input type="text" id="form-edit-ay-name" value="${ay.name || ''}" required placeholder="${t('settings.createYearPlaceholder')}" class="w-full px-3 py-2 rounded-md border border-input bg-card text-foreground font-mono focus:ring-1 focus:ring-ring" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-foreground mb-1">${currentLocale === 'km' ? 'កាលបរិច្ឆេទចាប់ផ្តើម' : 'Start Date'}</label>
+            <input type="date" id="form-edit-ay-start" value="${ay.startDate || ''}" class="w-full px-3 py-2 rounded-md border border-input bg-card text-foreground focus:ring-1 focus:ring-ring" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-foreground mb-1">${currentLocale === 'km' ? 'កាលបរិច្ឆេទបញ្ចប់' : 'End Date'}</label>
+            <input type="date" id="form-edit-ay-end" value="${ay.endDate || ''}" class="w-full px-3 py-2 rounded-md border border-input bg-card text-foreground focus:ring-1 focus:ring-ring" />
+          </div>
+        </div>
+      </form>
+    `;
+
+    const footer = `
+      <button id="btn-cancel-edit-ay" class="px-4 py-2 rounded-lg border border-border hover:bg-muted text-xs sm:text-sm font-medium transition-colors cursor-pointer">
+        ${t('common.cancel')}
+      </button>
+      <button id="btn-save-edit-ay" class="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-xs sm:text-sm font-medium shadow-sm transition-colors cursor-pointer">
+        ${t('common.save')}
+      </button>
+    `;
+
+    const modal = Modal.open({
+      title: t('settings.editAcademicYear'),
+      content,
+      footer,
+      maxWidth: 'max-w-sm'
+    });
+
+    modal.element.querySelector('#btn-cancel-edit-ay')?.addEventListener('click', () => modal.close());
+
+    modal.element.querySelector('#btn-save-edit-ay')?.addEventListener('click', async () => {
+      const name = modal.element.querySelector('#form-edit-ay-name')?.value.trim();
+      if (!name) return;
+      const startDate = modal.element.querySelector('#form-edit-ay-start')?.value;
+      const endDate = modal.element.querySelector('#form-edit-ay-end')?.value;
+
+      try {
+        await SettingsService.updateAcademicYear(ay.id || ay.name, { name, startDate, endDate });
+        AdminDataService.queueAutoSync();
+        toast.success(currentLocale === 'km' ? `បានកែប្រែឆ្នាំសិក្សា "${name}" ដោយជោគជ័យ` : `Academic year "${name}" updated successfully`);
         modal.close();
         window.dispatchEvent(new CustomEvent('app:refresh-data'));
         await this.render(container);
