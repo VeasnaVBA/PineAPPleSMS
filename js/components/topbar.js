@@ -169,16 +169,21 @@ export class Topbar {
                       ${userRole}
                     </span>
                   </div>
-                  ${user?.role === 'TEACHER' ? `
-                    <button id="btn-topbar-clear-teacher-students" type="button" class="w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 font-medium transition-colors border-b border-border/40 cursor-pointer">
-                      ${getIcon('trash', 'w-3.5 h-3.5 shrink-0')}
-                      <span>${currentLocale === 'km' ? 'លុបទិន្នន័យសិស្សទាំងអស់' : 'Delete All Students'}</span>
+                  <div class="flex items-center justify-between px-1.5 py-1 gap-1">
+                    <button id="btn-topbar-logout" type="button" class="flex-1 text-left px-2.5 py-1.5 flex items-center gap-2 hover:bg-destructive/10 text-destructive rounded-md font-medium transition-colors cursor-pointer">
+                      ${getIcon('logout', 'w-3.5 h-3.5 shrink-0')}
+                      <span>${currentLocale === 'km' ? 'ចាកចេញពីគណនី' : 'Sign Out'}</span>
                     </button>
-                  ` : ''}
-                  <button id="btn-topbar-logout" type="button" class="w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-destructive/10 text-destructive font-medium transition-colors cursor-pointer">
-                    ${getIcon('logout', 'w-3.5 h-3.5 shrink-0')}
-                    <span>${currentLocale === 'km' ? 'ចាកចេញពីគណនី' : 'Sign Out'}</span>
-                  </button>
+                    ${user?.role === 'TEACHER' ? `
+                      <button id="btn-topbar-clear-teacher-students" 
+                              type="button" 
+                              title="${currentLocale === 'km' ? 'លុបទិន្នន័យសិស្សទាំងអស់' : 'Delete All Students'}" 
+                              class="p-2 rounded-md hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:text-rose-700 transition-colors cursor-pointer shrink-0 flex items-center justify-center" 
+                              aria-label="${currentLocale === 'km' ? 'លុបទិន្នន័យសិស្សទាំងអស់' : 'Delete All Students'}">
+                        ${getIcon('trash', 'w-4 h-4')}
+                      </button>
+                    ` : ''}
+                  </div>
                 </div>
               </div>
             `;
