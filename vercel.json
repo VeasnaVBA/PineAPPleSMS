@@ -1,13 +1,30 @@
 {
   "version": 2,
+  "outputDirectory": ".",
   "cleanUrls": true,
-  "routes": [
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "headers": {
-        "cache-control": "s-maxage=0"
-      },
-      "dest": "/$1"
+      "source": "/((?!assets/|css/|js/|fonts/|favicon\\.ico|.*\\..*).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Pragma",
+          "value": "no-cache"
+        },
+        {
+          "key": "Expires",
+          "value": "0"
+        }
+      ]
     }
   ]
 }
