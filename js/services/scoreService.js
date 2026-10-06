@@ -3,7 +3,34 @@ import { ClassService } from './classService.js';
 import { SubjectService } from './subjectService.js';
 import { authService } from './authService.js';
 
+export const EVALUATION_PERIODS = [
+  // Months Jan to Dec
+  { id: 'January', nameKm: 'មករា', nameEn: 'January', group: 'month' },
+  { id: 'February', nameKm: 'កុម្ភៈ', nameEn: 'February', group: 'month' },
+  { id: 'March', nameKm: 'មីនា', nameEn: 'March', group: 'month' },
+  { id: 'April', nameKm: 'មេសា', nameEn: 'April', group: 'month' },
+  { id: 'May', nameKm: 'ឧសភា', nameEn: 'May', group: 'month' },
+  { id: 'June', nameKm: 'មិថុនា', nameEn: 'June', group: 'month' },
+  { id: 'July', nameKm: 'កក្កដា', nameEn: 'July', group: 'month' },
+  { id: 'August', nameKm: 'សីហា', nameEn: 'August', group: 'month' },
+  { id: 'September', nameKm: 'កញ្ញា', nameEn: 'September', group: 'month' },
+  { id: 'October', nameKm: 'តុលា', nameEn: 'October', group: 'month' },
+  { id: 'November', nameKm: 'វិច្ឆិកា', nameEn: 'November', group: 'month' },
+  { id: 'December', nameKm: 'ធ្នូ', nameEn: 'December', group: 'month' },
+  // Assessments requested by user
+  { id: 'First Test', nameKm: 'តេស្តដើមឆ្នាំ', nameEn: 'First Test', group: 'exam' },
+  { id: 'Semester 1', nameKm: 'ឆមាសទី១', nameEn: 'Semester 1', group: 'exam' },
+  { id: 'Semester 1 Exam', nameKm: 'ប្រឡងឆមាសទី១', nameEn: 'Semester 1 Exam', group: 'exam' },
+  { id: 'Semester 2', nameKm: 'ឆមាសទី២', nameEn: 'Semester 2', group: 'exam' },
+  { id: 'Semester 2 Exam', nameKm: 'ប្រឡងឆមាសទី២', nameEn: 'Semester 2 Exam', group: 'exam' },
+  { id: 'Annual', nameKm: 'ប្រចាំឆ្នាំ', nameEn: 'Annual', group: 'exam' }
+];
+
 export const ScoreService = {
+  getEvaluationPeriods() {
+    return EVALUATION_PERIODS;
+  },
+
   async getSubjects() {
     try {
       const list = await SubjectService.getAll();
@@ -56,6 +83,155 @@ export const ScoreService = {
       sorted[i].rank = currentRank;
     }
     return studentRows;
+  },
+
+  /**
+   * Master Score Sheet across all subjects for a class and evaluation period
+   */
+  async getMasterScoreSheet({ classId, academicYear, period = 'October' }) {
+    if (authService.isTeacher()) {
+      const teacherClassId = authService.getAssignedClassId();
+      if (teacherClassId) {
+        classId = teacherClassId;
+      }
+    }
+
+    const students = await ClassService.getEnrolledStudents(classId);
+    const activeStudents = students.filter(s => s.status === 'Active' || s.status === 'Inactive');
+
+    let className = '7A';
+    try {
+      const cls = await ClassService.getById(classId);
+      if (cls && cls.name) className = cls.name;
+    } catch (_) {}
+
+    const subjects = await SubjectService.getAll();
+    const subjectsWithMeta = subjects.map(sub => {
+      const fullScore = SubjectService.getSubjectFullScore(sub, className);
+      return {
+        ...sub,
+        fullScore
+      };
+    });
+
+    const allScores = await db.getAll('scores');
+    const existingScores = allScores.filter(s => 
+      s.classId === classId && 
+      s.academicYear === academicYear && 
+      (s.month === period || s.assessmentType === period)
+    );
+
+    const scoreMap = new Map();
+    existingScores.forEach(s => {
+      scoreMap.set(`${s.studentId}_${s.subjectId}`, s);
+    });
+
+    const rows = activeStudents.map(stu => {
+      // User requirement: Student Name (khmer firstname + khmer last name)
+      let fullNameKh = '';
+      if (stu.firstNameKh || stu.lastNameKh) {
+        fullNameKh = `${stu.firstNameKh || ''} ${stu.lastNameKh || ''}`.trim();
+      } else {
+        fullNameKh = stu.khmerName || stu.fullName || stu.name || '—';
+      }
+
+      const subjectScores = {};
+      let total = 0;
+      let totalMax = 0;
+
+      subjectsWithMeta.forEach(sub => {
+        const scRecord = scoreMap.get(`${stu.id}_${sub.id}`);
+        const val = scRecord !== undefined && scRecord !== null 
+          ? (Number(scRecord.totalScore ?? scRecord.examScore) || 0) 
+          : null;
+        subjectScores[sub.id] = val;
+        if (val !== null) {
+          total += val;
+        }
+        totalMax += sub.fullScore;
+      });
+
+      const average = totalMax > 0 ? ((total / totalMax) * 100) : 0;
+      const gradeInfo = SubjectService.calculateGrade(total, totalMax);
+
+      return {
+        studentId: stu.id,
+        studentNumber: stu.studentId,
+        firstNameKh: stu.firstNameKh || '',
+        lastNameKh: stu.lastNameKh || '',
+        khmerFullName: fullNameKh,
+        englishName: stu.englishName || '',
+        gender: stu.gender || 'Male',
+        classId,
+        className,
+        academicYear,
+        period,
+        subjectScores,
+        total,
+        totalMax,
+        average: Math.round(average * 10) / 10,
+        grade: gradeInfo.grade,
+        gradeColor: gradeInfo.color,
+        rank: 1
+      };
+    });
+
+    this.rankStudents(rows);
+    return {
+      rows,
+      subjects: subjectsWithMeta,
+      className
+    };
+  },
+
+  /**
+   * Save Master Score Sheet across all subjects
+   */
+  async saveMasterScoreSheet({ classId, academicYear, period, rows, subjects }) {
+    const isTeacher = authService.isTeacher();
+    const teacherClassId = authService.getAssignedClassId();
+    if (isTeacher && teacherClassId && classId !== teacherClassId) {
+      throw new Error('Access denied: Cannot record scores for another classroom.');
+    }
+
+    let className = '7A';
+    try {
+      const cls = await ClassService.getById(classId);
+      if (cls && cls.name) className = cls.name;
+    } catch (_) {}
+
+    for (const row of rows) {
+      for (const sub of subjects) {
+        const val = row.subjectScores[sub.id];
+        if (val !== null && val !== undefined && val !== '') {
+          const numVal = Math.max(0, Number(val) || 0);
+          const fullScore = SubjectService.getSubjectFullScore(sub, className);
+          const gradeInfo = SubjectService.calculateGrade(numVal, fullScore);
+          const id = `sc-${academicYear}-${classId}-${sub.id}-${period}-${row.studentId}`;
+          const record = {
+            id,
+            studentId: row.studentId,
+            classId: isTeacher && teacherClassId ? teacherClassId : classId,
+            academicYear,
+            subjectId: sub.id,
+            subjectNameKm: sub.name,
+            subjectNameEn: sub.nameEn || sub.name,
+            month: period,
+            assessmentType: period,
+            assignmentScore: 0,
+            examScore: numVal,
+            totalScore: numVal,
+            fullScore,
+            percentage: fullScore > 0 ? Math.min(100, Math.round((numVal / fullScore) * 100)) : 0,
+            grade: gradeInfo.grade,
+            notes: '',
+            updatedAt: new Date().toISOString()
+          };
+          await db.put('scores', record);
+        }
+      }
+    }
+    return true;
   },
 
   /**
