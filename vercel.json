@@ -1,30 +1,23 @@
 {
   "version": 2,
-  "outputDirectory": ".",
-  "cleanUrls": true,
-  "rewrites": [
+  "builds": [
     {
-      "source": "/((?!assets/|css/|js/|fonts/|favicon\\.ico|.*\\..*).*)",
-      "destination": "/index.html"
+      "src": "**",
+      "use": "@vercel/static"
     }
   ],
-  "headers": [
+  "routes": [
     {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        },
-        {
-          "key": "Pragma",
-          "value": "no-cache"
-        },
-        {
-          "key": "Expires",
-          "value": "0"
-        }
-      ]
+      "src": "/(assets|css|js)/(.*)",
+      "dest": "/$1/$2"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "/assets/icon.png"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
