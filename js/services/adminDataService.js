@@ -10,7 +10,7 @@
  * and client-side IndexedDB are isolated per browser.
  */
 
-import { globalDb, db } from '../database/db.js';
+import { globalDb, db, deleteWorkspaceDatabase } from '../database/db.js';
 import { hashPassword, authService } from './authService.js';
 import { themeService } from './themeService.js';
 import { fontService } from './fontService.js';
@@ -327,9 +327,12 @@ export const AdminDataService = {
       }
     }
 
-    // 2. Apply User Accounts into globalDb
+    // 2. Apply User Accounts into globalDb and prune locally deleted accounts
     if (Array.isArray(users) && users.length > 0) {
       await globalDb.open();
+      const validCloudUserIds = new Set();
+      const validCloudUsernames = new Set();
+
       for (const u of users) {
         const cleanUsername = (u.username || '').trim().toLowerCase();
         if (!cleanUsername) continue;
@@ -359,7 +362,24 @@ export const AdminDataService = {
         }
 
         await globalDb.put('users', userRecord);
+        validCloudUserIds.add(userRecord.id);
+        validCloudUsernames.add(userRecord.username);
         usersCount++;
+      }
+
+      // Check and delete local users/databases that no longer exist in the cloud sheet
+      try {
+        const localUsers = await globalDb.getAll('users');
+        for (const localU of localUsers) {
+          const localUname = (localU.username || '').trim().toLowerCase();
+          if (localU.role !== 'ADMIN' && !validCloudUserIds.has(localU.id) && !validCloudUsernames.has(localUname)) {
+            console.log(`[AdminData] Purging orphaned local account: @${localU.username} (${localU.id})`);
+            await globalDb.delete('users', localU.id);
+            await deleteWorkspaceDatabase(localU.id, localU.username);
+          }
+        }
+      } catch (pruneErr) {
+        console.warn('Error during local orphaned user prune:', pruneErr);
       }
     }
 
@@ -371,6 +391,11 @@ export const AdminDataService = {
         console.warn('Could not save incoming permissions:', e);
       }
     }
+
+    // 4. Purge all in-memory and browser caches
+    try {
+      await authService.clearAllCaches();
+    } catch (_) {}
 
     // 4. Dispatch refresh events
     window.dispatchEvent(new CustomEvent('app:refresh-data', {

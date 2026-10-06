@@ -570,6 +570,9 @@ export const StudentService = {
     await db.clear('students');
     await db.clear('scores');
     await db.clear('attendance');
+    try {
+      await authService.clearAllCaches();
+    } catch (_) {}
     syncStateManager.markDirty('students.clearAll');
     window.dispatchEvent(new CustomEvent('app:refresh-data'));
     return true;

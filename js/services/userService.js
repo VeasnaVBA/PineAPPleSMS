@@ -4,7 +4,7 @@
  * Operates specifically on the central SchoolSystem_Global database.
  */
 import { globalDb, deleteWorkspaceDatabase, db } from '../database/db.js';
-import { hashPassword } from './authService.js';
+import { hashPassword, authService } from './authService.js';
 import { CloudSyncService } from './cloudSyncService.js';
 import { AdminDataService } from './adminDataService.js';
 
@@ -258,6 +258,11 @@ export const UserService = {
 
     // Step C — Remove User Record from Global Database
     await globalDb.delete('users', targetUser.id);
+
+    // Step D — Clear all in-memory and browser caches
+    try {
+      await authService.clearAllCaches();
+    } catch (_) {}
 
     // Auto-sync admin database changes to Google Drive
     AdminDataService.queueAutoSync();

@@ -526,8 +526,10 @@ export const CloudSyncService = {
         }
       }
 
-      // 2. Clear all in-memory service caches and student page cache
-      authService.clearServiceCaches();
+      // 2. Clear all in-memory service caches, CacheStorage, and student page cache
+      try {
+        await authService.clearAllCaches();
+      } catch (_) {}
       if (StudentsPage) {
         StudentsPage.cachedStudents = null;
       }

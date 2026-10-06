@@ -8,6 +8,7 @@ import { seedWorkspaceBaseline } from '../database/seed.js';
 import { permissionService } from './permissionService.js';
 import { LocationService } from './locationService.js';
 import { SchoolService } from './schoolService.js';
+import { TeacherCatalogService } from './teacherCatalogService.js';
 
 export async function hashPassword(plainText) {
   if (typeof crypto !== 'undefined' && crypto.subtle) {
@@ -94,7 +95,7 @@ class AuthService {
   }
 
   /**
-   * Clear in-memory caches across services on account switch
+   * Clear in-memory caches across services on account switch or data wipe
    */
   clearServiceCaches() {
     try {
@@ -104,8 +105,37 @@ class AuthService {
       if (SchoolService && typeof SchoolService.clearCache === 'function') {
         SchoolService.clearCache();
       }
+      if (TeacherCatalogService && typeof TeacherCatalogService.clearCache === 'function') {
+        TeacherCatalogService.clearCache();
+      }
     } catch (e) {
       console.warn('Error clearing service caches:', e);
+    }
+  }
+
+  /**
+   * Complete purge of service caches, browser CacheStorage, and temporary sessions
+   */
+  async clearAllCaches() {
+    this.clearServiceCaches();
+
+    // 1. Purge Browser CacheStorage API (Service Worker / browser HTTP caches)
+    try {
+      if (typeof window !== 'undefined' && 'caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+      }
+    } catch (e) {
+      console.warn('Error clearing CacheStorage:', e);
+    }
+
+    // 2. Purge sessionStorage
+    try {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.clear();
+      }
+    } catch (e) {
+      console.warn('Error clearing sessionStorage:', e);
     }
   }
 
@@ -232,7 +262,7 @@ class AuthService {
   logout() {
     localStorage.removeItem(this.sessionKey);
     closeUserDatabase();
-    this.clearServiceCaches();
+    this.clearAllCaches();
     this.notify(null);
   }
 
