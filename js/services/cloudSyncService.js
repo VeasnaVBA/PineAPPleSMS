@@ -351,8 +351,9 @@ export const CloudSyncService = {
       let registrationCount = 0;
       let settingCount = 0;
 
-      // 1. Students
+      // 1. Students (Sync exact state from Drive sheet)
       if (Array.isArray(data.students)) {
+        await db.clear('students');
         for (const item of data.students) {
           if (!item.id && !item.studentId) continue;
           let dob = item.dateOfBirth;
@@ -372,6 +373,7 @@ export const CloudSyncService = {
 
       // 2. Schools
       if (Array.isArray(data.schools)) {
+        await db.clear('schools');
         for (const item of data.schools) {
           if (!item.id && !item.code && !item.name) continue;
           const cleanItem = {
@@ -392,6 +394,7 @@ export const CloudSyncService = {
 
       // 3. Classes
       if (Array.isArray(data.classes)) {
+        await db.clear('classes');
         for (const item of data.classes) {
           if (!item.id && !item.name) continue;
           const cleanItem = {
@@ -405,6 +408,7 @@ export const CloudSyncService = {
 
       // 4. Teachers
       if (Array.isArray(data.teachers)) {
+        await db.clear('teachers');
         for (const item of data.teachers) {
           if (!item.id && !item.teacherId && !item.khmerName && !item.lastNameKhmer) continue;
           const cleanItem = normalizeTeacherRecord(item);
@@ -415,6 +419,7 @@ export const CloudSyncService = {
 
       // 5. Attendance
       if (Array.isArray(data.attendance)) {
+        await db.clear('attendance');
         for (const item of data.attendance) {
           if (!item.id && !item.date) continue;
           let attDate = item.date;
@@ -433,6 +438,7 @@ export const CloudSyncService = {
 
       // 6. Scores
       if (Array.isArray(data.scores)) {
+        await db.clear('scores');
         for (const item of data.scores) {
           if (!item.id && !item.studentId) continue;
           const cleanItem = {
@@ -616,7 +622,7 @@ export const CloudSyncService = {
       if (result && result.success && result.found) {
         if (result.isNewlyCreated) {
           try {
-            await this.syncToGoogleDrive({ silent: true });
+            await this.pullToDrive(currentUser, { silent: true });
           } catch (_) {}
           if (!options?.silent) {
             toast.info(
@@ -665,7 +671,7 @@ export const CloudSyncService = {
       if (result && result.success && result.found) {
         if (result.isNewlyCreated) {
           try {
-            await this.syncToGoogleDrive({ silent: true });
+            await this.pullToDrive(currentUser, { silent: true });
           } catch (_) {}
           return true;
         }
