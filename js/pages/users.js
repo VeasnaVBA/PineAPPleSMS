@@ -826,17 +826,34 @@ export const UsersPage = {
                  class="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs" />
         </div>
 
+        <!-- Create Drive File Info -->
+        ${!isEdit ? `
+          <div class="p-3 rounded-lg border border-primary/20 bg-primary/5 flex items-start gap-2.5 text-xs select-none">
+            <span class="text-primary mt-0.5">${getIcon('fileSpreadsheet', 'w-4 h-4')}</span>
+            <div class="flex-1">
+              <span class="font-semibold text-foreground">
+                ${isKm ? 'បង្កើតឯកសារ Google Sheet ក្នុង Drive ដោយស្វ័យប្រវត្តិ' : 'Auto-create Google Sheet in Drive'}
+              </span>
+              <p class="text-[11px] text-muted-foreground mt-0.5">
+                ${isKm 
+                  ? 'ឯកសារ <code>SchoolWorkspace_&lt;username&gt;</code> នឹងត្រូវបានបង្កើតក្នុង Google Drive ភ្លាមៗ។'
+                  : 'A <code>SchoolWorkspace_&lt;username&gt;</code> spreadsheet will be created in Google Drive immediately.'}
+              </p>
+            </div>
+          </div>
+        ` : ''}
+
         <!-- Error banner in modal -->
         <div id="modal-form-error" class="hidden p-2.5 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-xs"></div>
 
         <!-- Actions -->
         <div class="flex justify-end gap-2 pt-4 border-t border-border">
           <button type="button" id="btn-modal-cancel" 
-                  class="px-4 py-2 rounded-lg border border-border hover:bg-muted text-foreground font-medium transition-colors">
+                  class="px-4 py-2 rounded-lg border border-border hover:bg-muted text-foreground font-medium transition-colors cursor-pointer">
             ${isKm ? 'បោះបង់' : 'Cancel'}
           </button>
           <button type="submit" id="btn-modal-save" 
-                  class="px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm transition-all">
+                  class="px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm transition-all cursor-pointer">
             ${isKm ? 'រក្សាទុក' : 'Save Account'}
           </button>
         </div>
@@ -874,6 +891,9 @@ export const UsersPage = {
         return;
       }
 
+      const saveBtn = document.getElementById('btn-modal-save');
+      const cancelBtn = document.getElementById('btn-modal-cancel');
+
       try {
         if (isEdit) {
           await UserService.update(userToEdit.id, {
@@ -883,18 +903,46 @@ export const UsersPage = {
           });
           toast.success(isKm ? 'គណនីត្រូវបានកែប្រែដោយជោគជ័យ' : 'Account updated successfully.');
         } else {
-          await UserService.create({
+          if (saveBtn) {
+            saveBtn.disabled = true;
+            if (cancelBtn) cancelBtn.disabled = true;
+            saveBtn.innerHTML = `
+              <span class="inline-flex items-center gap-1.5">
+                ${getIcon('loader2', 'w-4 h-4 animate-spin')}
+                <span>${isKm ? 'កំពុងបង្កើតគណនី និង Drive Sheet...' : 'Creating Account & Drive Sheet...'}</span>
+              </span>
+            `;
+          }
+
+          const createdUser = await UserService.create({
             displayName,
             username,
             password: pass,
             role
           });
-          toast.success(isKm ? 'បានបង្កើតគណនីថ្មីដោយជោគជ័យ' : 'Account created successfully.');
+
+          if (createdUser.driveFileCreated) {
+            toast.success(
+              isKm 
+                ? `បានបង្កើតគណនី @${username} និងឯកសារ ${createdUser.driveFileName} ក្នុង Google Drive ដោយជោគជ័យ!`
+                : `Account @${username} and spreadsheet ${createdUser.driveFileName} created in Google Drive!`,
+              isKm ? 'ជោគជ័យ' : 'Account & Drive Sheet Created'
+            );
+          } else {
+            toast.success(
+              isKm ? 'បានបង្កើតគណនីថ្មីដោយជោគជ័យ' : 'Account created successfully.'
+            );
+          }
         }
 
         modal.close();
         await this.reload();
       } catch (err) {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          if (cancelBtn) cancelBtn.disabled = false;
+          saveBtn.innerHTML = isKm ? 'រក្សាទុក' : 'Save Account';
+        }
         if (errBox) {
           errBox.textContent = err.message;
           errBox.classList.remove('hidden');
@@ -1108,28 +1156,28 @@ export const UsersPage = {
               <span class="p-1.5 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400">
                 ${getIcon('rotateCcw', 'w-4 h-4')}
               </span>
-              <span>${isKm ? 'ជម្រើសទី ១: កំណត់គណនីលំនាំដើមឡើងវិញ' : 'Option 1: Reset Default Accounts'}</span>
+              <span>${isKm ? 'ជម្រើសទី ១: កំណត់ទៅកាន់ ៤ គណនីលំនាំដើម' : 'Option 1: Reset to 4 Default Accounts'}</span>
             </div>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 whitespace-nowrap">
-              ${isKm ? 'រក្សាគណនីផ្សេងទៀត' : 'Safe / Keeps Custom Accs'}
+              ${isKm ? '៤ គណនីកូដ' : '4 Default Accs Only'}
             </span>
           </div>
 
           <p class="text-muted-foreground leading-relaxed">
             ${isKm 
-              ? 'ស្តារឡើងវិញនូវគណនីដែលបានកំណត់ក្នុងកូដ (<strong>admin</strong>, <strong>director1</strong>, <strong>teacher1</strong>, <strong>king</strong>) មកពាក្យសម្ងាត់ និងសិទ្ធិដើមវិញ។ ទិន្នន័យចាស់ទាំងអស់របស់គណនីទាំងនេះ (សិស្ស ថ្នាក់ ពិន្ទុ...) នឹងត្រូវសម្អាតឱ្យនៅទទេ (No Data)។'
-              : 'Restores predefined default accounts defined in code (<strong>admin</strong>, <strong>director1</strong>, <strong>teacher1</strong>, <strong>king</strong>) to default credentials. Clears their old data so they have fresh empty workspaces.'}
+              ? 'កំណត់ប្រព័ន្ធឱ្យនៅសល់តែ <strong>៤ គណនីលំនាំដើម</strong> ដែលកំណត់ក្នុងកូដ (<strong>admin</strong>, <strong>director1</strong>, <strong>teacher1</strong>, <strong>king</strong>)។ រាល់គណនីបន្ថែមផ្សេងទៀត (ដូចជា <code>reaksmey</code>, <code>veasna</code>...) នឹងត្រូវលុបចេញទាំងស្រុង។ ទិន្នន័យចាស់ៗរបស់គណនីទាំងនេះនឹងត្រូវសម្អាតឱ្យនៅទទេ (No Data)។'
+              : 'Resets system to ONLY the <strong>4 default accounts</strong> defined in code (<strong>admin</strong>, <strong>director1</strong>, <strong>teacher1</strong>, <strong>king</strong>). All additional custom accounts are removed, and workspaces are cleared to empty (No Data).'}
           </p>
 
           <div class="p-2.5 rounded-lg bg-background/80 border border-border text-[11px] text-muted-foreground flex items-center gap-2">
-            <span class="text-emerald-500 font-bold shrink-0">✓</span>
-            <span>${isKm ? 'រាល់គណនីផ្ទាល់ខ្លួនដែលបង្កើតដោយ Admin នឹងត្រូវរក្សាទុកជាធម្មតា (មិនបាត់បង់ទេ)។' : 'All custom accounts created by Admin will be safely preserved.'}</span>
+            <span class="text-amber-500 font-bold shrink-0">ℹ️</span>
+            <span>${isKm ? 'បន្ទាប់ពី Reset ក្នុងប្រព័ន្ធនឹងមានតែ ៤ គណនីលំនាំដើមគត់ ទាំងក្នុងម៉ាស៊ីន និង Google Drive (SchoolSystem_AdminData)។' : 'After reset, exactly 4 default accounts will exist locally and in Google Drive.'}</span>
           </div>
 
           <div class="flex justify-end pt-1">
             <button id="btn-trigger-reset-defaults" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition-colors cursor-pointer shadow-xs">
               ${getIcon('rotateCcw', 'w-3.5 h-3.5')}
-              <span>${isKm ? 'កំណត់គណនីលំនាំដើមឡើងវិញ' : 'Reset Default Accounts'}</span>
+              <span>${isKm ? 'កំណត់ទៅកាន់ ៤ គណនីលំនាំដើម' : 'Reset to 4 Default Accounts'}</span>
             </button>
           </div>
         </div>
@@ -1150,8 +1198,8 @@ export const UsersPage = {
 
           <p class="text-muted-foreground leading-relaxed">
             ${isKm
-              ? '⚠️ <strong>ការសម្អាតកម្រិតតឹងរ៉ឹង៖</strong> លុបចោលគណនីបង្កើតដោយខ្លួនឯងទាំងអស់ លុបឯកសារ Workspace ទាំងអស់ក្នុង Google Drive (<code>SchoolWorkspace_*</code>) និងលុបទិន្នន័យទាំងអស់ក្នុងម៉ាស៊ីន។ រក្សាទុកតែគណនីកំណត់ក្នុងកូដ (admin, director1, teacher1, king) ដែលគ្មានទិន្នន័យ។'
-              : '⚠️ <strong>Strict Factory Reset:</strong> Erases all custom user accounts, deletes all workspace files (<code>SchoolWorkspace_*</code>) from Google Drive, and wipes local database records. Retains ONLY default accounts set in code with empty data.'}
+              ? '⚠️ <strong>ការសម្អាតកម្រិតតឹងរ៉ឹង៖</strong> លុបចោលគណនីបង្កើតដោយខ្លួនឯងទាំងអស់ លុបឯកសារ Workspace ទាំងអស់ក្នុង Google Drive (<code>SchoolWorkspace_*</code>) និងលុបទិន្នន័យទាំងអស់ក្នុងម៉ាស៊ីន។ រក្សាទុកតែ ៤ គណនីកំណត់ក្នុងកូដ (admin, director1, teacher1, king) ដែលគ្មានទិន្នន័យ។'
+              : '⚠️ <strong>Strict Factory Reset:</strong> Erases all custom user accounts, deletes all workspace files (<code>SchoolWorkspace_*</code>) from Google Drive, and wipes local database records. Retains ONLY the 4 default accounts set in code with empty data.'}
           </p>
           
           <div class="space-y-2 pt-2 border-t border-destructive/20">
@@ -1196,11 +1244,11 @@ export const UsersPage = {
     // Option 1 Handler: Reset Default Accounts
     modal.element.querySelector('#btn-trigger-reset-defaults')?.addEventListener('click', () => {
       Modal.confirm({
-        title: isKm ? 'បញ្ជាក់ការកំណត់គណនីលំនាំដើម' : 'Confirm Default Accounts Reset',
+        title: isKm ? 'បញ្ជាក់ការកំណត់ទៅកាន់ ៤ គណនីលំនាំដើម' : 'Confirm Reset to 4 Default Accounts',
         message: isKm 
-          ? 'តើអ្នកប្រាកដជាចង់កំណត់គណនី admin, director1, teacher1, king ឡើងវិញមែនទេ? ទិន្នន័យចាស់របស់គណនីទាំងនេះនឹងត្រូវសម្អាតឱ្យនៅទទេ ប៉ុន្តែគណនីផ្សេងទៀតដែលបង្កើតដោយ Admin នឹងមិនបាត់បង់ឡើយ។'
-          : 'Are you sure you want to restore default accounts (admin, director1, teacher1, king)? Their old workspace data will be cleared, while custom accounts will remain safe.',
-        destructive: false,
+          ? 'តើអ្នកប្រាកដជាចង់កំណត់ទៅកាន់ ៤ គណនីលំនាំដើម (admin, director1, teacher1, king) មែនទេ? រាល់គណនីបន្ថែមផ្សេងទៀតនឹងត្រូវលុបចេញ ហើយទិន្នន័យចាស់ៗរបស់ ៤ គណនីនេះនឹងត្រូវសម្អាតឱ្យនៅទទេ។'
+          : 'Are you sure you want to reset to only the 4 default accounts (admin, director1, teacher1, king)? Extra accounts will be removed and their workspaces cleared.',
+        destructive: true,
         confirmText: isKm ? 'យល់ព្រម Reset' : 'Confirm Reset',
         cancelText: isKm ? 'បោះបង់' : 'Cancel',
         onConfirm: async () => {

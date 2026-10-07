@@ -16,6 +16,8 @@ import { themeService } from './themeService.js';
 import { fontService } from './fontService.js';
 import { i18n, t } from '../i18n/i18n.js';
 import { SettingsService } from './settingsService.js';
+import { SchoolService } from './schoolService.js';
+import { WorkspaceSetupService } from './workspaceSetupService.js';
 import { BackupService } from './backupService.js';
 import { permissionService } from './permissionService.js';
 import { CloudSyncService } from './cloudSyncService.js';
@@ -480,11 +482,10 @@ export const AdminDataService = {
   /**
    * Reset Default Accounts (Option 1):
    * Restores predefined default accounts defined in code (admin, director1, teacher1, king).
-   * - If deleted or altered, recreates/updates with default credentials & roles.
+   * - Deletes and purges any extra/custom accounts (e.g. reaksmey, veasna) so exactly 4 accounts remain.
    * - Clears their workspace data ("no data" - clean empty workspace).
-   * - Remote Drive workspace spreadsheets for these default accounts are deleted/reset.
-   * - Custom accounts created by admin are PRESERVED safely.
-   * - Syncs the restored default accounts to SchoolSystem_AdminData in Google Drive.
+   * - Remote Drive workspace spreadsheets for these accounts are deleted/reset.
+   * - Overwrites SchoolSystem_AdminData in Google Drive with ONLY the 4 default accounts.
    */
   async resetDefaultAccounts(options = {}) {
     const isSilent = options.silent === true;
@@ -492,22 +493,59 @@ export const AdminDataService = {
     const isKm = currentLocale === 'km';
 
     try {
-      console.log('[AdminDataService] Resetting default predefined accounts...');
+      console.log('[AdminDataService] Resetting to 4 default predefined accounts...');
 
-      // 1. Process each predefined default user
+      const defaultUsernames = new Set(DEFAULT_USERS.map(u => (u.username || '').trim().toLowerCase()));
+
+      // 1. Fetch all existing users from globalDb
+      let allExistingUsers = [];
+      try {
+        allExistingUsers = await globalDb.getAll('users');
+      } catch (_) {}
+
+      // 2. Identify and purge all extra/custom accounts (any account not in DEFAULT_USERS)
+      for (const u of allExistingUsers) {
+        const cleanUname = (u.username || '').trim().toLowerCase();
+        if (!defaultUsernames.has(cleanUname)) {
+          console.log(`[AdminDataService] Removing extra custom account: @${u.username} (${u.id})`);
+          try {
+            await globalDb.delete('users', u.id);
+          } catch (_) {}
+          try {
+            await deleteWorkspaceDatabase(u.id, u.username);
+          } catch (_) {}
+          if (CloudSyncService.isOnline()) {
+            try {
+              await CloudSyncService.deleteUserDriveFile(u.username);
+              console.log(`[AdminDataService] Deleted Drive file for extra user @${u.username}`);
+            } catch (driveErr) {
+              console.warn(`[AdminDataService] Note deleting Drive file for extra user @${u.username}:`, driveErr.message);
+            }
+          }
+        }
+      }
+
+      // 3. Re-seed and restore the 4 default predefined users (admin, director1, teacher1, king)
       for (const defUser of DEFAULT_USERS) {
         const cleanUsername = (defUser.username || '').trim().toLowerCase();
         if (!cleanUsername) continue;
 
+        // Clean up any existing record with mismatched id to avoid duplicate rows
+        const match = allExistingUsers.find(u => (u.username || '').trim().toLowerCase() === cleanUsername);
+        if (match && match.id && match.id !== defUser.id) {
+          try {
+            await globalDb.delete('users', match.id);
+          } catch (_) {}
+          try {
+            await deleteWorkspaceDatabase(match.id, cleanUsername);
+          } catch (_) {}
+        }
+
         // Hash default password
         const passwordHash = await hashPassword(defUser.password);
 
-        // Retrieve existing record if present to keep id if possible, otherwise use defUser.id
-        const existingUsers = await globalDb.getAll('users');
-        const match = existingUsers.find(u => (u.username || '').toLowerCase() === cleanUsername);
-
         const restoredRecord = {
-          id: match?.id || defUser.id || ('usr_' + cleanUsername),
+          id: defUser.id,
           username: cleanUsername,
           password: defUser.password,
           passwordHash,
@@ -516,18 +554,18 @@ export const AdminDataService = {
           status: 'ACTIVE',
           classId: null,
           permissions: defUser.permissions || null,
-          createdAt: match?.createdAt || new Date().toISOString(),
+          createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           lastLogin: null
         };
 
-        // Write restored record to globalDb
+        // Write canonical record to globalDb
         await globalDb.put('users', restoredRecord);
 
-        // Delete local workspace database for this account so it has "no data"
+        // Delete local workspace database for this account so it starts fresh with "no data"
         await deleteWorkspaceDatabase(restoredRecord.id, cleanUsername);
 
-        // If online and account has a workspace in Drive (e.g., director1, teacher1, king), delete its Drive file
+        // If online and account has a workspace in Drive (director1, teacher1, king), delete its Drive file
         if (CloudSyncService.isOnline() && cleanUsername !== 'admin') {
           try {
             await CloudSyncService.deleteUserDriveFile(cleanUsername);
@@ -538,21 +576,32 @@ export const AdminDataService = {
         }
       }
 
-      // 2. Clear caches
+      // 4. Clear auth caches
       try {
         await authService.clearAllCaches();
       } catch (_) {}
 
-      // 3. Sync restored user records to SchoolSystem_AdminData in Google Sheets
+      // 5. Overwrite SchoolSystem_AdminData in Google Sheets with ONLY the 4 default accounts!
       if (CloudSyncService.isOnline()) {
         try {
           await this.saveToGoogleSheet({ silent: true });
+          console.log('[AdminDataService] Synced clean 4 default accounts to Google Sheet (SchoolSystem_AdminData).');
         } catch (syncErr) {
           console.warn('[AdminDataService] Cloud sync after default reset warning:', syncErr);
         }
       }
 
-      // 4. Dispatch data refresh
+      // 6. Clear active workspace settings caches and notify setup guard
+      try {
+        await SettingsService.delete('schools_catalog');
+        await SettingsService.delete('schools_initialized');
+      } catch (_) {}
+      try {
+        await SchoolService.clearCache();
+      } catch (_) {}
+      WorkspaceSetupService.notifySetupChange();
+
+      // 7. Dispatch data refresh
       window.dispatchEvent(new CustomEvent('app:refresh-data', {
         detail: {
           adminSync: true,
@@ -564,8 +613,8 @@ export const AdminDataService = {
       if (!isSilent) {
         toast.success(
           isKm
-            ? `បានកំណត់គណនីលំនាំដើម (${DEFAULT_USERS.length} គណនី) ឡើងវិញដោយជោគជ័យ! ទិន្នន័យចាស់ត្រូវបានសម្អាត។`
-            : `Default accounts (${DEFAULT_USERS.length}) reset successfully with clean data!`,
+            ? `បានកំណត់ទៅកាន់ ៤ គណនីលំនាំដើម (${DEFAULT_USERS.length} គណនី) ឡើងវិញដោយជោគជ័យ! រាល់គណនីបន្ថែមត្រូវបានសម្អាតចេញ។`
+            : `Reset to the 4 default accounts (${DEFAULT_USERS.length}) successfully! All extra accounts removed.`,
           isKm ? 'កំណត់គណនីលំនាំដើម' : 'Reset Default Accounts'
         );
       }
@@ -586,8 +635,8 @@ export const AdminDataService = {
    * - Deletes ALL SchoolWorkspace_* spreadsheets from Google Drive.
    * - Drops ALL local workspace IndexedDB databases.
    * - Erases ALL custom user accounts.
-   * - Keeps ONLY the default accounts set in code (admin, director1, teacher1, king) with clean data.
-   * - Resets SchoolSystem_AdminData in Google Drive to default seed state.
+   * - Keeps ONLY the 4 default accounts set in code (admin, director1, teacher1, king) with clean data.
+   * - Overwrites SchoolSystem_AdminData in Google Drive to strictly contain the 4 default accounts.
    */
   async resetFullApp(options = {}) {
     const isSilent = options.silent === true;
@@ -597,7 +646,13 @@ export const AdminDataService = {
     try {
       console.log('[AdminDataService] Performing STRICT FULL APP RESET...');
 
-      // 1. Remote Google Drive Full Reset (if online)
+      // 1. Gather all existing users for complete cleanup
+      let existingUsers = [];
+      try {
+        existingUsers = await globalDb.getAll('users');
+      } catch (_) {}
+
+      // 2. Remote Google Drive Full Reset (if online)
       let remoteResetResult = null;
       if (CloudSyncService.isOnline()) {
         const scriptUrl = getCloudSyncUrl();
@@ -609,22 +664,26 @@ export const AdminDataService = {
             console.warn('[AdminDataService] Remote reset note:', remoteErr);
           }
         }
+
+        // Also explicitly delete Drive file for every existing user account
+        for (const u of existingUsers) {
+          const uName = (u.username || '').trim().toLowerCase();
+          if (uName && uName !== 'admin') {
+            try {
+              await CloudSyncService.deleteUserDriveFile(uName);
+            } catch (_) {}
+          }
+        }
       }
 
-      // 2. Local IndexedDB Wipe:
-      // 2a. Gather all existing user records to delete their isolated databases
-      let existingUsers = [];
-      try {
-        existingUsers = await globalDb.getAll('users');
-      } catch (_) {}
-
+      // 3. Local IndexedDB Wipe:
       for (const u of existingUsers) {
         try {
           await deleteWorkspaceDatabase(u.id, u.username);
         } catch (_) {}
       }
 
-      // 2b. If browser supports indexedDB.databases(), drop any remaining SchoolWorkspace_* databases
+      // 4. Drop any remaining SchoolWorkspace_* databases
       if (typeof indexedDB !== 'undefined' && typeof indexedDB.databases === 'function') {
         try {
           const dbs = await indexedDB.databases();
@@ -638,17 +697,17 @@ export const AdminDataService = {
         } catch (_) {}
       }
 
-      // 2c. Clear global users store completely
+      // 5. Clear global users store completely
       try {
         await globalDb.clear('users');
       } catch (_) {}
 
-      // 2d. Seed ONLY the default predefined users
+      // 6. Seed ONLY the 4 default predefined users with canonical IDs
       for (const defUser of DEFAULT_USERS) {
         const cleanUsername = (defUser.username || '').trim().toLowerCase();
         const passwordHash = await hashPassword(defUser.password);
         const userRecord = {
-          id: defUser.id || ('usr_' + cleanUsername),
+          id: defUser.id,
           username: cleanUsername,
           password: defUser.password,
           passwordHash,
@@ -664,17 +723,36 @@ export const AdminDataService = {
         await globalDb.put('users', userRecord);
       }
 
-      // 2e. Clear all in-memory and browser caches
+      // 7. Clear all in-memory and browser caches
       try {
         await authService.clearAllCaches();
       } catch (_) {}
 
-      // 2f. Reseed baseline configuration in active workspace
+      // 8. Reseed baseline configuration in active workspace
       try {
         await seedWorkspaceBaseline();
       } catch (_) {}
 
-      // 3. Dispatch global refresh
+      try {
+        await SettingsService.delete('schools_catalog');
+        await SettingsService.delete('schools_initialized');
+      } catch (_) {}
+      try {
+        await SchoolService.clearCache();
+      } catch (_) {}
+      WorkspaceSetupService.notifySetupChange();
+
+      // 9. CRITICAL: Save the 4 default accounts immediately to Google Drive's SchoolSystem_AdminData
+      if (CloudSyncService.isOnline()) {
+        try {
+          await this.saveToGoogleSheet({ silent: true });
+          console.log('[AdminDataService] Overwrote SchoolSystem_AdminData with 4 default accounts during full reset.');
+        } catch (syncErr) {
+          console.warn('[AdminDataService] Cloud sync after full reset warning:', syncErr);
+        }
+      }
+
+      // 10. Dispatch global refresh
       window.dispatchEvent(new CustomEvent('app:refresh-data', {
         detail: {
           adminSync: true,
@@ -686,8 +764,8 @@ export const AdminDataService = {
       if (!isSilent) {
         toast.success(
           isKm
-            ? 'កម្មវិធីត្រូវបានកំណត់ឡើងវិញទាំងស្រុងដោយជោគជ័យ! រាល់គណនីបង្កើតដោយខ្លួនឯង និងឯកសារ Drive ត្រូវបានលុប។ នៅសល់តែគណនីលំនាំដើម។'
-            : 'App has been strictly reset! All custom accounts and Drive workspace files erased. Default accounts retained.',
+            ? 'កម្មវិធីត្រូវបានកំណត់ឡើងវិញទាំងស្រុងដោយជោគជ័យ! នៅសល់តែ ៤ គណនីលំនាំដើម (admin, director1, teacher1, king)។'
+            : 'App has been strictly reset! Retained ONLY the 4 default accounts (admin, director1, teacher1, king).',
           isKm ? 'កំណត់កម្មវិធីឡើងវិញ' : 'Strict App Reset'
         );
       }
