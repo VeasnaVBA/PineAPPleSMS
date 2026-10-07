@@ -80,8 +80,8 @@ export class Sidebar {
     const allNavItems = [
       { id: 'dashboard', labelKey: 'nav.dashboard', icon: 'dashboard', href: '#dashboard' },
       { id: 'schools', labelKey: 'nav.schools', icon: 'school', href: '#schools', isSetupStep: 1 },
-      { id: 'classes', labelKey: 'nav.classes', icon: 'classes', href: '#classes', isSetupStep: 2 },
-      { id: 'teachers', labelKey: 'nav.teachers', icon: 'teachers', href: '#teachers', isSetupStep: 3 },
+      { id: 'teachers', labelKey: 'nav.teachers', icon: 'teachers', href: '#teachers', isSetupStep: 2 },
+      { id: 'classes', labelKey: 'nav.classes', icon: 'classes', href: '#classes', isSetupStep: 3 },
       { id: 'subjects', labelKey: 'nav.subjects', icon: 'bookOpen', href: '#subjects' },
       { id: 'students', labelKey: 'nav.students', icon: 'students', href: '#students' },
       { id: 'registration', labelKey: 'nav.registration', icon: 'fileCheck', href: '#registration' },
@@ -160,16 +160,16 @@ export class Sidebar {
                 statusBadge = setup.hasSchool 
                   ? `<span class="nav-badge text-emerald-600 dark:text-emerald-400 font-bold ml-auto text-xs" title="${isKm ? 'បានបញ្ចូលរួចរាល់' : 'Completed'}">✓</span>` 
                   : `<span class="nav-badge text-[10px] bg-amber-500/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-bold ml-auto ${fontClass}">${isKm ? 'ជំហាន ១' : 'Step 1'}</span>`;
-              } else if (item.id === 'classes') {
-                statusBadge = setup.hasClass 
-                  ? `<span class="nav-badge text-emerald-600 dark:text-emerald-400 font-bold ml-auto text-xs" title="${isKm ? 'បានបញ្ចូលរួចរាល់' : 'Completed'}">✓</span>` 
-                  : `<span class="nav-badge text-[10px] bg-amber-500/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-bold ml-auto ${fontClass}">${isKm ? 'ជំហាន ២' : 'Step 2'}</span>`;
               } else if (item.id === 'teachers') {
                 statusBadge = setup.hasTeacher 
                   ? `<span class="nav-badge text-emerald-600 dark:text-emerald-400 font-bold ml-auto text-xs" title="${isKm ? 'បានបញ្ចូលរួចរាល់' : 'Completed'}">✓</span>` 
+                  : `<span class="nav-badge text-[10px] bg-amber-500/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-bold ml-auto ${fontClass}">${isKm ? 'ជំហាន ២' : 'Step 2'}</span>`;
+              } else if (item.id === 'classes') {
+                statusBadge = setup.hasClass 
+                  ? `<span class="nav-badge text-emerald-600 dark:text-emerald-400 font-bold ml-auto text-xs" title="${isKm ? 'បានបញ្ចូលរួចរាល់' : 'Completed'}">✓</span>` 
                   : `<span class="nav-badge text-[10px] bg-amber-500/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-bold ml-auto ${fontClass}">${isKm ? 'ជំហាន ៣' : 'Step 3'}</span>`;
               } else if (isLocked) {
-                statusBadge = `<span class="nav-badge ml-auto text-muted-foreground opacity-60" title="${isKm ? 'ចាក់សោ (ត្រូវបំពេញសាលា ថ្នាក់ និងគ្រូជាមុន)' : 'Locked'}">${getIcon('lock', 'w-3.5 h-3.5')}</span>`;
+                statusBadge = `<span class="nav-badge ml-auto text-muted-foreground opacity-60" title="${isKm ? 'ចាក់សោ (ត្រូវបំពេញសាលា គ្រូ និងថ្នាក់ជាមុន)' : 'Locked'}">${getIcon('lock', 'w-3.5 h-3.5')}</span>`;
               }
             }
 
@@ -186,7 +186,7 @@ export class Sidebar {
               <a href="${isLocked ? 'javascript:void(0)' : item.href}" 
                  data-route="${item.id}"
                  data-locked="${isLocked ? 'true' : 'false'}"
-                 title="${isLocked ? (isKm ? 'ម៉ឺនុយត្រូវបានចាក់សោ (ត្រូវបំពេញព័ត៌មានសាលារៀន ថ្នាក់រៀន និងគ្រូបង្រៀនជាមុន)' : 'Menu locked (Please input school, classroom, and teacher info first)') : t(item.labelKey)}"
+                 title="${isLocked ? (isKm ? 'ម៉ឺនុយត្រូវបានចាក់សោ (ត្រូវបំពេញព័ត៌មានសាលារៀន គ្រូបង្រៀន និងថ្នាក់រៀនជាមុន)' : 'Menu locked (Please input school, teacher, and classroom info first)') : t(item.labelKey)}"
                  class="${linkClasses}">
                 <div class="flex-shrink-0 flex items-center justify-center w-5 h-5">
                   ${getIcon(item.icon, 'w-4 h-4')}
@@ -210,8 +210,8 @@ export class Sidebar {
         e.stopPropagation();
         toast.warning(
           isKm 
-            ? 'សូមបំពេញព័ត៌មានចាំបាច់ទាំង ៣ ជាមុនសិន៖\n១. ព័ត៌មានសាលារៀន\n២. បញ្ជីថ្នាក់រៀន\n៣. ព័ត៌មានគ្រូបង្រៀន' 
-            : 'Please complete the 3 required steps first:\n1. School Info\n2. Classroom Info\n3. Teacher Info',
+            ? 'សូមបំពេញព័ត៌មានចាំបាច់ទាំង ៣ ជាមុនសិន៖\n១. ព័ត៌មានសាលារៀន\n២. ព័ត៌មានគ្រូបង្រៀន\n៣. បញ្ជីថ្នាក់រៀន' 
+            : 'Please complete the 3 required steps first:\n1. School Info\n2. Teacher Info\n3. Classroom Info',
           isKm ? 'ម៉ឺនុយត្រូវបានចាក់សោ' : 'Menu Locked'
         );
       });

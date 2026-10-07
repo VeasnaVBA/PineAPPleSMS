@@ -1,9 +1,9 @@
 /**
  * Workspace Initial Setup Guard Service
  * Enforces mandatory initial setup for Director and Teacher accounts:
- * 1. At least 1 School record (schools)
- * 2. At least 1 Classroom record (classes)
- * 3. At least 1 Teacher record (teachers)
+ * 1. At least 1 School record (schools) - Step 1
+ * 2. At least 1 Teacher record (teachers) - Step 2
+ * 3. At least 1 Classroom record (classes) - Step 3
  * 
  * If any of these 3 are missing, all other sidebar menus remain locked.
  */
@@ -69,10 +69,10 @@ export const WorkspaceSetupService = {
 
       const missingRoutes = [];
       if (!hasSchool) missingRoutes.push('schools');
-      if (!hasClass) missingRoutes.push('classes');
       if (!hasTeacher) missingRoutes.push('teachers');
+      if (!hasClass) missingRoutes.push('classes');
 
-      const firstIncompleteRoute = !hasSchool ? 'schools' : (!hasClass ? 'classes' : (!hasTeacher ? 'teachers' : null));
+      const firstIncompleteRoute = !hasSchool ? 'schools' : (!hasTeacher ? 'teachers' : (!hasClass ? 'classes' : null));
 
       return {
         isComplete,
