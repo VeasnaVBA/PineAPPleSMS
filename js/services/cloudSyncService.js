@@ -536,11 +536,20 @@ export const CloudSyncService = {
 
       // 2. Auto-assign classroom for teacher if available
       if (currentUser && (currentUser.role || '').toUpperCase() === 'TEACHER' && Array.isArray(data.classes) && data.classes.length > 0) {
-        if (!authService.getAssignedClassId()) {
-          const firstClass = data.classes[0];
-          if (firstClass && firstClass.id) {
-            await authService.setAssignedClassId(firstClass.id);
-          }
+        let targetClassId = null;
+        if (Array.isArray(data.students) && data.students.length > 0) {
+          const classCounts = {};
+          data.students.forEach(s => {
+            if (s.classId) classCounts[s.classId] = (classCounts[s.classId] || 0) + 1;
+          });
+          const bestClass = Object.keys(classCounts).sort((a, b) => classCounts[b] - classCounts[a])[0];
+          if (bestClass) targetClassId = bestClass;
+        }
+        if (!targetClassId && data.classes[0]?.id) {
+          targetClassId = data.classes[0].id;
+        }
+        if (targetClassId) {
+          await authService.setAssignedClassId(targetClassId);
         }
       }
 

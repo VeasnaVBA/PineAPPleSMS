@@ -107,7 +107,10 @@ export const StudentService = {
     if (authService.isTeacher()) {
       const teacherClassId = authService.getAssignedClassId();
       if (teacherClassId) {
-        list = list.filter(s => s.classId === teacherClassId);
+        const classFiltered = list.filter(s => s.classId === teacherClassId || !s.classId);
+        if (classFiltered.length > 0) {
+          list = classFiltered;
+        }
       }
     }
     const normalized = list.map(normalizeStudentRecord);
@@ -274,7 +277,15 @@ export const StudentService = {
     if (authService.isTeacher()) {
       const teacherClassId = authService.getAssignedClassId();
       if (teacherClassId) {
-        students = students.filter(s => s.classId === teacherClassId);
+        const classStudents = students.filter(s => s.classId === teacherClassId);
+        if (classStudents.length > 0) {
+          students = classStudents;
+        } else {
+          const withUnassigned = students.filter(s => !s.classId);
+          if (withUnassigned.length > 0) {
+            students = withUnassigned;
+          }
+        }
       }
     }
     const total = students.length;
@@ -303,8 +314,11 @@ export const StudentService = {
     // 0. Enforce Teacher Classroom restriction
     if (authService.isTeacher()) {
       const teacherClassId = authService.getAssignedClassId();
-      if (teacherClassId) {
-        classId = teacherClassId;
+      if (teacherClassId && !classId) {
+        const hasStudents = rawItems.some(s => s.classId === teacherClassId);
+        if (hasStudents) {
+          classId = teacherClassId;
+        }
       }
     }
 

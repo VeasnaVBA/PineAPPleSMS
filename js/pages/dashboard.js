@@ -165,6 +165,17 @@ export const DashboardPage = {
     // Load dynamic data from DB
     await this.loadStats();
     await this.loadActivityLogs();
+
+    // Listen for data refresh events (e.g. Cloud Sync restore) to immediately reload stats
+    if (!this._refreshListenerBound) {
+      this._refreshListenerBound = true;
+      window.addEventListener('app:refresh-data', async () => {
+        if (document.getElementById('stat-total-students')) {
+          await this.loadStats();
+          await this.loadActivityLogs();
+        }
+      });
+    }
   },
 
   async loadStats() {
