@@ -69,6 +69,8 @@ export class NavbarSyncButtons {
    */
   static renderHtml() {
     const isSyncActive = this.isSyncing;
+    const isRestoreActive = this.isRestoring;
+    const isKm = i18n.getLocale() === 'km';
 
     return `
       <div id="topbar-cloud-sync-group" class="flex items-center gap-1.5 sm:gap-2">
@@ -87,6 +89,21 @@ export class NavbarSyncButtons {
           </span>
           <span class="btn-label hidden sm:inline">
             ${isSyncActive ? t('cloudSync.savingShort') : t('cloudSync.saveNavbar')}
+          </span>
+        </button>
+
+        <!-- Button: Restore / Sync from Drive -->
+        <button 
+          id="btn-cloud-restore-from-drive"
+          type="button"
+          title="${isKm ? 'ទាញទិន្នន័យចុងក្រោយពី Google Drive' : 'Sync latest data from Google Drive'}"
+          ${isRestoreActive ? 'disabled' : ''}
+          class="inline-flex items-center gap-1.5 h-9 px-2 sm:px-2.5 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-xs font-medium text-foreground transition-all shadow-xs cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed group">
+          <span class="btn-icon text-primary group-hover:scale-105 transition-transform flex items-center">
+            ${isRestoreActive ? getIcon('loader2', 'w-4 h-4 text-primary animate-spin') : getIcon('cloudDownload', 'w-4 h-4 text-primary')}
+          </span>
+          <span class="btn-label hidden md:inline">
+            ${isRestoreActive ? (isKm ? 'កំពុងទាញ...' : 'Syncing...') : (isKm ? 'ទាញពី Drive' : 'Sync Drive')}
           </span>
         </button>
       </div>
