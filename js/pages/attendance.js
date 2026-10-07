@@ -28,7 +28,11 @@ export const AttendancePage = {
     this.state.activeYear = await SettingsService.getActiveAcademicYear();
 
     if (authService.isTeacher()) {
-      const teacherClassId = authService.getAssignedClassId();
+      let teacherClassId = authService.getAssignedClassId();
+      if (!teacherClassId && this.state.classes.length > 0) {
+        teacherClassId = this.state.classes[0].id;
+        authService.setAssignedClassId(teacherClassId);
+      }
       if (teacherClassId) {
         this.state.selectedClassId = teacherClassId;
       }
@@ -69,16 +73,24 @@ export const AttendancePage = {
             <!-- Class Selector -->
             <div class="flex items-center gap-2">
               <span class="text-xs text-muted-foreground font-medium">${t('attendance.class')}:</span>
-              ${authService.isTeacher() ? (() => {
-                const assignedCls = classes.find(c => c.id === authService.getAssignedClassId());
-                return `
+              ${authService.isTeacher() && classes.length <= 1 ? (() => {
+                const assignedCls = classes.find(c => c.id === this.state.selectedClassId) || 
+                                    classes.find(c => c.id === authService.getAssignedClassId()) || 
+                                    classes[0];
+                return assignedCls ? `
                   <div class="h-9 px-3 py-1.5 rounded-md border border-primary/30 bg-primary/10 text-xs font-semibold text-primary flex items-center gap-1.5 box-border">
                     ${getIcon('classes', 'w-3.5 h-3.5')}
-                    <span>${assignedCls ? assignedCls.name : 'Assigned Class'}</span>
+                    <span>${assignedCls.name}</span>
                   </div>
+                ` : `
+                  <a href="#classes" class="h-9 px-3 py-1.5 rounded-md border border-dashed border-amber-500/40 bg-amber-500/10 text-xs font-medium text-amber-700 dark:text-amber-300 flex items-center gap-1.5 box-border hover:bg-amber-500/20 transition-colors">
+                    ${getIcon('plus', 'w-3.5 h-3.5')}
+                    <span>${t('classes.emptyList')}</span>
+                  </a>
                 `;
               })() : `
                 <select id="select-att-class" class="h-9 px-3 py-1.5 pr-8 rounded-md border border-input bg-background text-xs sm:text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs">
+                  ${classes.length === 0 ? `<option value="">${t('classes.emptyList')}</option>` : ''}
                   ${classes.map(c => `
                     <option value="${c.id}" ${this.state.selectedClassId === c.id ? 'selected' : ''}>${c.name}</option>
                   `).join('')}
@@ -288,6 +300,9 @@ export const AttendancePage = {
     // Change class
     document.getElementById('select-att-class')?.addEventListener('change', async (e) => {
       this.state.selectedClassId = e.target.value;
+      if (authService.isTeacher() && this.state.selectedClassId) {
+        await authService.setAssignedClassId(this.state.selectedClassId);
+      }
       await this.loadSheet();
     });
 

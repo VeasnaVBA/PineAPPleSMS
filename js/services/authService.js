@@ -71,7 +71,34 @@ class AuthService {
 
   getAssignedClassId() {
     const user = this.getCurrentUser();
-    return user && (user.role || '').toUpperCase() === 'TEACHER' ? (user.classId || user.assignedClassId || null) : null;
+    if (!user || (user.role || '').toUpperCase() !== 'TEACHER') return null;
+    return user.classId || user.assignedClassId || (user.id ? localStorage.getItem(`teacher_assigned_class_${user.id}`) : null) || null;
+  }
+
+  /**
+   * Assign or switch classroom for the active teacher account and persist to globalDb
+   */
+  async setAssignedClassId(classId) {
+    const user = this.getCurrentUser();
+    if (!user) return;
+    user.classId = classId;
+    user.assignedClassId = classId;
+    if (user.id && classId) {
+      try {
+        localStorage.setItem(`teacher_assigned_class_${user.id}`, classId);
+      } catch (_) {}
+    }
+    this.updateSessionUser({ classId, assignedClassId: classId });
+    try {
+      const userInDb = await globalDb.get('users', user.id);
+      if (userInDb) {
+        userInDb.classId = classId;
+        userInDb.assignedClassId = classId;
+        await globalDb.put('users', userInDb);
+      }
+    } catch (e) {
+      console.warn('Could not persist assigned classId:', e);
+    }
   }
 
   /**

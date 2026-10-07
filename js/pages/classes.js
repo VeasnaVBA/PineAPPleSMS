@@ -39,6 +39,9 @@ export const ClassesPage = {
     }
 
     this.state.classes = await ClassService.getClassesWithDetails();
+    if (currentUser && currentUser.role === 'TEACHER' && this.state.classes.length > 0 && !authService.getAssignedClassId()) {
+      await authService.setAssignedClassId(this.state.classes[0].id);
+    }
     this.state.teachers = await TeacherService.getAll();
     this.state.activeYear = await SettingsService.getActiveAcademicYear();
   },
@@ -108,6 +111,8 @@ export const ClassesPage = {
                 ? (cls.teacherNameEnglish ? `${cls.teacherNameKhmer} (${cls.teacherNameEnglish})` : cls.teacherNameKhmer) 
                 : (cls.teacherNameEnglish || t('classes.noTeacher'));
 
+              const isAssigned = isTeacher && (cls.id === authService.getAssignedClassId() || cls.id === currentUser?.classId);
+
               return `
                 <div class="p-5 rounded-xl border border-border bg-card shadow-sm hover:border-primary/50 transition-all flex flex-col justify-between group">
                   <div>
@@ -121,9 +126,16 @@ export const ClassesPage = {
                           <span class="text-xs text-muted-foreground font-mono">Room: ${cls.room || '—'}</span>
                         </div>
                       </div>
-                      <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                        ${cls.status || 'Active'}
-                      </span>
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        ${isAssigned ? `
+                          <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                            ✓ ${isKm ? 'ថ្នាក់របស់ខ្ញុំ' : 'My Class'}
+                          </span>
+                        ` : ''}
+                        <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                          ${cls.status || 'Active'}
+                        </span>
+                      </div>
                     </div>
 
                     <div class="mt-4 pt-3 border-t border-border/60 space-y-2 text-xs">
@@ -151,6 +163,21 @@ export const ClassesPage = {
                       id: cls.id,
                       title: isKm ? 'ជម្រើសសកម្មភាព' : 'Actions',
                       actions: [
+                        {
+                          label: isKm ? 'កំណត់ជាថ្នាក់របស់ខ្ញុំ' : 'Set as My Class',
+                          icon: 'check',
+                          show: isTeacher && !isAssigned,
+                          onClick: async () => {
+                            try {
+                              await authService.setAssignedClassId(cls.id);
+                              toast.success(isKm ? `បានកំណត់ "${cls.name}" ជាថ្នាក់របស់អ្នកដោយជោគជ័យ!` : `Set "${cls.name}" as your assigned class!`);
+                              await this.loadData();
+                              this.renderLayout();
+                            } catch (err) {
+                              toast.error(err.message);
+                            }
+                          }
+                        },
                         {
                           label: isKm ? 'បញ្ជីសិស្ស' : 'View Roster',
                           icon: 'students',

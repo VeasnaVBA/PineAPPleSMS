@@ -29,7 +29,11 @@ export const ReportsPage = {
     this.state.activeYear = await SettingsService.getActiveAcademicYear();
 
     if (authService.isTeacher()) {
-      const teacherClassId = authService.getAssignedClassId();
+      let teacherClassId = authService.getAssignedClassId();
+      if (!teacherClassId && this.state.classes.length > 0) {
+        teacherClassId = this.state.classes[0].id;
+        authService.setAssignedClassId(teacherClassId);
+      }
       if (teacherClassId) {
         this.state.selectedClassId = teacherClassId;
       }
@@ -95,16 +99,22 @@ export const ReportsPage = {
           <div class="flex items-center gap-3 flex-wrap">
             <div class="flex items-center gap-2" id="filter-rep-class-box">
               <span class="text-muted-foreground">${t('reports.filterClass')}</span>
-              ${authService.isTeacher() ? (() => {
-                const assignedCls = this.state.classes.find(c => c.id === authService.getAssignedClassId());
-                return `
+              ${authService.isTeacher() && this.state.classes.length <= 1 ? (() => {
+                const assignedCls = this.state.classes.find(c => c.id === this.state.selectedClassId) || 
+                                    this.state.classes.find(c => c.id === authService.getAssignedClassId()) || 
+                                    this.state.classes[0];
+                return assignedCls ? `
                   <div class="h-9 px-3 py-1.5 rounded-md border border-primary/30 bg-primary/10 text-xs font-semibold text-primary flex items-center box-border">
-                    ${assignedCls ? assignedCls.name : 'Assigned Class'}
+                    ${assignedCls.name}
+                  </div>
+                ` : `
+                  <div class="h-9 px-3 py-1.5 rounded-md border border-dashed border-amber-500/40 bg-amber-500/10 text-xs text-amber-700 dark:text-amber-300 flex items-center box-border">
+                    ${t('classes.emptyList')}
                   </div>
                 `;
               })() : `
                 <select id="select-rep-class" class="h-9 px-2.5 py-1.5 pr-8 rounded-md border border-input bg-card text-foreground box-border shadow-xs">
-                  <option value="all">${t('common.all')}</option>
+                  ${authService.isTeacher() ? '' : `<option value="all">${t('common.all')}</option>`}
                   ${this.state.classes.map(c => `
                     <option value="${c.id}" ${this.state.selectedClassId === c.id ? 'selected' : ''}>${c.name}</option>
                   `).join('')}
@@ -315,6 +325,9 @@ export const ReportsPage = {
     // Filter class
     document.getElementById('select-rep-class')?.addEventListener('change', async (e) => {
       this.state.selectedClassId = e.target.value;
+      if (authService.isTeacher() && this.state.selectedClassId && this.state.selectedClassId !== 'all') {
+        await authService.setAssignedClassId(this.state.selectedClassId);
+      }
       await this.loadReportData();
     });
 

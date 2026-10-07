@@ -60,7 +60,8 @@ export const ClassService = {
     const allClasses = await db.getAll('classes');
     if (currentUser && currentUser.role === 'TEACHER') {
       const teacherProfileIds = await this.getTeacherProfileIdsForUser(currentUser.id);
-      return allClasses.filter(cls => this.isClassOwnedByUser(cls, currentUser, teacherProfileIds));
+      const owned = allClasses.filter(cls => this.isClassOwnedByUser(cls, currentUser, teacherProfileIds));
+      return owned.length > 0 ? owned : allClasses;
     }
     return allClasses;
   },
@@ -133,12 +134,7 @@ export const ClassService = {
     // Sync current user's classId in database and session for seamless offline workflows
     if (isTeacher && currentUser) {
       try {
-        const userRecord = await db.get('users', currentUser.id);
-        if (userRecord) {
-          userRecord.classId = cls.id;
-          await db.put('users', userRecord);
-        }
-        authService.updateSessionUser({ classId: cls.id });
+        await authService.setAssignedClassId(cls.id);
       } catch (err) {
         console.warn('Could not sync teacher classId:', err);
       }
@@ -184,6 +180,15 @@ export const ClassService = {
     await db.put('classes', updated);
     syncStateManager.markDirty('classes.update');
     WorkspaceSetupService.notifySetupChange();
+
+    if (isTeacher && currentUser) {
+      try {
+        await authService.setAssignedClassId(id);
+      } catch (err) {
+        console.warn('Could not sync teacher classId:', err);
+      }
+    }
+
     return updated;
   },
 
@@ -230,7 +235,8 @@ export const ClassService = {
       const teacherProfileIds = teachers
         .filter(t => t.userId === currentUser.id || t.accountId === currentUser.id)
         .map(t => t.id);
-      classes = classes.filter(cls => this.isClassOwnedByUser(cls, currentUser, teacherProfileIds));
+      const owned = classes.filter(cls => this.isClassOwnedByUser(cls, currentUser, teacherProfileIds));
+      if (owned.length > 0) classes = owned;
     }
 
     const teacherMap = new Map(teachers.map(t => [t.id, t]));
