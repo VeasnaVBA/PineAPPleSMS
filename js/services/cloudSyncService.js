@@ -992,5 +992,33 @@ export const CloudSyncService = {
     }
 
     return response;
+  },
+
+  /**
+   * Trigger Strict Full App Reset on Google Apps Script Backend
+   * Deletes all SchoolWorkspace_* files from Drive and resets SchoolSystem_AdminData
+   */
+  async resetAppFull(timeoutMs = 60000) {
+    if (!this.isOnline()) {
+      throw new Error(t('cloudSync.offlineError') || 'Device is offline. Please check your internet connection.');
+    }
+
+    const endpoint = getCloudSyncUrl();
+    if (!endpoint) {
+      throw new Error('Google Apps Script Web App URL is not configured.');
+    }
+
+    const payload = {
+      action: 'RESET_APP_FULL'
+    };
+
+    console.log('[CloudSync] Dispatching RESET_APP_FULL to Google Apps Script...');
+    const response = await this.dispatchGoogleScriptRequest(endpoint, payload, timeoutMs);
+
+    if (!response || response.success === false) {
+      throw new Error(response?.error || 'Failed to perform full app reset on Google Drive.');
+    }
+
+    return response;
   }
 };

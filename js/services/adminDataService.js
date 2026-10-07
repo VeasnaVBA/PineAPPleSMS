@@ -26,6 +26,8 @@ import {
   ADMIN_DATA_LAST_SYNC_KEY,
   ADMIN_DATA_SPREADSHEET_URL_KEY
 } from '../config/cloudSync.js';
+import { DEFAULT_USERS } from '../config/defaultUsers.js';
+import { seedWorkspaceBaseline } from '../database/seed.js';
 import { toast } from '../components/toast.js';
 
 export const AdminDataService = {
@@ -472,6 +474,234 @@ export const AdminDataService = {
       console.log('[AdminDataService] Startup cloud sync completed successfully.');
     } catch (err) {
       console.warn('[AdminDataService] Startup cloud sync warning:', err);
+    }
+  },
+
+  /**
+   * Reset Default Accounts (Option 1):
+   * Restores predefined default accounts defined in code (admin, director1, teacher1, king).
+   * - If deleted or altered, recreates/updates with default credentials & roles.
+   * - Clears their workspace data ("no data" - clean empty workspace).
+   * - Remote Drive workspace spreadsheets for these default accounts are deleted/reset.
+   * - Custom accounts created by admin are PRESERVED safely.
+   * - Syncs the restored default accounts to SchoolSystem_AdminData in Google Drive.
+   */
+  async resetDefaultAccounts(options = {}) {
+    const isSilent = options.silent === true;
+    const currentLocale = i18n.getLocale();
+    const isKm = currentLocale === 'km';
+
+    try {
+      console.log('[AdminDataService] Resetting default predefined accounts...');
+
+      // 1. Process each predefined default user
+      for (const defUser of DEFAULT_USERS) {
+        const cleanUsername = (defUser.username || '').trim().toLowerCase();
+        if (!cleanUsername) continue;
+
+        // Hash default password
+        const passwordHash = await hashPassword(defUser.password);
+
+        // Retrieve existing record if present to keep id if possible, otherwise use defUser.id
+        const existingUsers = await globalDb.getAll('users');
+        const match = existingUsers.find(u => (u.username || '').toLowerCase() === cleanUsername);
+
+        const restoredRecord = {
+          id: match?.id || defUser.id || ('usr_' + cleanUsername),
+          username: cleanUsername,
+          password: defUser.password,
+          passwordHash,
+          displayName: defUser.displayName || cleanUsername,
+          role: (defUser.role || 'TEACHER').toUpperCase(),
+          status: 'ACTIVE',
+          classId: null,
+          permissions: defUser.permissions || null,
+          createdAt: match?.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastLogin: null
+        };
+
+        // Write restored record to globalDb
+        await globalDb.put('users', restoredRecord);
+
+        // Delete local workspace database for this account so it has "no data"
+        await deleteWorkspaceDatabase(restoredRecord.id, cleanUsername);
+
+        // If online and account has a workspace in Drive (e.g., director1, teacher1, king), delete its Drive file
+        if (CloudSyncService.isOnline() && cleanUsername !== 'admin') {
+          try {
+            await CloudSyncService.deleteUserDriveFile(cleanUsername);
+            console.log(`[AdminDataService] Deleted Drive file for default user @${cleanUsername}`);
+          } catch (driveErr) {
+            console.log(`[AdminDataService] Drive file delete note for @${cleanUsername}:`, driveErr.message);
+          }
+        }
+      }
+
+      // 2. Clear caches
+      try {
+        await authService.clearAllCaches();
+      } catch (_) {}
+
+      // 3. Sync restored user records to SchoolSystem_AdminData in Google Sheets
+      if (CloudSyncService.isOnline()) {
+        try {
+          await this.saveToGoogleSheet({ silent: true });
+        } catch (syncErr) {
+          console.warn('[AdminDataService] Cloud sync after default reset warning:', syncErr);
+        }
+      }
+
+      // 4. Dispatch data refresh
+      window.dispatchEvent(new CustomEvent('app:refresh-data', {
+        detail: {
+          adminSync: true,
+          defaultAccountsReset: true,
+          timestamp: Date.now()
+        }
+      }));
+
+      if (!isSilent) {
+        toast.success(
+          isKm
+            ? `បានកំណត់គណនីលំនាំដើម (${DEFAULT_USERS.length} គណនី) ឡើងវិញដោយជោគជ័យ! ទិន្នន័យចាស់ត្រូវបានសម្អាត។`
+            : `Default accounts (${DEFAULT_USERS.length}) reset successfully with clean data!`,
+          isKm ? 'កំណត់គណនីលំនាំដើម' : 'Reset Default Accounts'
+        );
+      }
+
+      return { success: true, count: DEFAULT_USERS.length };
+    } catch (err) {
+      console.error('resetDefaultAccounts error:', err);
+      if (!isSilent) {
+        toast.error(err.message, isKm ? 'បរាជ័យ' : 'Reset Error');
+      }
+      throw err;
+    }
+  },
+
+  /**
+   * Reset App Full - Strict Factory Reset (Option 2):
+   * Very strict reset:
+   * - Deletes ALL SchoolWorkspace_* spreadsheets from Google Drive.
+   * - Drops ALL local workspace IndexedDB databases.
+   * - Erases ALL custom user accounts.
+   * - Keeps ONLY the default accounts set in code (admin, director1, teacher1, king) with clean data.
+   * - Resets SchoolSystem_AdminData in Google Drive to default seed state.
+   */
+  async resetFullApp(options = {}) {
+    const isSilent = options.silent === true;
+    const currentLocale = i18n.getLocale();
+    const isKm = currentLocale === 'km';
+
+    try {
+      console.log('[AdminDataService] Performing STRICT FULL APP RESET...');
+
+      // 1. Remote Google Drive Full Reset (if online)
+      let remoteResetResult = null;
+      if (CloudSyncService.isOnline()) {
+        const scriptUrl = getCloudSyncUrl();
+        if (scriptUrl) {
+          try {
+            remoteResetResult = await CloudSyncService.resetAppFull(60000);
+            console.log('[AdminDataService] Remote Drive reset succeeded:', remoteResetResult);
+          } catch (remoteErr) {
+            console.warn('[AdminDataService] Remote reset note:', remoteErr);
+          }
+        }
+      }
+
+      // 2. Local IndexedDB Wipe:
+      // 2a. Gather all existing user records to delete their isolated databases
+      let existingUsers = [];
+      try {
+        existingUsers = await globalDb.getAll('users');
+      } catch (_) {}
+
+      for (const u of existingUsers) {
+        try {
+          await deleteWorkspaceDatabase(u.id, u.username);
+        } catch (_) {}
+      }
+
+      // 2b. If browser supports indexedDB.databases(), drop any remaining SchoolWorkspace_* databases
+      if (typeof indexedDB !== 'undefined' && typeof indexedDB.databases === 'function') {
+        try {
+          const dbs = await indexedDB.databases();
+          for (const dbInfo of dbs) {
+            if (dbInfo.name && dbInfo.name.startsWith('SchoolWorkspace_')) {
+              try {
+                indexedDB.deleteDatabase(dbInfo.name);
+              } catch (_) {}
+            }
+          }
+        } catch (_) {}
+      }
+
+      // 2c. Clear global users store completely
+      try {
+        await globalDb.clear('users');
+      } catch (_) {}
+
+      // 2d. Seed ONLY the default predefined users
+      for (const defUser of DEFAULT_USERS) {
+        const cleanUsername = (defUser.username || '').trim().toLowerCase();
+        const passwordHash = await hashPassword(defUser.password);
+        const userRecord = {
+          id: defUser.id || ('usr_' + cleanUsername),
+          username: cleanUsername,
+          password: defUser.password,
+          passwordHash,
+          displayName: defUser.displayName || cleanUsername,
+          role: (defUser.role || 'TEACHER').toUpperCase(),
+          status: 'ACTIVE',
+          classId: null,
+          permissions: defUser.permissions || null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastLogin: null
+        };
+        await globalDb.put('users', userRecord);
+      }
+
+      // 2e. Clear all in-memory and browser caches
+      try {
+        await authService.clearAllCaches();
+      } catch (_) {}
+
+      // 2f. Reseed baseline configuration in active workspace
+      try {
+        await seedWorkspaceBaseline();
+      } catch (_) {}
+
+      // 3. Dispatch global refresh
+      window.dispatchEvent(new CustomEvent('app:refresh-data', {
+        detail: {
+          adminSync: true,
+          fullAppReset: true,
+          timestamp: Date.now()
+        }
+      }));
+
+      if (!isSilent) {
+        toast.success(
+          isKm
+            ? 'កម្មវិធីត្រូវបានកំណត់ឡើងវិញទាំងស្រុងដោយជោគជ័យ! រាល់គណនីបង្កើតដោយខ្លួនឯង និងឯកសារ Drive ត្រូវបានលុប។ នៅសល់តែគណនីលំនាំដើម។'
+            : 'App has been strictly reset! All custom accounts and Drive workspace files erased. Default accounts retained.',
+          isKm ? 'កំណត់កម្មវិធីឡើងវិញ' : 'Strict App Reset'
+        );
+      }
+
+      return {
+        success: true,
+        deletedDriveFiles: remoteResetResult?.deletedFilesCount ?? 0
+      };
+    } catch (err) {
+      console.error('resetFullApp error:', err);
+      if (!isSilent) {
+        toast.error(err.message, isKm ? 'បរាជ័យ' : 'Reset Error');
+      }
+      throw err;
     }
   }
 };

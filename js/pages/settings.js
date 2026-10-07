@@ -18,6 +18,7 @@ import { CloudSyncService } from '../services/cloudSyncService.js';
 import { AdminDataService } from '../services/adminDataService.js';
 import { db } from '../database/db.js';
 import { getCloudSyncUrl, setCloudSyncUrl, getWorkspaceSpreadsheetName, GOOGLE_APPS_SCRIPT_BACKEND_CODE, ADMIN_SPREADSHEET_NAME } from '../config/cloudSync.js';
+import { UsersPage } from './users.js';
 
 export const SettingsPage = {
   async render(container) {
@@ -637,9 +638,17 @@ export const SettingsPage = {
               <h4 class="text-xs font-bold text-destructive uppercase tracking-wider">${t('settings.dangerZone')}</h4>
               <p class="text-xs text-muted-foreground mt-0.5">${t('settings.dangerZoneDesc')}</p>
             </div>
-            <button id="btn-clear-db" class="px-3.5 py-2 rounded-lg bg-destructive text-destructive-foreground text-xs font-semibold shadow hover:bg-destructive/90 transition-colors self-start sm:self-auto">
-              ${t('settings.clearDbBtn')}
-            </button>
+            <div class="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+              ${authService.isAdmin() ? `
+                <button id="btn-settings-admin-reset" type="button" class="px-3.5 py-2 rounded-lg border border-destructive/40 bg-card hover:bg-destructive/10 text-destructive text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5">
+                  ${getIcon('rotateCcw', 'w-3.5 h-3.5 text-destructive')}
+                  <span>${currentLocale === 'km' ? 'កំណត់គណនី/កម្មវិធីឡើងវិញ' : 'Reset Accounts / App'}</span>
+                </button>
+              ` : ''}
+              <button id="btn-clear-db" class="px-3.5 py-2 rounded-lg bg-destructive text-destructive-foreground text-xs font-semibold shadow hover:bg-destructive/90 transition-colors">
+                ${t('settings.clearDbBtn')}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1111,6 +1120,11 @@ export const SettingsPage = {
     // Clear Database (Danger Zone)
     container.querySelector('#btn-clear-db')?.addEventListener('click', () => {
       this.openClearDbModal(container);
+    });
+
+    // Reset Accounts / App (Admin Danger Zone)
+    container.querySelector('#btn-settings-admin-reset')?.addEventListener('click', () => {
+      UsersPage.openAdminResetModal();
     });
   },
 

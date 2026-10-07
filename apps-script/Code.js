@@ -149,6 +149,8 @@ function doPost(e) {
       return handleDeleteUserDriveFile(fileName, username);
     } else if (action === 'LIST_ALL_WORKSPACE_FILES') {
       return handleListAllWorkspaceFiles();
+    } else if (action === 'RESET_APP_FULL') {
+      return handleResetAppFull();
     } else {
       return jsonResponse({ success: false, error: 'Unsupported action: ' + action });
     }
@@ -539,6 +541,110 @@ function handleDeleteUserDriveFile(fileName, username) {
     username: username,
     fileName: targetName,
     deletedCount: deletedCount
+  });
+}
+
+/**
+ * Strict Full App Factory Reset:
+ * 1. Searches and deletes/trashes ALL SchoolWorkspace_* spreadsheets from Google Drive.
+ * 2. Resets SchoolSystem_AdminData (users and permissions sheets) back to default seed records.
+ *    (Preserves scriptUrl and basic settings so the script connection remains intact).
+ */
+function handleResetAppFull() {
+  var deletedFilesCount = 0;
+  var errors = [];
+
+  // 1. Delete all SchoolWorkspace_* spreadsheet files from Drive
+  try {
+    var searchIterator = DriveApp.searchFiles("title contains 'SchoolWorkspace_' and mimeType = 'application/vnd.google-apps.spreadsheet' and trashed = false");
+    while (searchIterator.hasNext()) {
+      var file = searchIterator.next();
+      var fName = file.getName();
+      if (fName.indexOf('SchoolWorkspace_') === 0 || fName.toLowerCase().indexOf('schoolworkspace_') === 0) {
+        try {
+          if (typeof Drive !== 'undefined' && Drive.Files && Drive.Files.remove) {
+            Drive.Files.remove(file.getId());
+          } else {
+            file.setTrashed(true);
+          }
+          deletedFilesCount++;
+        } catch (delErr) {
+          try {
+            file.setTrashed(true);
+            deletedFilesCount++;
+          } catch (trashErr) {
+            errors.push('Error deleting ' + fName + ': ' + trashErr.toString());
+          }
+        }
+      }
+    }
+  } catch (driveSearchErr) {
+    errors.push('Search error: ' + driveSearchErr.toString());
+    Logger.log('handleResetAppFull drive search error: ' + driveSearchErr);
+  }
+
+  // 2. Reset SchoolSystem_AdminData users and permissions sheets to default seed values
+  var adminSpreadsheet = null;
+  try {
+    var adminFiles = DriveApp.getFilesByName(ADMIN_SPREADSHEET_NAME);
+    if (adminFiles.hasNext()) {
+      adminSpreadsheet = SpreadsheetApp.open(adminFiles.next());
+    }
+  } catch (findErr) {
+    Logger.log('Could not open admin spreadsheet for reset: ' + findErr);
+  }
+
+  if (adminSpreadsheet) {
+    try {
+      // 2a. Reset Users sheet
+      var usersSheet = adminSpreadsheet.getSheetByName('users');
+      if (!usersSheet) usersSheet = adminSpreadsheet.insertSheet('users');
+      usersSheet.clear();
+      var usersHeaders = ['id', 'username', 'password', 'passwordHash', 'displayName', 'role', 'status', 'classId', 'permissions', 'createdAt', 'updatedAt'];
+      var usersMatrix = [usersHeaders];
+      for (var u = 0; u < DEFAULT_SEED_USERS.length; u++) {
+        var usr = DEFAULT_SEED_USERS[u];
+        usersMatrix.push([
+          usr.id,
+          usr.username,
+          usr.password,
+          '',
+          usr.displayName,
+          usr.role,
+          usr.status,
+          usr.classId,
+          usr.permissions,
+          new Date().toISOString(),
+          new Date().toISOString()
+        ]);
+      }
+      usersSheet.getRange(1, 1, usersMatrix.length, usersHeaders.length).setValues(usersMatrix);
+      formatSheetHeader(usersSheet, usersHeaders.length);
+
+      // 2b. Reset Permissions sheet
+      var permSheet = adminSpreadsheet.getSheetByName('permissions');
+      if (!permSheet) permSheet = adminSpreadsheet.insertSheet('permissions');
+      permSheet.clear();
+      var permHeaders = ['role', 'permissionsJson', 'updatedAt'];
+      var permMatrix = [permHeaders];
+      for (var p = 0; p < DEFAULT_SEED_PERMISSIONS.length; p++) {
+        var pItem = DEFAULT_SEED_PERMISSIONS[p];
+        permMatrix.push([pItem.role, pItem.permissionsJson, new Date().toISOString()]);
+      }
+      permSheet.getRange(1, 1, permMatrix.length, permHeaders.length).setValues(permMatrix);
+      formatSheetHeader(permSheet, permHeaders.length);
+    } catch (sheetResetErr) {
+      errors.push('Admin sheet reset error: ' + sheetResetErr.toString());
+      Logger.log('handleResetAppFull admin sheet reset error: ' + sheetResetErr);
+    }
+  }
+
+  return jsonResponse({
+    success: true,
+    action: 'RESET_APP_FULL',
+    deletedFilesCount: deletedFilesCount,
+    errors: errors,
+    message: 'Strict factory reset complete. All custom accounts and Drive workspaces erased. Default accounts restored.'
   });
 }
 

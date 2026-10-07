@@ -90,6 +90,15 @@ export const UsersPage = {
               <span>${isKm ? 'ទាញពី Sheet' : 'Pull from Sheet'}</span>
             </button>
 
+            <!-- Reset Button (Admin Options) -->
+            <button id="btn-admin-reset" 
+                    type="button"
+                    title="${isKm ? 'កំណត់គណនី ឬកម្មវិធីឡើងវិញ' : 'Reset default accounts or reset full app'}"
+                    class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-destructive/40 bg-destructive/10 hover:bg-destructive/20 text-destructive font-semibold text-xs sm:text-sm shadow-2xs transition-all cursor-pointer">
+              ${getIcon('rotateCcw', 'w-4 h-4 text-destructive')}
+              <span>${isKm ? 'កំណត់ឡើងវិញ' : 'Reset'}</span>
+            </button>
+
             <!-- Add User Button -->
             <button id="btn-add-user" 
                     type="button"
@@ -606,6 +615,12 @@ export const UsersPage = {
       }
     });
 
+    // Admin Reset Button Click
+    const adminResetBtn = document.getElementById('btn-admin-reset');
+    adminResetBtn?.addEventListener('click', () => {
+      this.openAdminResetModal();
+    });
+
     // Save permissions button
     document.getElementById('btn-save-perms')?.addEventListener('click', async () => {
       const directorPerms = {};
@@ -1073,6 +1088,173 @@ export const UsersPage = {
     confirmBtn?.addEventListener('click', async () => {
       const deleteDrive = Boolean(driveCheckbox?.checked);
       await executeDeletion(deleteDrive, false);
+    });
+  },
+
+  /**
+   * Admin Reset Modal:
+   * Option 1: Reset Default Accounts (Restores predefined default accounts with clean empty workspaces; preserves custom accounts)
+   * Option 2: Strict Full App Reset (Erases all custom accounts, deletes all Drive workspace files, keeps only default accounts with empty data)
+   */
+  openAdminResetModal() {
+    const isKm = i18n.getLocale() === 'km';
+
+    const contentHtml = `
+      <div class="space-y-4 text-xs select-none">
+        <!-- Option 1: Reset Default Accounts -->
+        <div class="p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 space-y-3">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-2 font-bold text-amber-900 dark:text-amber-200 text-sm">
+              <span class="p-1.5 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                ${getIcon('rotateCcw', 'w-4 h-4')}
+              </span>
+              <span>${isKm ? 'ជម្រើសទី ១: កំណត់គណនីលំនាំដើមឡើងវិញ' : 'Option 1: Reset Default Accounts'}</span>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 whitespace-nowrap">
+              ${isKm ? 'រក្សាគណនីផ្សេងទៀត' : 'Safe / Keeps Custom Accs'}
+            </span>
+          </div>
+
+          <p class="text-muted-foreground leading-relaxed">
+            ${isKm 
+              ? 'ស្តារឡើងវិញនូវគណនីដែលបានកំណត់ក្នុងកូដ (<strong>admin</strong>, <strong>director1</strong>, <strong>teacher1</strong>, <strong>king</strong>) មកពាក្យសម្ងាត់ និងសិទ្ធិដើមវិញ។ ទិន្នន័យចាស់ទាំងអស់របស់គណនីទាំងនេះ (សិស្ស ថ្នាក់ ពិន្ទុ...) នឹងត្រូវសម្អាតឱ្យនៅទទេ (No Data)។'
+              : 'Restores predefined default accounts defined in code (<strong>admin</strong>, <strong>director1</strong>, <strong>teacher1</strong>, <strong>king</strong>) to default credentials. Clears their old data so they have fresh empty workspaces.'}
+          </p>
+
+          <div class="p-2.5 rounded-lg bg-background/80 border border-border text-[11px] text-muted-foreground flex items-center gap-2">
+            <span class="text-emerald-500 font-bold shrink-0">✓</span>
+            <span>${isKm ? 'រាល់គណនីផ្ទាល់ខ្លួនដែលបង្កើតដោយ Admin នឹងត្រូវរក្សាទុកជាធម្មតា (មិនបាត់បង់ទេ)។' : 'All custom accounts created by Admin will be safely preserved.'}</span>
+          </div>
+
+          <div class="flex justify-end pt-1">
+            <button id="btn-trigger-reset-defaults" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition-colors cursor-pointer shadow-xs">
+              ${getIcon('rotateCcw', 'w-3.5 h-3.5')}
+              <span>${isKm ? 'កំណត់គណនីលំនាំដើមឡើងវិញ' : 'Reset Default Accounts'}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Option 2: Strict Full App Reset -->
+        <div class="p-4 rounded-xl border border-destructive/30 bg-destructive/5 space-y-3">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-2 font-bold text-destructive text-sm">
+              <span class="p-1.5 rounded-lg bg-destructive/15 text-destructive">
+                ${getIcon('trash2', 'w-4 h-4')}
+              </span>
+              <span>${isKm ? 'ជម្រើសទី ២: កំណត់កម្មវិធីឡើងវិញទាំងស្រុង (Strict Reset)' : 'Option 2: Strict Full App Reset'}</span>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-destructive/15 text-destructive border border-destructive/30 whitespace-nowrap">
+              ${isKm ? 'សម្អាតទាំងអស់' : 'Factory Strict'}
+            </span>
+          </div>
+
+          <p class="text-muted-foreground leading-relaxed">
+            ${isKm
+              ? '⚠️ <strong>ការសម្អាតកម្រិតតឹងរ៉ឹង៖</strong> លុបចោលគណនីបង្កើតដោយខ្លួនឯងទាំងអស់ លុបឯកសារ Workspace ទាំងអស់ក្នុង Google Drive (<code>SchoolWorkspace_*</code>) និងលុបទិន្នន័យទាំងអស់ក្នុងម៉ាស៊ីន។ រក្សាទុកតែគណនីកំណត់ក្នុងកូដ (admin, director1, teacher1, king) ដែលគ្មានទិន្នន័យ។'
+              : '⚠️ <strong>Strict Factory Reset:</strong> Erases all custom user accounts, deletes all workspace files (<code>SchoolWorkspace_*</code>) from Google Drive, and wipes local database records. Retains ONLY default accounts set in code with empty data.'}
+          </p>
+          
+          <div class="space-y-2 pt-2 border-t border-destructive/20">
+            <label for="input-confirm-reset-app" class="block text-[11px] font-semibold text-foreground">
+              ${isKm ? 'ដើម្បីបញ្ជាក់ការ Reset ទាំងស្រុង សូមវាយពាក្យ' : 'To confirm strict reset, type'} <span class="font-mono text-destructive font-bold uppercase select-all">RESET</span> ${isKm ? 'ក្នុងប្រអប់ខាងក្រោម៖' : 'below:'}
+            </label>
+            <div class="flex gap-2">
+              <input 
+                id="input-confirm-reset-app" 
+                type="text" 
+                placeholder="RESET"
+                autocomplete="off"
+                class="flex-1 px-3 py-1.5 rounded-md border border-input bg-background text-foreground text-xs font-mono uppercase focus:outline-none focus:ring-1 focus:ring-destructive" 
+              />
+              <button 
+                id="btn-trigger-reset-app-full" 
+                type="button" 
+                disabled
+                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-destructive text-destructive-foreground font-semibold text-xs opacity-50 cursor-not-allowed transition-colors shadow-xs">
+                ${getIcon('trash2', 'w-3.5 h-3.5')}
+                <span>${isKm ? 'Reset កម្មវិធី' : 'Strict Reset App'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const modal = Modal.open({
+      title: isKm ? 'ជម្រើសកំណត់ឡើងវិញរបស់ Admin (System Reset)' : 'Admin System Reset Options',
+      content: contentHtml,
+      maxWidth: 'max-w-lg',
+      footer: `
+        <button id="btn-cancel-admin-reset" class="px-4 py-2 rounded-lg border border-border hover:bg-muted text-xs font-medium transition-colors cursor-pointer">
+          ${t('common.cancel')}
+        </button>
+      `
+    });
+
+    modal.element.querySelector('#btn-cancel-admin-reset')?.addEventListener('click', () => modal.close());
+
+    // Option 1 Handler: Reset Default Accounts
+    modal.element.querySelector('#btn-trigger-reset-defaults')?.addEventListener('click', () => {
+      Modal.confirm({
+        title: isKm ? 'បញ្ជាក់ការកំណត់គណនីលំនាំដើម' : 'Confirm Default Accounts Reset',
+        message: isKm 
+          ? 'តើអ្នកប្រាកដជាចង់កំណត់គណនី admin, director1, teacher1, king ឡើងវិញមែនទេ? ទិន្នន័យចាស់របស់គណនីទាំងនេះនឹងត្រូវសម្អាតឱ្យនៅទទេ ប៉ុន្តែគណនីផ្សេងទៀតដែលបង្កើតដោយ Admin នឹងមិនបាត់បង់ឡើយ។'
+          : 'Are you sure you want to restore default accounts (admin, director1, teacher1, king)? Their old workspace data will be cleared, while custom accounts will remain safe.',
+        destructive: false,
+        confirmText: isKm ? 'យល់ព្រម Reset' : 'Confirm Reset',
+        cancelText: isKm ? 'បោះបង់' : 'Cancel',
+        onConfirm: async () => {
+          modal.close();
+          const loadingToast = toast.info(
+            isKm ? 'កំពុងកំណត់គណនីលំនាំដើមឡើងវិញ...' : 'Resetting default accounts...',
+            isKm ? 'ដំណើរការ' : 'Processing',
+            0
+          );
+          try {
+            await AdminDataService.resetDefaultAccounts({ silent: false });
+            await this.reload();
+          } catch (err) {
+            toast.error(err.message);
+          } finally {
+            if (loadingToast && typeof loadingToast.close === 'function') {
+              loadingToast.close();
+            }
+          }
+        }
+      });
+    });
+
+    // Option 2 Handler: Strict Full App Reset
+    const inputConfirm = modal.element.querySelector('#input-confirm-reset-app');
+    const resetFullBtn = modal.element.querySelector('#btn-trigger-reset-app-full');
+
+    inputConfirm?.addEventListener('input', (e) => {
+      const isMatch = e.target.value.trim().toUpperCase() === 'RESET';
+      resetFullBtn.disabled = !isMatch;
+      if (isMatch) {
+        resetFullBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      } else {
+        resetFullBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      }
+    });
+
+    resetFullBtn?.addEventListener('click', async () => {
+      modal.close();
+      const loadingToast = toast.info(
+        isKm ? 'កំពុងដំណើរការ Strict Reset App ទាំងក្នុង Drive និងមូលដ្ឋានទិន្នន័យ...' : 'Executing Strict Factory Reset in Drive and local storage...',
+        isKm ? 'ដំណើរការ' : 'Processing',
+        0
+      );
+      try {
+        await AdminDataService.resetFullApp({ silent: false });
+        await this.reload();
+      } catch (err) {
+        toast.error(err.message);
+      } finally {
+        if (loadingToast && typeof loadingToast.close === 'function') {
+          loadingToast.close();
+        }
+      }
     });
   },
 
