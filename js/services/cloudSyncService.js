@@ -925,10 +925,89 @@ export const CloudSyncService = {
     }
 
     if (response.deletedCount === 0) {
-      throw new Error(`Google Drive reported 0 files deleted for "SchoolWorkspace_${cleanUsername}". Please verify that the file exists in Google Drive or that the Google Apps Script is updated to a New Version.`);
+      console.log(`[CloudSync] Note: Google Drive reported 0 files deleted for "SchoolWorkspace_${cleanUsername}" (already absent or removed).`);
     }
 
     return response;
+  },
+
+  /**
+   * Automatically creates a new user workspace spreadsheet in Google Drive: SchoolWorkspace_<username>
+   * with all structured sheets and headers.
+   *
+   * @param {string} username - Target username
+   * @param {number} [timeoutMs=45000]
+   * @returns {Promise<{success: boolean, created?: boolean, fileName?: string, spreadsheetUrl?: string, error?: string}>}
+   */
+  async createUserDriveFile(username, timeoutMs = 45000) {
+    if (!this.isOnline()) {
+      return { success: false, error: 'OFFLINE' };
+    }
+
+    const endpoint = getCloudSyncUrl();
+    if (!endpoint) {
+      return { success: false, error: 'NO_ENDPOINT' };
+    }
+
+    const cleanUsername = (username || '').trim();
+    if (!cleanUsername) {
+      throw new Error('Username is required to create Google Drive file.');
+    }
+
+    console.log('[CloudSync] Dispatching CREATE_USER_WORKSPACE for:', cleanUsername);
+
+    const payload = {
+      action: 'CREATE_USER_WORKSPACE',
+      username: cleanUsername,
+      fileName: `SchoolWorkspace_${cleanUsername}`
+    };
+
+    try {
+      let response = await this.dispatchGoogleScriptRequest(endpoint, payload, timeoutMs);
+
+      // Backward compatibility: If deployed Google Apps Script does not yet support CREATE_USER_WORKSPACE,
+      // fallback to PUSH_TO_APP which triggers getOrCreateUserSpreadsheet on all deployed versions.
+      if (!response || response.success === false || (response.error && response.error.includes('Unsupported action'))) {
+        console.log('[CloudSync] Fallback to PUSH_TO_APP to create sheet for:', cleanUsername);
+        const fallbackPayload = {
+          action: 'PUSH_TO_APP',
+          username: cleanUsername,
+          fileName: `SchoolWorkspace_${cleanUsername}`
+        };
+        response = await this.dispatchGoogleScriptRequest(endpoint, fallbackPayload, timeoutMs);
+      }
+
+      if (response && response.success) {
+        return {
+          success: true,
+          created: response.created ?? response.isNewlyCreated ?? true,
+          fileName: response.fileName || `SchoolWorkspace_${cleanUsername}`,
+          spreadsheetUrl: response.spreadsheetUrl || null
+        };
+      }
+      return response || { success: false, error: 'NO_RESPONSE' };
+    } catch (err) {
+      console.warn('[CloudSync] createUserDriveFile error, attempting PUSH_TO_APP fallback:', err);
+      try {
+        const fallbackPayload = {
+          action: 'PUSH_TO_APP',
+          username: cleanUsername,
+          fileName: `SchoolWorkspace_${cleanUsername}`
+        };
+        const fallbackRes = await this.dispatchGoogleScriptRequest(endpoint, fallbackPayload, timeoutMs);
+        if (fallbackRes && fallbackRes.success) {
+          return {
+            success: true,
+            created: fallbackRes.isNewlyCreated ?? true,
+            fileName: fallbackRes.fileName || `SchoolWorkspace_${cleanUsername}`,
+            spreadsheetUrl: fallbackRes.spreadsheetUrl || null
+          };
+        }
+        return fallbackRes || { success: false, error: err.message };
+      } catch (fallbackErr) {
+        throw fallbackErr;
+      }
+    }
   },
 
   /**

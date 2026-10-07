@@ -495,53 +495,29 @@ export const AdminDataService = {
     try {
       console.log('[AdminDataService] Resetting to 4 default predefined accounts...');
 
-      const defaultUsernames = new Set(DEFAULT_USERS.map(u => (u.username || '').trim().toLowerCase()));
-
-      // 1. Fetch all existing users from globalDb
+      // 1. Fetch all existing users from globalDb for workspace cleanup
       let allExistingUsers = [];
       try {
         allExistingUsers = await globalDb.getAll('users');
       } catch (_) {}
 
-      // 2. Identify and purge all extra/custom accounts (any account not in DEFAULT_USERS)
+      // Clean up isolated IndexedDB databases for all users
       for (const u of allExistingUsers) {
-        const cleanUname = (u.username || '').trim().toLowerCase();
-        if (!defaultUsernames.has(cleanUname)) {
-          console.log(`[AdminDataService] Removing extra custom account: @${u.username} (${u.id})`);
-          try {
-            await globalDb.delete('users', u.id);
-          } catch (_) {}
-          try {
-            await deleteWorkspaceDatabase(u.id, u.username);
-          } catch (_) {}
-          if (CloudSyncService.isOnline()) {
-            try {
-              await CloudSyncService.deleteUserDriveFile(u.username);
-              console.log(`[AdminDataService] Deleted Drive file for extra user @${u.username}`);
-            } catch (driveErr) {
-              console.warn(`[AdminDataService] Note deleting Drive file for extra user @${u.username}:`, driveErr.message);
-            }
-          }
-        }
+        try {
+          await deleteWorkspaceDatabase(u.id, u.username);
+        } catch (_) {}
       }
 
-      // 3. Re-seed and restore the 4 default predefined users (admin, director1, teacher1, king)
+      // 2. Clear global users store COMPLETELY to eliminate all custom/extra accounts (reaksmey, veasna, etc.)
+      try {
+        await globalDb.clear('users');
+      } catch (_) {}
+
+      // 3. Seed ONLY the 4 default predefined users with canonical IDs (admin, director1, teacher1, king)
       for (const defUser of DEFAULT_USERS) {
         const cleanUsername = (defUser.username || '').trim().toLowerCase();
         if (!cleanUsername) continue;
 
-        // Clean up any existing record with mismatched id to avoid duplicate rows
-        const match = allExistingUsers.find(u => (u.username || '').trim().toLowerCase() === cleanUsername);
-        if (match && match.id && match.id !== defUser.id) {
-          try {
-            await globalDb.delete('users', match.id);
-          } catch (_) {}
-          try {
-            await deleteWorkspaceDatabase(match.id, cleanUsername);
-          } catch (_) {}
-        }
-
-        // Hash default password
         const passwordHash = await hashPassword(defUser.password);
 
         const restoredRecord = {
@@ -561,19 +537,6 @@ export const AdminDataService = {
 
         // Write canonical record to globalDb
         await globalDb.put('users', restoredRecord);
-
-        // Delete local workspace database for this account so it starts fresh with "no data"
-        await deleteWorkspaceDatabase(restoredRecord.id, cleanUsername);
-
-        // If online and account has a workspace in Drive (director1, teacher1, king), delete its Drive file
-        if (CloudSyncService.isOnline() && cleanUsername !== 'admin') {
-          try {
-            await CloudSyncService.deleteUserDriveFile(cleanUsername);
-            console.log(`[AdminDataService] Deleted Drive file for default user @${cleanUsername}`);
-          } catch (driveErr) {
-            console.log(`[AdminDataService] Drive file delete note for @${cleanUsername}:`, driveErr.message);
-          }
-        }
       }
 
       // 4. Clear auth caches
@@ -589,6 +552,20 @@ export const AdminDataService = {
         } catch (syncErr) {
           console.warn('[AdminDataService] Cloud sync after default reset warning:', syncErr);
         }
+      }
+
+      // 6. Asynchronously clean up remote Drive workspace spreadsheets (non-blocking)
+      if (CloudSyncService.isOnline()) {
+        (async () => {
+          for (const u of allExistingUsers) {
+            const uName = (u.username || '').trim().toLowerCase();
+            if (uName && uName !== 'admin') {
+              try {
+                await CloudSyncService.deleteUserDriveFile(uName);
+              } catch (_) {}
+            }
+          }
+        })();
       }
 
       // 6. Clear active workspace settings caches and notify setup guard
