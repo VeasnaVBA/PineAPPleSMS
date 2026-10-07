@@ -442,25 +442,105 @@ export const ScoresPage = {
         }
       });
 
-      // Keyboard navigation (Enter / Arrow keys)
+      // Auto-select text on focus for fast typing
+      inp.addEventListener('focus', () => {
+        inp.select();
+      });
+
+      // Keyboard navigation (Tab moves down / Enter / Arrow keys)
       inp.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === 'ArrowDown') {
+        const subjectId = inp.getAttribute('data-subject');
+        const tr = inp.closest('tr');
+
+        if (e.key === 'Tab') {
           e.preventDefault();
-          const tr = inp.closest('tr');
+          if (e.shiftKey) {
+            // Shift + Tab: Move UP to the previous student for the same subject
+            const prevTr = tr?.previousElementSibling;
+            if (prevTr) {
+              const prevSubInp = prevTr.querySelector(`input[data-subject="${subjectId}"]`);
+              if (prevSubInp) {
+                prevSubInp.focus();
+                prevSubInp.select();
+                return;
+              }
+            } else {
+              // At top student: wrap to bottom student of previous subject
+              const subIdx = this.state.subjects.findIndex(s => s.id === subjectId);
+              if (subIdx > 0) {
+                const prevSub = this.state.subjects[subIdx - 1];
+                const allTrs = this.container.querySelectorAll('tbody tr[data-student-id]');
+                const lastTr = allTrs[allTrs.length - 1];
+                const wrapInp = lastTr?.querySelector(`input[data-subject="${prevSub.id}"]`);
+                if (wrapInp) {
+                  wrapInp.focus();
+                  wrapInp.select();
+                  return;
+                }
+              }
+            }
+          } else {
+            // Tab: Move DOWN to the next student for the same subject
+            const nextTr = tr?.nextElementSibling;
+            if (nextTr) {
+              const nextSubInp = nextTr.querySelector(`input[data-subject="${subjectId}"]`);
+              if (nextSubInp) {
+                nextSubInp.focus();
+                nextSubInp.select();
+                return;
+              }
+            } else {
+              // At bottom student: wrap to top student of next subject (column to the right)
+              const subIdx = this.state.subjects.findIndex(s => s.id === subjectId);
+              if (subIdx !== -1 && subIdx + 1 < this.state.subjects.length) {
+                const nextSub = this.state.subjects[subIdx + 1];
+                const firstTr = this.container.querySelector('tbody tr[data-student-id]');
+                const wrapInp = firstTr?.querySelector(`input[data-subject="${nextSub.id}"]`);
+                if (wrapInp) {
+                  wrapInp.focus();
+                  wrapInp.select();
+                  return;
+                }
+              }
+            }
+          }
+        } else if (e.key === 'Enter' || e.key === 'ArrowDown') {
+          e.preventDefault();
           const nextTr = tr?.nextElementSibling;
           if (nextTr) {
-            const sameSubInp = nextTr.querySelector(`input[data-subject="${inp.getAttribute('data-subject')}"]`);
+            const sameSubInp = nextTr.querySelector(`input[data-subject="${subjectId}"]`);
             sameSubInp?.focus();
             sameSubInp?.select();
           }
         } else if (e.key === 'ArrowUp') {
           e.preventDefault();
-          const tr = inp.closest('tr');
           const prevTr = tr?.previousElementSibling;
           if (prevTr) {
-            const sameSubInp = prevTr.querySelector(`input[data-subject="${inp.getAttribute('data-subject')}"]`);
+            const sameSubInp = prevTr.querySelector(`input[data-subject="${subjectId}"]`);
             sameSubInp?.focus();
             sameSubInp?.select();
+          }
+        } else if (e.key === 'ArrowRight') {
+          const subIdx = this.state.subjects.findIndex(s => s.id === subjectId);
+          if (subIdx !== -1 && subIdx + 1 < this.state.subjects.length) {
+            const nextSub = this.state.subjects[subIdx + 1];
+            const rightInp = tr?.querySelector(`input[data-subject="${nextSub.id}"]`);
+            if (rightInp) {
+              e.preventDefault();
+              rightInp.focus();
+              rightInp.select();
+            }
+          }
+        } else if (e.key === 'ArrowLeft') {
+          const subIdx = this.state.subjects.findIndex(s => s.id === subjectId);
+          if (subIdx > 0) {
+            const prevSub = this.state.subjects[subIdx - 1];
+            const leftInp = tr?.querySelector(`input[data-subject="${prevSub.id}"]`);
+            if (leftInp) {
+              e.preventDefault();
+              leftInp.focus();
+              leftInp.select();
+            }
           }
         }
       });
