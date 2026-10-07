@@ -666,11 +666,16 @@ export const StudentExcelService = {
       // Target classroom confirmation / teacher role enforcement
       if (effectiveClassId) {
         record.classId = effectiveClassId;
-      } else {
-        // If classroom does not exist in system, leave blank for unassigned resolution
-        if (!record.classId || !validClassIds.has(record.classId)) {
+      } else if (record.classId) {
+        const cleanName = String(record.classId).trim().toLowerCase();
+        const matchedClass = classes.find(c => c.id === record.classId || (c.name && String(c.name).trim().toLowerCase() === cleanName));
+        if (matchedClass) {
+          record.classId = matchedClass.id;
+        } else {
           record.classId = '';
         }
+      } else {
+        record.classId = '';
       }
 
       // Target study year confirmation

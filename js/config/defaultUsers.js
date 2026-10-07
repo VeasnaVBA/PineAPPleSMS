@@ -60,7 +60,7 @@ export const DEFAULT_USERS = [
     displayName: "Teacher Default",
     role: "TEACHER",
     status: "ACTIVE",
-    classId: "class_7a",
+    classId: null,
     permissions: {
       dashboard: true,
       schools: true,

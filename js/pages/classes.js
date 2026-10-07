@@ -202,7 +202,7 @@ export const ClassesPage = {
                           label: isKm ? 'លុប' : 'Delete',
                           icon: 'trash2',
                           destructive: true,
-                          show: !isTeacher,
+                          show: true,
                           onClick: () => {
                             Modal.confirm({
                               title: t('common.delete'),

@@ -45,7 +45,7 @@ var DEFAULT_SEED_USERS = [
     displayName: "Lead Teacher",
     role: "TEACHER",
     status: "ACTIVE",
-    classId: "class_7a",
+    classId: "",
     permissions: JSON.stringify({ dashboard: true, schools: true, students: true, classes: true, attendance: true, scores: true, reports: true })
   },
   {

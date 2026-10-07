@@ -194,13 +194,14 @@ export const ClassService = {
 
   async delete(id, user = authService.getCurrentUser()) {
     const currentUser = user || authService.getCurrentUser();
-    if (currentUser?.role === 'TEACHER') {
-      throw new Error('Access denied: Teachers cannot delete classrooms.');
-    }
-    if (!authService.can('classes.delete')) {
+    const isTeacher = currentUser?.role === 'TEACHER';
+    if (!isTeacher && !authService.can('classes.delete')) {
       throw new Error('Access denied: You do not have permission to delete classes.');
     }
     const res = await db.delete('classes', id);
+    if (isTeacher && authService.getAssignedClassId() === id) {
+      await authService.setAssignedClassId(null);
+    }
     syncStateManager.markDirty('classes.delete');
     WorkspaceSetupService.notifySetupChange();
     return res;
@@ -214,8 +215,15 @@ export const ClassService = {
    * Get students enrolled in a class
    */
   async getEnrolledStudents(classId) {
-    const students = await db.getAll('students');
-    return students.filter(s => s.classId === classId);
+    const [students, cls] = await Promise.all([
+      db.getAll('students'),
+      db.get('classes', classId)
+    ]);
+    const className = cls?.name ? String(cls.name).trim().toLowerCase() : '';
+    return students.filter(s => 
+      s.classId === classId || 
+      (className && s.classId && String(s.classId).trim().toLowerCase() === className)
+    );
   },
 
   /**
@@ -244,7 +252,11 @@ export const ClassService = {
     return classes.map(cls => {
       const teacher = teacherMap.get(cls.teacherId) || 
         teachers.find(t => t.teacherId === cls.teacherId || t.id === cls.teacherId || t.userId === cls.teacherId || t.accountId === cls.teacherId);
-      const enrolled = students.filter(s => s.classId === cls.id);
+      const className = cls.name ? String(cls.name).trim().toLowerCase() : '';
+      const enrolled = students.filter(s => 
+        s.classId === cls.id || 
+        (className && s.classId && String(s.classId).trim().toLowerCase() === className)
+      );
       return {
         ...cls,
         teacherNameKhmer: teacher?.khmerName || '',
