@@ -331,8 +331,10 @@ export const CloudSyncService = {
   /**
    * Populate incoming sheets into active user's IndexedDB without full page reload
    */
-  async applyRestoredData(data, currentUser) {
+  async applyRestoredData(data, currentUser, options = {}) {
+    const isSilent = options?.silent === true;
     try {
+      if (!data || typeof data !== 'object') return;
       // 1. Ensure active workspace DB is opened (zero contamination of other accounts)
       await db.open();
 
@@ -526,7 +528,17 @@ export const CloudSyncService = {
         }
       }
 
-      // 2. Clear all in-memory service caches, CacheStorage, and student page cache
+      // 2. Auto-assign classroom for teacher if available
+      if (currentUser && (currentUser.role || '').toUpperCase() === 'TEACHER' && Array.isArray(data.classes) && data.classes.length > 0) {
+        if (!authService.getAssignedClassId()) {
+          const firstClass = data.classes[0];
+          if (firstClass && firstClass.id) {
+            await authService.setAssignedClassId(firstClass.id);
+          }
+        }
+      }
+
+      // 3. Clear all in-memory service caches, CacheStorage, and student page cache
       try {
         await authService.clearAllCaches();
       } catch (_) {}
@@ -534,7 +546,7 @@ export const CloudSyncService = {
         StudentsPage.cachedStudents = null;
       }
 
-      // 3. Dispatch data refresh event across the window
+      // 4. Dispatch data refresh event across the window
       window.dispatchEvent(new CustomEvent('app:refresh-data', {
         detail: {
           timestamp: Date.now(),
@@ -558,22 +570,97 @@ export const CloudSyncService = {
       // Mark sync state clean
       syncStateManager.markClean();
 
-      // 4. Trigger active view refresh immediately without full page reload
+      // 5. Trigger active view refresh immediately without full page reload
       if (window.router?.handleRoute) {
         await window.router.handleRoute();
       } else if (typeof window !== 'undefined' && window.location) {
         window.dispatchEvent(new HashChangeEvent('hashchange'));
       }
 
-      // 5. Success notification
-      toast.success(
-        `${t('cloudSync.successRestore')} (${studentCount} students, ${schoolCount} schools, ${classCount} classes, ${scoreCount} scores)`,
-        t('cloudSync.restoreFromDrive')
-      );
+      // 6. Success notification
+      if (!isSilent && (studentCount > 0 || schoolCount > 0 || classCount > 0 || scoreCount > 0)) {
+        toast.success(
+          `${t('cloudSync.successRestore')} (${studentCount} students, ${schoolCount} schools, ${classCount} classes, ${scoreCount} scores)`,
+          t('cloudSync.restoreFromDrive')
+        );
+      }
     } catch (err) {
       console.error('applyRestoredData error:', err);
-      toast.error('Failed to write data into local database: ' + err.message, t('cloudSync.errorTitle'));
+      if (!isSilent) {
+        toast.error('Failed to write data into local database: ' + err.message, t('cloudSync.errorTitle'));
+      }
     }
+  },
+
+  /**
+   * Auto-pull and restore user workspace data from Google Drive when logging in
+   * Ensures mobile phones or fresh browsers get all data saved from PC automatically.
+   * @param {Object} currentUser - Logged in user session data
+   * @param {Object} [options={}] - Options (e.g. { silent: false })
+   */
+  async restoreOnLogin(currentUser, options = {}) {
+    if (!this.isOnline()) return false;
+    const cleanUsername = currentUser?.username;
+    if (!cleanUsername) return false;
+
+    const endpoint = getCloudSyncUrl();
+    if (!endpoint) return false;
+
+    try {
+      const payload = {
+        action: 'PUSH_TO_APP',
+        username: cleanUsername
+      };
+
+      const result = await this.dispatchGoogleScriptRequest(endpoint, payload, 35000);
+      if (result && result.success && result.found && result.data) {
+        await this.applyRestoredData(result.data, currentUser, { silent: options?.silent ?? false });
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.warn('[CloudSync] restoreOnLogin error:', err);
+      return false;
+    }
+  },
+
+  /**
+   * Auto-sync check on app startup for active session
+   * If local database is empty or device has 0 students, automatically pulls latest data from Google Drive.
+   */
+  async checkAndSyncOnStartup(user = authService.getCurrentUser()) {
+    if (!this.isOnline()) return false;
+    const currentUser = user || authService.getCurrentUser();
+    if (!currentUser || !currentUser.username) return false;
+
+    const endpoint = getCloudSyncUrl();
+    if (!endpoint) return false;
+
+    try {
+      await db.open();
+      const localStudentsCount = await db.count('students');
+      const isLocalEmpty = localStudentsCount === 0;
+
+      const payload = {
+        action: 'PUSH_TO_APP',
+        username: currentUser.username
+      };
+
+      const result = await this.dispatchGoogleScriptRequest(endpoint, payload, 30000);
+      if (result && result.success && result.found && result.data) {
+        const driveStudentsCount = Array.isArray(result.data.students) ? result.data.students.length : 0;
+        if (isLocalEmpty && driveStudentsCount > 0) {
+          await this.applyRestoredData(result.data, currentUser, { silent: false });
+          return true;
+        } else if (!isLocalEmpty && driveStudentsCount > 0) {
+          await this.applyRestoredData(result.data, currentUser, { silent: true });
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn('[CloudSync] checkAndSyncOnStartup error:', err);
+    }
+    return false;
   },
 
   /**

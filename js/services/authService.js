@@ -231,7 +231,17 @@ class AuthService {
 
     localStorage.setItem(this.sessionKey, JSON.stringify(sessionData));
 
-    // 7. Ensure URL hash is valid for the logging in role before notifying UI
+    // 7. Cloud-First Workspace Restore: Pull latest workspace data from Google Drive for this account
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
+      try {
+        const { CloudSyncService } = await import('./cloudSyncService.js');
+        await CloudSyncService.restoreOnLogin(sessionData, { silent: false });
+      } catch (cloudErr) {
+        console.warn('[Auth] Auto-restore workspace on login notice:', cloudErr);
+      }
+    }
+
+    // 8. Ensure URL hash is valid for the logging in role before notifying UI
     const currentHash = (typeof window !== 'undefined' && window.location.hash) ? window.location.hash.replace('#', '').trim() : '';
     if (sessionData.role === 'ADMIN') {
       if (currentHash !== 'users' && currentHash !== 'settings' && currentHash !== 'download-data') {

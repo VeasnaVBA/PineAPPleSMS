@@ -65,6 +65,18 @@ class SchoolApp {
     // 4. Check session
     if (authService.isAuthenticated()) {
       this.showAppShell();
+
+      // Background auto-sync latest data from Google Drive for active session if online
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        import('./services/cloudSyncService.js').then(({ CloudSyncService }) => {
+          const user = authService.getCurrentUser();
+          if (user && user.role !== 'ADMIN') {
+            CloudSyncService.checkAndSyncOnStartup(user).catch(e => {
+              console.warn('Workspace startup sync notice:', e);
+            });
+          }
+        }).catch(() => {});
+      }
     } else {
       this.showLogin();
     }
