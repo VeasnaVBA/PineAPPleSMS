@@ -59,8 +59,9 @@ export const UserService = {
 
   /**
    * Create a new user account in SchoolSystem_Global
+   * and automatically initialize the user's workspace spreadsheet in Google Drive (SchoolWorkspace_<username>)
    */
-  async create({ displayName, username, password, role, classId = null }) {
+  async create({ displayName, username, password, role, classId = null }, options = {}) {
     const cleanUsername = (username || '').trim().toLowerCase();
     if (!cleanUsername) throw new Error('Username is required.');
     if (!password || password.length < 4) throw new Error('Password must be at least 4 characters long.');
@@ -92,11 +93,38 @@ export const UserService = {
 
     await globalDb.put('users', newUser);
 
-    // Auto-sync admin database changes to Google Drive
-    AdminDataService.queueAutoSync();
+    // 1. Automatically create workspace spreadsheet in Google Drive: SchoolWorkspace_<username>
+    let driveResult = null;
+    if (CloudSyncService.isOnline()) {
+      try {
+        if (typeof options.onProgress === 'function') {
+          options.onProgress('creatingDrive');
+        }
+        driveResult = await CloudSyncService.createUserDriveFile(cleanUsername);
+        console.log(`[UserService] Created Google Drive workspace sheet for @${cleanUsername}:`, driveResult);
+      } catch (driveErr) {
+        console.warn(`[UserService] Drive sheet auto-creation note for @${cleanUsername}:`, driveErr);
+        driveResult = { success: false, error: driveErr.message };
+      }
+
+      // 2. Immediately sync new user account to SchoolSystem_AdminData in Google Sheets
+      try {
+        await AdminDataService.saveToGoogleSheet({ silent: true });
+        console.log(`[UserService] Synced new account @${cleanUsername} to SchoolSystem_AdminData on Google Drive.`);
+      } catch (adminSyncErr) {
+        console.warn('[UserService] Admin sheet sync warning:', adminSyncErr);
+      }
+    } else {
+      AdminDataService.queueAutoSync();
+    }
 
     const { passwordHash: _, ...safeUser } = newUser;
-    return safeUser;
+    return {
+      ...safeUser,
+      driveFileCreated: Boolean(driveResult?.success),
+      driveFileUrl: driveResult?.spreadsheetUrl || null,
+      driveFileName: driveResult?.fileName || `SchoolWorkspace_${cleanUsername}`
+    };
   },
 
   /**

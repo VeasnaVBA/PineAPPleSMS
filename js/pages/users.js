@@ -922,12 +922,29 @@ export const UsersPage = {
           });
 
           if (createdUser.driveFileCreated) {
-            toast.success(
-              isKm 
-                ? `បានបង្កើតគណនី @${username} និងឯកសារ ${createdUser.driveFileName} ក្នុង Google Drive ដោយជោគជ័យ!`
-                : `Account @${username} and spreadsheet ${createdUser.driveFileName} created in Google Drive!`,
-              isKm ? 'ជោគជ័យ' : 'Account & Drive Sheet Created'
-            );
+            const msg = isKm 
+              ? `បានបង្កើតគណនី @${username} និងឯកសារ ${createdUser.driveFileName} ក្នុង Google Drive ដោយជោគជ័យ!`
+              : `Account @${username} and spreadsheet ${createdUser.driveFileName} created in Google Drive!`;
+            if (createdUser.driveFileUrl) {
+              toast.show({
+                title: isKm ? 'បង្កើតគណនី & Drive Sheet' : 'Account & Drive Sheet Created',
+                message: msg,
+                type: 'success',
+                duration: 9000,
+                action: {
+                  label: isKm ? 'បើកឯកសារ Drive' : 'Open in Drive',
+                  onClick: () => {
+                    if (window.electronAPI?.openExternal) {
+                      window.electronAPI.openExternal(createdUser.driveFileUrl);
+                    } else {
+                      window.open(createdUser.driveFileUrl, '_blank', 'noopener,noreferrer');
+                    }
+                  }
+                }
+              });
+            } else {
+              toast.success(msg, isKm ? 'ជោគជ័យ' : 'Success');
+            }
           } else {
             toast.success(
               isKm ? 'បានបង្កើតគណនីថ្មីដោយជោគជ័យ' : 'Account created successfully.'
