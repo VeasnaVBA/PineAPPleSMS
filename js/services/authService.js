@@ -259,17 +259,18 @@ class AuthService {
       }
     }
 
-    // Instantly transition to App Shell (< 50ms)
-    this.notify(sessionData);
-
-    // 7. Non-blocking Background Sync: Automatically restore workspace from Google Drive in background
-    if (typeof navigator !== 'undefined' && navigator.onLine) {
-      import('./cloudSyncService.js').then(({ CloudSyncService }) => {
-        CloudSyncService.restoreOnLogin(sessionData, { silent: false }).catch(cloudErr => {
-          console.warn('[Auth] Background workspace restore notice:', cloudErr);
-        });
-      }).catch(err => console.warn('[Auth] CloudSync import notice:', err));
+    // 7. Whenever logging into an account, ALWAYS load and give values from Drive sheet file to app
+    if (typeof navigator !== 'undefined' && navigator.onLine && sessionData.role !== 'ADMIN') {
+      try {
+        const { CloudSyncService } = await import('./cloudSyncService.js');
+        await CloudSyncService.restoreOnLogin(sessionData, { silent: false });
+      } catch (cloudErr) {
+        console.warn('[Auth] Workspace restore on login notice:', cloudErr);
+      }
     }
+
+    // Transition to App Shell with updated data
+    this.notify(sessionData);
 
     // If Admin logs in, auto verify and sync SchoolSystem_AdminData in Google Drive in background
     if (sessionData.role === 'ADMIN') {

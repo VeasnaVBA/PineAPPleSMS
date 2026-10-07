@@ -613,9 +613,24 @@ export const CloudSyncService = {
       };
 
       const result = await this.dispatchGoogleScriptRequest(endpoint, payload, 35000);
-      if (result && result.success && result.found && result.data) {
-        await this.applyRestoredData(result.data, currentUser, { silent: options?.silent ?? false });
-        return true;
+      if (result && result.success && result.found) {
+        if (result.isNewlyCreated) {
+          try {
+            await this.syncToGoogleDrive({ silent: true });
+          } catch (_) {}
+          if (!options?.silent) {
+            toast.info(
+              `Created new Google Drive sheet: SchoolWorkspace_${cleanUsername}`,
+              t('cloudSync.driveSync') || 'Google Drive'
+            );
+          }
+          return true;
+        }
+
+        if (result.data) {
+          await this.applyRestoredData(result.data, currentUser, { silent: options?.silent ?? false });
+          return true;
+        }
       }
       return false;
     } catch (err) {
@@ -647,13 +662,16 @@ export const CloudSyncService = {
       };
 
       const result = await this.dispatchGoogleScriptRequest(endpoint, payload, 30000);
-      if (result && result.success && result.found && result.data) {
-        const driveStudentsCount = Array.isArray(result.data.students) ? result.data.students.length : 0;
-        if (isLocalEmpty && driveStudentsCount > 0) {
-          await this.applyRestoredData(result.data, currentUser, { silent: false });
+      if (result && result.success && result.found) {
+        if (result.isNewlyCreated) {
+          try {
+            await this.syncToGoogleDrive({ silent: true });
+          } catch (_) {}
           return true;
-        } else if (!isLocalEmpty && driveStudentsCount > 0) {
-          await this.applyRestoredData(result.data, currentUser, { silent: true });
+        }
+
+        if (result.data) {
+          await this.applyRestoredData(result.data, currentUser, { silent: !isLocalEmpty });
           return true;
         }
       }

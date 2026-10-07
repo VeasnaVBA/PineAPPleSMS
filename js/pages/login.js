@@ -296,7 +296,7 @@ export class LoginPage {
         submitBtn.setAttribute('disabled', 'true');
         submitBtn.innerHTML = `
           <div class="w-4 h-4 rounded-full border-2 ${btnSpinnerBorder} border-t-transparent animate-spin"></div>
-          <span>${isKm ? 'កំពុងផ្ទៀងផ្ទាត់...' : 'Logging in...'}</span>
+          <span>${isKm ? 'កំពុងផ្ទៀងផ្ទាត់ និងទាញទិន្នន័យ...' : 'Logging in & syncing Drive...'}</span>
         `;
       }
 

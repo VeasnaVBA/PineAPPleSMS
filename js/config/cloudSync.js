@@ -766,22 +766,116 @@ function handleDeleteUserDriveFile(fileName, username) {
   });
 }
 
-function handlePullToDrive(fileName, username, data) {
-  var files = DriveApp.getFilesByName(fileName);
-  var spreadsheet;
+/**
+ * Find existing user workspace spreadsheet in Drive (handling exact name and case variations),
+ * or automatically create and format a new one if not found.
+ */
+function getOrCreateUserSpreadsheet(fileName, username) {
+  var cleanUser = (username || '').trim();
+  var targetName = (fileName || ('SchoolWorkspace_' + cleanUser)).trim();
   
-  if (files.hasNext()) {
-    spreadsheet = SpreadsheetApp.open(files.next());
-  } else {
-    spreadsheet = SpreadsheetApp.create(fileName);
+  // 1. Exact match lookup
+  try {
+    var files = DriveApp.getFilesByName(targetName);
+    while (files.hasNext()) {
+      var file = files.next();
+      if (!file.isTrashed()) {
+        return {
+          spreadsheet: SpreadsheetApp.open(file),
+          isNew: false
+        };
+      }
+    }
+  } catch (e1) {
+    Logger.log('Exact lookup error: ' + e1);
   }
+  
+  // 2. Fallback search (case-insensitive & whitespace tolerant)
+  try {
+    var lowerTarget = targetName.toLowerCase();
+    var lowerUser = cleanUser.toLowerCase();
+    var searchIterator = DriveApp.searchFiles("title contains 'SchoolWorkspace_' and mimeType = 'application/vnd.google-apps.spreadsheet' and trashed = false");
+    while (searchIterator.hasNext()) {
+      var f = searchIterator.next();
+      var fname = f.getName().trim();
+      var fnameLower = fname.toLowerCase();
+      var userPart = fname.replace(/^SchoolWorkspace_/i, '').trim().toLowerCase();
+      if (fnameLower === lowerTarget || (lowerUser && userPart === lowerUser)) {
+        return {
+          spreadsheet: SpreadsheetApp.open(f),
+          isNew: false
+        };
+      }
+    }
+  } catch (e2) {
+    Logger.log('Fallback search error: ' + e2);
+  }
+  
+  // 3. Not found in Google Drive -> "just create one"
+  var spreadsheet = SpreadsheetApp.create(targetName);
+  
+  var sheetNames = [
+    'students', 
+    'schools', 
+    'classes', 
+    'teachers', 
+    'attendance', 
+    'scores',
+    'academicYears',
+    'subjects',
+    'groups',
+    'report_settings',
+    'registration_queue',
+    'settings'
+  ];
+  
+  var defaultHeaders = {
+    students: ['id', 'studentId', 'name', 'latinName', 'gender', 'dateOfBirth', 'classId', 'grade', 'academicYear', 'photo', 'parentPhone', 'phone', 'address', 'status', 'createdAt', 'updatedAt'],
+    schools: ['id', 'code', 'name', 'nameEn', 'address', 'director', 'phone', 'notes', 'updatedAt'],
+    classes: ['id', 'name', 'grade', 'academicYear', 'room', 'teacherId', 'capacity', 'shift', 'status', 'createdAt', 'updatedAt'],
+    teachers: ['id', 'teacherId', 'name', 'gender', 'phone', 'email', 'subject', 'role', 'status', 'createdAt', 'updatedAt'],
+    attendance: ['id', 'studentId', 'classId', 'date', 'status', 'reason', 'session', 'academicYear', 'createdAt', 'updatedAt'],
+    scores: ['id', 'studentId', 'classId', 'subjectId', 'examType', 'semester', 'academicYear', 'score', 'maxScore', 'grade', 'evaluation', 'date', 'createdAt', 'updatedAt'],
+    academicYears: ['id', 'name', 'startDate', 'endDate', 'isActive', 'status', 'createdAt', 'updatedAt'],
+    subjects: ['id', 'code', 'name', 'nameEn', 'coefficient', 'passingScore', 'type', 'status', 'createdAt', 'updatedAt'],
+    groups: ['id', 'name', 'classId', 'academicYear', 'leaderStudentId', 'members', 'description', 'status', 'createdAt', 'updatedAt'],
+    report_settings: ['id', 'key', 'value', 'type', 'description', 'updatedAt'],
+    registration_queue: ['id', 'studentId', 'name', 'gender', 'dateOfBirth', 'grade', 'appliedDate', 'status', 'notes', 'createdAt', 'updatedAt'],
+    settings: ['id', 'key', 'value', 'category', 'updatedAt']
+  };
+
+  for (var i = 0; i < sheetNames.length; i++) {
+    var sName = sheetNames[i];
+    var sheet = spreadsheet.getSheetByName(sName);
+    if (!sheet) {
+      sheet = spreadsheet.insertSheet(sName);
+    }
+    var headers = defaultHeaders[sName] || ['id', 'createdAt', 'updatedAt'];
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    formatSheetHeader(sheet, headers.length);
+  }
+
+  // Remove default 'Sheet1' if other sheets exist
+  var defaultSheet = spreadsheet.getSheetByName('Sheet1');
+  if (defaultSheet && spreadsheet.getSheets().length > 1) {
+    try { spreadsheet.deleteSheet(defaultSheet); } catch (_) {}
+  }
+
+  return {
+    spreadsheet: spreadsheet,
+    isNew: true
+  };
+}
+
+function handlePullToDrive(fileName, username, data) {
+  var fileInfo = getOrCreateUserSpreadsheet(fileName, username);
+  var spreadsheet = fileInfo.spreadsheet;
   
   var sheetsDef = [
     { name: 'students', data: data.students || [] },
     { name: 'schools', data: data.schools || [] },
     { name: 'classes', data: data.classes || [] },
     { name: 'teachers', data: data.teachers || [] },
-    { name: 'courses', data: data.courses || [] },
     { name: 'attendance', data: data.attendance || [] },
     { name: 'scores', data: data.scores || [] },
     { name: 'academicYears', data: data.academicYears || [] },
@@ -826,6 +920,7 @@ function handlePullToDrive(fileName, username, data) {
     }
   }
   
+  // Remove initial default "Sheet1" if other sheets exist
   var defaultSheet = spreadsheet.getSheetByName('Sheet1');
   if (defaultSheet && spreadsheet.getSheets().length > 1) {
     try { spreadsheet.deleteSheet(defaultSheet); } catch (_) {}
@@ -836,30 +931,22 @@ function handlePullToDrive(fileName, username, data) {
     found: true,
     action: 'PULL_TO_DRIVE',
     username: username,
-    fileName: fileName,
+    fileName: spreadsheet.getName(),
     spreadsheetUrl: spreadsheet.getUrl(),
     counts: counts
   });
 }
 
 function handlePushToApp(fileName, username) {
-  var files = DriveApp.getFilesByName(fileName);
-  if (!files.hasNext()) {
-    return jsonResponse({
-      success: true,
-      found: false,
-      username: username,
-      fileName: fileName
-    });
-  }
+  var fileInfo = getOrCreateUserSpreadsheet(fileName, username);
+  var spreadsheet = fileInfo.spreadsheet;
+  var isNew = fileInfo.isNew;
   
-  var spreadsheet = SpreadsheetApp.open(files.next());
   var sheetNames = [
     'students', 
     'schools', 
     'classes', 
     'teachers', 
-    'courses',
     'attendance', 
     'scores',
     'academicYears',
@@ -893,6 +980,7 @@ function handlePushToApp(fileName, username) {
       var hasValue = false;
       for (var c = 0; c < headers.length; c++) {
         var colKey = headers[c];
+        if (!colKey) continue;
         var val = row[c];
         if (val !== '' && val !== null && val !== undefined) {
           hasValue = true;
@@ -902,7 +990,7 @@ function handlePushToApp(fileName, username) {
         }
         item[colKey] = val;
       }
-      if (hasValue && (item.id || item.studentId || item.code || item.name || item.courseId || item.key || item.tempStudentId || item.date || item.classId || item.subjectId || item.teacherId)) {
+      if (hasValue && (item.id || item.studentId || item.code || item.name || item.key || item.tempStudentId || item.date || item.classId || item.subjectId || item.teacherId)) {
         items.push(item);
       }
     }
@@ -912,9 +1000,10 @@ function handlePushToApp(fileName, username) {
   return jsonResponse({
     success: true,
     found: true,
+    isNewlyCreated: isNew,
     action: 'PUSH_TO_APP',
     username: username,
-    fileName: fileName,
+    fileName: spreadsheet.getName(),
     spreadsheetUrl: spreadsheet.getUrl(),
     data: resultData
   });
