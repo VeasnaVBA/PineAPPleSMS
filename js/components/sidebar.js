@@ -3,6 +3,7 @@ import { authService } from '../services/authService.js';
 import { fontService } from '../services/fontService.js';
 import { WorkspaceSetupService } from '../services/workspaceSetupService.js';
 import { toast } from './toast.js';
+import { Modal } from './modal.js';
 import { getIcon } from './icons.js';
 import { APP_LOGO_BASE64 } from '../config/appLogo.js';
 
@@ -205,15 +206,103 @@ export class Sidebar {
 
     // Intercept click on locked links
     this.container.querySelectorAll('.nav-link[data-locked="true"]').forEach(el => {
-      el.addEventListener('click', (e) => {
+      el.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
+
+        const currentSetup = await WorkspaceSetupService.getSetupStatus();
+        const nextRoute = currentSetup.firstIncompleteRoute || 'schools';
+        let nextRouteName = isKm ? 'សាលារៀន' : 'School Info';
+        if (nextRoute === 'teachers') nextRouteName = isKm ? 'គ្រូបង្រៀន' : 'Teacher Info';
+        else if (nextRoute === 'classes') nextRouteName = isKm ? 'ថ្នាក់រៀន' : 'Classroom Info';
+
+        // 1. Toast warning (now supported with icon and amber styling)
         toast.warning(
           isKm 
             ? 'សូមបំពេញព័ត៌មានចាំបាច់ទាំង ៣ ជាមុនសិន៖\n១. ព័ត៌មានសាលារៀន\n២. ព័ត៌មានគ្រូបង្រៀន\n៣. បញ្ជីថ្នាក់រៀន' 
             : 'Please complete the 3 required steps first:\n1. School Info\n2. Teacher Info\n3. Classroom Info',
           isKm ? 'ម៉ឺនុយត្រូវបានចាក់សោ' : 'Menu Locked'
         );
+
+        // 2. Open informative Setup Notice Modal with direct jump button
+        const contentHtml = `
+          <div class="space-y-4 text-xs select-none">
+            <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 flex items-start gap-3">
+              <span class="p-2 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
+                ${getIcon('lock', 'w-5 h-5')}
+              </span>
+              <div class="space-y-1">
+                <p class="font-bold text-sm">
+                  ${isKm ? 'ម៉ឺនុយនេះត្រូវបានចាក់សោបណ្តោះអាសន្ន' : 'This menu is temporarily locked'}
+                </p>
+                <p class="text-xs leading-relaxed text-muted-foreground">
+                  ${isKm 
+                    ? 'ដើម្បីដំណើរការម៉ឺនុយនេះ សូមបំពេញព័ត៌មានចាំបាច់ទាំង ៣ ជំហានខាងក្រោមជាមុនសិន៖' 
+                    : 'To access this menu, please complete the 3 required setup steps below first:'}
+                </p>
+              </div>
+            </div>
+
+            <!-- Steps checklist -->
+            <div class="space-y-2 p-3 rounded-xl border border-border bg-card">
+              <!-- Step 1: School -->
+              <div class="flex items-center justify-between p-2.5 rounded-lg ${currentSetup.hasSchool ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'bg-muted/60 text-foreground'}">
+                <div class="flex items-center gap-2.5 font-medium">
+                  <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${currentSetup.hasSchool ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'}">
+                    ${currentSetup.hasSchool ? '✓' : '១'}
+                  </span>
+                  <span>${isKm ? 'ជំហាន ១: បញ្ចូលព័ត៌មានសាលារៀន (School)' : 'Step 1: School Information'}</span>
+                </div>
+                <span class="text-[11px] font-semibold">${currentSetup.hasSchool ? (isKm ? 'រួចរាល់' : 'Completed') : (isKm ? 'មិនទាន់បំពេញ' : 'Missing')}</span>
+              </div>
+
+              <!-- Step 2: Teacher -->
+              <div class="flex items-center justify-between p-2.5 rounded-lg ${currentSetup.hasTeacher ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'bg-muted/60 text-foreground'}">
+                <div class="flex items-center gap-2.5 font-medium">
+                  <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${currentSetup.hasTeacher ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'}">
+                    ${currentSetup.hasTeacher ? '✓' : '២'}
+                  </span>
+                  <span>${isKm ? 'ជំហាន ២: បញ្ចូលព័ត៌មានគ្រូបង្រៀន (Teacher)' : 'Step 2: Teacher Information'}</span>
+                </div>
+                <span class="text-[11px] font-semibold">${currentSetup.hasTeacher ? (isKm ? 'រួចរាល់' : 'Completed') : (isKm ? 'មិនទាន់បំពេញ' : 'Missing')}</span>
+              </div>
+
+              <!-- Step 3: Class -->
+              <div class="flex items-center justify-between p-2.5 rounded-lg ${currentSetup.hasClass ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'bg-muted/60 text-foreground'}">
+                <div class="flex items-center gap-2.5 font-medium">
+                  <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${currentSetup.hasClass ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'}">
+                    ${currentSetup.hasClass ? '✓' : '៣'}
+                  </span>
+                  <span>${isKm ? 'ជំហាន ៣: បញ្ចូលបញ្ជីថ្នាក់រៀន (Classroom)' : 'Step 3: Classroom Information'}</span>
+                </div>
+                <span class="text-[11px] font-semibold">${currentSetup.hasClass ? (isKm ? 'រួចរាល់' : 'Completed') : (isKm ? 'មិនទាន់បំពេញ' : 'Missing')}</span>
+              </div>
+            </div>
+          </div>
+        `;
+
+        const setupModal = Modal.open({
+          title: isKm ? 'ការរៀបចំចាំបាច់មិនទាន់បានបញ្ចប់' : 'Setup Steps Incomplete',
+          content: contentHtml,
+          maxWidth: 'max-w-md',
+          footer: `
+            <div class="flex items-center justify-between w-full">
+              <button id="btn-close-setup-modal" class="px-3.5 py-1.5 rounded-lg border border-border hover:bg-muted text-xs font-medium cursor-pointer">
+                ${t('common.cancel')}
+              </button>
+              <button id="btn-goto-next-setup-step" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 shadow-xs cursor-pointer">
+                <span>${isKm ? `ទៅកាន់ ${nextRouteName}` : `Go to ${nextRouteName}`}</span>
+                ${getIcon('arrowRight', 'w-3.5 h-3.5')}
+              </button>
+            </div>
+          `
+        });
+
+        setupModal.element.querySelector('#btn-close-setup-modal')?.addEventListener('click', () => setupModal.close());
+        setupModal.element.querySelector('#btn-goto-next-setup-step')?.addEventListener('click', () => {
+          setupModal.close();
+          window.location.hash = `#${nextRoute}`;
+        });
       });
     });
 

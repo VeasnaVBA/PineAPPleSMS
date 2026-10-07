@@ -30,6 +30,7 @@ class ToastManager {
     let iconSvg = '';
     if (type === 'success') iconSvg = getIcon('check', 'w-5 h-5 text-emerald-500');
     else if (type === 'error') iconSvg = getIcon('x', 'w-5 h-5 text-destructive');
+    else if (type === 'warning') iconSvg = getIcon('alertTriangle', 'w-5 h-5 text-amber-500');
     else iconSvg = getIcon('bell', 'w-5 h-5 text-primary');
 
     toast.innerHTML = `
@@ -84,6 +85,8 @@ class ToastManager {
         return 'border-emerald-500/30';
       case 'error':
         return 'border-destructive/40';
+      case 'warning':
+        return 'border-amber-500/40';
       default:
         return 'border-border';
     }
@@ -95,6 +98,10 @@ class ToastManager {
 
   error(message, title = 'Error') {
     this.show({ message, title, type: 'error' });
+  }
+
+  warning(message, title = 'Warning') {
+    this.show({ message, title, type: 'warning' });
   }
 
   info(message, title = 'Notification') {
