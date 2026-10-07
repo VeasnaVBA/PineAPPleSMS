@@ -27,21 +27,7 @@ export const WorkspaceSetupService = {
    */
   async getSetupStatus() {
     const currentUser = authService.getCurrentUser();
-    
-    // Master Admin is exempt as Admin manages global users and system settings
-    if (!currentUser || currentUser.role === 'ADMIN') {
-      return {
-        isComplete: true,
-        hasSchool: true,
-        hasClass: true,
-        hasTeacher: true,
-        completedCount: 3,
-        totalRequired: 3,
-        counts: { schools: 1, classes: 1, teachers: 1 },
-        missingRoutes: [],
-        firstIncompleteRoute: null
-      };
-    }
+    const isAdmin = currentUser?.role === 'ADMIN';
 
     try {
       let [schools, classes, teachers] = await Promise.all([
@@ -49,16 +35,6 @@ export const WorkspaceSetupService = {
         db.getAll('classes').catch(() => []),
         db.getAll('teachers').catch(() => [])
       ]);
-
-      // Fallback check for schools in settings store if IndexedDB schools store is empty
-      if (!schools || schools.length === 0) {
-        try {
-          const fallbackSchools = await SettingsService.get('schools_catalog');
-          if (Array.isArray(fallbackSchools) && fallbackSchools.length > 0) {
-            schools = fallbackSchools;
-          }
-        } catch (_) {}
-      }
 
       const hasSchool = Array.isArray(schools) && schools.length > 0;
       const hasClass = Array.isArray(classes) && classes.length > 0;
@@ -75,7 +51,9 @@ export const WorkspaceSetupService = {
       const firstIncompleteRoute = !hasSchool ? 'schools' : (!hasTeacher ? 'teachers' : (!hasClass ? 'classes' : null));
 
       return {
-        isComplete,
+        // Admin is never locked out of navigation, but setup status accurately reflects real records
+        isComplete: isAdmin ? true : isComplete,
+        isAdmin,
         hasSchool,
         hasClass,
         hasTeacher,
@@ -92,15 +70,16 @@ export const WorkspaceSetupService = {
     } catch (err) {
       console.warn('WorkspaceSetupService check error:', err);
       return {
-        isComplete: true,
-        hasSchool: true,
-        hasClass: true,
-        hasTeacher: true,
-        completedCount: 3,
+        isComplete: Boolean(isAdmin),
+        isAdmin: Boolean(isAdmin),
+        hasSchool: false,
+        hasClass: false,
+        hasTeacher: false,
+        completedCount: 0,
         totalRequired: 3,
         counts: { schools: 0, classes: 0, teachers: 0 },
-        missingRoutes: [],
-        firstIncompleteRoute: null
+        missingRoutes: ['schools', 'teachers', 'classes'],
+        firstIncompleteRoute: 'schools'
       };
     }
   },

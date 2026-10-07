@@ -8,7 +8,7 @@
  * - Tabs: students, schools, classes, teachers, attendance, scores, academicYears, subjects, groups, report_settings, registration_queue, settings
  */
 
-import { db } from '../database/db.js';
+import { db, setSuppressWorkspaceMutation } from '../database/db.js';
 import { authService } from './authService.js';
 import { normalizeStudentRecord } from './studentService.js';
 import { normalizeTeacherRecord } from './teacherService.js';
@@ -333,6 +333,7 @@ export const CloudSyncService = {
    */
   async applyRestoredData(data, currentUser, options = {}) {
     const isSilent = options?.silent === true;
+    setSuppressWorkspaceMutation(true);
     try {
       if (!data || typeof data !== 'object') return;
       // 1. Ensure active workspace DB is opened (zero contamination of other accounts)
@@ -604,6 +605,9 @@ export const CloudSyncService = {
       if (!isSilent) {
         toast.error('Failed to write data into local database: ' + err.message, t('cloudSync.errorTitle'));
       }
+    } finally {
+      setSuppressWorkspaceMutation(false);
+      syncStateManager.markClean();
     }
   },
 

@@ -12,8 +12,11 @@ import { WorkspaceSetupService } from './workspaceSetupService.js';
 const DEFAULT_SCHOOLS = [];
 
 export const SchoolService = {
-  clearCache() {
-    // No-op or cache purge
+  async clearCache() {
+    try {
+      await SettingsService.delete('schools_catalog');
+      await SettingsService.delete('schools_initialized');
+    } catch (_) {}
   },
 
   /**
@@ -258,8 +261,13 @@ export const SchoolService = {
 
     try {
       const updatedList = schools.filter(s => s.id !== target.id);
-      await SettingsService.set('schools_catalog', updatedList);
-      await SettingsService.set('schools_initialized', true);
+      if (updatedList.length === 0) {
+        await SettingsService.delete('schools_catalog');
+        await SettingsService.delete('schools_initialized');
+      } else {
+        await SettingsService.set('schools_catalog', updatedList);
+        await SettingsService.set('schools_initialized', true);
+      }
     } catch (_) {}
 
     syncStateManager.markDirty('schools.delete');

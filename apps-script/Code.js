@@ -104,6 +104,10 @@ function doGet(e) {
     } else if (action === 'INIT_ADMIN_DATA') {
       getOrCreateAdminSpreadsheet();
       return handleGetAdminData();
+    } else if (action === 'CREATE_USER_WORKSPACE' || action === 'INIT_USER_WORKSPACE') {
+      var username = (e && e.parameter && e.parameter.username) ? e.parameter.username : '';
+      var fileName = 'SchoolWorkspace_' + username;
+      return handleCreateUserWorkspace(fileName, username);
     } else if (action === 'LIST_ALL_WORKSPACE_FILES') {
       return handleListAllWorkspaceFiles();
     } else {
@@ -141,6 +145,8 @@ function doPost(e) {
     } else if (action === 'INIT_ADMIN_DATA') {
       getOrCreateAdminSpreadsheet();
       return handleGetAdminData();
+    } else if (action === 'CREATE_USER_WORKSPACE' || action === 'INIT_USER_WORKSPACE') {
+      return handleCreateUserWorkspace(fileName, username);
     } else if (action === 'PULL_TO_DRIVE') {
       return handlePullToDrive(fileName, username, payload.data || {});
     } else if (action === 'PUSH_TO_APP') {
@@ -747,6 +753,20 @@ function getOrCreateUserSpreadsheet(fileName, username) {
     spreadsheet: spreadsheet,
     isNew: true
   };
+}
+
+function handleCreateUserWorkspace(fileName, username) {
+  var fileInfo = getOrCreateUserSpreadsheet(fileName, username);
+  return jsonResponse({
+    success: true,
+    found: true,
+    isNewlyCreated: fileInfo.isNew,
+    action: 'CREATE_USER_WORKSPACE',
+    username: username,
+    fileName: fileInfo.spreadsheet.getName(),
+    spreadsheetUrl: fileInfo.spreadsheet.getUrl(),
+    spreadsheetId: fileInfo.spreadsheet.getId()
+  });
 }
 
 function handlePullToDrive(fileName, username, data) {

@@ -11,6 +11,14 @@ export const SettingsService = {
     return await db.put('settings', { key, value });
   },
 
+  async delete(key) {
+    try {
+      return await db.delete('settings', key);
+    } catch (_) {
+      return false;
+    }
+  },
+
   async getAcademicYears() {
     const years = await db.getAll('academicYears');
     if (!years || years.length === 0) {

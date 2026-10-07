@@ -10,7 +10,9 @@
 import { authService } from './authService.js';
 import { getCloudSyncUrl } from '../config/cloudSync.js';
 import { CloudSyncService } from './cloudSyncService.js';
+import { AdminDataService } from './adminDataService.js';
 import { ExitSyncModal } from '../components/exitSyncModal.js';
+import { setWorkspaceMutationCallback } from '../database/db.js';
 
 class SyncStateManager {
   constructor() {
@@ -20,18 +22,28 @@ class SyncStateManager {
     this._isAutoSyncing = false;
     this._listeners = new Set();
     this._initialized = false;
-    this.DEBOUNCE_MS = 5000; // 5 seconds of user inactivity
+    this.DEBOUNCE_MS = 1500; // 1.5 seconds of user inactivity for responsive auto-sync
   }
 
   /**
-   * Initialize lifecycle listeners (online/offline, beforeunload, Electron IPC)
+   * Initialize lifecycle listeners (online/offline, beforeunload, Electron IPC, database mutations)
    */
   init() {
     if (this._initialized) return;
     this._initialized = true;
 
+    // Connect central workspace database mutation listener
+    setWorkspaceMutationCallback((storeName, op) => {
+      this.markDirty(`${storeName}.${op}`);
+    });
+
     // 1. Online / Offline network listeners
     if (typeof window !== 'undefined') {
+      window.addEventListener('workspace:data-mutation', (e) => {
+        const { storeName, operation } = e.detail || {};
+        this.markDirty(`${storeName || 'workspace'}.${operation || 'change'}`);
+      });
+
       window.addEventListener('online', () => {
         this.notify();
         // If there were unsynced changes accumulated while offline, trigger auto-sync
@@ -164,10 +176,20 @@ class SyncStateManager {
       this._isAutoSyncing = true;
       this.notify();
 
-      // Run silent background sync (no modal, no popup toasts)
+      console.log(`[SyncStateManager] Auto-syncing workspace changes to Google Drive for @${currentUser.username}...`);
+
+      // Run silent background sync to user's SchoolWorkspace_<username>
       const success = await CloudSyncService.pullToDrive(currentUser, { silent: true });
 
+      // If user is Admin, also ensure SchoolSystem_AdminData is kept fresh
+      if (currentUser.role === 'ADMIN' && typeof AdminDataService !== 'undefined') {
+        try {
+          await AdminDataService.saveToGoogleSheet({ silent: true });
+        } catch (_) {}
+      }
+
       if (success) {
+        console.log(`[SyncStateManager] Workspace auto-sync completed successfully for @${currentUser.username}.`);
         this.markClean();
       } else {
         this._isAutoSyncing = false;

@@ -100,6 +100,7 @@ export class Sidebar {
 
     const isKm = i18n.getLocale() === 'km';
     const currentUser = authService.getCurrentUser();
+    const isAdmin = currentUser?.role === 'ADMIN';
     const fontClass = isKm ? 'font-khmer' : 'font-sans';
 
     // Role color scheme
@@ -112,7 +113,7 @@ export class Sidebar {
       roleBadgeColor = 'bg-blue-500/10 text-blue-500 border-blue-500/20';
     }
 
-    // Check initial setup status for non-admin accounts
+    // Check initial setup status for all accounts
     const setup = await WorkspaceSetupService.getSetupStatus();
 
     this.container.innerHTML = `
@@ -135,7 +136,7 @@ export class Sidebar {
 
         <!-- Navigation Menu -->
         <div class="flex-1 overflow-y-auto py-4 px-3 space-y-1 sidebar-nav">
-          ${!setup.isComplete ? `
+          ${(!setup.isComplete && !isAdmin) ? `
             <!-- Setup Progress Banner -->
             <div class="setup-progress-card mb-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs space-y-2">
               <div class="flex items-center justify-between font-bold text-amber-700 dark:text-amber-300 ${fontClass}">
@@ -153,19 +154,19 @@ export class Sidebar {
 
           ${navItems.map(item => {
             const isActive = this.activeRoute === item.id;
-            const isLocked = !setup.isComplete && !WorkspaceSetupService.isSetupAllowedRoute(item.id);
+            const isLocked = !isAdmin && !setup.isComplete && !WorkspaceSetupService.isSetupAllowedRoute(item.id);
 
             let statusBadge = '';
-            if (!setup.isComplete) {
+            if (!setup.isComplete || isAdmin) {
               if (item.id === 'schools') {
                 statusBadge = setup.hasSchool 
                   ? `<span class="nav-badge text-emerald-600 dark:text-emerald-400 font-bold ml-auto text-xs" title="${isKm ? 'បានបញ្ចូលរួចរាល់' : 'Completed'}">✓</span>` 
                   : `<span class="nav-badge text-[10px] bg-amber-500/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-bold ml-auto ${fontClass}">${isKm ? 'ជំហាន ១' : 'Step 1'}</span>`;
-              } else if (item.id === 'teachers') {
+              } else if (item.id === 'teachers' && !isAdmin) {
                 statusBadge = setup.hasTeacher 
                   ? `<span class="nav-badge text-emerald-600 dark:text-emerald-400 font-bold ml-auto text-xs" title="${isKm ? 'បានបញ្ចូលរួចរាល់' : 'Completed'}">✓</span>` 
                   : `<span class="nav-badge text-[10px] bg-amber-500/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-bold ml-auto ${fontClass}">${isKm ? 'ជំហាន ២' : 'Step 2'}</span>`;
-              } else if (item.id === 'classes') {
+              } else if (item.id === 'classes' && !isAdmin) {
                 statusBadge = setup.hasClass 
                   ? `<span class="nav-badge text-emerald-600 dark:text-emerald-400 font-bold ml-auto text-xs" title="${isKm ? 'បានបញ្ចូលរួចរាល់' : 'Completed'}">✓</span>` 
                   : `<span class="nav-badge text-[10px] bg-amber-500/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-bold ml-auto ${fontClass}">${isKm ? 'ជំហាន ៣' : 'Step 3'}</span>`;

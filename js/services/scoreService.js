@@ -2,6 +2,7 @@ import { db } from '../database/db.js';
 import { ClassService } from './classService.js';
 import { SubjectService } from './subjectService.js';
 import { authService } from './authService.js';
+import { syncStateManager } from './syncStateManager.js';
 
 export const EVALUATION_PERIODS = [
   // Months Jan to Dec
@@ -231,6 +232,7 @@ export const ScoreService = {
         }
       }
     }
+    syncStateManager.markDirty('scores.saveMasterScoreSheet');
     return true;
   },
 
@@ -344,6 +346,7 @@ export const ScoreService = {
       };
       await db.put('scores', record);
     }
+    syncStateManager.markDirty('scores.saveScoreSheet');
     return true;
   },
 

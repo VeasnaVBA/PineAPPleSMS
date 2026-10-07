@@ -1,6 +1,7 @@
 import { db } from '../database/db.js';
 import { ClassService } from './classService.js';
 import { authService } from './authService.js';
+import { syncStateManager } from './syncStateManager.js';
 
 export const AttendanceService = {
   async getByDate(date) {
@@ -103,6 +104,7 @@ export const AttendanceService = {
       };
       await db.put('attendance', record);
     }
+    syncStateManager.markDirty('attendance.save');
     return true;
   },
 

@@ -1,5 +1,7 @@
 import { db } from '../database/db.js';
 import { seedInitialData } from '../database/seed.js';
+import { SettingsService } from './settingsService.js';
+import { WorkspaceSetupService } from './workspaceSetupService.js';
 
 export const BackupService = {
   /**
@@ -178,6 +180,13 @@ export const BackupService = {
     if (reseed) {
       await seedInitialData();
     }
+
+    try {
+      await SettingsService.delete('schools_catalog');
+      await SettingsService.delete('schools_initialized');
+    } catch (_) {}
+
+    WorkspaceSetupService.notifySetupChange();
 
     return true;
   },

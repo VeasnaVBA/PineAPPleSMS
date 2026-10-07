@@ -299,6 +299,58 @@ class GlobalDatabase {
 }
 
 /**
+ * Synchronizable Workspace Object Stores (mirrored to Google Drive: SchoolWorkspace_<username>)
+ */
+export const WORKSPACE_SYNCABLE_STORES = new Set([
+  'students',
+  'schools',
+  'classes',
+  'teachers',
+  'attendance',
+  'scores',
+  'academicYears',
+  'subjects',
+  'groups',
+  'report_settings',
+  'registration_queue',
+  'settings'
+]);
+
+let _workspaceMutationCallback = null;
+let _suppressWorkspaceMutation = false;
+
+export function setWorkspaceMutationCallback(callback) {
+  _workspaceMutationCallback = callback;
+}
+
+export function setSuppressWorkspaceMutation(suppress) {
+  _suppressWorkspaceMutation = Boolean(suppress);
+}
+
+export function isSuppressWorkspaceMutation() {
+  return _suppressWorkspaceMutation;
+}
+
+function notifyWorkspaceMutation(storeName, operation) {
+  if (_suppressWorkspaceMutation) return;
+  if (!WORKSPACE_SYNCABLE_STORES.has(storeName)) return;
+
+  if (typeof _workspaceMutationCallback === 'function') {
+    try {
+      _workspaceMutationCallback(storeName, operation);
+    } catch (cbErr) {
+      console.warn('Workspace mutation callback warning:', cbErr);
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('workspace:data-mutation', {
+      detail: { storeName, operation, timestamp: Date.now() }
+    }));
+  }
+}
+
+/**
  * Isolated User Workspace Database Manager
  */
 class WorkspaceDatabase {
@@ -514,7 +566,10 @@ class WorkspaceDatabase {
         const tx = db.transaction(storeName, 'readwrite');
         const store = tx.objectStore(storeName);
         const req = store.add(item);
-        req.onsuccess = () => resolve(req.result);
+        req.onsuccess = () => {
+          notifyWorkspaceMutation(storeName, 'add');
+          resolve(req.result);
+        };
         req.onerror = () => reject(req.error);
       } catch (err) {
         console.warn(`add error on ${storeName}:`, err);
@@ -533,7 +588,10 @@ class WorkspaceDatabase {
         const tx = db.transaction(storeName, 'readwrite');
         const store = tx.objectStore(storeName);
         const req = store.put(item);
-        req.onsuccess = () => resolve(req.result);
+        req.onsuccess = () => {
+          notifyWorkspaceMutation(storeName, 'put');
+          resolve(req.result);
+        };
         req.onerror = () => reject(req.error);
       } catch (err) {
         console.warn(`put error on ${storeName}:`, err);
@@ -552,7 +610,10 @@ class WorkspaceDatabase {
         const tx = db.transaction(storeName, 'readwrite');
         const store = tx.objectStore(storeName);
         const req = store.delete(key);
-        req.onsuccess = () => resolve(true);
+        req.onsuccess = () => {
+          notifyWorkspaceMutation(storeName, 'delete');
+          resolve(true);
+        };
         req.onerror = () => reject(req.error);
       } catch (err) {
         console.warn(`delete error on ${storeName}:`, err);
@@ -610,7 +671,10 @@ class WorkspaceDatabase {
         const tx = db.transaction(storeName, 'readwrite');
         const store = tx.objectStore(storeName);
         const req = store.clear();
-        req.onsuccess = () => resolve(true);
+        req.onsuccess = () => {
+          notifyWorkspaceMutation(storeName, 'clear');
+          resolve(true);
+        };
         req.onerror = () => reject(req.error);
       } catch (err) {
         console.warn(`clear error on ${storeName}:`, err);

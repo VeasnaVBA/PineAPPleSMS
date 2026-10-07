@@ -31,6 +31,15 @@ export const SchoolsPage = {
 
   async render(container) {
     this.container = container;
+    if (!this._listenerBound) {
+      this._listenerBound = true;
+      window.addEventListener('app:refresh-data', async () => {
+        if (this.container && window.location.hash.includes('schools')) {
+          await this.loadData();
+          this.renderLayout();
+        }
+      });
+    }
     await this.loadData();
     this.renderLayout();
   },
