@@ -179,26 +179,42 @@ class AuthService {
 
     const computedHash = await hashPassword(cleanPassword);
 
-    // 1. Cloud-First: Always sync/pull latest accounts & credentials from SchoolSystem_AdminData if online
-    if (typeof navigator !== 'undefined' && navigator.onLine) {
+    // 1. Authenticate against central system database (SchoolSystem_Global) first for instant login
+    let allUsers = await globalDb.getAll('users');
+    let user = allUsers.find(u => u.username.toLowerCase() === cleanUsername);
+
+    // If user is not found locally, and we're online, pull latest accounts from SchoolSystem_AdminData
+    if (!user && typeof navigator !== 'undefined' && navigator.onLine) {
       try {
         const { AdminDataService } = await import('./adminDataService.js');
         await AdminDataService.pullFromGoogleSheet({ silent: true });
+        allUsers = await globalDb.getAll('users');
+        user = allUsers.find(u => u.username.toLowerCase() === cleanUsername);
       } catch (syncErr) {
         console.warn('[Auth] Cloud check notice during login:', syncErr);
       }
     }
 
-    // 2. Authenticate against central system database (SchoolSystem_Global)
-    const allUsers = await globalDb.getAll('users');
-    const user = allUsers.find(u => u.username.toLowerCase() === cleanUsername);
-
     if (!user) {
       throw new Error('Invalid username or password.');
     }
 
-    const isPasswordValid = (user.passwordHash && user.passwordHash === computedHash) ||
+    let isPasswordValid = (user.passwordHash && user.passwordHash === computedHash) ||
+                          (user.password && String(user.password).trim() === cleanPassword);
+
+    // If password failed locally, attempt cloud update in case password was changed on another device
+    if (!isPasswordValid && typeof navigator !== 'undefined' && navigator.onLine) {
+      try {
+        const { AdminDataService } = await import('./adminDataService.js');
+        await AdminDataService.pullFromGoogleSheet({ silent: true });
+        allUsers = await globalDb.getAll('users');
+        user = allUsers.find(u => u.username.toLowerCase() === cleanUsername);
+        if (user) {
+          isPasswordValid = (user.passwordHash && user.passwordHash === computedHash) ||
                             (user.password && String(user.password).trim() === cleanPassword);
+        }
+      } catch (_) {}
+    }
 
     if (!isPasswordValid) {
       throw new Error('Invalid username or password.');
@@ -208,18 +224,18 @@ class AuthService {
       throw new Error('This account has been disabled. Please contact the administrator.');
     }
 
-    // 3. Update lastLogin in SchoolSystem_Global
+    // 2. Update lastLogin in SchoolSystem_Global
     user.lastLogin = new Date().toISOString();
     await globalDb.put('users', user);
 
-    // 4. Clear existing in-memory caches before loading the new workspace
+    // 3. Clear existing in-memory caches before loading the new workspace
     this.clearServiceCaches();
 
-    // 5. Initialize the user's private, isolated workspace database
+    // 4. Initialize the user's private, isolated workspace database
     await initUserDatabase(user.id);
     await seedWorkspaceBaseline();
 
-    // 6. Save session in localStorage
+    // 5. Save session in localStorage
     const sessionData = {
       id: user.id,
       username: user.username,
@@ -231,17 +247,7 @@ class AuthService {
 
     localStorage.setItem(this.sessionKey, JSON.stringify(sessionData));
 
-    // 7. Cloud-First Workspace Restore: Pull latest workspace data from Google Drive for this account
-    if (typeof navigator !== 'undefined' && navigator.onLine) {
-      try {
-        const { CloudSyncService } = await import('./cloudSyncService.js');
-        await CloudSyncService.restoreOnLogin(sessionData, { silent: false });
-      } catch (cloudErr) {
-        console.warn('[Auth] Auto-restore workspace on login notice:', cloudErr);
-      }
-    }
-
-    // 8. Ensure URL hash is valid for the logging in role before notifying UI
+    // 6. Ensure URL hash is valid for the logging in role before notifying UI
     const currentHash = (typeof window !== 'undefined' && window.location.hash) ? window.location.hash.replace('#', '').trim() : '';
     if (sessionData.role === 'ADMIN') {
       if (currentHash !== 'users' && currentHash !== 'settings' && currentHash !== 'download-data') {
@@ -253,9 +259,19 @@ class AuthService {
       }
     }
 
+    // Instantly transition to App Shell (< 50ms)
     this.notify(sessionData);
 
-    // If Admin logs in, auto verify and sync SchoolSystem_AdminData in Google Drive
+    // 7. Non-blocking Background Sync: Automatically restore workspace from Google Drive in background
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
+      import('./cloudSyncService.js').then(({ CloudSyncService }) => {
+        CloudSyncService.restoreOnLogin(sessionData, { silent: false }).catch(cloudErr => {
+          console.warn('[Auth] Background workspace restore notice:', cloudErr);
+        });
+      }).catch(err => console.warn('[Auth] CloudSync import notice:', err));
+    }
+
+    // If Admin logs in, auto verify and sync SchoolSystem_AdminData in Google Drive in background
     if (sessionData.role === 'ADMIN') {
       import('./adminDataService.js').then(({ AdminDataService }) => {
         AdminDataService.syncOnAdminLogin().catch(e => console.warn('Admin login sync notice:', e));
