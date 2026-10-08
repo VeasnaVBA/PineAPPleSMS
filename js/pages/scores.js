@@ -417,22 +417,22 @@ export const ScoresPage = {
     // Single Clean Header Row
     headerRow.innerHTML = `
       <!-- Sticky Student Info Header Columns (Locked on X and Y with highest z-index) -->
-      <th class="score-sticky-col-1 p-0 text-center font-mono font-bold text-muted-foreground z-50 bg-slate-100 dark:bg-slate-800">
-        <div class="w-[36px] max-w-[36px] truncate text-center py-2">#</div>
+      <th class="score-sticky-col-1 p-0 text-center font-mono font-bold text-muted-foreground z-50 bg-slate-100 dark:bg-slate-800" style="z-index: 100 !important; transform: translateZ(10px) !important;">
+        <div class="w-[36px] max-w-[36px] truncate text-center py-2 bg-slate-100 dark:bg-slate-800">#</div>
       </th>
-      <th class="score-sticky-col-2 p-0 text-left font-bold font-khmer text-foreground z-50 bg-slate-100 dark:bg-slate-800">
-        <div class="w-[72px] max-w-[72px] truncate text-left py-2 px-2 text-xs">${isKm ? 'គោត្តនាម' : 'Surname'}</div>
+      <th class="score-sticky-col-2 p-0 text-left font-bold font-khmer text-foreground z-50 bg-slate-100 dark:bg-slate-800" style="z-index: 100 !important; transform: translateZ(10px) !important;">
+        <div class="w-[72px] max-w-[72px] truncate text-left py-2 px-2 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'គោត្តនាម' : 'Surname'}</div>
       </th>
-      <th class="score-sticky-col-3 p-0 text-left font-bold font-khmer text-foreground z-50 bg-slate-100 dark:bg-slate-800">
-        <div class="w-[72px] max-w-[72px] truncate text-left py-2 px-2 text-xs">${isKm ? 'នាម' : 'Name'}</div>
+      <th class="score-sticky-col-3 p-0 text-left font-bold font-khmer text-foreground z-50 bg-slate-100 dark:bg-slate-800" style="z-index: 100 !important; transform: translateZ(10px) !important;">
+        <div class="w-[72px] max-w-[72px] truncate text-left py-2 px-2 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'នាម' : 'Name'}</div>
       </th>
-      <th class="score-sticky-col-4 p-0 text-center font-bold font-khmer text-foreground z-50 bg-slate-100 dark:bg-slate-800">
-        <div class="w-[54px] max-w-[54px] truncate text-center py-2 px-1 text-xs">${isKm ? 'ភេទ' : 'Sex'}</div>
+      <th class="score-sticky-col-4 p-0 text-center font-bold font-khmer text-foreground z-50 bg-slate-100 dark:bg-slate-800" style="z-index: 100 !important; transform: translateZ(10px) !important;">
+        <div class="w-[54px] max-w-[54px] truncate text-center py-2 px-1 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'ភេទ' : 'Sex'}</div>
       </th>
 
-      <!-- Subject Column Headers (Vertical Text + Category Color, z-10 so sticky columns stay on top) -->
+      <!-- Subject Column Headers (Vertical Text + Category Color, z-index 5 so sticky columns stay on top) -->
       ${groups.map(g => g.subjects.map(sub => `
-        <th class="score-subject-th p-0 z-10 ${g.subHeaderClass}" title="${sub.name} (Max: ${sub.fullScore})">
+        <th class="score-subject-th p-0 z-10 ${g.subHeaderClass}" style="z-index: 5 !important; transform: translateZ(1px) !important;" title="${sub.name} (Max: ${sub.fullScore})">
           <div class="w-[46px] max-w-[46px] mx-auto flex flex-col items-center">
             <div class="score-vertical-title font-khmer" title="${sub.name}">
               ${sub.name}
@@ -529,23 +529,23 @@ export const ScoresPage = {
       return `
         <tr class="hover:bg-muted/15 transition-colors group" data-student-id="${r.studentId}" data-row-idx="${rIdx}">
           <!-- 1. No (Centered) -->
-          <td class="score-sticky-col-1 p-0 text-center font-mono font-medium text-muted-foreground z-20 bg-white dark:bg-slate-900">
-            <div class="w-[36px] max-w-[36px] truncate text-center py-1.5">${rIdx + 1}</div>
+          <td class="score-sticky-col-1 p-0 text-center font-mono font-medium text-muted-foreground z-20 bg-white dark:bg-slate-900" style="z-index: 30 !important; transform: translateZ(5px) !important;">
+            <div class="w-[36px] max-w-[36px] truncate text-center py-1.5 bg-white dark:bg-slate-900">${rIdx + 1}</div>
           </td>
 
           <!-- 2. Surname (គោត្តនាម) - Left-aligned -->
-          <td class="score-sticky-col-2 p-0 text-left font-khmer font-semibold text-foreground z-20 bg-white dark:bg-slate-900">
-            <div class="w-[72px] max-w-[72px] truncate text-left py-1.5 px-2 text-xs" title="${surname}">${surname || '—'}</div>
+          <td class="score-sticky-col-2 p-0 text-left font-khmer font-semibold text-foreground z-20 bg-white dark:bg-slate-900" style="z-index: 30 !important; transform: translateZ(5px) !important;">
+            <div class="w-[72px] max-w-[72px] truncate text-left py-1.5 px-2 text-xs bg-white dark:bg-slate-900" title="${surname}">${surname || '—'}</div>
           </td>
 
           <!-- 3. Given Name (នាម) - Left-aligned -->
-          <td class="score-sticky-col-3 p-0 text-left font-khmer font-semibold text-foreground z-20 bg-white dark:bg-slate-900">
-            <div class="w-[72px] max-w-[72px] truncate text-left py-1.5 px-2 text-xs" title="${givenName}">${givenName || '—'}</div>
+          <td class="score-sticky-col-3 p-0 text-left font-khmer font-semibold text-foreground z-20 bg-white dark:bg-slate-900" style="z-index: 30 !important; transform: translateZ(5px) !important;">
+            <div class="w-[72px] max-w-[72px] truncate text-left py-1.5 px-2 text-xs bg-white dark:bg-slate-900" title="${givenName}">${givenName || '—'}</div>
           </td>
 
           <!-- 4. Gender (ភេទ) - Centered -->
-          <td class="score-sticky-col-4 p-0 text-center font-khmer text-xs ${genderColor} z-20 bg-white dark:bg-slate-900">
-            <div class="w-[54px] max-w-[54px] truncate text-center py-1.5 px-1">${genderText}</div>
+          <td class="score-sticky-col-4 p-0 text-center font-khmer text-xs ${genderColor} z-20 bg-white dark:bg-slate-900" style="z-index: 30 !important; transform: translateZ(5px) !important;">
+            <div class="w-[54px] max-w-[54px] truncate text-center py-1.5 px-1 bg-white dark:bg-slate-900">${genderText}</div>
           </td>
 
           <!-- 5. Subject Score Grid Cells (Centered Values) -->
