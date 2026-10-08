@@ -430,10 +430,10 @@ export const ScoresPage = {
         <div class="w-full whitespace-nowrap text-center py-2 px-1 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'ភេទ' : 'Sex'}</div>
       </th>
 
-      <!-- Subject Column Headers (Vertical Text + Category Color, z-index 10 in CSS, xnumber removed) -->
+      <!-- Subject Column Headers (Vertical Text + Category Color, z-index 10 in CSS, centered) -->
       ${groups.map(g => g.subjects.map(sub => `
         <th class="score-subject-th p-0 ${g.subHeaderClass}" style="z-index: 10 !important; isolation: isolate !important;" title="${sub.name} (Max: ${sub.fullScore})">
-          <div class="w-[46px] max-w-[46px] mx-auto flex flex-col items-center justify-end pb-2">
+          <div class="w-[46px] max-w-[46px] h-full mx-auto flex items-center justify-center py-2">
             <div class="score-vertical-title font-khmer" title="${sub.name}">
               ${sub.name}
             </div>
