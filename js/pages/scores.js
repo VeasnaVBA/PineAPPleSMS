@@ -404,7 +404,7 @@ export const ScoresPage = {
         <col style="width: 36px; min-width: 36px; max-width: 36px;">
         <col style="width: 72px; min-width: 72px; max-width: 72px;">
         <col style="width: 72px; min-width: 72px; max-width: 72px;">
-        <col style="width: 50px; min-width: 50px; max-width: 50px;">
+        <col style="width: 54px; min-width: 54px; max-width: 54px;">
         ${groups.map(g => g.subjects.map(() => `<col style="width: 46px; min-width: 46px; max-width: 46px;">`).join('')).join('')}
         <col style="width: 55px; min-width: 55px; max-width: 55px;">
         <col style="width: 52px; min-width: 52px; max-width: 52px;">
@@ -416,23 +416,23 @@ export const ScoresPage = {
 
     // Single Clean Header Row
     headerRow.innerHTML = `
-      <!-- Sticky Student Info Header Columns (Locked on X and Y) -->
-      <th class="score-sticky-col-1 p-0 text-center font-mono font-bold text-muted-foreground">
+      <!-- Sticky Student Info Header Columns (Locked on X and Y with highest z-index) -->
+      <th class="score-sticky-col-1 p-0 text-center font-mono font-bold text-muted-foreground z-50 bg-slate-100 dark:bg-slate-800">
         <div class="w-[36px] max-w-[36px] truncate text-center py-2">#</div>
       </th>
-      <th class="score-sticky-col-2 p-0 text-center font-bold font-khmer text-foreground">
-        <div class="w-[72px] max-w-[72px] truncate text-center py-2 px-0.5 text-xs">${isKm ? 'គោត្តនាម' : 'Surname'}</div>
+      <th class="score-sticky-col-2 p-0 text-left font-bold font-khmer text-foreground z-50 bg-slate-100 dark:bg-slate-800">
+        <div class="w-[72px] max-w-[72px] truncate text-left py-2 px-2 text-xs">${isKm ? 'គោត្តនាម' : 'Surname'}</div>
       </th>
-      <th class="score-sticky-col-3 p-0 text-center font-bold font-khmer text-foreground">
-        <div class="w-[72px] max-w-[72px] truncate text-center py-2 px-0.5 text-xs">${isKm ? 'នាម' : 'Name'}</div>
+      <th class="score-sticky-col-3 p-0 text-left font-bold font-khmer text-foreground z-50 bg-slate-100 dark:bg-slate-800">
+        <div class="w-[72px] max-w-[72px] truncate text-left py-2 px-2 text-xs">${isKm ? 'នាម' : 'Name'}</div>
       </th>
-      <th class="score-sticky-col-4 p-0 text-center font-bold font-khmer text-foreground">
-        <div class="w-[50px] max-w-[50px] truncate text-center py-2 px-0.5 text-xs">${isKm ? 'ភេទ' : 'Sex'}</div>
+      <th class="score-sticky-col-4 p-0 text-center font-bold font-khmer text-foreground z-50 bg-slate-100 dark:bg-slate-800">
+        <div class="w-[54px] max-w-[54px] truncate text-center py-2 px-1 text-xs">${isKm ? 'ភេទ' : 'Sex'}</div>
       </th>
 
-      <!-- Subject Column Headers (Vertical Text + Category Color) -->
+      <!-- Subject Column Headers (Vertical Text + Category Color, z-10 so sticky columns stay on top) -->
       ${groups.map(g => g.subjects.map(sub => `
-        <th class="score-subject-th p-0 ${g.subHeaderClass}" title="${sub.name} (Max: ${sub.fullScore})">
+        <th class="score-subject-th p-0 z-10 ${g.subHeaderClass}" title="${sub.name} (Max: ${sub.fullScore})">
           <div class="w-[46px] max-w-[46px] mx-auto flex flex-col items-center">
             <div class="score-vertical-title font-khmer" title="${sub.name}">
               ${sub.name}
@@ -443,29 +443,29 @@ export const ScoresPage = {
       `).join('')).join('')}
 
       <!-- Result Columns -->
-      <th class="score-result-th p-0 text-center font-bold font-mono text-foreground bg-slate-100 dark:bg-slate-800">
+      <th class="score-result-th p-0 text-center font-bold font-mono text-foreground z-10 bg-slate-100 dark:bg-slate-800">
         <div class="w-[55px] max-w-[55px] text-center py-2 px-1">
           <span class="font-khmer text-[11px] block">${isKm ? 'ពិន្ទុសរុប' : 'Total'}</span>
         </div>
       </th>
-      <th class="score-result-th p-0 text-center font-bold font-mono text-primary bg-slate-100 dark:bg-slate-800">
+      <th class="score-result-th p-0 text-center font-bold font-mono text-primary z-10 bg-slate-100 dark:bg-slate-800">
         <div class="w-[52px] max-w-[52px] text-center py-2 px-1">
           <span class="font-khmer text-[11px] block text-primary">${isKm ? 'មធ្យម' : 'Avg'}</span>
         </div>
       </th>
-      <th class="score-result-th p-0 text-center font-bold font-mono text-amber-600 dark:text-amber-400 bg-slate-100 dark:bg-slate-800">
+      <th class="score-result-th p-0 text-center font-bold font-mono text-amber-600 dark:text-amber-400 z-10 bg-slate-100 dark:bg-slate-800">
         <div class="w-[46px] max-w-[46px] text-center py-2 px-1">
           <span class="font-khmer text-[11px] block text-amber-600 dark:text-amber-400">${isKm ? 'ចំណាត់' : 'Rank'}</span>
         </div>
       </th>
-      <th class="score-result-th p-0 text-center font-bold bg-slate-100 dark:bg-slate-800">
+      <th class="score-result-th p-0 text-center font-bold z-10 bg-slate-100 dark:bg-slate-800">
         <div class="w-[46px] max-w-[46px] text-center py-2 px-1">
           <span class="font-khmer text-[11px] block">${isKm ? 'និទ្ទេស' : 'Grade'}</span>
         </div>
       </th>
 
       <!-- Actions Column -->
-      <th class="text-center p-0 bg-slate-100 dark:bg-slate-800 text-[10px] text-muted-foreground font-khmer print:hidden">
+      <th class="text-center p-0 bg-slate-100 dark:bg-slate-800 text-[10px] text-muted-foreground font-khmer z-10 print:hidden">
         <div class="w-[40px] max-w-[40px] text-center py-2 px-0.5">
           ${isKm ? 'ផ្សេងៗ' : 'Actions'}
         </div>
@@ -528,39 +528,39 @@ export const ScoresPage = {
 
       return `
         <tr class="hover:bg-muted/15 transition-colors group" data-student-id="${r.studentId}" data-row-idx="${rIdx}">
-          <!-- 1. No -->
-          <td class="score-sticky-col-1 p-0 text-center font-mono font-medium text-muted-foreground">
+          <!-- 1. No (Centered) -->
+          <td class="score-sticky-col-1 p-0 text-center font-mono font-medium text-muted-foreground z-20 bg-white dark:bg-slate-900">
             <div class="w-[36px] max-w-[36px] truncate text-center py-1.5">${rIdx + 1}</div>
           </td>
 
-          <!-- 2. Surname (គោត្តនាម) -->
-          <td class="score-sticky-col-2 p-0 text-center font-khmer font-semibold text-foreground">
-            <div class="w-[72px] max-w-[72px] truncate text-center py-1.5 px-0.5 text-xs" title="${surname}">${surname || '—'}</div>
+          <!-- 2. Surname (គោត្តនាម) - Left-aligned -->
+          <td class="score-sticky-col-2 p-0 text-left font-khmer font-semibold text-foreground z-20 bg-white dark:bg-slate-900">
+            <div class="w-[72px] max-w-[72px] truncate text-left py-1.5 px-2 text-xs" title="${surname}">${surname || '—'}</div>
           </td>
 
-          <!-- 3. Given Name (នាម) -->
-          <td class="score-sticky-col-3 p-0 text-center font-khmer font-semibold text-foreground">
-            <div class="w-[72px] max-w-[72px] truncate text-center py-1.5 px-0.5 text-xs" title="${givenName}">${givenName || '—'}</div>
+          <!-- 3. Given Name (នាម) - Left-aligned -->
+          <td class="score-sticky-col-3 p-0 text-left font-khmer font-semibold text-foreground z-20 bg-white dark:bg-slate-900">
+            <div class="w-[72px] max-w-[72px] truncate text-left py-1.5 px-2 text-xs" title="${givenName}">${givenName || '—'}</div>
           </td>
 
-          <!-- 4. Gender (ភេទ) -->
-          <td class="score-sticky-col-4 p-0 text-center font-khmer text-xs ${genderColor}">
-            <div class="w-[50px] max-w-[50px] truncate text-center py-1.5 px-0.5">${genderText}</div>
+          <!-- 4. Gender (ភេទ) - Centered -->
+          <td class="score-sticky-col-4 p-0 text-center font-khmer text-xs ${genderColor} z-20 bg-white dark:bg-slate-900">
+            <div class="w-[54px] max-w-[54px] truncate text-center py-1.5 px-1">${genderText}</div>
           </td>
 
-          <!-- 5. Subject Score Grid Cells (Flat Grid with Column Pastel Colors) -->
+          <!-- 5. Subject Score Grid Cells (Centered Values) -->
           ${flatSubjects.map((s, cIdx) => {
             const currentScore = r.subjectScores[s.id];
             const displayVal = (currentScore !== null && currentScore !== undefined) ? currentScore : '';
             const catKey = getSubjectCategoryKey(s);
             const cellBg = CATEGORY_DEFS[catKey]?.cellBgClass || 'bg-slate-50/40 dark:bg-slate-900/20';
             return `
-              <td class="score-cell-td ${cellBg} p-0" data-row="${rIdx}" data-col="${cIdx}">
+              <td class="score-cell-td ${cellBg} p-0 text-center" data-row="${rIdx}" data-col="${cIdx}">
                 <div class="w-[46px] max-w-[46px] h-full flex items-center justify-center">
                   <input type="text"
                          inputmode="decimal"
                          autocomplete="off"
-                         class="score-cell-input"
+                         class="score-cell-input text-center"
                          data-row="${rIdx}"
                          data-col="${cIdx}"
                          data-student="${r.studentId}"
