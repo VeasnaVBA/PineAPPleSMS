@@ -1,31 +1,127 @@
 /**
  * Scores & Grading Management Module
  * Comprehensive Master Gradebook with:
- * - Period Selection: Month (Jan to Dec), First Test, Semester 1, Semester 1 Exam, Semester 2, Semester 2 Exam, Annual
- * - Table Columns: No, Student ID, Student Name (khmer firstname + khmer last name), Gender, and All Subjects from Subject module
- * - Instant Dynamic Calculations: Total, Average (%), Letter Grade (A-F), and Class Dynamic Rank
- * - Instant Search Filter, Print preview, and persistence in IndexedDB
+ * - Design matching Cambodian MoEYS official master score sheet:
+ *   - Category groups (Khmer, Math, Science, Social Studies, PE/Arts/Health, Languages/ICT, Results)
+ *   - Vertical column headers with weight/coefficient indicators
+ *   - Separate Surname (គោត្តនាម) and Given Name (នាម) columns
+ *   - Distinct Gender styling (ស្រី in pink, ប្រុស in blue)
+ *   - Rounded pill-like input boxes
+ * - Excel-like Multi-Selection & Grid Interaction:
+ *   - Mouse click-and-drag range selection
+ *   - Shift + Click to extend selection
+ *   - Shift + Arrow keys to expand selection
+ *   - Delete / Backspace key multi-delete on selected cells
+ *   - Floating "Delete Selected" action bar
+ *   - Multi-cell Copy & Paste from Excel / Google Sheets
+ *   - Enter (down), Tab (right), Arrow keys navigation
+ * - Direct Template Download & Excel Upload
+ * - Instant Dynamic Calculations & Background Auto-Sync
  */
+
 import { ScoreService, EVALUATION_PERIODS } from '../services/scoreService.js';
-import { ClassService } from '../services/classService.js';
-import { SubjectService } from '../services/subjectService.js';
-import { SettingsService } from '../services/settingsService.js';
-import { authService } from '../services/authService.js';
+import { ClassService } from './classService.js';
+import { SubjectService } from './subjectService.js';
+import { SettingsService } from './settingsService.js';
+import { authService } from './authService.js';
 import { Modal } from '../components/modal.js';
 import { toast } from '../components/toast.js';
 import { i18n, t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
+import { syncStateManager } from './syncStateManager.js';
+
+// Category Definitions matching Cambodian Primary / Secondary Score Sheets
+const CATEGORY_DEFS = {
+  khmer: {
+    titleKm: 'ភាសាខ្មែរ',
+    titleEn: 'Khmer Literature',
+    headerClass: 'bg-purple-100/90 dark:bg-purple-950/60 text-purple-950 dark:text-purple-200 border-purple-200 dark:border-purple-800',
+    subHeaderClass: 'bg-purple-50/50 dark:bg-purple-950/30'
+  },
+  math: {
+    titleKm: 'គណិតវិទ្យា',
+    titleEn: 'Mathematics',
+    headerClass: 'bg-indigo-100/90 dark:bg-indigo-950/60 text-indigo-950 dark:text-indigo-200 border-indigo-200 dark:border-indigo-800',
+    subHeaderClass: 'bg-indigo-50/50 dark:bg-indigo-950/30'
+  },
+  science: {
+    titleKm: 'វិទ្យាសាស្ត្រ',
+    titleEn: 'Sciences',
+    headerClass: 'bg-emerald-100/90 dark:bg-emerald-950/60 text-emerald-950 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800',
+    subHeaderClass: 'bg-emerald-50/50 dark:bg-emerald-950/30'
+  },
+  social: {
+    titleKm: 'សិក្សាសង្គម',
+    titleEn: 'Social Studies',
+    headerClass: 'bg-amber-100/90 dark:bg-amber-950/60 text-amber-950 dark:text-amber-200 border-amber-200 dark:border-amber-800',
+    subHeaderClass: 'bg-amber-50/50 dark:bg-amber-950/30'
+  },
+  health_arts: {
+    titleKm: 'អប់រំកាយ/សុខភាព សិល្បៈ',
+    titleEn: 'PE, Health & Arts',
+    headerClass: 'bg-rose-100/90 dark:bg-rose-950/60 text-rose-950 dark:text-rose-200 border-rose-200 dark:border-rose-800',
+    subHeaderClass: 'bg-rose-50/50 dark:bg-rose-950/30'
+  },
+  languages_ict: {
+    titleKm: 'ស្វ័យសិក្សា / បរទេស / ICT',
+    titleEn: 'Languages & ICT',
+    headerClass: 'bg-cyan-100/90 dark:bg-cyan-950/60 text-cyan-950 dark:text-cyan-200 border-cyan-200 dark:border-cyan-800',
+    subHeaderClass: 'bg-cyan-50/50 dark:bg-cyan-950/30'
+  },
+  other: {
+    titleKm: 'មុខវិជ្ជាផ្សេងៗ',
+    titleEn: 'Other Subjects',
+    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700',
+    subHeaderClass: 'bg-slate-50 dark:bg-slate-900/40'
+  }
+};
+
+function getSubjectCategoryKey(subject) {
+  const text = ((subject.name || '') + ' ' + (subject.nameEn || '') + ' ' + (subject.code || '')).toLowerCase();
+  if (text.includes('តែងសេច') || text.includes('សរសេរតាមអាន') || text.includes('ខ្មែរ') || text.includes('អត្ថបទ') || text.includes('វេយ្យាករណ៍') || text.includes('khmer') || text.includes('essay') || text.includes('dictation')) {
+    return 'khmer';
+  }
+  if (text.includes('គណិត') || text.includes('ចំនួន') || text.includes('ធរណី') || text.includes('ពិជគណិត') || text.includes('ស្ថិតិ') || text.includes('រង្វាស់') || text.includes('math') || text.includes('algebra') || text.includes('geometry')) {
+    return 'math';
+  }
+  if (text.includes('វិទ្យាសាស្ត្រ') || text.includes('រូបវិទ្យា') || text.includes('គីមី') || text.includes('ជីវវិទ្យា') || text.includes('ផែនដី') || text.includes('science') || text.includes('physics') || text.includes('chem') || text.includes('bio')) {
+    return 'science';
+  }
+  if (text.includes('សង្គម') || text.includes('ប្រវត្តិ') || text.includes('ភូមិ') || text.includes('សីលធម៌') || text.includes('ពលរដ្ឋ') || text.includes('សេដ្ឋកិច្ច') || text.includes('social') || text.includes('history') || text.includes('geography') || text.includes('civic') || text.includes('econ')) {
+    return 'social';
+  }
+  if (text.includes('កាយ') || text.includes('សុខភាព') || text.includes('សិល្បៈ') || text.includes('គេហវិជ្ជា') || text.includes('កសិកម្ម') || text.includes('បំណិន') || text.includes('pe') || text.includes('art') || text.includes('health') || text.includes('home') || text.includes('agri')) {
+    return 'health_arts';
+  }
+  if (text.includes('បរទេស') || text.includes('អង់គ្លេស') || text.includes('បារាំង') || text.includes('ព័ត៌មានវិទ្យា') || text.includes('កុំព្យូទ័រ') || text.includes('ស្វ័យសិក្សា') || text.includes('english') || text.includes('french') || text.includes('ict') || text.includes('computer')) {
+    return 'languages_ict';
+  }
+  return 'other';
+}
 
 export const ScoresPage = {
   state: {
     classes: [],
     subjects: [],
+    groupedSubjects: [],
     periods: EVALUATION_PERIODS,
     selectedClassId: '',
     selectedPeriod: 'October',
     activeYear: '2024–2025',
     rows: [],
-    searchQuery: ''
+    searchQuery: '',
+    isAutoSaving: false,
+    saveDebounceTimer: null
+  },
+
+  // Excel-like Grid Multi-Selection State
+  selection: {
+    isSelecting: false,
+    startRow: null,
+    startCol: null,
+    endRow: null,
+    endCol: null,
+    selectedCoords: new Set() // Set of "row,col"
   },
 
   async render(container) {
@@ -57,57 +153,69 @@ export const ScoresPage = {
     const exams = this.state.periods.filter(p => p.group === 'exam');
 
     this.container.innerHTML = `
-      <div class="space-y-6 animate-fade-in pb-16 select-none print:p-0">
-        <!-- Page Header -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 print:hidden">
-          <div>
-            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-foreground ${isKm ? 'font-khmer' : ''}">
-              ${isKm ? 'តារាងពិន្ទុ និងចំណាត់ថ្នាក់សិស្ស' : 'Student Score Table & Ranking'}
-            </h1>
-            <p class="text-xs sm:text-sm text-muted-foreground mt-1 ${isKm ? 'font-khmer' : ''}">
-              ${isKm 
-                ? 'បញ្ចូល និងតាមដានពិន្ទុគ្រប់មុខវិជ្ជា គណនាមធ្យមភាគ និងចំណាត់ថ្នាក់ស្វ័យប្រវត្តិតាមខែ ឬឆមាស' 
-                : 'Comprehensive master gradebook across all subjects with real-time GPA and rank calculation.'}
-            </p>
+      <div class="space-y-4 animate-fade-in pb-20 select-none print:p-0">
+        <!-- Top Header: Back/Title + Pill Badges -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 print:hidden">
+          <div class="flex items-center gap-3 flex-wrap">
+            <a href="#dashboard" class="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted cursor-pointer" title="${isKm ? 'ត្រឡប់ក្រោយ' : 'Go back'}">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+              <span class="font-bold text-foreground text-sm sm:text-base ${isKm ? 'font-khmer' : ''}">
+                ${isKm ? 'ពិន្ទុខែ' : 'Monthly Scores'}
+              </span>
+            </a>
+
+            <!-- Pill Badges (Total, Female, Male) matching the design -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <span id="badge-total-students" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-khmer">
+                ${isKm ? 'សិស្សសរុប' : 'Total'} <span class="font-bold font-mono ml-1" id="stat-count-total">0</span>
+              </span>
+              <span id="badge-female-students" class="px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-900 font-khmer">
+                ${isKm ? 'ស្រី' : 'Female'} <span class="font-bold font-mono ml-1" id="stat-count-female">0</span>
+              </span>
+              <span id="badge-male-students" class="px-3 py-1 rounded-full text-xs font-semibold bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-300 border border-sky-200 dark:border-sky-900 font-khmer">
+                ${isKm ? 'ប្រុស' : 'Male'} <span class="font-bold font-mono ml-1" id="stat-count-male">0</span>
+              </span>
+            </div>
           </div>
-          <div class="flex items-center gap-2">
-            <button id="btn-print-scores" type="button" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs sm:text-sm font-medium shadow-xs transition-colors cursor-pointer">
-              ${getIcon('download', 'w-4 h-4')}
-              <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'បោះពុម្ពតារាង' : 'Print Table'}</span>
+
+          <!-- Top Action Buttons -->
+          <div class="flex items-center gap-2 flex-wrap justify-end">
+            <span id="sync-status-indicator" class="text-[11px] text-muted-foreground flex items-center gap-1.5 font-khmer px-2 py-1 rounded bg-muted/40">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span id="sync-status-text">${isKm ? 'បានធ្វើសមកាលកម្ម' : 'Synced'}</span>
+            </span>
+
+            <button id="btn-save-scores" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold shadow-xs hover:bg-primary/90 transition-all cursor-pointer">
+              ${getIcon('check', 'w-3.5 h-3.5')}
+              <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'រក្សាទុក' : 'Save'}</span>
             </button>
-            <button id="btn-save-scores" type="button" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs sm:text-sm font-semibold shadow-sm hover:bg-primary/90 transition-colors cursor-pointer">
-              ${getIcon('check', 'w-4 h-4')}
-              <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'រក្សាទុកពិន្ទុ' : 'Save Scores'}</span>
+            <button id="btn-print-scores" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium shadow-2xs transition-colors cursor-pointer">
+              ${getIcon('download', 'w-3.5 h-3.5')}
+              <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'បោះពុម្ព' : 'Print'}</span>
             </button>
           </div>
         </div>
 
-        <!-- Filter Controls -->
-        <div class="p-4 rounded-xl border border-border bg-card shadow-xs flex flex-col md:flex-row items-center justify-between gap-4 print:hidden">
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
-            <!-- Class Selection -->
-            <div>
-              <label class="block text-[11px] text-muted-foreground font-medium mb-1 ${isKm ? 'font-khmer' : ''}">
-                ${isKm ? 'ថ្នាក់រៀន' : 'Classroom'}
-              </label>
+        <!-- Filter & Toolbar (Matching screenshot: Class, Month, Template, Upload, A-F, Data menu, Search) -->
+        <div class="p-2.5 sm:p-3 rounded-xl border border-border bg-card shadow-2xs flex flex-wrap items-center justify-between gap-2.5 print:hidden">
+          <div class="flex items-center gap-2 flex-wrap flex-1 min-w-[280px]">
+            <!-- Class Selector Pill -->
+            <div class="relative">
               ${authService.isTeacher() && classes.length <= 1 ? (() => {
-                const assignedCls = classes.find(c => c.id === this.state.selectedClassId) || 
-                                    classes.find(c => c.id === authService.getAssignedClassId()) || 
-                                    classes[0];
+                const assignedCls = classes.find(c => c.id === this.state.selectedClassId) || classes[0];
                 return assignedCls ? `
-                  <div class="h-9 px-3 py-1.5 rounded-md border border-primary/30 bg-primary/10 text-xs font-semibold text-primary flex items-center gap-1.5 box-border">
+                  <div class="h-8.5 px-3 rounded-lg border border-primary/30 bg-primary/10 text-xs font-bold text-primary flex items-center gap-1.5">
                     ${getIcon('classes', 'w-3.5 h-3.5')}
                     <span>${assignedCls.name}</span>
                   </div>
                 ` : `
-                  <a href="#classes" class="h-9 px-3 py-1.5 rounded-md border border-dashed border-amber-500/40 bg-amber-500/10 text-xs font-medium text-amber-700 dark:text-amber-300 flex items-center gap-1.5 box-border hover:bg-amber-500/20 transition-colors">
-                    ${getIcon('plus', 'w-3.5 h-3.5')}
-                    <span>${isKm ? 'មិនទាន់មានថ្នាក់ (ចុចបង្កើតថ្នាក់)' : 'No Classroom (Click to create)'}</span>
+                  <a href="#classes" class="h-8.5 px-3 rounded-lg border border-dashed border-amber-500/40 bg-amber-500/10 text-xs font-medium text-amber-700 flex items-center gap-1.5">
+                    <span>${isKm ? '+ បង្កើតថ្នាក់' : '+ Add Class'}</span>
                   </a>
                 `;
               })() : `
-                <select id="select-score-class" class="w-full h-9 px-3 py-1.5 pr-8 rounded-md border border-input bg-card text-xs font-semibold text-foreground focus:ring-1 focus:ring-ring box-border shadow-xs cursor-pointer">
-                  ${classes.length === 0 ? `<option value="">${isKm ? 'មិនទាន់មានថ្នាក់រៀន' : 'No classes available'}</option>` : ''}
+                <select id="select-score-class" class="h-8.5 px-3 pr-8 rounded-lg border border-input bg-card text-xs font-bold text-foreground focus:ring-1 focus:ring-primary shadow-2xs cursor-pointer">
+                  ${classes.length === 0 ? `<option value="">${isKm ? 'គ្មានថ្នាក់រៀន' : 'No classes'}</option>` : ''}
                   ${classes.map(c => `
                     <option value="${c.id}" ${this.state.selectedClassId === c.id ? 'selected' : ''}>${c.name}</option>
                   `).join('')}
@@ -115,20 +223,17 @@ export const ScoresPage = {
               `}
             </div>
 
-            <!-- Month / Period Selection (Jan to Dec, Semester 1/2, First Test, Annual) -->
-            <div>
-              <label class="block text-[11px] text-muted-foreground font-medium mb-1 ${isKm ? 'font-khmer' : ''}">
-                ${isKm ? 'ខែ / សម័យប្រឡង' : 'Month / Evaluation Period'}
-              </label>
-              <select id="select-score-period" class="w-full h-9 px-3 py-1.5 pr-8 rounded-md border border-input bg-card text-xs font-semibold text-foreground focus:ring-1 focus:ring-ring box-border shadow-xs cursor-pointer">
-                <optgroup label="${isKm ? 'ខែ (Months: Jan - Dec)' : 'Months (Jan - Dec)'}">
+            <!-- Month / Period Selector Pill -->
+            <div class="relative">
+              <select id="select-score-period" class="h-8.5 px-3 pr-8 rounded-lg border border-input bg-card text-xs font-bold text-foreground focus:ring-1 focus:ring-primary shadow-2xs cursor-pointer">
+                <optgroup label="${isKm ? 'ខែសិក្សា' : 'Months'}">
                   ${months.map(m => `
                     <option value="${m.id}" ${this.state.selectedPeriod === m.id ? 'selected' : ''}>
-                      ${isKm ? `${m.nameKm} (${m.nameEn})` : m.nameEn}
+                      ${isKm ? m.nameKm : m.nameEn}
                     </option>
                   `).join('')}
                 </optgroup>
-                <optgroup label="${isKm ? 'តេស្ត និងការប្រឡងឆមាស (Exams & Terms)' : 'Assessments & Semesters'}">
+                <optgroup label="${isKm ? 'ការប្រឡង និងឆមាស' : 'Exams'}">
                   ${exams.map(e => `
                     <option value="${e.id}" ${this.state.selectedPeriod === e.id ? 'selected' : ''}>
                       ${isKm ? e.nameKm : e.nameEn}
@@ -138,57 +243,73 @@ export const ScoresPage = {
               </select>
             </div>
 
-            <!-- Student Search Filter -->
-            <div>
-              <label class="block text-[11px] text-muted-foreground font-medium mb-1 ${isKm ? 'font-khmer' : ''}">
-                ${isKm ? 'ស្វែងរកសិស្ស (ឈ្មោះ / អត្តលេខ)' : 'Search Student'}
-              </label>
-              <div class="relative">
-                <input type="text" 
-                       id="input-search-student" 
-                       placeholder="${isKm ? 'ស្វែងរកតាមឈ្មោះ ឬអត្តលេខ...' : 'Filter by name or ID...'}" 
-                       value="${this.state.searchQuery}"
-                       class="w-full h-9 pl-8 pr-3 rounded-md border border-input bg-background text-foreground text-xs focus:ring-1 focus:ring-primary shadow-xs" />
-                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  ${getIcon('search', 'w-3.5 h-3.5')}
-                </span>
+            <!-- Download Template Button -->
+            <button id="btn-download-template" type="button" class="h-8.5 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'ទាញយកឯកសារ Excel គំរូ' : 'Download Excel Template'}">
+              <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'ទាញយកគំរូ' : 'Template'}</span>
+            </button>
+
+            <!-- Upload Scores Button -->
+            <button id="btn-upload-scores" type="button" class="h-8.5 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'បញ្ចូលពិន្ទុពីឯកសារ Excel' : 'Upload from Excel'}">
+              <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"/></svg>
+              <span>Upload</span>
+            </button>
+            <input type="file" id="input-file-upload-excel" accept=".xlsx,.xls,.csv" class="hidden" />
+
+            <!-- A-F Grading Guide Button -->
+            <button id="btn-grade-scale-guide" type="button" class="h-8.5 px-2.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-bold font-mono shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'កម្រិតនិទ្ទេស A-F' : 'Grading Scale'}">
+              A-F
+            </button>
+
+            <!-- Data Actions Dropdown -->
+            <div class="relative">
+              <button id="btn-data-menu" type="button" class="h-8.5 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1 shadow-2xs transition-colors cursor-pointer">
+                <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'ទិន្នន័យ' : 'Data'}</span>
+                <svg class="w-3 h-3 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </button>
+              <div id="dropdown-data-menu" class="hidden absolute left-0 top-full mt-1 w-48 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg z-50 py-1 text-xs font-khmer">
+                <button id="action-recalculate-all" type="button" class="w-full text-left px-3 py-2 hover:bg-muted flex items-center gap-2 cursor-pointer">
+                  ${getIcon('refresh', 'w-3.5 h-3.5 text-primary')}
+                  <span>${isKm ? 'គណនាពិន្ទុឡើងវិញ' : 'Recalculate All'}</span>
+                </button>
+                <button id="action-clear-all-scores" type="button" class="w-full text-left px-3 py-2 hover:bg-destructive/10 text-destructive flex items-center gap-2 cursor-pointer">
+                  ${getIcon('trash', 'w-3.5 h-3.5')}
+                  <span>${isKm ? 'លុបពិន្ទុក្នុងតារាងទាំងអស់' : 'Clear All Scores'}</span>
+                </button>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Live Score Summary Cards -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 print:hidden" id="score-summary-banner">
-          <div class="p-3.5 rounded-xl bg-card border border-border shadow-2xs">
-            <span class="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block ${isKm ? 'font-khmer' : ''}">${isKm ? 'ចំនួនសិស្សសរុប' : 'Enrolled Students'}</span>
-            <p class="text-xl font-bold text-foreground mt-1" id="stat-total-students">0</p>
-          </div>
-          <div class="p-3.5 rounded-xl bg-card border border-border shadow-2xs">
-            <span class="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block ${isKm ? 'font-khmer' : ''}">${isKm ? 'មធ្យមភាគថ្នាក់' : 'Class Average'}</span>
-            <p class="text-xl font-bold text-foreground mt-1" id="stat-class-average">0%</p>
-          </div>
-          <div class="p-3.5 rounded-xl bg-card border border-border shadow-2xs">
-            <span class="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase font-bold tracking-wider block ${isKm ? 'font-khmer' : ''}">${isKm ? 'ពិន្ទុខ្ពស់បំផុត' : 'Highest Score'}</span>
-            <p class="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1" id="stat-highest-mark">0</p>
-          </div>
-          <div class="p-3.5 rounded-xl bg-card border border-border shadow-2xs">
-            <span class="text-[10px] text-primary uppercase font-bold tracking-wider block ${isKm ? 'font-khmer' : ''}">${isKm ? 'អត្រាជាប់' : 'Pass Rate'}</span>
-            <p class="text-xl font-bold text-primary mt-1" id="stat-pass-rate">0%</p>
+          <!-- Student Search Input -->
+          <div class="relative w-full sm:w-64">
+            <input type="text" 
+                   id="input-search-student" 
+                   placeholder="${isKm ? 'ស្វែងរកសិស្ស...' : 'Search student...'}" 
+                   value="${this.state.searchQuery}"
+                   class="w-full h-8.5 pl-8 pr-3 rounded-lg border border-input bg-background text-foreground text-xs focus:ring-1 focus:ring-primary shadow-2xs" />
+            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+              ${getIcon('search', 'w-3.5 h-3.5')}
+            </span>
           </div>
         </div>
 
-        <!-- Score Table Card -->
-        <div class="rounded-xl border border-border bg-card shadow-xs overflow-hidden print:border-none print:shadow-none">
-          <div class="overflow-x-auto relative max-h-[70vh]">
-            <table class="w-full text-left border-collapse text-xs select-text">
-              <thead class="sticky top-0 z-20 bg-muted/90 backdrop-blur border-b border-border text-muted-foreground font-semibold">
-                <tr id="scores-table-header-row">
-                  <!-- Dynamically populated with No, ID, Name, Gender, Subjects, Total, Average, Grade, Rank -->
+        <!-- Master Score Table Container -->
+        <div class="rounded-xl border border-border bg-card shadow-xs overflow-hidden print:border-none print:shadow-none relative">
+          <div class="score-table-container max-h-[72vh] overflow-auto">
+            <table class="score-table text-left text-xs border-separate" id="master-score-table">
+              <thead class="sticky top-0 z-30 shadow-xs">
+                <!-- Tier 1: Category Groups Header -->
+                <tr id="score-category-header-row" class="bg-muted/95 border-b border-border/80">
+                  <!-- Populated dynamically -->
+                </tr>
+                <!-- Tier 2: Subject Names (Vertical Text) & Sub-columns -->
+                <tr id="score-subject-header-row" class="bg-muted/90 border-b border-border">
+                  <!-- Populated dynamically -->
                 </tr>
               </thead>
-              <tbody id="scores-table-body" class="divide-y divide-border/60">
+              <tbody id="scores-table-body" class="divide-y divide-border/40">
                 <tr>
-                  <td colspan="20" class="py-12 text-center text-muted-foreground">
+                  <td colspan="30" class="py-16 text-center text-muted-foreground">
                     <div class="flex items-center justify-center gap-2">
                       <div class="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
                       <span>${t('common.loading')}</span>
@@ -198,6 +319,21 @@ export const ScoresPage = {
               </tbody>
             </table>
           </div>
+        </div>
+
+        <!-- Floating Multi-Delete Bar (Appears when 2 or more cells are selected) -->
+        <div id="score-floating-actions" class="score-floating-action-bar hidden">
+          <span class="font-khmer text-xs">
+            ${isKm ? 'បានជ្រើស' : 'Selected'}: <strong id="floating-selection-count" class="font-mono text-amber-300">0</strong> ${isKm ? 'ប្រអប់' : 'cells'}
+          </span>
+          <div class="h-3.5 w-px bg-slate-600"></div>
+          <button id="btn-floating-delete" type="button" class="px-3 py-1 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            <span>${isKm ? 'លុបពិន្ទុដែលបានជ្រើស' : 'Delete Selected'}</span>
+          </button>
+          <button id="btn-floating-cancel" type="button" class="px-2 py-1 rounded-full text-slate-300 hover:text-white text-xs cursor-pointer">
+            ✕
+          </button>
         </div>
       </div>
     `;
@@ -217,42 +353,98 @@ export const ScoresPage = {
     this.state.rows = data.rows || [];
     this.state.subjects = data.subjects || [];
 
+    // Group subjects into MoEYS standard categories
+    this.organizeGroupedSubjects();
+
     this.renderHeader();
     this.renderRows();
     this.updateSummaryStats();
   },
 
+  organizeGroupedSubjects() {
+    const rawSubjects = this.state.subjects;
+    const groupsMap = {};
+
+    Object.keys(CATEGORY_DEFS).forEach(k => {
+      groupsMap[k] = {
+        key: k,
+        ...CATEGORY_DEFS[k],
+        subjects: []
+      };
+    });
+
+    rawSubjects.forEach(sub => {
+      const catKey = getSubjectCategoryKey(sub);
+      if (groupsMap[catKey]) {
+        groupsMap[catKey].subjects.push(sub);
+      } else {
+        groupsMap.other.subjects.push(sub);
+      }
+    });
+
+    // Keep only categories that have at least 1 subject in this class
+    this.state.groupedSubjects = Object.values(groupsMap).filter(g => g.subjects.length > 0);
+  },
+
   renderHeader() {
     const isKm = i18n.getLocale() === 'km';
-    const headerRow = document.getElementById('scores-table-header-row');
-    if (!headerRow) return;
+    const catRow = document.getElementById('score-category-header-row');
+    const subRow = document.getElementById('score-subject-header-row');
+    if (!catRow || !subRow) return;
 
-    const subjects = this.state.subjects;
+    const groups = this.state.groupedSubjects;
 
-    headerRow.innerHTML = `
-      <th class="w-12 px-3 py-3 text-center sticky left-0 bg-muted z-30 border-r border-border/60 shadow-2xs">#</th>
-      <th class="px-3 py-3 font-mono sticky left-12 bg-muted z-30 border-r border-border/60 min-w-[90px] shadow-2xs">${isKm ? 'អត្តលេខ' : 'Student ID'}</th>
-      <th class="px-4 py-3 sticky left-[138px] bg-muted z-30 border-r border-border/60 min-w-[170px] shadow-sm">
-        <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'គោត្តនាម-នាម' : 'Student Name'}</span>
-      </th>
-      <th class="px-3 py-3 text-center min-w-[65px] border-r border-border/60">${isKm ? 'ភេទ' : 'Gender'}</th>
-      
-      ${subjects.map(s => `
-        <th class="px-2 py-2 text-center min-w-[85px] border-r border-border/40 hover:bg-muted/70 transition-colors">
-          <div class="font-bold text-foreground text-xs font-khmer truncate max-w-[110px] mx-auto" title="${s.name} (${s.nameEn || ''})">
-            ${s.name}
-          </div>
-          <div class="text-[10px] text-muted-foreground font-mono mt-0.5">
-            Max: ${s.fullScore}
-          </div>
+    // Tier 1: Category Row
+    catRow.innerHTML = `
+      <!-- Sticky Student Info Header Columns (Rowspan 2) -->
+      <th rowspan="2" class="score-sticky-col-1 text-center bg-muted/95 border-r border-b border-border/80 font-mono font-bold text-muted-foreground">#</th>
+      <th rowspan="2" class="score-sticky-col-2 text-center bg-muted/95 border-r border-b border-border/80 font-bold font-khmer text-foreground">${isKm ? 'គោត្តនាម' : 'Surname'}</th>
+      <th rowspan="2" class="score-sticky-col-3 text-center bg-muted/95 border-r border-b border-border/80 font-bold font-khmer text-foreground">${isKm ? 'នាម' : 'Name'}</th>
+      <th rowspan="2" class="score-sticky-col-4 text-center bg-muted/95 border-b border-border/80 font-bold font-khmer text-foreground">${isKm ? 'ភេទ' : 'Sex'}</th>
+
+      <!-- Subject Category Groups -->
+      ${groups.map(g => `
+        <th colspan="${g.subjects.length}" class="score-category-th ${g.headerClass} font-khmer">
+          ${isKm ? g.titleKm : g.titleEn}
         </th>
       `).join('')}
 
-      <th class="px-3 py-3 text-center font-bold text-foreground min-w-[70px] bg-muted/80 border-r border-border/60">${isKm ? 'សរុប' : 'Total'}</th>
-      <th class="px-3 py-3 text-center font-bold text-primary min-w-[70px] bg-muted/80 border-r border-border/60">${isKm ? 'មធ្យម' : 'Avg %'}</th>
-      <th class="px-3 py-3 text-center font-bold min-w-[65px] bg-muted/80 border-r border-border/60">${isKm ? 'និទ្ទេស' : 'Grade'}</th>
-      <th class="px-3 py-3 text-center font-bold text-amber-600 dark:text-amber-400 min-w-[60px] bg-muted/80 border-r border-border/60">${isKm ? 'ចំណាត់' : 'Rank'}</th>
-      <th class="px-3 py-3 text-center min-w-[55px] bg-muted/80 print:hidden">${isKm ? 'ផ្សេងៗ' : 'Actions'}</th>
+      <!-- Results Group (4 columns) -->
+      <th colspan="4" class="score-category-th bg-slate-100/95 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 font-khmer">
+        ${isKm ? 'លទ្ធផល' : 'Results'}
+      </th>
+
+      <!-- Actions -->
+      <th rowspan="2" class="text-center px-2 py-3 bg-muted/95 border-b border-border/80 text-[10px] text-muted-foreground font-khmer print:hidden">
+        ${isKm ? 'ផ្សេងៗ' : 'Actions'}
+      </th>
+    `;
+
+    // Tier 2: Subject Column Headers (Vertical Text) & Result Columns
+    subRow.innerHTML = `
+      <!-- Subject Sub-headers with vertical writing and coefficient badge -->
+      ${groups.map(g => g.subjects.map(sub => `
+        <th class="score-subject-th ${g.subHeaderClass}" title="${sub.name} (Max: ${sub.fullScore})">
+          <div class="score-vertical-title font-khmer" title="${sub.name}">
+            ${sub.name}
+          </div>
+          <span class="score-coefficient-badge">×${sub.creditHours || 1}</span>
+        </th>
+      `).join('')).join('')}
+
+      <!-- Result Sub-columns -->
+      <th class="px-2 py-2 text-center font-bold font-mono text-foreground min-w-[55px] bg-slate-50 dark:bg-slate-900/40 border-r border-b border-border/50">
+        <span class="font-khmer text-[11px] block">${isKm ? 'ពិន្ទុសរុប' : 'Total'}</span>
+      </th>
+      <th class="px-2 py-2 text-center font-bold font-mono text-primary min-w-[52px] bg-slate-50 dark:bg-slate-900/40 border-r border-b border-border/50">
+        <span class="font-khmer text-[11px] block">${isKm ? 'មធ្យម' : 'Avg'}</span>
+      </th>
+      <th class="px-2 py-2 text-center font-bold font-mono text-amber-600 dark:text-amber-400 min-w-[46px] bg-slate-50 dark:bg-slate-900/40 border-r border-b border-border/50">
+        <span class="font-khmer text-[11px] block">${isKm ? 'ចំណាត់' : 'Rank'}</span>
+      </th>
+      <th class="px-2 py-2 text-center font-bold min-w-[46px] bg-slate-50 dark:bg-slate-900/40 border-r border-b border-border/50">
+        <span class="font-khmer text-[11px] block">${isKm ? 'និទ្ទេស' : 'Grade'}</span>
+      </th>
     `;
   },
 
@@ -267,284 +459,223 @@ export const ScoresPage = {
       rows = rows.filter(r => 
         (r.studentNumber && r.studentNumber.toLowerCase().includes(query)) ||
         (r.khmerFullName && r.khmerFullName.toLowerCase().includes(query)) ||
+        (r.lastNameKh && r.lastNameKh.toLowerCase().includes(query)) ||
+        (r.firstNameKh && r.firstNameKh.toLowerCase().includes(query)) ||
         (r.englishName && r.englishName.toLowerCase().includes(query))
       );
     }
 
+    const flatSubjects = [];
+    this.state.groupedSubjects.forEach(g => {
+      g.subjects.forEach(s => flatSubjects.push(s));
+    });
+
     if (rows.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="${5 + this.state.subjects.length + 5}" class="py-12 text-center text-muted-foreground">
-            <p class="text-xs ${isKm ? 'font-khmer' : ''}">${isKm ? 'មិនមានសិស្សក្នុងថ្នាក់នេះទេ' : 'No students found in this class'}</p>
+          <td colspan="${4 + flatSubjects.length + 5}" class="py-16 text-center text-muted-foreground">
+            <p class="text-xs ${isKm ? 'font-khmer' : ''}">
+              ${isKm ? 'មិនមានសិស្សក្នុងថ្នាក់នេះទេ' : 'No students found in this class'}
+            </p>
           </td>
         </tr>
       `;
       return;
     }
 
-    const subjects = this.state.subjects;
+    tbody.innerHTML = rows.map((r, rIdx) => {
+      // Split Names into Surname (គោត្តនាម) and Given Name (នាម)
+      let surname = (r.lastNameKh || '').trim();
+      let givenName = (r.firstNameKh || '').trim();
+      if (!surname && !givenName && r.khmerFullName) {
+        const parts = r.khmerFullName.trim().split(/\s+/);
+        surname = parts[0] || '';
+        givenName = parts.slice(1).join(' ') || '';
+      }
 
-    tbody.innerHTML = rows.map((r, idx) => {
+      // Gender styling: ស្រី in pink, ប្រុស in blue (clean text matching screenshot)
       const isFemale = r.gender === 'Female' || r.gender === 'ស្រី';
-      const genderLabel = isKm ? (isFemale ? 'ស្រី' : 'ប្រុស') : (isFemale ? 'F' : 'M');
-      const genderBadge = isFemale 
-        ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20' 
-        : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20';
+      const isMale = r.gender === 'Male' || r.gender === 'ប្រុស';
+      const genderText = isFemale ? 'ស្រី' : (isMale ? 'ប្រុស' : (r.gender || '—'));
+      const genderColor = isFemale 
+        ? 'text-rose-600 dark:text-rose-400 font-bold' 
+        : (isMale ? 'text-sky-600 dark:text-sky-400 font-bold' : 'text-muted-foreground');
 
       return `
-        <tr class="hover:bg-muted/20 transition-colors" data-student-id="${r.studentId}">
-          <!-- No -->
-          <td class="w-12 px-3 py-2 text-center font-mono text-muted-foreground sticky left-0 bg-card z-10 border-r border-border/60 shadow-2xs">
-            ${idx + 1}
+        <tr class="hover:bg-muted/15 transition-colors group" data-student-id="${r.studentId}" data-row-idx="${rIdx}">
+          <!-- 1. No -->
+          <td class="score-sticky-col-1 text-center font-mono font-medium text-muted-foreground bg-card group-hover:bg-muted/20 border-r border-b border-border/50 py-1.5">
+            ${rIdx + 1}
           </td>
 
-          <!-- Student ID -->
-          <td class="px-3 py-2 font-mono font-medium text-foreground sticky left-12 bg-card z-10 border-r border-border/60 shadow-2xs">
-            ${r.studentNumber || '—'}
+          <!-- 2. Surname (គោត្តនាម) -->
+          <td class="score-sticky-col-2 text-center font-khmer font-semibold text-foreground bg-card group-hover:bg-muted/20 border-r border-b border-border/50 px-1 py-1.5 truncate">
+            ${surname || '—'}
           </td>
 
-          <!-- Student Name (khmer firstname + khmer last name) -->
-          <td class="px-4 py-2 sticky left-[138px] bg-card z-10 border-r border-border/60 shadow-sm min-w-[170px]">
-            <p class="font-bold text-foreground font-khmer text-xs leading-tight truncate">
-              ${r.khmerFullName || '—'}
-            </p>
-            ${r.englishName ? `
-              <p class="text-[10px] text-muted-foreground truncate leading-tight font-sans">
-                ${r.englishName}
-              </p>
-            ` : ''}
+          <!-- 3. Given Name (នាម) -->
+          <td class="score-sticky-col-3 text-center font-khmer font-semibold text-foreground bg-card group-hover:bg-muted/20 border-r border-b border-border/50 px-1 py-1.5 truncate">
+            ${givenName || '—'}
           </td>
 
-          <!-- Gender -->
-          <td class="px-3 py-2 text-center border-r border-border/60">
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${genderBadge}">
-              ${genderLabel}
-            </span>
+          <!-- 4. Gender (ភេទ) -->
+          <td class="score-sticky-col-4 text-center font-khmer text-xs ${genderColor} bg-card group-hover:bg-muted/20 border-b border-border/50 px-1 py-1.5">
+            ${genderText}
           </td>
 
-          <!-- All Subjects Inputs -->
-          ${subjects.map(s => {
+          <!-- 5. Subject Score Grid Cells -->
+          ${flatSubjects.map((s, cIdx) => {
             const currentScore = r.subjectScores[s.id];
             const displayVal = (currentScore !== null && currentScore !== undefined) ? currentScore : '';
             return `
-              <td class="px-1.5 py-1.5 text-center border-r border-border/30">
-                <input type="number" 
-                       min="0" 
-                       max="${s.fullScore}" 
-                       step="any"
-                       class="input-subject-score w-16 h-8 px-1 py-1 rounded border border-input bg-background text-foreground font-mono font-semibold text-center text-xs focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-2xs" 
-                       data-student="${r.studentId}" 
-                       data-subject="${s.id}" 
-                       data-max="${s.fullScore}" 
-                       value="${displayVal}" 
-                       placeholder="—" />
+              <td class="score-cell-td" data-row="${rIdx}" data-col="${cIdx}">
+                <input type="text"
+                       inputmode="decimal"
+                       autocomplete="off"
+                       class="score-cell-input"
+                       data-row="${rIdx}"
+                       data-col="${cIdx}"
+                       data-student="${r.studentId}"
+                       data-subject="${s.id}"
+                       data-max="${s.fullScore}"
+                       value="${displayVal}"
+                       placeholder="" />
               </td>
             `;
           }).join('')}
 
-          <!-- Total Score -->
-          <td class="px-3 py-2 text-center font-bold font-mono text-foreground col-total bg-muted/10 border-r border-border/60">
-            ${r.total}
+          <!-- 6. Total -->
+          <td class="px-2 py-1.5 text-center font-bold font-mono text-foreground col-total bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
+            ${r.total !== undefined ? r.total : 0}
           </td>
 
-          <!-- Percentage / Average -->
-          <td class="px-3 py-2 text-center font-bold font-mono text-primary col-average bg-muted/10 border-r border-border/60">
-            ${r.average}%
+          <!-- 7. Average % -->
+          <td class="px-2 py-1.5 text-center font-bold font-mono text-primary col-average bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
+            ${r.average !== undefined ? r.average : 0}%
           </td>
 
-          <!-- Grade Badge -->
-          <td class="px-3 py-2 text-center bg-muted/10 border-r border-border/60">
-            <span class="col-grade inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-extrabold ${this.getGradeBadgeClasses(r.grade)}">
-              ${r.grade}
+          <!-- 8. Rank -->
+          <td class="px-2 py-1.5 text-center font-bold font-mono text-amber-600 dark:text-amber-400 col-rank bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
+            #${r.rank || 1}
+          </td>
+
+          <!-- 9. Grade -->
+          <td class="px-2 py-1.5 text-center bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
+            <span class="col-grade inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold ${this.getGradeBadgeClasses(r.grade)}">
+              ${r.grade || 'F'}
             </span>
           </td>
 
-          <!-- Rank -->
-          <td class="px-3 py-2 text-center font-extrabold font-mono text-amber-600 dark:text-amber-400 col-rank bg-muted/10 border-r border-border/60">
-            #${r.rank}
-          </td>
-
-          <!-- Actions -->
-          <td class="px-2 py-2 text-center bg-muted/10 print:hidden">
+          <!-- 10. Actions -->
+          <td class="px-1.5 py-1 text-center border-b border-border/40 print:hidden">
             <button type="button" 
-                    class="btn-student-transcript p-1.5 rounded hover:bg-primary/10 text-primary transition-colors cursor-pointer" 
+                    class="btn-student-transcript p-1 rounded hover:bg-primary/10 text-primary transition-colors cursor-pointer" 
                     title="${isKm ? 'មើលព្រឹត្តិបត្រពិន្ទុ' : 'View Transcript'}"
                     data-student="${r.studentId}" 
-                    data-name="${r.khmerFullName}">
-              ${getIcon('fileText', 'w-4 h-4')}
+                    data-name="${r.khmerFullName || (surname + ' ' + givenName)}">
+              ${getIcon('fileText', 'w-3.5 h-3.5')}
             </button>
           </td>
         </tr>
       `;
     }).join('');
 
-    this.bindRowEvents();
+    this.bindGridInteractionEvents();
   },
 
-  bindRowEvents() {
-    const inputs = this.container.querySelectorAll('.input-subject-score');
+  /**
+   * Bind Excel-like Multi-Selection & Grid Interaction Events
+   */
+  bindGridInteractionEvents() {
+    const tableContainer = this.container.querySelector('.score-table-container');
+    const inputs = this.container.querySelectorAll('.score-cell-input');
+    if (!tableContainer) return;
 
+    // 1. Mouse Drag Range Selection
     inputs.forEach(inp => {
-      inp.addEventListener('input', () => {
-        const studentId = inp.getAttribute('data-student');
-        const subjectId = inp.getAttribute('data-subject');
-        const maxScore = Number(inp.getAttribute('data-max')) || 100;
+      inp.addEventListener('mousedown', (e) => {
+        const r = parseInt(inp.getAttribute('data-row'), 10);
+        const c = parseInt(inp.getAttribute('data-col'), 10);
 
-        let enteredVal = inp.value.trim();
-        let numVal = enteredVal === '' ? null : Math.max(0, Number(enteredVal));
-
-        // Validate max score warning
-        if (numVal !== null && numVal > maxScore) {
-          inp.classList.add('border-destructive', 'text-destructive', 'bg-destructive/10');
-        } else {
-          inp.classList.remove('border-destructive', 'text-destructive', 'bg-destructive/10');
-        }
-
-        const rowData = this.state.rows.find(r => r.studentId === studentId);
-        if (rowData) {
-          rowData.subjectScores[subjectId] = numVal;
-
-          // Recalculate row total and average
-          let sum = 0;
-          let maxTotal = 0;
-          this.state.subjects.forEach(s => {
-            const v = rowData.subjectScores[s.id];
-            if (v !== null && v !== undefined) {
-              sum += Number(v);
-            }
-            maxTotal += s.fullScore;
-          });
-
-          rowData.total = Math.round(sum * 10) / 10;
-          rowData.totalMax = maxTotal;
-          const avgPct = maxTotal > 0 ? (sum / maxTotal) * 100 : 0;
-          rowData.average = Math.round(avgPct * 10) / 10;
-          const gradeInfo = SubjectService.calculateGrade(sum, maxTotal);
-          rowData.grade = gradeInfo.grade;
-          rowData.gradeColor = gradeInfo.color;
-
-          // Recalculate ranks across all rows
-          ScoreService.rankStudents(this.state.rows);
-
-          // Update this row's display
-          const trEl = inp.closest('tr');
-          if (trEl) {
-            trEl.querySelector('.col-total').textContent = rowData.total;
-            trEl.querySelector('.col-average').textContent = `${rowData.average}%`;
-            const gradeEl = trEl.querySelector('.col-grade');
-            gradeEl.textContent = rowData.grade;
-            gradeEl.className = `col-grade inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-extrabold ${this.getGradeBadgeClasses(rowData.grade)}`;
+        if (e.shiftKey && this.selection.startRow !== null) {
+          // Extend range from anchor
+          this.selection.endRow = r;
+          this.selection.endCol = c;
+          this.updateSelectionVisuals();
+        } else if (e.ctrlKey || e.metaKey) {
+          // Add cell to selection
+          const coordKey = `${r},${c}`;
+          if (this.selection.selectedCoords.has(coordKey)) {
+            this.selection.selectedCoords.delete(coordKey);
+          } else {
+            this.selection.selectedCoords.add(coordKey);
           }
+          this.updateSelectionVisuals();
+        } else {
+          // Start fresh selection
+          this.selection.isSelecting = true;
+          this.selection.startRow = r;
+          this.selection.startCol = c;
+          this.selection.endRow = r;
+          this.selection.endCol = c;
+          this.updateSelectionRange(r, c, r, c);
+        }
+      });
 
-          // Update ranks across entire table
-          this.updateRanksInDOM();
-          this.updateSummaryStats();
+      inp.addEventListener('mouseenter', () => {
+        if (this.selection.isSelecting) {
+          const r = parseInt(inp.getAttribute('data-row'), 10);
+          const c = parseInt(inp.getAttribute('data-col'), 10);
+          this.selection.endRow = r;
+          this.selection.endCol = c;
+          this.updateSelectionRange(
+            this.selection.startRow,
+            this.selection.startCol,
+            r,
+            c
+          );
         }
       });
 
       // Auto-select text on focus for fast typing
       inp.addEventListener('focus', () => {
         inp.select();
-      });
-
-      // Keyboard navigation (Tab moves down / Enter / Arrow keys)
-      inp.addEventListener('keydown', (e) => {
-        const subjectId = inp.getAttribute('data-subject');
-        const tr = inp.closest('tr');
-
-        if (e.key === 'Tab') {
-          e.preventDefault();
-          if (e.shiftKey) {
-            // Shift + Tab: Move UP to the previous student for the same subject
-            const prevTr = tr?.previousElementSibling;
-            if (prevTr) {
-              const prevSubInp = prevTr.querySelector(`input[data-subject="${subjectId}"]`);
-              if (prevSubInp) {
-                prevSubInp.focus();
-                prevSubInp.select();
-                return;
-              }
-            } else {
-              // At top student: wrap to bottom student of previous subject
-              const subIdx = this.state.subjects.findIndex(s => s.id === subjectId);
-              if (subIdx > 0) {
-                const prevSub = this.state.subjects[subIdx - 1];
-                const allTrs = this.container.querySelectorAll('tbody tr[data-student-id]');
-                const lastTr = allTrs[allTrs.length - 1];
-                const wrapInp = lastTr?.querySelector(`input[data-subject="${prevSub.id}"]`);
-                if (wrapInp) {
-                  wrapInp.focus();
-                  wrapInp.select();
-                  return;
-                }
-              }
-            }
-          } else {
-            // Tab: Move DOWN to the next student for the same subject
-            const nextTr = tr?.nextElementSibling;
-            if (nextTr) {
-              const nextSubInp = nextTr.querySelector(`input[data-subject="${subjectId}"]`);
-              if (nextSubInp) {
-                nextSubInp.focus();
-                nextSubInp.select();
-                return;
-              }
-            } else {
-              // At bottom student: wrap to top student of next subject (column to the right)
-              const subIdx = this.state.subjects.findIndex(s => s.id === subjectId);
-              if (subIdx !== -1 && subIdx + 1 < this.state.subjects.length) {
-                const nextSub = this.state.subjects[subIdx + 1];
-                const firstTr = this.container.querySelector('tbody tr[data-student-id]');
-                const wrapInp = firstTr?.querySelector(`input[data-subject="${nextSub.id}"]`);
-                if (wrapInp) {
-                  wrapInp.focus();
-                  wrapInp.select();
-                  return;
-                }
-              }
-            }
-          }
-        } else if (e.key === 'Enter' || e.key === 'ArrowDown') {
-          e.preventDefault();
-          const nextTr = tr?.nextElementSibling;
-          if (nextTr) {
-            const sameSubInp = nextTr.querySelector(`input[data-subject="${subjectId}"]`);
-            sameSubInp?.focus();
-            sameSubInp?.select();
-          }
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          const prevTr = tr?.previousElementSibling;
-          if (prevTr) {
-            const sameSubInp = prevTr.querySelector(`input[data-subject="${subjectId}"]`);
-            sameSubInp?.focus();
-            sameSubInp?.select();
-          }
-        } else if (e.key === 'ArrowRight') {
-          const subIdx = this.state.subjects.findIndex(s => s.id === subjectId);
-          if (subIdx !== -1 && subIdx + 1 < this.state.subjects.length) {
-            const nextSub = this.state.subjects[subIdx + 1];
-            const rightInp = tr?.querySelector(`input[data-subject="${nextSub.id}"]`);
-            if (rightInp) {
-              e.preventDefault();
-              rightInp.focus();
-              rightInp.select();
-            }
-          }
-        } else if (e.key === 'ArrowLeft') {
-          const subIdx = this.state.subjects.findIndex(s => s.id === subjectId);
-          if (subIdx > 0) {
-            const prevSub = this.state.subjects[subIdx - 1];
-            const leftInp = tr?.querySelector(`input[data-subject="${prevSub.id}"]`);
-            if (leftInp) {
-              e.preventDefault();
-              leftInp.focus();
-              leftInp.select();
-            }
-          }
+        const r = parseInt(inp.getAttribute('data-row'), 10);
+        const c = parseInt(inp.getAttribute('data-col'), 10);
+        if (!this.selection.isSelecting && this.selection.selectedCoords.size <= 1) {
+          this.selection.startRow = r;
+          this.selection.startCol = c;
+          this.selection.endRow = r;
+          this.selection.endCol = c;
+          this.updateSelectionRange(r, c, r, c);
         }
       });
+
+      // Live Calculation on Typing
+      inp.addEventListener('input', () => {
+        this.handleCellInput(inp);
+      });
+
+      // Keyboard Navigation (Excel-like Arrows, Enter, Tab)
+      inp.addEventListener('keydown', (e) => {
+        this.handleCellKeydown(e, inp);
+      });
+
+      // Excel Multi-cell Paste Support
+      inp.addEventListener('paste', (e) => {
+        this.handleCellPaste(e, inp);
+      });
     });
+
+    // Global mouseup to finalize drag selection
+    const handleGlobalMouseUp = () => {
+      if (this.selection.isSelecting) {
+        this.selection.isSelecting = false;
+      }
+    };
+    window.removeEventListener('mouseup', this._globalMouseUpHandler);
+    this._globalMouseUpHandler = handleGlobalMouseUp;
+    window.addEventListener('mouseup', this._globalMouseUpHandler);
 
     // Transcript modal buttons
     this.container.querySelectorAll('.btn-student-transcript').forEach(btn => {
@@ -555,6 +686,368 @@ export const ScoresPage = {
         this.openTranscriptModal(studentName, history);
       });
     });
+  },
+
+  /**
+   * Update internal selection range coordinates
+   */
+  updateSelectionRange(r1, c1, r2, c2) {
+    const minR = Math.min(r1, r2);
+    const maxR = Math.max(r1, r2);
+    const minC = Math.min(c1, c2);
+    const maxC = Math.max(c1, c2);
+
+    this.selection.selectedCoords.clear();
+    for (let r = minR; r <= maxR; r++) {
+      for (let c = minC; c <= maxC; c++) {
+        this.selection.selectedCoords.add(`${r},${c}`);
+      }
+    }
+
+    this.updateSelectionVisuals();
+  },
+
+  /**
+   * Update visual highlight classes in DOM
+   */
+  updateSelectionVisuals() {
+    const allCells = this.container.querySelectorAll('.score-cell-td');
+    const activeCoord = `${this.selection.endRow},${this.selection.endCol}`;
+    const selectedCount = this.selection.selectedCoords.size;
+
+    allCells.forEach(cell => {
+      const r = cell.getAttribute('data-row');
+      const c = cell.getAttribute('data-col');
+      const coord = `${r},${c}`;
+
+      if (this.selection.selectedCoords.has(coord)) {
+        cell.classList.add('is-selected');
+        if (coord === activeCoord) {
+          cell.classList.add('is-active-cell');
+        } else {
+          cell.classList.remove('is-active-cell');
+        }
+      } else {
+        cell.classList.remove('is-selected', 'is-active-cell');
+      }
+    });
+
+    // Update Floating Multi-Delete Bar
+    const floatingBar = document.getElementById('score-floating-actions');
+    const countEl = document.getElementById('floating-selection-count');
+    if (floatingBar && countEl) {
+      if (selectedCount > 1) {
+        countEl.textContent = selectedCount;
+        floatingBar.classList.remove('hidden');
+      } else {
+        floatingBar.classList.add('hidden');
+      }
+    }
+  },
+
+  /**
+   * Clear all selected cells (Multi-Delete)
+   */
+  deleteSelectedCells() {
+    const selectedCount = this.selection.selectedCoords.size;
+    if (selectedCount === 0) return;
+
+    const affectedStudents = new Set();
+
+    this.selection.selectedCoords.forEach(coord => {
+      const [rStr, cStr] = coord.split(',');
+      const inp = this.container.querySelector(`.score-cell-input[data-row="${rStr}"][data-col="${cStr}"]`);
+      if (inp) {
+        inp.value = '';
+        inp.classList.remove('border-destructive', 'text-destructive', 'bg-destructive/10');
+        const studentId = inp.getAttribute('data-student');
+        const subjectId = inp.getAttribute('data-subject');
+        const rowData = this.state.rows.find(row => row.studentId === studentId);
+        if (rowData) {
+          rowData.subjectScores[subjectId] = null;
+          affectedStudents.add(rowData);
+        }
+      }
+    });
+
+    // Recalculate each affected student row
+    affectedStudents.forEach(rowData => {
+      this.recalculateRowData(rowData);
+    });
+
+    // Recalculate ranks across all rows
+    ScoreService.rankStudents(this.state.rows);
+    this.updateRanksInDOM();
+    this.updateSummaryStats();
+
+    // Trigger debounced auto-save & sync
+    this.triggerDebouncedAutoSave();
+
+    // Show brief feedback toast
+    const isKm = i18n.getLocale() === 'km';
+    toast.success(
+      isKm ? `បានលុបពិន្ទុ ${selectedCount} ប្រអប់ដោយជោគជ័យ!` : `Cleared ${selectedCount} score cells!`,
+      isKm ? 'លុបរួចរាល់' : 'Cleared'
+    );
+
+    // Keep active single cell selected
+    this.selection.selectedCoords.clear();
+    if (this.selection.endRow !== null && this.selection.endCol !== null) {
+      this.selection.selectedCoords.add(`${this.selection.endRow},${this.selection.endCol}`);
+    }
+    this.updateSelectionVisuals();
+  },
+
+  /**
+   * Handle single cell input change
+   */
+  handleCellInput(inp) {
+    const studentId = inp.getAttribute('data-student');
+    const subjectId = inp.getAttribute('data-subject');
+    const maxScore = Number(inp.getAttribute('data-max')) || 100;
+
+    let enteredVal = inp.value.trim();
+    let numVal = enteredVal === '' ? null : Math.max(0, Number(enteredVal));
+
+    if (numVal !== null && numVal > maxScore) {
+      inp.classList.add('border-destructive', 'text-destructive', 'bg-destructive/10');
+    } else {
+      inp.classList.remove('border-destructive', 'text-destructive', 'bg-destructive/10');
+    }
+
+    const rowData = this.state.rows.find(r => r.studentId === studentId);
+    if (rowData) {
+      rowData.subjectScores[subjectId] = numVal;
+      this.recalculateRowData(rowData);
+      ScoreService.rankStudents(this.state.rows);
+      this.updateRanksInDOM();
+      this.updateSummaryStats();
+      this.triggerDebouncedAutoSave();
+    }
+  },
+
+  /**
+   * Recalculate total, average, grade for a student row and update DOM
+   */
+  recalculateRowData(rowData) {
+    let sum = 0;
+    let maxTotal = 0;
+
+    this.state.subjects.forEach(s => {
+      const v = rowData.subjectScores[s.id];
+      if (v !== null && v !== undefined && v !== '') {
+        sum += Number(v);
+      }
+      maxTotal += s.fullScore;
+    });
+
+    rowData.total = Math.round(sum * 10) / 10;
+    rowData.totalMax = maxTotal;
+    const avgPct = maxTotal > 0 ? (sum / maxTotal) * 100 : 0;
+    rowData.average = Math.round(avgPct * 10) / 10;
+    const gradeInfo = SubjectService.calculateGrade(sum, maxTotal);
+    rowData.grade = gradeInfo.grade;
+    rowData.gradeColor = gradeInfo.color;
+
+    const trEl = this.container.querySelector(`tr[data-student-id="${rowData.studentId}"]`);
+    if (trEl) {
+      trEl.querySelector('.col-total').textContent = rowData.total;
+      trEl.querySelector('.col-average').textContent = `${rowData.average}%`;
+      const gradeEl = trEl.querySelector('.col-grade');
+      if (gradeEl) {
+        gradeEl.textContent = rowData.grade;
+        gradeEl.className = `col-grade inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold ${this.getGradeBadgeClasses(rowData.grade)}`;
+      }
+    }
+  },
+
+  /**
+   * Handle keyboard navigation (Excel shortcuts, Delete key, Tab, Enter)
+   */
+  handleCellKeydown(e, inp) {
+    const curR = parseInt(inp.getAttribute('data-row'), 10);
+    const curC = parseInt(inp.getAttribute('data-col'), 10);
+    const totalRows = this.state.rows.length;
+    const totalCols = this.state.subjects.length;
+
+    // 1. Delete / Backspace key multi-delete
+    if (e.key === 'Delete' || (e.key === 'Backspace' && (this.selection.selectedCoords.size > 1 || inp.selectionStart === 0 && inp.selectionEnd === inp.value.length))) {
+      if (this.selection.selectedCoords.size > 1) {
+        e.preventDefault();
+        this.deleteSelectedCells();
+        return;
+      }
+    }
+
+    // 2. Select All (Ctrl+A / Cmd+A)
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
+      e.preventDefault();
+      this.selection.selectedCoords.clear();
+      for (let r = 0; r < totalRows; r++) {
+        for (let c = 0; c < totalCols; c++) {
+          this.selection.selectedCoords.add(`${r},${c}`);
+        }
+      }
+      this.updateSelectionVisuals();
+      return;
+    }
+
+    // 3. Arrow Keys with Shift (Expand Selection like Excel)
+    if (e.shiftKey && (e.key.startsWith('Arrow') || e.key === 'Tab' || e.key === 'Enter')) {
+      e.preventDefault();
+      let nextR = this.selection.endRow !== null ? this.selection.endRow : curR;
+      let nextC = this.selection.endCol !== null ? this.selection.endCol : curC;
+
+      if (e.key === 'ArrowDown') nextR = Math.min(totalRows - 1, nextR + 1);
+      else if (e.key === 'ArrowUp') nextR = Math.max(0, nextR - 1);
+      else if (e.key === 'ArrowRight') nextC = Math.min(totalCols - 1, nextC + 1);
+      else if (e.key === 'ArrowLeft') nextC = Math.max(0, nextC - 1);
+
+      this.selection.endRow = nextR;
+      this.selection.endCol = nextC;
+      this.updateSelectionRange(
+        this.selection.startRow,
+        this.selection.startCol,
+        nextR,
+        nextC
+      );
+      return;
+    }
+
+    // 4. Standard Navigation: Enter (Down), Tab (Right), Arrow Keys
+    let targetR = curR;
+    let targetC = curC;
+    let shouldNavigate = false;
+
+    if (e.key === 'Enter' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      targetR = Math.min(totalRows - 1, curR + 1);
+      shouldNavigate = true;
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      targetR = Math.max(0, curR - 1);
+      shouldNavigate = true;
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      if (e.shiftKey) {
+        // Shift + Tab: Move left
+        if (curC > 0) {
+          targetC = curC - 1;
+        } else if (curR > 0) {
+          targetR = curR - 1;
+          targetC = totalCols - 1;
+        }
+      } else {
+        // Tab: Move right
+        if (curC + 1 < totalCols) {
+          targetC = curC + 1;
+        } else if (curR + 1 < totalRows) {
+          targetR = curR + 1;
+          targetC = 0;
+        }
+      }
+      shouldNavigate = true;
+    } else if (e.key === 'ArrowRight' && inp.selectionEnd === inp.value.length) {
+      if (curC + 1 < totalCols) {
+        targetC = curC + 1;
+        shouldNavigate = true;
+      }
+    } else if (e.key === 'ArrowLeft' && inp.selectionStart === 0) {
+      if (curC > 0) {
+        targetC = curC - 1;
+        shouldNavigate = true;
+      }
+    }
+
+    if (shouldNavigate && (targetR !== curR || targetC !== curC)) {
+      const nextInp = this.container.querySelector(`.score-cell-input[data-row="${targetR}"][data-col="${targetC}"]`);
+      if (nextInp) {
+        nextInp.focus();
+        nextInp.select();
+      }
+    }
+  },
+
+  /**
+   * Handle pasting table values directly from Excel or Google Sheets
+   */
+  handleCellPaste(e, inp) {
+    const text = (e.clipboardData || window.clipboardData)?.getData('text');
+    if (!text || (!text.includes('\t') && !text.includes('\n'))) return;
+
+    e.preventDefault();
+    const curR = parseInt(inp.getAttribute('data-row'), 10);
+    const curC = parseInt(inp.getAttribute('data-col'), 10);
+
+    const lines = text.trim().split(/\r?\n/).map(line => line.split('\t'));
+    let pastedCount = 0;
+    const affectedStudents = new Set();
+
+    lines.forEach((line, rOffset) => {
+      line.forEach((cellVal, cOffset) => {
+        const targetR = curR + rOffset;
+        const targetC = curC + cOffset;
+        const targetInp = this.container.querySelector(`.score-cell-input[data-row="${targetR}"][data-col="${targetC}"]`);
+        if (targetInp) {
+          const cleanVal = cellVal.trim();
+          const numVal = cleanVal === '' ? null : Math.max(0, Number(cleanVal));
+          targetInp.value = cleanVal;
+
+          const studentId = targetInp.getAttribute('data-student');
+          const subjectId = targetInp.getAttribute('data-subject');
+          const rowData = this.state.rows.find(r => r.studentId === studentId);
+          if (rowData) {
+            rowData.subjectScores[subjectId] = isNaN(numVal) ? null : numVal;
+            affectedStudents.add(rowData);
+            pastedCount++;
+          }
+        }
+      });
+    });
+
+    affectedStudents.forEach(rowData => {
+      this.recalculateRowData(rowData);
+    });
+
+    ScoreService.rankStudents(this.state.rows);
+    this.updateRanksInDOM();
+    this.updateSummaryStats();
+    this.triggerDebouncedAutoSave();
+
+    const isKm = i18n.getLocale() === 'km';
+    toast.success(
+      isKm ? `បានបិទភ្ជាប់ពិន្ទុ ${pastedCount} ប្រអប់ដោយជោគជ័យ!` : `Pasted ${pastedCount} score cells!`,
+      isKm ? 'ជោគជ័យ' : 'Success'
+    );
+  },
+
+  /**
+   * Auto-save scores to IndexedDB & trigger silent Drive sync
+   */
+  triggerDebouncedAutoSave() {
+    clearTimeout(this.state.saveDebounceTimer);
+    const statusText = document.getElementById('sync-status-text');
+    if (statusText) {
+      statusText.textContent = i18n.getLocale() === 'km' ? 'កំពុងកែប្រែ...' : 'Saving...';
+    }
+
+    this.state.saveDebounceTimer = setTimeout(async () => {
+      try {
+        await ScoreService.saveMasterScoreSheet({
+          classId: this.state.selectedClassId,
+          academicYear: this.state.activeYear,
+          period: this.state.selectedPeriod,
+          rows: this.state.rows,
+          subjects: this.state.subjects
+        });
+
+        if (statusText) {
+          statusText.textContent = i18n.getLocale() === 'km' ? 'បានធ្វើសមកាលកម្ម' : 'Synced';
+        }
+      } catch (err) {
+        console.warn('Auto-save scores notice:', err);
+      }
+    }, 800);
   },
 
   updateRanksInDOM() {
@@ -570,35 +1063,22 @@ export const ScoresPage = {
 
   updateSummaryStats() {
     const rows = this.state.rows;
-    const totalEl = document.getElementById('stat-total-students');
-    const avgEl = document.getElementById('stat-class-average');
-    const highEl = document.getElementById('stat-highest-mark');
-    const passEl = document.getElementById('stat-pass-rate');
+    const totalEl = document.getElementById('stat-count-total');
+    const femaleEl = document.getElementById('stat-count-female');
+    const maleEl = document.getElementById('stat-count-male');
 
-    if (totalEl) totalEl.textContent = rows.length;
-    if (rows.length === 0) {
-      if (avgEl) avgEl.textContent = '0%';
-      if (highEl) highEl.textContent = '0';
-      if (passEl) passEl.textContent = '0%';
-      return;
-    }
-
-    let sumPct = 0;
-    let highest = 0;
-    let passedCount = 0;
+    let femaleCount = 0;
+    let maleCount = 0;
 
     for (const r of rows) {
-      sumPct += (r.average || 0);
-      if (r.total > highest) highest = r.total;
-      if (r.average >= 50) passedCount++;
+      const isFemale = r.gender === 'Female' || r.gender === 'ស្រី';
+      if (isFemale) femaleCount++;
+      else maleCount++;
     }
 
-    const classAveragePct = (sumPct / rows.length).toFixed(1);
-    const passRate = Math.round((passedCount / rows.length) * 100);
-
-    if (avgEl) avgEl.textContent = `${classAveragePct}%`;
-    if (highEl) highEl.textContent = `${highest}`;
-    if (passEl) passEl.textContent = `${passRate}% (${passedCount} នាក់)`;
+    if (totalEl) totalEl.textContent = rows.length;
+    if (femaleEl) femaleEl.textContent = femaleCount;
+    if (maleEl) maleEl.textContent = maleCount;
   },
 
   getGradeBadgeClasses(grade) {
@@ -634,13 +1114,13 @@ export const ScoresPage = {
       this.renderRows();
     });
 
-    // Save Scores
+    // Save Scores Button
     document.getElementById('btn-save-scores')?.addEventListener('click', async () => {
       if (this.state.rows.length === 0) return;
       const saveBtn = document.getElementById('btn-save-scores');
       if (saveBtn) {
         saveBtn.disabled = true;
-        saveBtn.innerHTML = `<div class="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></div> <span>...</span>`;
+        saveBtn.innerHTML = `<div class="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin"></div>`;
       }
 
       try {
@@ -657,7 +1137,7 @@ export const ScoresPage = {
         toast.success(
           isKm 
             ? `បានរក្សាទុកពិន្ទុថ្នាក់ ${cls?.name || ''} សម្រាប់ ${this.state.selectedPeriod} ដោយជោគជ័យ!`
-            : `Scores for ${cls?.name || ''} (${this.state.selectedPeriod}) saved successfully!`,
+            : `Scores saved successfully!`,
           isKm ? 'ជោគជ័យ' : 'Success'
         );
       } catch (err) {
@@ -665,7 +1145,7 @@ export const ScoresPage = {
       } finally {
         if (saveBtn) {
           saveBtn.disabled = false;
-          saveBtn.innerHTML = `${getIcon('check', 'w-4 h-4')} <span>${i18n.getLocale() === 'km' ? 'រក្សាទុកពិន្ទុ' : 'Save Scores'}</span>`;
+          saveBtn.innerHTML = `${getIcon('check', 'w-3.5 h-3.5')} <span>${i18n.getLocale() === 'km' ? 'រក្សាទុក' : 'Save'}</span>`;
         }
       }
     });
@@ -674,6 +1154,276 @@ export const ScoresPage = {
     document.getElementById('btn-print-scores')?.addEventListener('click', () => {
       window.print();
     });
+
+    // Floating Multi-Delete Action Bar Buttons
+    document.getElementById('btn-floating-delete')?.addEventListener('click', () => {
+      this.deleteSelectedCells();
+    });
+    document.getElementById('btn-floating-cancel')?.addEventListener('click', () => {
+      this.selection.selectedCoords.clear();
+      this.updateSelectionVisuals();
+    });
+
+    // Data Menu Dropdown Toggle
+    const dataMenuBtn = document.getElementById('btn-data-menu');
+    const dataMenuDropdown = document.getElementById('dropdown-data-menu');
+    dataMenuBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dataMenuDropdown?.classList.toggle('hidden');
+    });
+    window.addEventListener('click', () => {
+      dataMenuDropdown?.classList.add('hidden');
+    });
+
+    // Action: Recalculate All
+    document.getElementById('action-recalculate-all')?.addEventListener('click', () => {
+      this.state.rows.forEach(r => this.recalculateRowData(r));
+      ScoreService.rankStudents(this.state.rows);
+      this.updateRanksInDOM();
+      this.updateSummaryStats();
+      this.triggerDebouncedAutoSave();
+      toast.success(i18n.getLocale() === 'km' ? 'បានគណនាឡើងវិញគ្រប់សិស្ស' : 'Recalculated all student scores');
+    });
+
+    // Action: Clear All Scores
+    document.getElementById('action-clear-all-scores')?.addEventListener('click', () => {
+      const isKm = i18n.getLocale() === 'km';
+      if (!confirm(isKm ? 'តើអ្នកប្រាកដជាចង់លុបពិន្ទុទាំងអស់ក្នុងខែនេះមែនទេ?' : 'Are you sure you want to clear all scores for this month?')) return;
+      this.state.rows.forEach(r => {
+        Object.keys(r.subjectScores).forEach(subId => {
+          r.subjectScores[subId] = null;
+        });
+        this.recalculateRowData(r);
+      });
+      ScoreService.rankStudents(this.state.rows);
+      this.renderRows();
+      this.updateSummaryStats();
+      this.triggerDebouncedAutoSave();
+      toast.success(isKm ? 'បានសម្អាតពិន្ទុទាំងអស់' : 'Cleared all scores');
+    });
+
+    // Download Excel Template Button
+    document.getElementById('btn-download-template')?.addEventListener('click', () => {
+      this.downloadExcelTemplate();
+    });
+
+    // Upload Scores Button
+    const uploadInput = document.getElementById('input-file-upload-excel');
+    document.getElementById('btn-upload-scores')?.addEventListener('click', () => {
+      uploadInput?.click();
+    });
+    uploadInput?.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        this.importScoresFromExcel(file);
+      }
+      uploadInput.value = '';
+    });
+
+    // A-F Grading Guide Button
+    document.getElementById('btn-grade-scale-guide')?.addEventListener('click', () => {
+      this.openGradingScaleModal();
+    });
+  },
+
+  /**
+   * Download Excel Template populated with current class roster
+   */
+  downloadExcelTemplate() {
+    const isKm = i18n.getLocale() === 'km';
+    if (!window.XLSX) {
+      toast.error('Excel library is not loaded');
+      return;
+    }
+
+    const cls = this.state.classes.find(c => c.id === this.state.selectedClassId);
+    const className = cls?.name || 'Class';
+    const period = this.state.selectedPeriod;
+
+    const headers = [
+      isKm ? 'ល.រ' : 'No',
+      isKm ? 'អត្តលេខ' : 'Student ID',
+      isKm ? 'គោត្តនាម' : 'LastName',
+      isKm ? 'នាម' : 'FirstName',
+      isKm ? 'ភេទ' : 'Gender'
+    ];
+
+    const flatSubjects = [];
+    this.state.groupedSubjects.forEach(g => {
+      g.subjects.forEach(s => {
+        flatSubjects.push(s);
+        headers.push(`${s.name} (Max:${s.fullScore})`);
+      });
+    });
+
+    const data = [headers];
+
+    this.state.rows.forEach((r, idx) => {
+      let surname = (r.lastNameKh || '').trim();
+      let givenName = (r.firstNameKh || '').trim();
+      if (!surname && !givenName && r.khmerFullName) {
+        const parts = r.khmerFullName.trim().split(/\s+/);
+        surname = parts[0] || '';
+        givenName = parts.slice(1).join(' ') || '';
+      }
+
+      const row = [
+        idx + 1,
+        r.studentNumber || '',
+        surname,
+        givenName,
+        r.gender || 'Male'
+      ];
+
+      flatSubjects.forEach(s => {
+        const score = r.subjectScores[s.id];
+        row.push(score !== null && score !== undefined ? score : '');
+      });
+
+      data.push(row);
+    });
+
+    const ws = window.XLSX.utils.aoa_to_sheet(data);
+    const wb = window.XLSX.utils.book_new();
+    window.XLSX.utils.book_append_sheet(wb, ws, 'Scores');
+    window.XLSX.writeFile(wb, `Score_Template_${className}_${period}.xlsx`);
+
+    toast.success(
+      isKm ? `បានទាញយកឯកសារ Excel គំរូថ្នាក់ ${className}!` : `Downloaded template for ${className}!`,
+      isKm ? 'ជោគជ័យ' : 'Success'
+    );
+  },
+
+  /**
+   * Import Scores from Excel file
+   */
+  importScoresFromExcel(file) {
+    const isKm = i18n.getLocale() === 'km';
+    if (!window.XLSX) {
+      toast.error('Excel library is not loaded');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = window.XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const rows = window.XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+        if (!rows || rows.length < 2) {
+          throw new Error('File does not contain valid score rows');
+        }
+
+        const headerRow = rows[0].map(h => String(h || '').trim().toLowerCase());
+        let importedCount = 0;
+
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row || row.length === 0) continue;
+
+          const stdIdVal = String(row[1] || '').trim();
+          const surnameVal = String(row[2] || '').trim();
+          const givenNameVal = String(row[3] || '').trim();
+
+          const targetStudent = this.state.rows.find(r => 
+            (stdIdVal && r.studentNumber && r.studentNumber.toLowerCase() === stdIdVal.toLowerCase()) ||
+            (surnameVal && givenNameVal && r.lastNameKh === surnameVal && r.firstNameKh === givenNameVal) ||
+            (surnameVal && givenNameVal && (r.khmerFullName || '').includes(surnameVal) && (r.khmerFullName || '').includes(givenNameVal))
+          );
+
+          if (targetStudent) {
+            this.state.subjects.forEach(sub => {
+              const subName = (sub.name || '').toLowerCase();
+              const colIdx = headerRow.findIndex(h => h.includes(subName) || (sub.nameEn && h.includes(sub.nameEn.toLowerCase())));
+              if (colIdx !== -1 && row[colIdx] !== undefined && row[colIdx] !== '') {
+                const val = Number(row[colIdx]);
+                if (!isNaN(val)) {
+                  targetStudent.subjectScores[sub.id] = Math.max(0, val);
+                }
+              }
+            });
+            this.recalculateRowData(targetStudent);
+            importedCount++;
+          }
+        }
+
+        ScoreService.rankStudents(this.state.rows);
+        this.renderRows();
+        this.updateSummaryStats();
+        this.triggerDebouncedAutoSave();
+
+        toast.success(
+          isKm ? `បានបញ្ចូលពិន្ទុសិស្ស ${importedCount} នាក់ពី Excel ដោយជោគជ័យ!` : `Imported scores for ${importedCount} students!`,
+          isKm ? 'ជោគជ័យ' : 'Success'
+        );
+      } catch (err) {
+        toast.error('Failed to import Excel: ' + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  },
+
+  /**
+   * Grading Scale (A-F) Guide Modal
+   */
+  openGradingScaleModal() {
+    const isKm = i18n.getLocale() === 'km';
+    const summary = SubjectService.getGradingScaleSummary(100);
+
+    const content = `
+      <div class="space-y-3 text-xs select-none">
+        <p class="text-muted-foreground ${isKm ? 'font-khmer' : ''}">
+          ${isKm 
+            ? 'ស្តង់ដារក្រសួងអប់រំ យុវជន និងកីឡា សម្រាប់ការវាយតម្លៃនិទ្ទេសសិស្ស (A ដល់ F)៖' 
+            : 'Standard Ministry of Education grading scale (A to F):'}
+        </p>
+
+        <div class="rounded-lg border border-border overflow-hidden">
+          <table class="w-full text-left text-xs font-khmer">
+            <thead class="bg-muted text-muted-foreground font-bold">
+              <tr>
+                <th class="p-2.5 text-center">និទ្ទេស</th>
+                <th class="p-2.5">អត្ថន័យ</th>
+                <th class="p-2.5 text-center">ភាគរយ</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              ${summary.map(item => `
+                <tr class="hover:bg-muted/30">
+                  <td class="p-2.5 text-center font-bold">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-extrabold ${this.getGradeBadgeClasses(item.grade)}">
+                      ${item.grade}
+                    </span>
+                  </td>
+                  <td class="p-2.5 font-semibold text-foreground">
+                    ${item.labelKm} <span class="text-muted-foreground font-normal">(${item.labelEn})</span>
+                  </td>
+                  <td class="p-2.5 text-center font-mono font-bold text-primary">
+                    ${item.percentRange}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    const modal = Modal.open({
+      title: isKm ? 'កម្រិតនិទ្ទេស (A - F)' : 'Grading Scale (A - F)',
+      content,
+      footer: `
+        <button id="btn-close-grade-guide" type="button" class="px-4 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-semibold cursor-pointer">
+          ${isKm ? 'យល់ព្រម' : 'Got it'}
+        </button>
+      `,
+      maxWidth: 'max-w-md'
+    });
+
+    modal.element.querySelector('#btn-close-grade-guide')?.addEventListener('click', () => modal.close());
   },
 
   /**
