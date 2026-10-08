@@ -406,10 +406,10 @@ export const ScoresPage = {
         <col style="width: 94px; min-width: 94px; max-width: 94px;">
         <col style="width: 64px; min-width: 64px; max-width: 64px;">
         ${groups.map(g => g.subjects.map(() => `<col style="width: 46px; min-width: 46px; max-width: 46px;">`).join('')).join('')}
-        <col style="width: 55px; min-width: 55px; max-width: 55px;">
+        <col style="width: 64px; min-width: 64px; max-width: 64px;">
+        <col style="width: 68px; min-width: 68px; max-width: 68px;">
+        <col style="width: 72px; min-width: 72px; max-width: 72px;">
         <col style="width: 52px; min-width: 52px; max-width: 52px;">
-        <col style="width: 46px; min-width: 46px; max-width: 46px;">
-        <col style="width: 46px; min-width: 46px; max-width: 46px;">
         <col style="width: 40px; min-width: 40px; max-width: 40px;">
       `;
     }
@@ -443,22 +443,22 @@ export const ScoresPage = {
 
       <!-- Result Columns (Centered in the middle) -->
       <th class="score-result-th p-0 text-center font-bold font-mono text-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-        <div class="w-[55px] max-w-[55px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
+        <div class="w-[64px] max-w-[64px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
           <span class="font-khmer text-xs block text-center">${isKm ? 'ពិន្ទុសរុប' : 'Total'}</span>
         </div>
       </th>
       <th class="score-result-th p-0 text-center font-bold font-mono text-primary bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-        <div class="w-[52px] max-w-[52px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
-          <span class="font-khmer text-xs block text-primary text-center">${isKm ? 'មធ្យម' : 'Avg'}</span>
+        <div class="w-[68px] max-w-[68px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
+          <span class="font-khmer text-xs block text-primary text-center">${isKm ? 'មធ្យមភាគ' : 'Avg'}</span>
         </div>
       </th>
       <th class="score-result-th p-0 text-center font-bold font-mono text-amber-600 dark:text-amber-400 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-        <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
-          <span class="font-khmer text-xs block text-amber-600 dark:text-amber-400 text-center">${isKm ? 'ចំណាត់' : 'Rank'}</span>
+        <div class="w-[72px] max-w-[72px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
+          <span class="font-khmer text-xs block text-amber-600 dark:text-amber-400 text-center">${isKm ? 'ចំណាត់ថ្នាក់' : 'Rank'}</span>
         </div>
       </th>
       <th class="score-result-th p-0 text-center font-bold bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-        <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
+        <div class="w-[52px] max-w-[52px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
           <span class="font-khmer text-xs block text-center">${isKm ? 'និទ្ទេស' : 'Grade'}</span>
         </div>
       </th>
@@ -574,22 +574,22 @@ export const ScoresPage = {
 
           <!-- 6. Total -->
           <td class="p-0 text-center font-bold font-mono text-foreground col-total bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
-            <div class="w-[55px] max-w-[55px] truncate text-center py-1.5 px-1">${r.total !== undefined ? r.total : 0}</div>
+            <div class="w-[64px] max-w-[64px] truncate text-center py-1.5 px-1">${r.total !== undefined ? r.total : 0}</div>
           </td>
 
           <!-- 7. Average % -->
           <td class="p-0 text-center font-bold font-mono text-primary col-average bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
-            <div class="w-[52px] max-w-[52px] truncate text-center py-1.5 px-1">${r.average !== undefined ? r.average : 0}%</div>
+            <div class="w-[68px] max-w-[68px] truncate text-center py-1.5 px-1">${r.average !== undefined ? r.average : 0}%</div>
           </td>
 
           <!-- 8. Rank -->
           <td class="p-0 text-center font-bold font-mono text-amber-600 dark:text-amber-400 col-rank bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
-            <div class="w-[46px] max-w-[46px] truncate text-center py-1.5 px-1">#${r.rank || 1}</div>
+            <div class="w-[72px] max-w-[72px] truncate text-center py-1.5 px-1">#${r.rank || 1}</div>
           </td>
 
           <!-- 9. Grade -->
           <td class="p-0 text-center bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
-            <div class="w-[46px] max-w-[46px] flex items-center justify-center py-1.5">
+            <div class="w-[52px] max-w-[52px] flex items-center justify-center py-1.5">
               <span class="col-grade inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${this.getGradeBadgeClasses(r.grade)}">
                 ${r.grade || 'F'}
               </span>
