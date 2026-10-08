@@ -1601,6 +1601,29 @@ tbody tr.is-active-row td.col-grade-cell {
   background-color: rgba(3, 105, 161, 0.45) !important;
 }
 
+/* Cell Grid Borders */
+.score-cell-td,
+td.col-sub-rank,
+td.col-sub-grade,
+td.col-total,
+td.col-average,
+td.col-rank,
+td.col-grade-cell {
+  border-right: 1px solid #cbd5e1 !important;
+  border-bottom: 1px solid #cbd5e1 !important;
+}
+
+.dark .score-cell-td,
+.dark td.col-sub-rank,
+.dark td.col-sub-grade,
+.dark td.col-total,
+.dark td.col-average,
+.dark td.col-rank,
+.dark td.col-grade-cell {
+  border-right: 1px solid #334155 !important;
+  border-bottom: 1px solid #334155 !important;
+}
+
 /* Flat Excel-like Grid Cell */
 .score-cell-td {
   padding: 0 !important;
@@ -1614,22 +1637,59 @@ tbody tr.is-active-row td.col-grade-cell {
 }
 
 .score-cell-input {
-  width: 100% !important;
-  height: 100% !important;
-  min-height: 32px !important;
+  width: 38px !important;
+  height: 26px !important;
+  min-height: 26px !important;
+  max-height: 26px !important;
   padding: 0 2px !important;
-  margin: 0 !important;
+  margin: 0 auto !important;
   text-align: center !important;
   font-family: monospace !important;
   font-weight: 600 !important;
   font-size: 12px !important;
-  border: none !important;
-  border-radius: 0 !important;
-  background-color: transparent !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 4px !important;
+  background-color: #ffffff !important;
   color: inherit !important;
   outline: none !important;
   box-shadow: none !important;
   cursor: cell;
+}
+
+.dark .score-cell-input {
+  border: 1px solid #475569 !important;
+  background-color: #0f172a !important;
+}
+
+.score-cell-box {
+  width: 38px !important;
+  height: 26px !important;
+  border-radius: 4px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+
+.score-cell-rank-box {
+  border: 1px solid #fdba74 !important; /* Orange-300 */
+  background-color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.dark .score-cell-rank-box {
+  border: 1px solid rgba(194, 65, 12, 0.6) !important;
+  background-color: rgba(124, 45, 18, 0.4) !important;
+}
+
+.score-cell-grade-box {
+  border: 1px solid #7dd3fc !important; /* Sky-300 */
+  background-color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.dark .score-cell-grade-box {
+  border: 1px solid rgba(3, 105, 161, 0.6) !important;
+  background-color: rgba(12, 74, 110, 0.4) !important;
 }
 
 /* Active Cell (like Excel focus box) */
