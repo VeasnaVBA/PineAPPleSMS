@@ -40,7 +40,8 @@ export const DEFAULT_SUBJECTS = [
     creditHours: 4,
     maxScore: 100,
     scoreByGrade: { G7: 100, G8: 100, G9: 100, G10: 0, G11: 0, G12: 0 },
-    notes: 'មុខវិជ្ជាស្នូល'
+    sumOfCourses: 'SUB-101, SUB-102',
+    notes: 'មុខវិជ្ជាស្នូល (សរសេរតាមអាន + តែងសេចក្តី)'
   },
   {
     id: 'sub_math',
@@ -379,11 +380,18 @@ export const SubjectService = {
       return orderA - orderB;
     });
 
-    return sorted.map((s, idx) => ({
-      ...s,
-      order: typeof s.order === 'number' ? s.order : idx,
-      scoreByGrade: this.normalizeScoreByGrade(s.scoreByGrade, s.maxScore || 100)
-    }));
+    return sorted.map((s, idx) => {
+      let sumOfCourses = s.sumOfCourses;
+      if (!sumOfCourses && (s.id === 'sub_khmer_lit' || s.code === 'SUB-103')) {
+        sumOfCourses = 'SUB-101, SUB-102';
+      }
+      return {
+        ...s,
+        sumOfCourses,
+        order: typeof s.order === 'number' ? s.order : idx,
+        scoreByGrade: this.normalizeScoreByGrade(s.scoreByGrade, s.maxScore || 100)
+      };
+    });
   },
 
   /**
@@ -428,6 +436,8 @@ export const SubjectService = {
       maxScore,
       scoreByGrade,
       creditHours: Number(data.creditHours) > 0 ? Number(data.creditHours) : 2,
+      sumOfCourses: data.sumOfCourses ? String(data.sumOfCourses).trim() : '',
+      description: data.description ? String(data.description).trim() : (data.notes?.trim() || ''),
       notes: data.notes?.trim() || '',
       createdAt: data.createdAt || now,
       updatedAt: now
@@ -485,6 +495,8 @@ export const SubjectService = {
       maxScore,
       scoreByGrade,
       creditHours: data.creditHours !== undefined && Number(data.creditHours) > 0 ? Number(data.creditHours) : existing.creditHours,
+      sumOfCourses: data.sumOfCourses !== undefined ? String(data.sumOfCourses).trim() : (existing.sumOfCourses || ''),
+      description: data.description !== undefined ? String(data.description).trim() : (existing.description || ''),
       notes: data.notes !== undefined ? data.notes.trim() : (existing.notes || ''),
       updatedAt: new Date().toISOString()
     };
@@ -653,5 +665,52 @@ export const SubjectService = {
 
     syncStateManager.markDirty('subjects.restore');
     return seeded;
+  },
+
+  /**
+   * Parse comma/space-separated course codes into an array of uppercase codes/IDs
+   */
+  getSumSubCourseCodes(subject) {
+    if (!subject || !subject.sumOfCourses) return [];
+    if (Array.isArray(subject.sumOfCourses)) return subject.sumOfCourses;
+    return String(subject.sumOfCourses)
+      .split(/[,+;\s]+/)
+      .map(c => c.trim().toUpperCase())
+      .filter(Boolean);
+  },
+
+  /**
+   * Check if a subject is a calculated/composite subject (sum of other subjects)
+   */
+  isCalculatedSubject(subject) {
+    return this.getSumSubCourseCodes(subject).length > 0;
+  },
+
+  /**
+   * Calculate composite score for a subject from a map/object of student scores
+   */
+  calculateCompositeScore(subject, allSubjects, subjectScores) {
+    if (!this.isCalculatedSubject(subject)) return null;
+    const subCodes = this.getSumSubCourseCodes(subject);
+    const componentSubs = allSubjects.filter(other =>
+      other.id !== subject.id && (
+        subCodes.includes(String(other.code || '').toUpperCase()) ||
+        subCodes.includes(String(other.id || '').toUpperCase())
+      )
+    );
+
+    if (componentSubs.length === 0) return null;
+
+    let sum = 0;
+    let hasAnyScore = false;
+    componentSubs.forEach(cSub => {
+      const v = subjectScores[cSub.id];
+      if (v !== null && v !== undefined && v !== '') {
+        sum += Number(v);
+        hasAnyScore = true;
+      }
+    });
+
+    return hasAnyScore ? Math.round(sum * 10) / 10 : null;
   }
 };

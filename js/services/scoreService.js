@@ -140,14 +140,46 @@ export const ScoreService = {
       let total = 0;
       let totalMax = 0;
 
+      // 1. First pass: load existing raw scores
       subjectsWithMeta.forEach(sub => {
         const scRecord = scoreMap.get(`${stu.id}_${sub.id}`);
         const val = scRecord !== undefined && scRecord !== null 
           ? (Number(scRecord.totalScore ?? scRecord.examScore) || 0) 
           : null;
         subjectScores[sub.id] = val;
-        if (val !== null) {
-          total += val;
+      });
+
+      // 2. Second pass: compute composite / sum subjects live
+      subjectsWithMeta.forEach(sub => {
+        if (SubjectService.isCalculatedSubject(sub)) {
+          const compVal = SubjectService.calculateCompositeScore(sub, subjectsWithMeta, subjectScores);
+          subjectScores[sub.id] = compVal;
+        }
+      });
+
+      // 3. Identify sub-components to prevent double-counting in grand total
+      const subComponentIds = new Set();
+      subjectsWithMeta.forEach(sub => {
+        if (SubjectService.isCalculatedSubject(sub)) {
+          const subCodes = SubjectService.getSumSubCourseCodes(sub);
+          subjectsWithMeta.forEach(other => {
+            if (other.id !== sub.id && (
+              subCodes.includes(String(other.code || '').toUpperCase()) ||
+              subCodes.includes(String(other.id || '').toUpperCase())
+            )) {
+              subComponentIds.add(other.id);
+            }
+          });
+        }
+      });
+
+      // 4. Calculate total & totalMax
+      subjectsWithMeta.forEach(sub => {
+        if (subComponentIds.has(sub.id)) return; // Exclude sub-components from grand total
+
+        const val = subjectScores[sub.id];
+        if (val !== null && val !== undefined) {
+          total += Number(val);
         }
         totalMax += sub.fullScore;
       });

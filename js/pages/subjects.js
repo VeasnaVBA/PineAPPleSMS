@@ -288,6 +288,11 @@ export const SubjectsPage = {
                         <div class="font-semibold text-foreground text-sm flex items-center gap-1.5 cursor-pointer" data-action="toggle-scale" data-id="${item.id}" title="${isKm ? 'ចុចដើម្បីមើលរូបមន្តគណនានិទ្ទេស' : 'Click to view grading scale'}">
                           ${getIcon('bookOpen', 'w-3.5 h-3.5 text-primary flex-shrink-0')}
                           <span class="truncate hover:underline hover:text-primary transition-colors">${mainName}</span>
+                          ${item.sumOfCourses ? `
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-primary/10 text-primary border border-primary/25 ml-1" title="${isKm ? 'បូកសរុបពិន្ទុពី៖ ' + item.sumOfCourses : 'Sum of: ' + item.sumOfCourses}">
+                              ∑ ${item.sumOfCourses}
+                            </span>
+                          ` : ''}
                         </div>
                         ${subName ? `<div class="text-[11px] text-muted-foreground/80 mt-0.5 pl-5 truncate">${subName}</div>` : ''}
                       </td>

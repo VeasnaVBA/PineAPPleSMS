@@ -434,9 +434,12 @@ export const ScoresPage = {
       ${this.state.subjects.map(sub => {
         const catKey = getSubjectCategoryKey(sub);
         const subHeaderClass = CATEGORY_DEFS[catKey]?.subHeaderClass || 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200';
+        const isCalc = SubjectService.isCalculatedSubject(sub);
+        const titleTip = `${sub.name} (Max: ${sub.fullScore})${isCalc ? ` [${isKm ? 'បូកសរុបពី' : 'Sum of'}: ${sub.sumOfCourses}]` : ''}`;
         return `
-          <th class="score-subject-th p-0 ${subHeaderClass}" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${sub.name} (Max: ${sub.fullScore})">
-            <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2">
+          <th class="score-subject-th p-0 ${subHeaderClass}" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${titleTip}">
+            <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2 relative">
+              ${isCalc ? `<span class="absolute top-1 right-1 text-[9px] font-mono font-extrabold text-primary bg-primary/20 rounded px-0.5 leading-none" title="${isKm ? 'បូកសរុបស្វ័យប្រវត្តិ' : 'Auto-calculated'}">∑</span>` : ''}
               <div class="score-vertical-title font-khmer" title="${sub.name}">
                 ${sub.name}
               </div>
@@ -554,19 +557,23 @@ export const ScoresPage = {
             const displayVal = (currentScore !== null && currentScore !== undefined) ? currentScore : '';
             const catKey = getSubjectCategoryKey(s);
             const cellBg = CATEGORY_DEFS[catKey]?.cellBgClass || 'bg-slate-50/40 dark:bg-slate-900/20';
+            const isCalc = SubjectService.isCalculatedSubject(s);
             return `
-              <td class="score-cell-td ${cellBg} p-0 text-center" data-row="${rIdx}" data-col="${cIdx}">
+              <td class="score-cell-td ${cellBg} p-0 text-center ${isCalc ? 'bg-primary/5' : ''}" data-row="${rIdx}" data-col="${cIdx}">
                 <div class="w-[46px] max-w-[46px] h-full flex items-center justify-center">
                   <input type="text"
                          inputmode="decimal"
                          autocomplete="off"
-                         class="score-cell-input text-center"
+                         ${isCalc ? 'readonly tabindex="-1"' : ''}
+                         class="score-cell-input text-center ${isCalc ? 'font-bold text-primary bg-primary/10 cursor-not-allowed select-none opacity-90' : ''}"
                          data-row="${rIdx}"
                          data-col="${cIdx}"
                          data-student="${r.studentId}"
                          data-subject="${s.id}"
                          data-max="${s.fullScore}"
+                         ${isCalc ? 'data-calculated="true"' : ''}
                          value="${displayVal}"
+                         title="${isCalc ? (isKm ? 'ពិន្ទុបូកសរុបដោយស្វ័យប្រវត្តិពី៖ ' + s.sumOfCourses : 'Auto-calculated sum from: ' + s.sumOfCourses) : ''}"
                          placeholder="" />
                 </div>
               </td>
@@ -791,6 +798,7 @@ export const ScoresPage = {
       const [rStr, cStr] = coord.split(',');
       const inp = this.container.querySelector(`.score-cell-input[data-row="${rStr}"][data-col="${cStr}"]`);
       if (inp) {
+        if (inp.getAttribute('data-calculated') === 'true') return; // Skip calculated cells
         inp.value = '';
         inp.classList.remove('border-destructive', 'text-destructive', 'bg-destructive/10');
         const studentId = inp.getAttribute('data-student');
@@ -863,10 +871,43 @@ export const ScoresPage = {
    * Recalculate total, average, grade for a student row and update DOM
    */
   recalculateRowData(rowData) {
+    // 1. Recalculate any composite / sum subjects live
+    this.state.subjects.forEach(s => {
+      if (SubjectService.isCalculatedSubject(s)) {
+        const compVal = SubjectService.calculateCompositeScore(s, this.state.subjects, rowData.subjectScores);
+        rowData.subjectScores[s.id] = compVal;
+
+        // Update disabled cell input in DOM immediately
+        const compInp = this.container.querySelector(`input[data-student="${rowData.studentId}"][data-subject="${s.id}"]`);
+        if (compInp) {
+          compInp.value = compVal !== null && compVal !== undefined ? compVal : '';
+        }
+      }
+    });
+
+    // 2. Identify sub-component subjects to prevent double counting in grand total
+    const subComponentIds = new Set();
+    this.state.subjects.forEach(s => {
+      if (SubjectService.isCalculatedSubject(s)) {
+        const subCodes = SubjectService.getSumSubCourseCodes(s);
+        this.state.subjects.forEach(other => {
+          if (other.id !== s.id && (
+            subCodes.includes(String(other.code || '').toUpperCase()) ||
+            subCodes.includes(String(other.id || '').toUpperCase())
+          )) {
+            subComponentIds.add(other.id);
+          }
+        });
+      }
+    });
+
+    // 3. Compute grand total and totalMax
     let sum = 0;
     let maxTotal = 0;
 
     this.state.subjects.forEach(s => {
+      if (subComponentIds.has(s.id)) return; // Don't double count sub-components
+
       const v = rowData.subjectScores[s.id];
       if (v !== null && v !== undefined && v !== '') {
         sum += Number(v);
@@ -884,8 +925,10 @@ export const ScoresPage = {
 
     const trEl = this.container.querySelector(`tr[data-student-id="${rowData.studentId}"]`);
     if (trEl) {
-      trEl.querySelector('.col-total').textContent = rowData.total;
-      trEl.querySelector('.col-average').textContent = `${rowData.average}%`;
+      const totEl = trEl.querySelector('.col-total');
+      if (totEl) totEl.textContent = rowData.total;
+      const avgEl = trEl.querySelector('.col-average');
+      if (avgEl) avgEl.textContent = `${rowData.average}%`;
       const gradeEl = trEl.querySelector('.col-grade');
       if (gradeEl) {
         gradeEl.textContent = rowData.grade;
@@ -1022,6 +1065,7 @@ export const ScoresPage = {
         const targetC = curC + cOffset;
         const targetInp = this.container.querySelector(`.score-cell-input[data-row="${targetR}"][data-col="${targetC}"]`);
         if (targetInp) {
+          if (targetInp.getAttribute('data-calculated') === 'true') return; // Skip calculated cells
           const cleanVal = cellVal.trim();
           const numVal = cleanVal === '' ? null : Math.max(0, Number(cleanVal));
           targetInp.value = cleanVal;
