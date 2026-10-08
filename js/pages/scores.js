@@ -618,7 +618,7 @@ export const ScoresPage = {
 
           <!-- 7. Average -->
           <td class="p-0 text-center font-bold font-mono text-primary col-average bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
-            <div class="w-[68px] max-w-[68px] truncate text-center py-1.5 px-1">${r.average !== undefined ? r.average : 0}</div>
+            <div class="w-[68px] max-w-[68px] truncate text-center py-1.5 px-1">${(Number(r.average) || 0).toFixed(2)}</div>
           </td>
 
           <!-- 8. Rank -->
@@ -1008,7 +1008,7 @@ export const ScoresPage = {
       const totEl = trEl.querySelector('.col-total div') || trEl.querySelector('.col-total');
       if (totEl) totEl.textContent = rowData.total;
       const avgEl = trEl.querySelector('.col-average div') || trEl.querySelector('.col-average');
-      if (avgEl) avgEl.textContent = rowData.average;
+      if (avgEl) avgEl.textContent = (Number(rowData.average) || 0).toFixed(2);
       const gradeEl = trEl.querySelector('.col-grade');
       if (gradeEl) {
         gradeEl.textContent = rowData.grade;
