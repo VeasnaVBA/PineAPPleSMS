@@ -198,7 +198,10 @@ export const ScoreService = {
       subjects.forEach(sub => {
         const val = r.subjectScores ? r.subjectScores[sub.id] : null;
         if (val !== null && val !== undefined && val !== '') {
-          const gInfo = SubjectService.calculateGrade(Number(val), sub.fullScore);
+          const max = Number(sub.fullScore) > 0 
+            ? Number(sub.fullScore) 
+            : (Number(sub.maxScore) > 0 ? Number(sub.maxScore) : 100);
+          const gInfo = SubjectService.calculateGrade(Number(val), max);
           r.subjectGrades[sub.id] = gInfo.grade;
         } else {
           r.subjectGrades[sub.id] = null;
@@ -224,8 +227,8 @@ export const ScoreService = {
 
     let className = '7A';
     try {
-      const cls = await ClassService.getById(classId);
-      if (cls && cls.name) className = cls.name;
+      const cls = (await db.get('classes', classId)) || (await ClassService.getById(classId));
+      if (cls && (cls.name || cls.grade)) className = cls.name || cls.grade;
     } catch (_) {}
 
     const subjects = await SubjectService.getAll();

@@ -1080,7 +1080,10 @@ export const ScoresPage = {
     this.state.subjects.forEach(s => {
       const v = rowData.subjectScores[s.id];
       if (v !== null && v !== undefined && v !== '') {
-        rowData.subjectGrades[s.id] = SubjectService.calculateGrade(Number(v), s.fullScore).grade;
+        const max = Number(s.fullScore) > 0 
+          ? Number(s.fullScore) 
+          : (Number(s.maxScore) > 0 ? Number(s.maxScore) : 100);
+        rowData.subjectGrades[s.id] = SubjectService.calculateGrade(Number(v), max).grade;
       } else {
         rowData.subjectGrades[s.id] = null;
       }
@@ -1712,6 +1715,14 @@ export const ScoresPage = {
               `).join('')}
             </tbody>
           </table>
+        </div>
+
+        <div class="p-2.5 rounded-lg bg-primary/5 border border-primary/15 text-muted-foreground ${isKm ? 'font-khmer' : ''}">
+          <p class="text-[11px] leading-relaxed">
+            ${isKm
+              ? '💡 <strong>ចំណាំសម្រាប់និទ្ទេសតាមមុខវិជ្ជានីមួយៗ៖</strong> និទ្ទេសត្រូវគណនាផ្អែកលើពិន្ទុពេញនៃមុខវិជ្ជានោះ (ឧ. តែងសេចក្តី ពិន្ទុពេញ 60 និទ្ទេស F គឺ < 30 ពិន្ទុ, មុខវិជ្ជាពិន្ទុពេញ 50 និទ្ទេស F គឺ < 25 ពិន្ទុ, មុខវិជ្ជាពិន្ទុពេញ 100 និទ្ទេស F គឺ < 50 ពិន្ទុ)។'
+              : '💡 <strong>Note for individual subject grades:</strong> Subject grades are calculated based on each subject\'s own max score (e.g. Essay max score 60 → grade F is < 30, max score 50 → grade F is < 25, max score 100 → grade F is < 50).'}
+          </p>
         </div>
       </div>
     `;

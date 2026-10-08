@@ -234,13 +234,15 @@ export const SubjectService = {
    */
   getSubjectFullScore(subject, classNameOrGrade = 'G7') {
     if (!subject) return 100;
-    const gradeKey = classNameOrGrade.startsWith('G') 
+    const gradeKey = (typeof classNameOrGrade === 'string' && classNameOrGrade.startsWith('G')) 
       ? classNameOrGrade 
       : this.extractGradeFromClassName(classNameOrGrade);
 
     if (subject.scoreByGrade && subject.scoreByGrade[gradeKey] !== undefined) {
       const val = Number(subject.scoreByGrade[gradeKey]);
-      return !isNaN(val) && val >= 0 ? val : (subject.maxScore || 100);
+      if (!isNaN(val) && val > 0) {
+        return val;
+      }
     }
     return Number(subject.maxScore) > 0 ? Number(subject.maxScore) : 100;
   },
