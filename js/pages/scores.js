@@ -36,51 +36,51 @@ const CATEGORY_DEFS = {
   khmer: {
     titleKm: 'ភាសាខ្មែរ',
     titleEn: 'Khmer Literature',
-    headerClass: 'bg-purple-100 dark:bg-purple-950 text-purple-950 dark:text-purple-200 border-purple-300 dark:border-purple-800',
-    subHeaderClass: 'bg-purple-100 dark:bg-purple-950 text-purple-950 dark:text-purple-200',
-    cellBgClass: 'bg-purple-100/40 dark:bg-purple-950/25'
+    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700',
+    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200',
+    cellBgClass: 'bg-white dark:bg-slate-900'
   },
   math: {
     titleKm: 'គណិតវិទ្យា',
     titleEn: 'Mathematics',
-    headerClass: 'bg-indigo-100 dark:bg-indigo-950 text-indigo-950 dark:text-indigo-200 border-indigo-300 dark:border-indigo-800',
-    subHeaderClass: 'bg-indigo-100 dark:bg-indigo-950 text-indigo-950 dark:text-indigo-200',
-    cellBgClass: 'bg-indigo-100/40 dark:bg-indigo-950/25'
+    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700',
+    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200',
+    cellBgClass: 'bg-white dark:bg-slate-900'
   },
   science: {
     titleKm: 'វិទ្យាសាស្ត្រ',
     titleEn: 'Sciences',
-    headerClass: 'bg-emerald-100 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-200 border-emerald-300 dark:border-emerald-800',
-    subHeaderClass: 'bg-emerald-100 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-200',
-    cellBgClass: 'bg-emerald-100/40 dark:bg-emerald-950/25'
+    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700',
+    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200',
+    cellBgClass: 'bg-white dark:bg-slate-900'
   },
   social: {
     titleKm: 'សិក្សាសង្គម',
     titleEn: 'Social Studies',
-    headerClass: 'bg-amber-100 dark:bg-amber-950 text-amber-950 dark:text-amber-200 border-amber-300 dark:border-amber-800',
-    subHeaderClass: 'bg-amber-100 dark:bg-amber-950 text-amber-950 dark:text-amber-200',
-    cellBgClass: 'bg-amber-100/40 dark:bg-amber-950/25'
+    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700',
+    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200',
+    cellBgClass: 'bg-white dark:bg-slate-900'
   },
   health_arts: {
     titleKm: 'អប់រំកាយ/សុខភាព សិល្បៈ',
     titleEn: 'PE, Health & Arts',
-    headerClass: 'bg-rose-100 dark:bg-rose-950 text-rose-950 dark:text-rose-200 border-rose-300 dark:border-rose-800',
-    subHeaderClass: 'bg-rose-100 dark:bg-rose-950 text-rose-950 dark:text-rose-200',
-    cellBgClass: 'bg-rose-100/40 dark:bg-rose-950/25'
+    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700',
+    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200',
+    cellBgClass: 'bg-white dark:bg-slate-900'
   },
   languages_ict: {
     titleKm: 'ស្វ័យសិក្សា / បរទេស / ICT',
     titleEn: 'Languages & ICT',
-    headerClass: 'bg-cyan-100 dark:bg-cyan-950 text-cyan-950 dark:text-cyan-200 border-cyan-300 dark:border-cyan-800',
-    subHeaderClass: 'bg-cyan-100 dark:bg-cyan-950 text-cyan-950 dark:text-cyan-200',
-    cellBgClass: 'bg-cyan-100/40 dark:bg-cyan-950/25'
+    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700',
+    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200',
+    cellBgClass: 'bg-white dark:bg-slate-900'
   },
   other: {
     titleKm: 'មុខវិជ្ជាផ្សេងៗ',
     titleEn: 'Other Subjects',
     headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700',
     subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200',
-    cellBgClass: 'bg-slate-50/50 dark:bg-slate-900/25'
+    cellBgClass: 'bg-white dark:bg-slate-900'
   }
 };
 
@@ -555,11 +555,9 @@ export const ScoresPage = {
           ${flatSubjects.map((s, cIdx) => {
             const currentScore = r.subjectScores[s.id];
             const displayVal = (currentScore !== null && currentScore !== undefined) ? currentScore : '';
-            const catKey = getSubjectCategoryKey(s);
-            const cellBg = CATEGORY_DEFS[catKey]?.cellBgClass || 'bg-slate-50/40 dark:bg-slate-900/20';
             const isCalc = SubjectService.isCalculatedSubject(s);
             return `
-              <td class="score-cell-td ${cellBg} p-0 text-center ${isCalc ? 'bg-primary/5' : ''}" data-row="${rIdx}" data-col="${cIdx}">
+              <td class="score-cell-td bg-white dark:bg-slate-900 p-0 text-center ${isCalc ? 'bg-primary/5' : ''}" data-row="${rIdx}" data-col="${cIdx}">
                 <div class="w-[46px] max-w-[46px] h-full flex items-center justify-center">
                   <input type="text"
                          inputmode="${isCalc ? 'none' : 'decimal'}"
