@@ -202,7 +202,7 @@ export const DEFAULT_SUBJECTS = [
     scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     notes: ''
   }
-];
+].map((s, idx) => ({ ...s, order: idx }));
 
 export const SubjectService = {
   /**
@@ -327,36 +327,29 @@ export const SubjectService = {
   },
 
   /**
-   * Get all subjects with auto-seeding if newly initialized
+   * Get all subjects with auto-seeding if newly initialized, sorted by order
    */
   async getAll() {
+    let list = [];
     try {
       const database = await db.open();
       if (database && database.objectStoreNames && database.objectStoreNames.contains('subjects')) {
-        const list = await db.getAll('subjects');
-        if (Array.isArray(list) && list.length > 0) {
-          return list.map(s => ({
-            ...s,
-            scoreByGrade: this.normalizeScoreByGrade(s.scoreByGrade, s.maxScore || 100)
-          }));
-        }
-
-        // Auto-seed default MoEYS standard subjects
-        for (const item of DEFAULT_SUBJECTS) {
-          try {
-            await db.add('subjects', {
-              ...item,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            });
-          } catch (_) {}
-        }
-        const seededList = await db.getAll('subjects');
-        if (Array.isArray(seededList) && seededList.length > 0) {
-          return seededList.map(s => ({
-            ...s,
-            scoreByGrade: this.normalizeScoreByGrade(s.scoreByGrade, s.maxScore || 100)
-          }));
+        const dbList = await db.getAll('subjects');
+        if (Array.isArray(dbList) && dbList.length > 0) {
+          list = dbList;
+        } else {
+          // Auto-seed default MoEYS standard subjects with explicit order
+          for (let i = 0; i < DEFAULT_SUBJECTS.length; i++) {
+            const item = { ...DEFAULT_SUBJECTS[i], order: i };
+            try {
+              await db.add('subjects', {
+                ...item,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              });
+            } catch (_) {}
+          }
+          list = await db.getAll('subjects');
         }
       }
     } catch (err) {
@@ -364,19 +357,33 @@ export const SubjectService = {
     }
 
     // Fallback using settings store
-    try {
-      const stored = await SettingsService.get('subjects_catalog');
-      if (Array.isArray(stored) && stored.length > 0) {
-        return stored.map(s => ({
-          ...s,
-          scoreByGrade: this.normalizeScoreByGrade(s.scoreByGrade, s.maxScore || 100)
-        }));
+    if (!list || list.length === 0) {
+      try {
+        const stored = await SettingsService.get('subjects_catalog');
+        if (Array.isArray(stored) && stored.length > 0) {
+          list = stored;
+        } else {
+          const seeded = DEFAULT_SUBJECTS.map((s, idx) => ({ ...s, order: idx }));
+          await SettingsService.set('subjects_catalog', seeded);
+          list = seeded;
+        }
+      } catch (_) {
+        list = DEFAULT_SUBJECTS.map((s, idx) => ({ ...s, order: idx }));
       }
-      await SettingsService.set('subjects_catalog', DEFAULT_SUBJECTS);
-      return DEFAULT_SUBJECTS;
-    } catch (_) {}
+    }
 
-    return DEFAULT_SUBJECTS;
+    // Sort by user-defined order (fallback to array index if missing)
+    const sorted = [...list].sort((a, b) => {
+      const orderA = typeof a.order === 'number' ? a.order : 999999;
+      const orderB = typeof b.order === 'number' ? b.order : 999999;
+      return orderA - orderB;
+    });
+
+    return sorted.map((s, idx) => ({
+      ...s,
+      order: typeof s.order === 'number' ? s.order : idx,
+      scoreByGrade: this.normalizeScoreByGrade(s.scoreByGrade, s.maxScore || 100)
+    }));
   },
 
   /**
@@ -415,6 +422,7 @@ export const SubjectService = {
     const newSubject = {
       id: data.id || ('sub_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4)),
       code: cleanCode,
+      order: typeof data.order === 'number' ? data.order : subjects.length,
       name: cleanName,
       nameEn: data.nameEn?.trim() || '',
       maxScore,
@@ -471,6 +479,7 @@ export const SubjectService = {
     const updatedSubject = {
       ...existing,
       code: cleanCode,
+      order: typeof data.order === 'number' ? data.order : (typeof existing.order === 'number' ? existing.order : 0),
       name: cleanName,
       nameEn: data.nameEn !== undefined ? data.nameEn.trim() : (existing.nameEn || ''),
       maxScore,
@@ -526,6 +535,97 @@ export const SubjectService = {
   },
 
   /**
+   * Reorder subjects given an array of subject IDs in desired order
+   */
+  async reorderSubjects(orderedIds) {
+    if (!Array.isArray(orderedIds) || orderedIds.length === 0) return this.getAll();
+    const subjects = await this.getAll();
+
+    const idMap = new Map();
+    subjects.forEach(s => idMap.set(s.id, s));
+
+    const reordered = [];
+    const handled = new Set();
+
+    orderedIds.forEach(id => {
+      if (idMap.has(id)) {
+        reordered.push(idMap.get(id));
+        handled.add(id);
+      }
+    });
+
+    // Append any subjects not explicitly included in orderedIds
+    subjects.forEach(s => {
+      if (!handled.has(s.id)) {
+        reordered.push(s);
+      }
+    });
+
+    // Re-index order 0, 1, 2...
+    const now = new Date().toISOString();
+    const updatedList = reordered.map((s, idx) => ({
+      ...s,
+      order: idx,
+      updatedAt: now
+    }));
+
+    try {
+      const database = await db.open();
+      if (database && database.objectStoreNames && database.objectStoreNames.contains('subjects')) {
+        for (const item of updatedList) {
+          await db.put('subjects', item);
+        }
+      }
+    } catch (err) {
+      console.warn('Could not persist reordered subjects in IndexedDB:', err);
+    }
+
+    try {
+      await SettingsService.set('subjects_catalog', updatedList);
+    } catch (_) {}
+
+    syncStateManager.markDirty('subjects.reorder');
+    return updatedList;
+  },
+
+  /**
+   * Move subject to the first (top) position
+   */
+  async moveSubjectToFirst(subjectId) {
+    if (!subjectId) return this.getAll();
+    const subjects = await this.getAll();
+    const index = subjects.findIndex(s => s.id === subjectId || s.code === subjectId);
+    if (index <= 0) return subjects; // Already first or not found
+
+    const target = subjects[index];
+    const others = subjects.filter((_, idx) => idx !== index);
+    const orderedIds = [target.id, ...others.map(s => s.id)];
+    return this.reorderSubjects(orderedIds);
+  },
+
+  /**
+   * Move subject up (prev) or down (next) by 1 position
+   * direction: 'up' (earlier) or 'down' (later)
+   */
+  async moveSubject(subjectId, direction = 'up') {
+    if (!subjectId) return this.getAll();
+    const subjects = await this.getAll();
+    const index = subjects.findIndex(s => s.id === subjectId || s.code === subjectId);
+    if (index === -1) return subjects;
+
+    const targetIdx = direction === 'up' ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= subjects.length) return subjects; // Cannot move past boundary
+
+    const newOrder = [...subjects];
+    const temp = newOrder[index];
+    newOrder[index] = newOrder[targetIdx];
+    newOrder[targetIdx] = temp;
+
+    const orderedIds = newOrder.map(s => s.id);
+    return this.reorderSubjects(orderedIds);
+  },
+
+  /**
    * Restore standard default curriculum subjects
    */
   async restoreDefaults() {
@@ -533,7 +633,8 @@ export const SubjectService = {
       const database = await db.open();
       if (database && database.objectStoreNames && database.objectStoreNames.contains('subjects')) {
         await db.clear('subjects');
-        for (const item of DEFAULT_SUBJECTS) {
+        for (let i = 0; i < DEFAULT_SUBJECTS.length; i++) {
+          const item = { ...DEFAULT_SUBJECTS[i], order: i };
           await db.add('subjects', {
             ...item,
             createdAt: new Date().toISOString(),
@@ -545,11 +646,12 @@ export const SubjectService = {
       console.warn('Could not clear and re-seed IndexedDB subjects:', err);
     }
 
+    const seeded = DEFAULT_SUBJECTS.map((s, idx) => ({ ...s, order: idx }));
     try {
-      await SettingsService.set('subjects_catalog', DEFAULT_SUBJECTS);
+      await SettingsService.set('subjects_catalog', seeded);
     } catch (_) {}
 
     syncStateManager.markDirty('subjects.restore');
-    return DEFAULT_SUBJECTS;
+    return seeded;
   }
 };

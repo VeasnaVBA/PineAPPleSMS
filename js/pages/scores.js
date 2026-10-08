@@ -405,7 +405,7 @@ export const ScoresPage = {
         <col style="width: 94px; min-width: 94px; max-width: 94px;">
         <col style="width: 94px; min-width: 94px; max-width: 94px;">
         <col style="width: 64px; min-width: 64px; max-width: 64px;">
-        ${groups.map(g => g.subjects.map(() => `<col style="width: 46px; min-width: 46px; max-width: 46px;">`).join('')).join('')}
+        ${this.state.subjects.map(() => `<col style="width: 46px; min-width: 46px; max-width: 46px;">`).join('')}
         <col style="width: 64px; min-width: 64px; max-width: 64px;">
         <col style="width: 68px; min-width: 68px; max-width: 68px;">
         <col style="width: 72px; min-width: 72px; max-width: 72px;">
@@ -430,16 +430,20 @@ export const ScoresPage = {
         <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-center text-center px-1 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'ភេទ' : 'Sex'}</div>
       </th>
 
-      <!-- Subject Column Headers (Vertical Text + Category Color, z-index 10 in CSS, centered) -->
-      ${groups.map(g => g.subjects.map(sub => `
-        <th class="score-subject-th p-0 ${g.subHeaderClass}" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${sub.name} (Max: ${sub.fullScore})">
-          <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2">
-            <div class="score-vertical-title font-khmer" title="${sub.name}">
-              ${sub.name}
+      <!-- Subject Column Headers (Vertical Text + Category Color, z-index 10 in CSS, centered, ordered by user) -->
+      ${this.state.subjects.map(sub => {
+        const catKey = getSubjectCategoryKey(sub);
+        const subHeaderClass = CATEGORY_DEFS[catKey]?.subHeaderClass || 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200';
+        return `
+          <th class="score-subject-th p-0 ${subHeaderClass}" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${sub.name} (Max: ${sub.fullScore})">
+            <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2">
+              <div class="score-vertical-title font-khmer" title="${sub.name}">
+                ${sub.name}
+              </div>
             </div>
-          </div>
-        </th>
-      `).join('')).join('')}
+          </th>
+        `;
+      }).join('')}
 
       <!-- Result Columns (Centered in the middle) -->
       <th class="score-result-th p-0 text-center font-bold font-mono text-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
@@ -489,10 +493,7 @@ export const ScoresPage = {
       );
     }
 
-    const flatSubjects = [];
-    this.state.groupedSubjects.forEach(g => {
-      g.subjects.forEach(s => flatSubjects.push(s));
-    });
+    const flatSubjects = this.state.subjects;
 
     if (rows.length === 0) {
       tbody.innerHTML = `
@@ -1280,12 +1281,9 @@ export const ScoresPage = {
       isKm ? 'ភេទ' : 'Gender'
     ];
 
-    const flatSubjects = [];
-    this.state.groupedSubjects.forEach(g => {
-      g.subjects.forEach(s => {
-        flatSubjects.push(s);
-        headers.push(`${s.name} (Max:${s.fullScore})`);
-      });
+    const flatSubjects = this.state.subjects;
+    flatSubjects.forEach(s => {
+      headers.push(`${s.name} (Max:${s.fullScore})`);
     });
 
     const data = [headers];

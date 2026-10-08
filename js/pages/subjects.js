@@ -219,7 +219,7 @@ export const SubjectsPage = {
                   <th scope="col" class="w-24 px-3 py-3 text-center font-semibold text-foreground border-r border-border/60 whitespace-nowrap ${fontClass}">
                     ${isKm ? 'ម៉ោង/សប្តាហ៍' : 'Hours/wk'}
                   </th>
-                  <th scope="col" class="w-28 px-3 py-3 text-center font-semibold text-foreground whitespace-nowrap ${fontClass}">
+                  <th scope="col" class="w-40 min-w-[160px] px-3 py-3 text-center font-semibold text-foreground whitespace-nowrap ${fontClass}">
                     ${t('common.actions') || 'សកម្មភាព'}
                   </th>
                 </tr>
@@ -245,9 +245,29 @@ export const SubjectsPage = {
 
                   return `
                     <tr class="hover:bg-muted/20 transition-colors group ${isExpanded ? 'bg-muted/10' : ''}">
-                      <!-- Row No -->
+                      <!-- Row No with Reorder Up/Down -->
                       <td class="px-2 py-3 text-center text-muted-foreground border-r border-border/40 font-mono text-xs">
-                        ${idx + 1}
+                        <div class="flex items-center justify-center gap-1.5">
+                          <span class="font-bold text-foreground/80">${idx + 1}</span>
+                          <div class="inline-flex flex-col -space-y-0.5">
+                            <button type="button" 
+                                    data-action="move-up" 
+                                    data-id="${item.id}" 
+                                    ${idx === 0 ? 'disabled' : ''} 
+                                    class="p-0.5 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer transition-colors" 
+                                    title="${isKm ? 'ឡើងលើ (Move Up)' : 'Move Up'}">
+                              ${getIcon('chevronUp', 'w-3 h-3')}
+                            </button>
+                            <button type="button" 
+                                    data-action="move-down" 
+                                    data-id="${item.id}" 
+                                    ${idx === filtered.length - 1 ? 'disabled' : ''} 
+                                    class="p-0.5 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer transition-colors" 
+                                    title="${isKm ? 'ទៅបន្ទាប់ / ចុះក្រោម (Move Next)' : 'Move Next'}">
+                              ${getIcon('chevronDown', 'w-3 h-3')}
+                            </button>
+                          </div>
+                        </div>
                       </td>
 
                       <!-- Subject Code -->
@@ -299,6 +319,38 @@ export const SubjectsPage = {
                       <!-- Actions -->
                       <td class="px-2 py-3 text-center whitespace-nowrap">
                         <div class="flex items-center justify-center gap-1">
+                          <!-- Move to First Button -->
+                          <button type="button"
+                                  data-action="move-first"
+                                  data-id="${item.id}"
+                                  ${idx === 0 ? 'disabled' : ''}
+                                  title="${isKm ? 'ផ្លាស់ទីទៅដើមគេបង្អស់ (Move to First)' : 'Move to First'}"
+                                  class="p-1.5 rounded-md text-primary hover:bg-primary/15 hover:text-primary disabled:opacity-20 disabled:cursor-not-allowed transition-colors cursor-pointer">
+                            ${getIcon('chevronsUp', 'w-3.5 h-3.5') || getIcon('arrowUpToLine', 'w-3.5 h-3.5')}
+                          </button>
+
+                          <!-- Move Up Button -->
+                          <button type="button"
+                                  data-action="move-up"
+                                  data-id="${item.id}"
+                                  ${idx === 0 ? 'disabled' : ''}
+                                  title="${isKm ? 'ឡើងលើ (Move Up)' : 'Move Up'}"
+                                  class="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-20 disabled:cursor-not-allowed transition-colors cursor-pointer">
+                            ${getIcon('chevronUp', 'w-3.5 h-3.5')}
+                          </button>
+
+                          <!-- Move Next / Down Button -->
+                          <button type="button"
+                                  data-action="move-down"
+                                  data-id="${item.id}"
+                                  ${idx === filtered.length - 1 ? 'disabled' : ''}
+                                  title="${isKm ? 'ទៅបន្ទាប់ / ចុះក្រោម (Move Next)' : 'Move Next'}"
+                                  class="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-20 disabled:cursor-not-allowed transition-colors cursor-pointer">
+                            ${getIcon('chevronDown', 'w-3.5 h-3.5')}
+                          </button>
+
+                          <div class="w-px h-4 bg-border/60 mx-0.5"></div>
+
                           <!-- Toggle Grading Scale Formula Button -->
                           <button type="button"
                                   data-action="toggle-scale"
@@ -308,6 +360,7 @@ export const SubjectsPage = {
                             ${getIcon('award', 'w-3.5 h-3.5') || getIcon('clipboardList', 'w-3.5 h-3.5')}
                           </button>
 
+                          <!-- Edit Button -->
                           <button type="button"
                                   data-action="edit"
                                   data-id="${item.id}"
@@ -315,6 +368,8 @@ export const SubjectsPage = {
                                   class="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer">
                             ${getIcon('pencil', 'w-3.5 h-3.5')}
                           </button>
+
+                          <!-- Delete Button -->
                           <button type="button"
                                   data-action="delete"
                                   data-id="${item.id}"
@@ -462,7 +517,33 @@ export const SubjectsPage = {
         const id = btn.getAttribute('data-id');
         const subject = this.state.subjects.find(s => s.id === id);
 
-        if (action === 'toggle-scale' && id) {
+        const isKm = i18n.getLocale() === 'km';
+        if (action === 'move-first' && id) {
+          try {
+            await SubjectService.moveSubjectToFirst(id);
+            toast.success(isKm ? 'បានផ្លាស់ទីមុខវិជ្ជាទៅមុខគេបង្អស់' : 'Moved subject to first position');
+            await this.loadData();
+            this.renderLayout();
+          } catch (err) {
+            toast.error(err.message || 'Error moving subject');
+          }
+        } else if (action === 'move-up' && id) {
+          try {
+            await SubjectService.moveSubject(id, 'up');
+            await this.loadData();
+            this.renderLayout();
+          } catch (err) {
+            toast.error(err.message || 'Error moving subject');
+          }
+        } else if (action === 'move-down' && id) {
+          try {
+            await SubjectService.moveSubject(id, 'down');
+            await this.loadData();
+            this.renderLayout();
+          } catch (err) {
+            toast.error(err.message || 'Error moving subject');
+          }
+        } else if (action === 'toggle-scale' && id) {
           this.state.expandedSubjectId = this.state.expandedSubjectId === id ? null : id;
           this.renderLayout();
         } else if (action === 'edit' && subject) {
