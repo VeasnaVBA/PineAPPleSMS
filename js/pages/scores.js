@@ -437,10 +437,10 @@ export const ScoresPage = {
         const isCalc = SubjectService.isCalculatedSubject(sub);
         const titleTip = `${sub.name} (Max: ${sub.fullScore})${isCalc ? ` [${isKm ? 'បូកសរុបពី' : 'Sum of'}: ${sub.sumOfCourses}]` : ''}`;
         return `
-          <th class="score-subject-th p-0 ${subHeaderClass}" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${titleTip}">
+          <th class="score-subject-th p-0 ${isCalc ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-950 dark:text-rose-200 border-rose-300 dark:border-rose-800' : subHeaderClass}" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${titleTip}">
             <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2 relative">
-              ${isCalc ? `<span class="absolute top-1 right-1 text-[9px] font-mono font-extrabold text-primary bg-primary/20 rounded px-0.5 leading-none" title="${isKm ? 'បូកសរុបស្វ័យប្រវត្តិ' : 'Auto-calculated'}">∑</span>` : ''}
-              <div class="score-vertical-title font-khmer" title="${sub.name}">
+              ${isCalc ? `<span class="absolute top-1 right-1 text-[9px] font-mono font-extrabold text-rose-700 dark:text-rose-300 bg-rose-200/80 dark:bg-rose-900/80 rounded px-0.5 leading-none shadow-2xs" title="${isKm ? 'បូកសរុបស្វ័យប្រវត្តិ' : 'Auto-calculated'}">∑</span>` : ''}
+              <div class="score-vertical-title font-khmer ${isCalc ? 'text-rose-900 dark:text-rose-200 font-bold' : ''}" title="${sub.name}">
                 ${sub.name}
               </div>
             </div>
@@ -556,14 +556,15 @@ export const ScoresPage = {
             const currentScore = r.subjectScores[s.id];
             const displayVal = (currentScore !== null && currentScore !== undefined) ? currentScore : '';
             const isCalc = SubjectService.isCalculatedSubject(s);
+            const cellBg = isCalc ? 'bg-rose-50/90 dark:bg-rose-950/30' : 'bg-white dark:bg-slate-900';
             return `
-              <td class="score-cell-td bg-white dark:bg-slate-900 p-0 text-center ${isCalc ? 'bg-primary/5' : ''}" data-row="${rIdx}" data-col="${cIdx}">
+              <td class="score-cell-td ${cellBg} p-0 text-center" data-row="${rIdx}" data-col="${cIdx}">
                 <div class="w-[46px] max-w-[46px] h-full flex items-center justify-center">
                   <input type="text"
                          inputmode="${isCalc ? 'none' : 'decimal'}"
                          autocomplete="off"
                          ${isCalc ? 'readonly disabled tabindex="-1"' : ''}
-                         class="score-cell-input text-center ${isCalc ? 'font-bold text-primary bg-primary/10 cursor-not-allowed select-none opacity-90' : ''}"
+                         class="score-cell-input text-center ${isCalc ? 'font-bold text-rose-700 dark:text-rose-300 bg-rose-100/70 dark:bg-rose-900/40 cursor-not-allowed select-none' : ''}"
                          data-row="${rIdx}"
                          data-col="${cIdx}"
                          data-student="${r.studentId}"
