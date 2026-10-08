@@ -1293,6 +1293,7 @@ html[lang="km"] select {
 thead tr th {
   position: sticky !important;
   top: 0px !important;
+  vertical-align: middle !important;
   box-sizing: border-box !important;
 }
 
@@ -1315,8 +1316,8 @@ thead tr th {
   top: 0px !important;
   z-index: 10 !important;
   isolation: isolate !important;
-  padding: 6px 2px 4px 2px !important;
-  vertical-align: middle;
+  padding: 4px 2px !important;
+  vertical-align: middle !important;
   text-align: center;
   box-sizing: border-box !important;
 }

@@ -417,23 +417,23 @@ export const ScoresPage = {
     // Single Clean Header Row
     headerRow.innerHTML = `
       <!-- Sticky Student Info Header Columns (Locked on X and Y with highest z-index) -->
-      <th class="score-sticky-col-1 p-0 text-center font-bold text-muted-foreground bg-slate-100 dark:bg-slate-800 ${isKm ? 'font-khmer text-xs' : 'font-mono text-xs'}" style="z-index: 50 !important; transform: translateZ(0) !important;">
-        <div class="w-full whitespace-nowrap text-center py-2 bg-slate-100 dark:bg-slate-800">${isKm ? 'ល.រ' : 'No.'}</div>
+      <th class="score-sticky-col-1 p-0 text-center font-bold text-muted-foreground bg-slate-100 dark:bg-slate-800 ${isKm ? 'font-khmer text-xs' : 'font-mono text-xs'}" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
+        <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-center text-center bg-slate-100 dark:bg-slate-800">${isKm ? 'ល.រ' : 'No.'}</div>
       </th>
-      <th class="score-sticky-col-2 p-0 text-left font-bold font-khmer text-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important;">
-        <div class="w-full whitespace-nowrap text-left py-2 px-2 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'គោត្តនាម' : 'Surname'}</div>
+      <th class="score-sticky-col-2 p-0 text-left font-bold font-khmer text-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
+        <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-start text-left px-2 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'គោត្តនាម' : 'Surname'}</div>
       </th>
-      <th class="score-sticky-col-3 p-0 text-left font-bold font-khmer text-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important;">
-        <div class="w-full whitespace-nowrap text-left py-2 px-2 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'នាម' : 'Name'}</div>
+      <th class="score-sticky-col-3 p-0 text-left font-bold font-khmer text-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
+        <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-start text-left px-2 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'នាម' : 'Name'}</div>
       </th>
-      <th class="score-sticky-col-4 p-0 text-center font-bold font-khmer text-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important;">
-        <div class="w-full whitespace-nowrap text-center py-2 px-1 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'ភេទ' : 'Sex'}</div>
+      <th class="score-sticky-col-4 p-0 text-center font-bold font-khmer text-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
+        <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-center text-center px-1 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'ភេទ' : 'Sex'}</div>
       </th>
 
       <!-- Subject Column Headers (Vertical Text + Category Color, z-index 10 in CSS, centered) -->
       ${groups.map(g => g.subjects.map(sub => `
-        <th class="score-subject-th p-0 ${g.subHeaderClass}" style="z-index: 10 !important; isolation: isolate !important;" title="${sub.name} (Max: ${sub.fullScore})">
-          <div class="w-[46px] max-w-[46px] h-full mx-auto flex items-center justify-center py-2">
+        <th class="score-subject-th p-0 ${g.subHeaderClass}" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${sub.name} (Max: ${sub.fullScore})">
+          <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2">
             <div class="score-vertical-title font-khmer" title="${sub.name}">
               ${sub.name}
             </div>
@@ -441,31 +441,31 @@ export const ScoresPage = {
         </th>
       `).join('')).join('')}
 
-      <!-- Result Columns -->
-      <th class="score-result-th p-0 text-center font-bold font-mono text-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important;">
-        <div class="w-[55px] max-w-[55px] text-center py-2 px-1">
-          <span class="font-khmer text-[11px] block">${isKm ? 'ពិន្ទុសរុប' : 'Total'}</span>
+      <!-- Result Columns (Centered in the middle) -->
+      <th class="score-result-th p-0 text-center font-bold font-mono text-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+        <div class="w-[55px] max-w-[55px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
+          <span class="font-khmer text-xs block text-center">${isKm ? 'ពិន្ទុសរុប' : 'Total'}</span>
         </div>
       </th>
-      <th class="score-result-th p-0 text-center font-bold font-mono text-primary bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important;">
-        <div class="w-[52px] max-w-[52px] text-center py-2 px-1">
-          <span class="font-khmer text-[11px] block text-primary">${isKm ? 'មធ្យម' : 'Avg'}</span>
+      <th class="score-result-th p-0 text-center font-bold font-mono text-primary bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+        <div class="w-[52px] max-w-[52px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
+          <span class="font-khmer text-xs block text-primary text-center">${isKm ? 'មធ្យម' : 'Avg'}</span>
         </div>
       </th>
-      <th class="score-result-th p-0 text-center font-bold font-mono text-amber-600 dark:text-amber-400 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important;">
-        <div class="w-[46px] max-w-[46px] text-center py-2 px-1">
-          <span class="font-khmer text-[11px] block text-amber-600 dark:text-amber-400">${isKm ? 'ចំណាត់' : 'Rank'}</span>
+      <th class="score-result-th p-0 text-center font-bold font-mono text-amber-600 dark:text-amber-400 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+        <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
+          <span class="font-khmer text-xs block text-amber-600 dark:text-amber-400 text-center">${isKm ? 'ចំណាត់' : 'Rank'}</span>
         </div>
       </th>
-      <th class="score-result-th p-0 text-center font-bold bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important;">
-        <div class="w-[46px] max-w-[46px] text-center py-2 px-1">
-          <span class="font-khmer text-[11px] block">${isKm ? 'និទ្ទេស' : 'Grade'}</span>
+      <th class="score-result-th p-0 text-center font-bold bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+        <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
+          <span class="font-khmer text-xs block text-center">${isKm ? 'និទ្ទេស' : 'Grade'}</span>
         </div>
       </th>
 
       <!-- Actions Column -->
-      <th class="text-center p-0 bg-slate-100 dark:bg-slate-800 text-[10px] text-muted-foreground font-khmer print:hidden" style="z-index: 10 !important; isolation: isolate !important;">
-        <div class="w-[40px] max-w-[40px] text-center py-2 px-0.5">
+      <th class="text-center p-0 bg-slate-100 dark:bg-slate-800 text-[10px] text-muted-foreground font-khmer print:hidden" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+        <div class="w-[40px] max-w-[40px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-0.5">
           ${isKm ? 'ផ្សេងៗ' : 'Actions'}
         </div>
       </th>
