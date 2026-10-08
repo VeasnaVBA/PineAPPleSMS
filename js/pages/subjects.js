@@ -181,8 +181,11 @@ export const SubjectsPage = {
                   <th scope="col" class="w-28 px-3.5 py-3 font-semibold text-foreground border-r border-border/60 whitespace-nowrap ${fontClass}">
                     ${t('subjects.code') || 'កូដមុខវិជ្ជា'}
                   </th>
-                  <th scope="col" class="px-4 py-3 font-semibold text-foreground border-r border-border/60 min-w-[200px] ${fontClass}">
+                  <th scope="col" class="px-4 py-3 font-semibold text-foreground border-r border-border/60 min-w-[180px] ${fontClass}">
                     ${isKm ? 'ឈ្មោះមុខវិជ្ជា' : 'Subject Name'}
+                  </th>
+                  <th scope="col" class="w-32 min-w-[130px] px-3 py-3 text-center font-semibold text-foreground border-r border-border/60 whitespace-nowrap ${fontClass}">
+                    ${isKm ? 'បូកសរុបពិន្ទុ' : 'Sum of Courses'}
                   </th>
 
                   <!-- Grade Columns G7 to G12 -->
@@ -228,7 +231,7 @@ export const SubjectsPage = {
               <tbody class="divide-y divide-border/60 ${fontClass}">
                 ${filtered.length === 0 ? `
                   <tr>
-                    <td colspan="11" class="text-center py-12 text-muted-foreground ${fontClass}">
+                    <td colspan="12" class="text-center py-12 text-muted-foreground ${fontClass}">
                       <div class="flex flex-col items-center justify-center gap-2">
                         ${getIcon('inbox', 'w-8 h-8 text-muted-foreground/50')}
                         <span>${t('subjects.noData') || 'មិនទាន់មានមុខវិជ្ជាណាមួយនៅឡើយទេ'}</span>
@@ -287,14 +290,20 @@ export const SubjectsPage = {
                       <td class="px-3.5 py-3 border-r border-border/40 ${fontClass}">
                         <div class="font-semibold text-foreground text-sm flex items-center gap-1.5 cursor-pointer" data-action="toggle-scale" data-id="${item.id}" title="${isKm ? 'ចុចដើម្បីមើលរូបមន្តគណនានិទ្ទេស' : 'Click to view grading scale'}">
                           ${getIcon('bookOpen', 'w-3.5 h-3.5 text-primary flex-shrink-0')}
-                          <span class="truncate hover:underline hover:text-primary transition-colors">${mainName}</span>
-                          ${item.sumOfCourses ? `
-                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-primary/10 text-primary border border-primary/25 ml-1" title="${isKm ? 'បូកសរុបពិន្ទុពី៖ ' + item.sumOfCourses : 'Sum of: ' + item.sumOfCourses}">
-                              ∑ ${item.sumOfCourses}
-                            </span>
-                          ` : ''}
+                          <span class="hover:underline hover:text-primary transition-colors">${mainName}</span>
                         </div>
-                        ${subName ? `<div class="text-[11px] text-muted-foreground/80 mt-0.5 pl-5 truncate">${subName}</div>` : ''}
+                        ${subName ? `<div class="text-[11px] text-muted-foreground/80 mt-0.5 pl-5">${subName}</div>` : ''}
+                      </td>
+
+                      <!-- Sum of Courses (Dedicated Column) -->
+                      <td class="px-2.5 py-3 text-center border-r border-border/40 whitespace-nowrap">
+                        ${item.sumOfCourses ? `
+                          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded font-mono font-bold text-xs bg-primary/10 text-primary border border-primary/25 shadow-2xs" title="${isKm ? 'បូកសរុបពិន្ទុពី៖ ' + item.sumOfCourses : 'Sum of: ' + item.sumOfCourses}">
+                            ∑ ${item.sumOfCourses}
+                          </span>
+                        ` : `
+                          <span class="text-muted-foreground/30 text-xs font-mono">—</span>
+                        `}
                       </td>
 
                       <!-- Grade Scores G7 - G12 with Active Column Highlighting -->
@@ -397,7 +406,7 @@ export const SubjectsPage = {
                     <!-- Per-Subject Expandable Grading Formula Scale Row -->
                     ${isExpanded ? `
                       <tr class="bg-muted/10 border-b border-border/70 animate-fade-in">
-                        <td colspan="11" class="py-2.5 px-3 sm:px-6">
+                        <td colspan="12" class="py-2.5 px-3 sm:px-6">
                           <div class="flex flex-col md:flex-row md:items-center justify-between gap-2.5 p-2.5 sm:px-4 sm:py-2 rounded-lg bg-card/90 border border-border shadow-2xs">
                             
                             <!-- Left: Grade Level & Full Score -->
