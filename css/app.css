@@ -1300,6 +1300,7 @@ thead tr th {
   position: sticky !important;
   top: 0px !important;
   z-index: 10 !important;
+  isolation: isolate !important;
   padding: 6px 0 4px 0 !important;
   width: 46px !important;
   min-width: 46px !important;
@@ -1313,6 +1314,7 @@ thead tr th {
   position: sticky !important;
   top: 0px !important;
   z-index: 10 !important;
+  isolation: isolate !important;
   padding: 6px 2px 4px 2px !important;
   vertical-align: middle;
   text-align: center;
@@ -1395,14 +1397,15 @@ thead tr th {
   box-shadow: 4px 0 6px -2px rgba(0, 0, 0, 0.45) !important;
 }
 
-/* Header Sticky Intersection Cells (Top-Left corner: z-index 40) - ALWAYS on top of scrolling headers */
+/* Header Sticky Intersection Cells (Top-Left corner: z-index 50) - ALWAYS on top of scrolling headers */
 thead th.score-sticky-col-1,
 thead th.score-sticky-col-2,
 thead th.score-sticky-col-3,
 thead th.score-sticky-col-4 {
   position: sticky !important;
   top: 0px !important;
-  z-index: 40 !important;
+  z-index: 50 !important;
+  transform: translateZ(0) !important;
   background-color: #f1f5f9 !important;
 }
 

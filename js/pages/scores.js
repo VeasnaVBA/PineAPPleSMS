@@ -306,7 +306,7 @@ export const ScoresPage = {
           <div class="score-table-container max-h-[72vh] overflow-auto w-full max-w-full">
             <table class="score-table text-left text-xs border-separate" id="master-score-table">
               <colgroup id="score-table-colgroup"></colgroup>
-              <thead class="z-30">
+              <thead>
                 <tr id="score-table-header-row" class="border-b border-border">
                   <!-- Populated dynamically -->
                 </tr>
@@ -417,55 +417,54 @@ export const ScoresPage = {
     // Single Clean Header Row
     headerRow.innerHTML = `
       <!-- Sticky Student Info Header Columns (Locked on X and Y with highest z-index) -->
-      <th class="score-sticky-col-1 p-0 text-center font-mono font-bold text-muted-foreground bg-slate-100 dark:bg-slate-800">
+      <th class="score-sticky-col-1 p-0 text-center font-mono font-bold text-muted-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important;">
         <div class="w-full whitespace-nowrap text-center py-2 bg-slate-100 dark:bg-slate-800">#</div>
       </th>
-      <th class="score-sticky-col-2 p-0 text-left font-bold font-khmer text-foreground bg-slate-100 dark:bg-slate-800">
+      <th class="score-sticky-col-2 p-0 text-left font-bold font-khmer text-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important;">
         <div class="w-full whitespace-nowrap text-left py-2 px-2 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'គោត្តនាម' : 'Surname'}</div>
       </th>
-      <th class="score-sticky-col-3 p-0 text-left font-bold font-khmer text-foreground bg-slate-100 dark:bg-slate-800">
+      <th class="score-sticky-col-3 p-0 text-left font-bold font-khmer text-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important;">
         <div class="w-full whitespace-nowrap text-left py-2 px-2 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'នាម' : 'Name'}</div>
       </th>
-      <th class="score-sticky-col-4 p-0 text-center font-bold font-khmer text-foreground bg-slate-100 dark:bg-slate-800">
+      <th class="score-sticky-col-4 p-0 text-center font-bold font-khmer text-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important;">
         <div class="w-full whitespace-nowrap text-center py-2 px-1 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'ភេទ' : 'Sex'}</div>
       </th>
 
-      <!-- Subject Column Headers (Vertical Text + Category Color, z-index 10 in CSS) -->
+      <!-- Subject Column Headers (Vertical Text + Category Color, z-index 10 in CSS, xnumber removed) -->
       ${groups.map(g => g.subjects.map(sub => `
-        <th class="score-subject-th p-0 ${g.subHeaderClass}" title="${sub.name} (Max: ${sub.fullScore})">
-          <div class="w-[46px] max-w-[46px] mx-auto flex flex-col items-center">
+        <th class="score-subject-th p-0 ${g.subHeaderClass}" style="z-index: 10 !important; isolation: isolate !important;" title="${sub.name} (Max: ${sub.fullScore})">
+          <div class="w-[46px] max-w-[46px] mx-auto flex flex-col items-center justify-end pb-2">
             <div class="score-vertical-title font-khmer" title="${sub.name}">
               ${sub.name}
             </div>
-            <span class="score-coefficient-badge">×${sub.creditHours || 1}</span>
           </div>
         </th>
       `).join('')).join('')}
 
       <!-- Result Columns -->
-      <th class="score-result-th p-0 text-center font-bold font-mono text-foreground bg-slate-100 dark:bg-slate-800">
+      <th class="score-result-th p-0 text-center font-bold font-mono text-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important;">
         <div class="w-[55px] max-w-[55px] text-center py-2 px-1">
           <span class="font-khmer text-[11px] block">${isKm ? 'ពិន្ទុសរុប' : 'Total'}</span>
         </div>
       </th>
-      <th class="score-result-th p-0 text-center font-bold font-mono text-primary bg-slate-100 dark:bg-slate-800">
+      <th class="score-result-th p-0 text-center font-bold font-mono text-primary bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important;">
         <div class="w-[52px] max-w-[52px] text-center py-2 px-1">
           <span class="font-khmer text-[11px] block text-primary">${isKm ? 'មធ្យម' : 'Avg'}</span>
         </div>
       </th>
-      <th class="score-result-th p-0 text-center font-bold font-mono text-amber-600 dark:text-amber-400 bg-slate-100 dark:bg-slate-800">
+      <th class="score-result-th p-0 text-center font-bold font-mono text-amber-600 dark:text-amber-400 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important;">
         <div class="w-[46px] max-w-[46px] text-center py-2 px-1">
           <span class="font-khmer text-[11px] block text-amber-600 dark:text-amber-400">${isKm ? 'ចំណាត់' : 'Rank'}</span>
         </div>
       </th>
-      <th class="score-result-th p-0 text-center font-bold bg-slate-100 dark:bg-slate-800">
+      <th class="score-result-th p-0 text-center font-bold bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important;">
         <div class="w-[46px] max-w-[46px] text-center py-2 px-1">
           <span class="font-khmer text-[11px] block">${isKm ? 'និទ្ទេស' : 'Grade'}</span>
         </div>
       </th>
 
       <!-- Actions Column -->
-      <th class="text-center p-0 bg-slate-100 dark:bg-slate-800 text-[10px] text-muted-foreground font-khmer print:hidden">
+      <th class="text-center p-0 bg-slate-100 dark:bg-slate-800 text-[10px] text-muted-foreground font-khmer print:hidden" style="z-index: 10 !important; isolation: isolate !important;">
         <div class="w-[40px] max-w-[40px] text-center py-2 px-0.5">
           ${isKm ? 'ផ្សេងៗ' : 'Actions'}
         </div>
