@@ -305,13 +305,14 @@ export const ScoresPage = {
         <div class="rounded-xl border border-border bg-card shadow-xs overflow-hidden print:border-none print:shadow-none relative">
           <div class="score-table-container max-h-[72vh] overflow-auto">
             <table class="score-table text-left text-xs border-separate" id="master-score-table">
-              <thead class="sticky top-0 z-30 shadow-xs">
+              <colgroup id="score-table-colgroup"></colgroup>
+              <thead class="z-30">
                 <!-- Tier 1: Category Groups Header -->
-                <tr id="score-category-header-row" class="bg-muted/95 border-b border-border/80">
+                <tr id="score-category-header-row" class="border-b border-border/80">
                   <!-- Populated dynamically -->
                 </tr>
                 <!-- Tier 2: Subject Names (Vertical Text) & Sub-columns -->
-                <tr id="score-subject-header-row" class="bg-muted/90 border-b border-border">
+                <tr id="score-subject-header-row" class="border-b border-border">
                   <!-- Populated dynamically -->
                 </tr>
               </thead>
@@ -398,17 +399,34 @@ export const ScoresPage = {
     const isKm = i18n.getLocale() === 'km';
     const catRow = document.getElementById('score-category-header-row');
     const subRow = document.getElementById('score-subject-header-row');
+    const colgroup = document.getElementById('score-table-colgroup');
     if (!catRow || !subRow) return;
 
     const groups = this.state.groupedSubjects;
 
+    // Fixed Column Widths via Colgroup
+    if (colgroup) {
+      colgroup.innerHTML = `
+        <col style="width: 36px; min-width: 36px; max-width: 36px;">
+        <col style="width: 72px; min-width: 72px; max-width: 72px;">
+        <col style="width: 72px; min-width: 72px; max-width: 72px;">
+        <col style="width: 48px; min-width: 48px; max-width: 48px;">
+        ${groups.map(g => g.subjects.map(() => `<col style="width: 46px; min-width: 46px; max-width: 46px;">`).join('')).join('')}
+        <col style="width: 55px; min-width: 55px;">
+        <col style="width: 52px; min-width: 52px;">
+        <col style="width: 46px; min-width: 46px;">
+        <col style="width: 46px; min-width: 46px;">
+        <col style="width: 40px; min-width: 40px;">
+      `;
+    }
+
     // Tier 1: Category Row
     catRow.innerHTML = `
-      <!-- Sticky Student Info Header Columns (Rowspan 2) -->
-      <th rowspan="2" class="score-sticky-col-1 text-center bg-muted/95 border-r border-b border-border/80 font-mono font-bold text-muted-foreground">#</th>
-      <th rowspan="2" class="score-sticky-col-2 text-center bg-muted/95 border-r border-b border-border/80 font-bold font-khmer text-foreground">${isKm ? 'គោត្តនាម' : 'Surname'}</th>
-      <th rowspan="2" class="score-sticky-col-3 text-center bg-muted/95 border-r border-b border-border/80 font-bold font-khmer text-foreground">${isKm ? 'នាម' : 'Name'}</th>
-      <th rowspan="2" class="score-sticky-col-4 text-center bg-muted/95 border-b border-border/80 font-bold font-khmer text-foreground">${isKm ? 'ភេទ' : 'Sex'}</th>
+      <!-- Sticky Student Info Header Columns (Rowspan 2, Locked on X and Y) -->
+      <th rowspan="2" class="score-sticky-col-1 text-center font-mono font-bold text-muted-foreground">#</th>
+      <th rowspan="2" class="score-sticky-col-2 text-center font-bold font-khmer text-foreground">${isKm ? 'គោត្តនាម' : 'Surname'}</th>
+      <th rowspan="2" class="score-sticky-col-3 text-center font-bold font-khmer text-foreground">${isKm ? 'នាម' : 'Name'}</th>
+      <th rowspan="2" class="score-sticky-col-4 text-center font-bold font-khmer text-foreground">${isKm ? 'ភេទ' : 'Sex'}</th>
 
       <!-- Subject Category Groups -->
       ${groups.map(g => `
@@ -418,12 +436,12 @@ export const ScoresPage = {
       `).join('')}
 
       <!-- Results Group (4 columns) -->
-      <th colspan="4" class="score-category-th bg-slate-100/95 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 font-khmer">
+      <th colspan="4" class="score-category-th bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700 font-khmer">
         ${isKm ? 'លទ្ធផល' : 'Results'}
       </th>
 
       <!-- Actions -->
-      <th rowspan="2" class="text-center px-2 py-3 bg-muted/95 border-b border-border/80 text-[10px] text-muted-foreground font-khmer print:hidden">
+      <th rowspan="2" class="text-center px-2 py-3 bg-slate-100 dark:bg-slate-800 text-[10px] text-muted-foreground font-khmer print:hidden">
         ${isKm ? 'ផ្សេងៗ' : 'Actions'}
       </th>
     `;
@@ -441,16 +459,16 @@ export const ScoresPage = {
       `).join('')).join('')}
 
       <!-- Result Sub-columns -->
-      <th class="px-2 py-2 text-center font-bold font-mono text-foreground min-w-[55px] bg-slate-50 dark:bg-slate-900/40 border-r border-b border-border/50">
+      <th class="score-result-th px-2 py-2 text-center font-bold font-mono text-foreground min-w-[55px] bg-slate-50 dark:bg-slate-900/40">
         <span class="font-khmer text-[11px] block">${isKm ? 'ពិន្ទុសរុប' : 'Total'}</span>
       </th>
-      <th class="px-2 py-2 text-center font-bold font-mono text-primary min-w-[52px] bg-slate-50 dark:bg-slate-900/40 border-r border-b border-border/50">
+      <th class="score-result-th px-2 py-2 text-center font-bold font-mono text-primary min-w-[52px] bg-slate-50 dark:bg-slate-900/40">
         <span class="font-khmer text-[11px] block">${isKm ? 'មធ្យម' : 'Avg'}</span>
       </th>
-      <th class="px-2 py-2 text-center font-bold font-mono text-amber-600 dark:text-amber-400 min-w-[46px] bg-slate-50 dark:bg-slate-900/40 border-r border-b border-border/50">
+      <th class="score-result-th px-2 py-2 text-center font-bold font-mono text-amber-600 dark:text-amber-400 min-w-[46px] bg-slate-50 dark:bg-slate-900/40">
         <span class="font-khmer text-[11px] block">${isKm ? 'ចំណាត់' : 'Rank'}</span>
       </th>
-      <th class="px-2 py-2 text-center font-bold min-w-[46px] bg-slate-50 dark:bg-slate-900/40 border-r border-b border-border/50">
+      <th class="score-result-th px-2 py-2 text-center font-bold min-w-[46px] bg-slate-50 dark:bg-slate-900/40">
         <span class="font-khmer text-[11px] block">${isKm ? 'និទ្ទេស' : 'Grade'}</span>
       </th>
     `;
@@ -512,22 +530,22 @@ export const ScoresPage = {
       return `
         <tr class="hover:bg-muted/15 transition-colors group" data-student-id="${r.studentId}" data-row-idx="${rIdx}">
           <!-- 1. No -->
-          <td class="score-sticky-col-1 text-center font-mono font-medium text-muted-foreground bg-card group-hover:bg-muted/20 border-r border-b border-border/50 py-1.5">
+          <td class="score-sticky-col-1 text-center font-mono font-medium text-muted-foreground py-1.5">
             ${rIdx + 1}
           </td>
 
           <!-- 2. Surname (គោត្តនាម) -->
-          <td class="score-sticky-col-2 text-center font-khmer font-semibold text-foreground bg-card group-hover:bg-muted/20 border-r border-b border-border/50 px-1 py-1.5 truncate">
+          <td class="score-sticky-col-2 text-center font-khmer font-semibold text-foreground px-1 py-1.5 truncate">
             ${surname || '—'}
           </td>
 
           <!-- 3. Given Name (នាម) -->
-          <td class="score-sticky-col-3 text-center font-khmer font-semibold text-foreground bg-card group-hover:bg-muted/20 border-r border-b border-border/50 px-1 py-1.5 truncate">
+          <td class="score-sticky-col-3 text-center font-khmer font-semibold text-foreground px-1 py-1.5 truncate">
             ${givenName || '—'}
           </td>
 
           <!-- 4. Gender (ភេទ) -->
-          <td class="score-sticky-col-4 text-center font-khmer text-xs ${genderColor} bg-card group-hover:bg-muted/20 border-b border-border/50 px-1 py-1.5">
+          <td class="score-sticky-col-4 text-center font-khmer text-xs ${genderColor} px-1 py-1.5">
             ${genderText}
           </td>
 

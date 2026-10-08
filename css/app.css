@@ -1260,55 +1260,65 @@ html[lang="km"] select {
    Master Score Table & Excel-like Grid Selection Styling (Flat Grid with Colors)
    ========================================================================== */
 .score-table-container {
-  overflow-x: auto;
+  overflow-x: auto !important;
+  overflow-y: auto !important;
   position: relative;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .score-table {
-  border-collapse: collapse !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
   width: 100%;
+  table-layout: fixed;
 }
 
 .score-table th,
 .score-table td {
-  border: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  box-sizing: border-box;
 }
 
 .dark .score-table th,
 .dark .score-table td {
-  border: 1px solid #334155;
+  border-right: 1px solid #334155;
+  border-bottom: 1px solid #334155;
 }
 
-/* Category Headers (Tier 1) */
-.score-category-th {
+/* Category Headers (Tier 1) - Sticky Top */
+thead tr#score-category-header-row th.score-category-th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 30 !important;
+  height: 32px !important;
   font-size: 11px;
   font-weight: 700;
   padding: 6px 4px;
   text-align: center;
-  border: 1px solid rgba(0, 0, 0, 0.12) !important;
   white-space: nowrap;
+  box-sizing: border-box;
 }
 
-.dark .score-category-th {
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+/* Vertical Column Subject Headers & Result Headers (Tier 2) - Sticky Top 32px */
+thead tr#score-subject-header-row th.score-subject-th,
+thead tr#score-subject-header-row th.score-result-th {
+  position: sticky !important;
+  top: 32px !important;
+  z-index: 30 !important;
+  box-sizing: border-box;
 }
 
-/* Vertical Column Subject Headers (Tier 2) */
 .score-subject-th {
   position: relative;
   padding: 6px 2px 4px 2px;
-  min-width: 44px;
-  max-width: 52px;
   width: 46px;
+  min-width: 46px;
+  max-width: 46px;
   vertical-align: bottom;
   text-align: center;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
-}
-
-.dark .score-subject-th {
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
 .score-vertical-title {
@@ -1339,52 +1349,98 @@ html[lang="km"] select {
   color: #94a3b8;
 }
 
-/* Sticky Student Info Columns */
+/* Sticky Student Info Columns (Locked to Left during Horizontal Scroll) */
 .score-sticky-col-1 {
-  position: sticky;
-  left: 0;
-  width: 38px;
-  min-width: 38px;
-  z-index: 20;
+  position: sticky !important;
+  left: 0px !important;
+  width: 36px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
+  box-sizing: border-box !important;
 }
 
 .score-sticky-col-2 {
-  position: sticky;
-  left: 38px;
-  width: 78px;
-  min-width: 78px;
-  z-index: 20;
+  position: sticky !important;
+  left: 36px !important;
+  width: 72px !important;
+  min-width: 72px !important;
+  max-width: 72px !important;
+  box-sizing: border-box !important;
 }
 
 .score-sticky-col-3 {
-  position: sticky;
-  left: 116px;
-  width: 78px;
-  min-width: 78px;
-  z-index: 20;
+  position: sticky !important;
+  left: 108px !important;
+  width: 72px !important;
+  min-width: 72px !important;
+  max-width: 72px !important;
+  box-sizing: border-box !important;
 }
 
 .score-sticky-col-4 {
-  position: sticky;
-  left: 194px;
-  width: 52px;
-  min-width: 52px;
-  z-index: 20;
-  border-right: 2px solid rgba(0, 0, 0, 0.15) !important;
+  position: sticky !important;
+  left: 180px !important;
+  width: 48px !important;
+  min-width: 48px !important;
+  max-width: 48px !important;
+  box-sizing: border-box !important;
+  border-right: 2px solid #94a3b8 !important;
+  box-shadow: 4px 0 6px -2px rgba(0, 0, 0, 0.15) !important;
 }
 
 .dark .score-sticky-col-4 {
-  border-right: 2px solid rgba(255, 255, 255, 0.2) !important;
+  border-right: 2px solid #475569 !important;
+  box-shadow: 4px 0 6px -2px rgba(0, 0, 0, 0.45) !important;
 }
 
+/* High z-index for Header Sticky Intersection Cells (Top-Left corner) */
 thead th.score-sticky-col-1,
 thead th.score-sticky-col-2,
 thead th.score-sticky-col-3,
 thead th.score-sticky-col-4 {
-  z-index: 35 !important;
+  top: 0px !important;
+  z-index: 45 !important;
+  background-color: #f8fafc !important;
 }
 
-/* Flat Excel-like Grid Cell (NO rounded pill shapes) */
+.dark thead th.score-sticky-col-1,
+.dark thead th.score-sticky-col-2,
+.dark thead th.score-sticky-col-3,
+.dark thead th.score-sticky-col-4 {
+  background-color: #1e293b !important;
+}
+
+/* Body Sticky Cells */
+tbody td.score-sticky-col-1,
+tbody td.score-sticky-col-2,
+tbody td.score-sticky-col-3,
+tbody td.score-sticky-col-4 {
+  z-index: 20 !important;
+  background-color: #ffffff !important;
+}
+
+.dark tbody td.score-sticky-col-1,
+.dark tbody td.score-sticky-col-2,
+.dark tbody td.score-sticky-col-3,
+.dark tbody td.score-sticky-col-4 {
+  background-color: #0f172a !important;
+}
+
+tbody tr:hover td.score-sticky-col-1,
+tbody tr:hover td.score-sticky-col-2,
+tbody tr:hover td.score-sticky-col-3,
+tbody tr:hover td.score-sticky-col-4 {
+  background-color: #f1f5f9 !important;
+}
+
+.dark tbody tr:hover td.score-sticky-col-1,
+.dark tbody tr:hover td.score-sticky-col-2,
+.dark tbody tr:hover td.score-sticky-col-3,
+.dark tbody tr:hover td.score-sticky-col-4 {
+  background-color: #1e293b !important;
+}
+
+/* Flat Excel-like Grid Cell */
 .score-cell-td {
   padding: 0 !important;
   margin: 0 !important;
@@ -1419,14 +1475,14 @@ thead th.score-sticky-col-4 {
 .score-cell-td:focus-within {
   outline: 2px solid #2563eb !important;
   outline-offset: -2px !important;
-  z-index: 10;
+  z-index: 15;
   background-color: #ffffff !important;
 }
 
 .dark .score-cell-td:focus-within {
   outline: 2px solid #3b82f6 !important;
   outline-offset: -2px !important;
-  z-index: 10;
+  z-index: 15;
   background-color: #0f172a !important;
 }
 
@@ -1435,7 +1491,7 @@ thead th.score-sticky-col-4 {
   background-color: rgba(59, 130, 246, 0.22) !important;
   outline: 1px solid #3b82f6 !important;
   outline-offset: -1px !important;
-  z-index: 5;
+  z-index: 10;
 }
 
 .score-cell-td.is-selected .score-cell-input {
