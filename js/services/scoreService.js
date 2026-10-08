@@ -137,8 +137,9 @@ export const ScoreService = {
 
   /**
    * Determine letter grade based on calculated percentage / full score
+   * Default full score is 50.00 for average (< 25 is F)
    */
-  calculateGrade(scoreOrPercentage, fullScore = 100) {
+  calculateGrade(scoreOrPercentage, fullScore = 50) {
     return SubjectService.calculateGrade(scoreOrPercentage, fullScore);
   },
 
@@ -258,7 +259,9 @@ export const ScoreService = {
       });
 
       const averageVal = periodCoeff > 0 ? (total / periodCoeff) : total;
-      const gradeInfo = SubjectService.calculateGrade(total, totalMax);
+      const roundedAvg = Math.round(averageVal * 100) / 100;
+      // Grade is calculated from average with full average = 50.00 (< 25 is F)
+      const gradeInfo = SubjectService.calculateGrade(roundedAvg, 50);
 
       return {
         studentId: stu.id,
@@ -275,7 +278,7 @@ export const ScoreService = {
         subjectScores,
         total,
         totalMax,
-        average: Math.round(averageVal * 100) / 100,
+        average: roundedAvg,
         grade: gradeInfo.grade,
         gradeColor: gradeInfo.color,
         rank: 1

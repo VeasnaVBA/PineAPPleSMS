@@ -1005,7 +1005,8 @@ export const ScoresPage = {
     const avgScore = coeff > 0 ? (sum / coeff) : sum;
     rowData.average = Math.round(avgScore * 100) / 100;
 
-    const gradeInfo = SubjectService.calculateGrade(sum, maxTotal);
+    // Use average to calculate the grade, where full average is 50.00 (< 25 is F)
+    const gradeInfo = SubjectService.calculateGrade(rowData.average, 50);
     rowData.grade = gradeInfo.grade;
     rowData.gradeColor = gradeInfo.color;
 
@@ -1549,14 +1550,23 @@ export const ScoresPage = {
    */
   openGradingScaleModal() {
     const isKm = i18n.getLocale() === 'km';
-    const summary = SubjectService.getGradingScaleSummary(100);
+    const summary = SubjectService.getGradingScaleSummary(50);
+
+    const scoreRanges = {
+      'A': '42.50 – 50.00',
+      'B': '40.00 – 42.49',
+      'C': '35.00 – 39.99',
+      'D': '30.00 – 34.99',
+      'E': '25.00 – 29.99',
+      'F': '< 25.00'
+    };
 
     const content = `
       <div class="space-y-3 text-xs select-none">
         <p class="text-muted-foreground ${isKm ? 'font-khmer' : ''}">
           ${isKm 
-            ? 'ស្តង់ដារក្រសួងអប់រំ យុវជន និងកីឡា សម្រាប់ការវាយតម្លៃនិទ្ទេសសិស្ស (A ដល់ F)៖' 
-            : 'Standard Ministry of Education grading scale (A to F):'}
+            ? 'ស្តង់ដារក្រសួងអប់រំ យុវជន និងកីឡា សម្រាប់ការវាយតម្លៃនិទ្ទេសសិស្ស (A ដល់ F) គិតតាមមធ្យមភាគពេញ 50.00 (ក្រោម 25.00 ធ្លាក់)៖' 
+            : 'Standard Ministry of Education grading scale (A to F) calculated from average score out of full 50.00 (< 25.00 is Fail):'}
         </p>
 
         <div class="rounded-lg border border-border overflow-hidden">
@@ -1565,7 +1575,8 @@ export const ScoresPage = {
               <tr>
                 <th class="p-2.5 text-center">និទ្ទេស</th>
                 <th class="p-2.5">អត្ថន័យ</th>
-                <th class="p-2.5 text-center">ភាគរយ</th>
+                <th class="p-2.5 text-center font-mono">មធ្យមភាគ (ពេញ 50)</th>
+                <th class="p-2.5 text-center font-mono">ភាគរយ</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-border">
@@ -1578,6 +1589,9 @@ export const ScoresPage = {
                   </td>
                   <td class="p-2.5 font-semibold text-foreground">
                     ${item.labelKm} <span class="text-muted-foreground font-normal">(${item.labelEn})</span>
+                  </td>
+                  <td class="p-2.5 text-center font-mono font-bold text-foreground">
+                    ${scoreRanges[item.grade] || '—'}
                   </td>
                   <td class="p-2.5 text-center font-mono font-bold text-primary">
                     ${item.percentRange}
@@ -1598,7 +1612,7 @@ export const ScoresPage = {
           ${isKm ? 'យល់ព្រម' : 'Got it'}
         </button>
       `,
-      maxWidth: 'max-w-md'
+      maxWidth: 'max-w-lg'
     });
 
     modal.element.querySelector('#btn-close-grade-guide')?.addEventListener('click', () => modal.close());
