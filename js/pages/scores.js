@@ -134,26 +134,32 @@ export const ScoresPage = {
   },
 
   async render(container) {
-    this.container = container;
-    this.state.classes = await ClassService.getAll();
-    this.state.activeYear = await SettingsService.getActiveAcademicYear();
-    this.state.coefficients = await ScoreService.getMonthlyCoefficients();
+    if (this._isRendering) return;
+    this._isRendering = true;
+    try {
+      this.container = container;
+      this.state.classes = await ClassService.getAll();
+      this.state.activeYear = await SettingsService.getActiveAcademicYear();
+      this.state.coefficients = await ScoreService.getMonthlyCoefficients();
 
-    if (authService.isTeacher()) {
-      let teacherClassId = authService.getAssignedClassId();
-      if (!teacherClassId && this.state.classes.length > 0) {
-        teacherClassId = this.state.classes[0].id;
-        authService.setAssignedClassId(teacherClassId);
+      if (authService.isTeacher()) {
+        let teacherClassId = authService.getAssignedClassId();
+        if (!teacherClassId && this.state.classes.length > 0) {
+          teacherClassId = this.state.classes[0].id;
+          authService.setAssignedClassId(teacherClassId);
+        }
+        if (teacherClassId) {
+          this.state.selectedClassId = teacherClassId;
+        }
+      } else if (this.state.classes.length > 0 && !this.state.selectedClassId) {
+        this.state.selectedClassId = this.state.classes[0].id;
       }
-      if (teacherClassId) {
-        this.state.selectedClassId = teacherClassId;
-      }
-    } else if (this.state.classes.length > 0 && !this.state.selectedClassId) {
-      this.state.selectedClassId = this.state.classes[0].id;
+
+      this.renderLayout();
+      await this.loadScores();
+    } finally {
+      this._isRendering = false;
     }
-
-    this.renderLayout();
-    await this.loadScores();
   },
 
   renderLayout() {

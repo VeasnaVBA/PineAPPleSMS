@@ -147,7 +147,9 @@ class SchoolApp {
       window.router = this.router;
       this.sidebar.render();
       this.topbar?.render();
-      this.router?.handleRoute();
+      if (!this.router.currentRoute || (currentHash && this.router.currentRoute !== currentHash)) {
+        this.router?.handleRoute();
+      }
     }
   }
 }

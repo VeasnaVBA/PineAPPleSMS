@@ -57,8 +57,8 @@ export class Router {
     window.addEventListener('app:refresh-data', (e) => {
       const source = e.detail?.source || '';
 
-      // 1. Never reload if active page is scores and change originated from scores
-      if (this.currentRoute === 'scores' && (source.startsWith('scores') || source.includes('score'))) {
+      // 1. Never reload if active page is scores - scores page manages its own live grid
+      if (this.currentRoute === 'scores') {
         return;
       }
 

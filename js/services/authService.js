@@ -81,6 +81,7 @@ class AuthService {
   async setAssignedClassId(classId) {
     const user = this.getCurrentUser();
     if (!user) return;
+    if (user.classId === classId && user.assignedClassId === classId) return;
     user.classId = classId;
     user.assignedClassId = classId;
     if (user.id && classId) {
