@@ -1257,7 +1257,7 @@ html[lang="km"] select {
 }
 
 /* ==========================================================================
-   Master Score Table & Excel-like Grid Selection Styling
+   Master Score Table & Excel-like Grid Selection Styling (Flat Grid with Colors)
    ========================================================================== */
 .score-table-container {
   overflow-x: auto;
@@ -1267,9 +1267,18 @@ html[lang="km"] select {
 }
 
 .score-table {
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse !important;
   width: 100%;
+}
+
+.score-table th,
+.score-table td {
+  border: 1px solid #e2e8f0;
+}
+
+.dark .score-table th,
+.dark .score-table td {
+  border: 1px solid #334155;
 }
 
 /* Category Headers (Tier 1) */
@@ -1278,14 +1287,12 @@ html[lang="km"] select {
   font-weight: 700;
   padding: 6px 4px;
   text-align: center;
-  border-right: 1px solid rgba(0, 0, 0, 0.08);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
   white-space: nowrap;
 }
 
 .dark .score-category-th {
-  border-right-color: rgba(255, 255, 255, 0.1);
-  border-bottom-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 /* Vertical Column Subject Headers (Tier 2) */
@@ -1297,13 +1304,11 @@ html[lang="km"] select {
   width: 46px;
   vertical-align: bottom;
   text-align: center;
-  border-right: 1px solid rgba(0, 0, 0, 0.06);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
 }
 
 .dark .score-subject-th {
-  border-right-color: rgba(255, 255, 255, 0.08);
-  border-bottom-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
 .score-vertical-title {
@@ -1365,11 +1370,11 @@ html[lang="km"] select {
   width: 52px;
   min-width: 52px;
   z-index: 20;
-  border-right: 2px solid rgba(0, 0, 0, 0.1) !important;
+  border-right: 2px solid rgba(0, 0, 0, 0.15) !important;
 }
 
 .dark .score-sticky-col-4 {
-  border-right: 2px solid rgba(255, 255, 255, 0.12) !important;
+  border-right: 2px solid rgba(255, 255, 255, 0.2) !important;
 }
 
 thead th.score-sticky-col-1,
@@ -1379,74 +1384,66 @@ thead th.score-sticky-col-4 {
   z-index: 35 !important;
 }
 
-/* Score Input Cell (Pill / Rounded Box) */
+/* Flat Excel-like Grid Cell (NO rounded pill shapes) */
 .score-cell-td {
-  padding: 3px 2px;
+  padding: 0 !important;
+  margin: 0 !important;
   text-align: center;
-  border-right: 1px solid rgba(0, 0, 0, 0.05);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  transition: background-color 0.1s ease;
   position: relative;
-}
-
-.dark .score-cell-td {
-  border-right-color: rgba(255, 255, 255, 0.06);
-  border-bottom-color: rgba(255, 255, 255, 0.06);
+  height: 32px;
+  min-height: 32px;
+  box-sizing: border-box;
+  transition: background-color 0.1s ease;
 }
 
 .score-cell-input {
-  width: 100%;
-  height: 30px;
-  padding: 0 2px;
-  text-align: center;
-  font-family: monospace;
-  font-weight: 600;
-  font-size: 11px;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
-  background-color: #ffffff;
-  color: #0f172a;
-  outline: none;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
-  transition: all 0.12s ease-in-out;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 32px !important;
+  padding: 0 2px !important;
+  margin: 0 !important;
+  text-align: center !important;
+  font-family: monospace !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  color: inherit !important;
+  outline: none !important;
+  box-shadow: none !important;
+  cursor: cell;
 }
 
-.dark .score-cell-input {
-  background-color: #0f172a;
-  border-color: #334155;
-  color: #f8fafc;
+/* Active Cell (like Excel focus box) */
+.score-cell-td:focus-within {
+  outline: 2px solid #2563eb !important;
+  outline-offset: -2px !important;
+  z-index: 10;
+  background-color: #ffffff !important;
+}
+
+.dark .score-cell-td:focus-within {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: -2px !important;
+  z-index: 10;
+  background-color: #0f172a !important;
 }
 
 /* Excel-like Selection Highlight */
 .score-cell-td.is-selected {
-  background-color: rgba(59, 130, 246, 0.15) !important;
+  background-color: rgba(59, 130, 246, 0.22) !important;
+  outline: 1px solid #3b82f6 !important;
+  outline-offset: -1px !important;
+  z-index: 5;
 }
 
 .score-cell-td.is-selected .score-cell-input {
-  background-color: rgba(219, 234, 254, 0.6) !important;
-  border-color: #3b82f6 !important;
-}
-
-.dark .score-cell-td.is-selected {
-  background-color: rgba(59, 130, 246, 0.25) !important;
+  color: #1e3a8a !important;
 }
 
 .dark .score-cell-td.is-selected .score-cell-input {
-  background-color: rgba(30, 58, 138, 0.5) !important;
-  border-color: #60a5fa !important;
-}
-
-/* Active Cell (where user is currently focused) */
-.score-cell-td.is-active-cell .score-cell-input {
-  background-color: #ffffff !important;
-  border: 2px solid #2563eb !important;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25) !important;
-}
-
-.dark .score-cell-td.is-active-cell .score-cell-input {
-  background-color: #0f172a !important;
-  border: 2px solid #3b82f6 !important;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35) !important;
+  color: #93c5fd !important;
 }
 
 /* Floating / Sticky Multi-Delete Action Bar */
