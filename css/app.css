@@ -1433,17 +1433,89 @@ tbody td.score-sticky-col-4 {
   background-color: #0f172a !important;
 }
 
+tbody td.score-sticky-col-1 > div,
+tbody td.score-sticky-col-2 > div,
+tbody td.score-sticky-col-3 > div,
+tbody td.score-sticky-col-4 > div {
+  background-color: transparent !important;
+}
+
 tbody tr:hover td.score-sticky-col-1,
 tbody tr:hover td.score-sticky-col-2,
 tbody tr:hover td.score-sticky-col-3,
-tbody tr:hover td.score-sticky-col-4 {
+tbody tr:hover td.score-sticky-col-4,
+tbody tr:focus-within td.score-sticky-col-1,
+tbody tr:focus-within td.score-sticky-col-2,
+tbody tr:focus-within td.score-sticky-col-3,
+tbody tr:focus-within td.score-sticky-col-4,
+tbody tr.is-active-row td.score-sticky-col-1,
+tbody tr.is-active-row td.score-sticky-col-2,
+tbody tr.is-active-row td.score-sticky-col-3,
+tbody tr.is-active-row td.score-sticky-col-4 {
   background-color: #f1f5f9 !important;
 }
 
 .dark tbody tr:hover td.score-sticky-col-1,
 .dark tbody tr:hover td.score-sticky-col-2,
 .dark tbody tr:hover td.score-sticky-col-3,
-.dark tbody tr:hover td.score-sticky-col-4 {
+.dark tbody tr:hover td.score-sticky-col-4,
+.dark tbody tr:focus-within td.score-sticky-col-1,
+.dark tbody tr:focus-within td.score-sticky-col-2,
+.dark tbody tr:focus-within td.score-sticky-col-3,
+.dark tbody tr:focus-within td.score-sticky-col-4,
+.dark tbody tr.is-active-row td.score-sticky-col-1,
+.dark tbody tr.is-active-row td.score-sticky-col-2,
+.dark tbody tr.is-active-row td.score-sticky-col-3,
+.dark tbody tr.is-active-row td.score-sticky-col-4 {
+  background-color: #1e293b !important;
+}
+
+/* Entire active row highlight across subject and result cells */
+tbody tr:hover td.score-cell-td:not(.is-selected):not([data-calculated-cell="true"]),
+tbody tr:focus-within td.score-cell-td:not(.is-selected):not([data-calculated-cell="true"]),
+tbody tr.is-active-row td.score-cell-td:not(.is-selected):not([data-calculated-cell="true"]) {
+  background-color: #f1f5f9 !important;
+}
+
+tbody tr:hover td.score-cell-td[data-calculated-cell="true"]:not(.is-selected),
+tbody tr:focus-within td.score-cell-td[data-calculated-cell="true"]:not(.is-selected),
+tbody tr.is-active-row td.score-cell-td[data-calculated-cell="true"]:not(.is-selected) {
+  background-color: #ffe4e6 !important;
+}
+
+.dark tbody tr:hover td.score-cell-td:not(.is-selected):not([data-calculated-cell="true"]),
+.dark tbody tr:focus-within td.score-cell-td:not(.is-selected):not([data-calculated-cell="true"]),
+.dark tbody tr.is-active-row td.score-cell-td:not(.is-selected):not([data-calculated-cell="true"]) {
+  background-color: #1e293b !important;
+}
+
+.dark tbody tr:hover td.score-cell-td[data-calculated-cell="true"]:not(.is-selected),
+.dark tbody tr:focus-within td.score-cell-td[data-calculated-cell="true"]:not(.is-selected),
+.dark tbody tr.is-active-row td.score-cell-td[data-calculated-cell="true"]:not(.is-selected) {
+  background-color: #4c0519 !important;
+}
+
+tbody tr:hover td.col-total,
+tbody tr:hover td.col-average,
+tbody tr:hover td.col-rank,
+tbody tr:focus-within td.col-total,
+tbody tr:focus-within td.col-average,
+tbody tr:focus-within td.col-rank,
+tbody tr.is-active-row td.col-total,
+tbody tr.is-active-row td.col-average,
+tbody tr.is-active-row td.col-rank {
+  background-color: #f1f5f9 !important;
+}
+
+.dark tbody tr:hover td.col-total,
+.dark tbody tr:hover td.col-average,
+.dark tbody tr:hover td.col-rank,
+.dark tbody tr:focus-within td.col-total,
+.dark tbody tr:focus-within td.col-average,
+.dark tbody tr:focus-within td.col-rank,
+.dark tbody tr.is-active-row td.col-total,
+.dark tbody tr.is-active-row td.col-average,
+.dark tbody tr.is-active-row td.col-rank {
   background-color: #1e293b !important;
 }
 

@@ -532,23 +532,23 @@ export const ScoresPage = {
       return `
         <tr class="hover:bg-muted/15 transition-colors group" data-student-id="${r.studentId}" data-row-idx="${rIdx}">
           <!-- 1. No (Centered) -->
-          <td class="score-sticky-col-1 p-0 text-center font-mono font-medium text-muted-foreground bg-white dark:bg-slate-900" style="z-index: 30 !important; transform: translateZ(0) !important;">
-            <div class="w-full whitespace-nowrap text-center py-1.5 bg-white dark:bg-slate-900">${rIdx + 1}</div>
+          <td class="score-sticky-col-1 p-0 text-center font-mono font-medium text-muted-foreground" style="z-index: 30 !important; transform: translateZ(0) !important;">
+            <div class="w-full whitespace-nowrap text-center py-1.5 bg-transparent">${rIdx + 1}</div>
           </td>
 
           <!-- 2. Surname (គោត្តនាម) - Left-aligned -->
-          <td class="score-sticky-col-2 p-0 text-left font-khmer font-semibold text-foreground bg-white dark:bg-slate-900" style="z-index: 30 !important; transform: translateZ(0) !important;" title="${surname}">
-            <div class="w-full whitespace-nowrap text-left py-1.5 px-2 text-xs bg-white dark:bg-slate-900">${surname || '—'}</div>
+          <td class="score-sticky-col-2 p-0 text-left font-khmer font-semibold text-foreground" style="z-index: 30 !important; transform: translateZ(0) !important;" title="${surname}">
+            <div class="w-full whitespace-nowrap text-left py-1.5 px-2 text-xs bg-transparent">${surname || '—'}</div>
           </td>
 
           <!-- 3. Given Name (នាម) - Left-aligned -->
-          <td class="score-sticky-col-3 p-0 text-left font-khmer font-semibold text-foreground bg-white dark:bg-slate-900" style="z-index: 30 !important; transform: translateZ(0) !important;" title="${givenName}">
-            <div class="w-full whitespace-nowrap text-left py-1.5 px-2 text-xs bg-white dark:bg-slate-900">${givenName || '—'}</div>
+          <td class="score-sticky-col-3 p-0 text-left font-khmer font-semibold text-foreground" style="z-index: 30 !important; transform: translateZ(0) !important;" title="${givenName}">
+            <div class="w-full whitespace-nowrap text-left py-1.5 px-2 text-xs bg-transparent">${givenName || '—'}</div>
           </td>
 
           <!-- 4. Gender (ភេទ) - Centered -->
-          <td class="score-sticky-col-4 p-0 text-center font-khmer text-xs ${genderColor} bg-white dark:bg-slate-900" style="z-index: 30 !important; transform: translateZ(0) !important;">
-            <div class="w-full whitespace-nowrap text-center py-1.5 px-1 bg-white dark:bg-slate-900">${genderText}</div>
+          <td class="score-sticky-col-4 p-0 text-center font-khmer text-xs ${genderColor}" style="z-index: 30 !important; transform: translateZ(0) !important;">
+            <div class="w-full whitespace-nowrap text-center py-1.5 px-1 bg-transparent">${genderText}</div>
           </td>
 
           <!-- 5. Subject Score Grid Cells (Centered Values) -->
@@ -558,7 +558,7 @@ export const ScoresPage = {
             const isCalc = SubjectService.isCalculatedSubject(s);
             const cellBg = isCalc ? 'bg-rose-50/90 dark:bg-rose-950/30' : 'bg-white dark:bg-slate-900';
             return `
-              <td class="score-cell-td ${cellBg} p-0 text-center" data-row="${rIdx}" data-col="${cIdx}">
+              <td class="score-cell-td ${cellBg} p-0 text-center" data-row="${rIdx}" data-col="${cIdx}" data-calculated-cell="${isCalc ? 'true' : 'false'}">
                 <div class="w-[46px] max-w-[46px] h-full flex items-center justify-center">
                   <input type="text"
                          inputmode="${isCalc ? 'none' : 'decimal'}"
@@ -688,6 +688,11 @@ export const ScoresPage = {
           this.selection.endCol = c;
           this.updateSelectionRange(r, c, r, c);
         }
+        tableContainer.querySelectorAll('tbody tr.is-active-row').forEach(other => {
+          other.classList.remove('is-active-row');
+        });
+        const rowEl = inp.closest('tr');
+        if (rowEl) rowEl.classList.add('is-active-row');
       });
 
       // Live Calculation on Typing
@@ -703,6 +708,18 @@ export const ScoresPage = {
       // Excel Multi-cell Paste Support
       inp.addEventListener('paste', (e) => {
         this.handleCellPaste(e, inp);
+      });
+    });
+
+    // Row click activation (e.g. clicking student name, gender, or row background)
+    tableContainer.querySelectorAll('tbody tr[data-row-idx]').forEach(tr => {
+      tr.addEventListener('click', (e) => {
+        if (!e.target.closest('.score-cell-input')) {
+          tableContainer.querySelectorAll('tbody tr.is-active-row').forEach(other => {
+            if (other !== tr) other.classList.remove('is-active-row');
+          });
+          tr.classList.add('is-active-row');
+        }
       });
     });
 
@@ -779,6 +796,17 @@ export const ScoresPage = {
         }
       } else {
         cell.classList.remove('is-selected', 'is-active-cell');
+      }
+    });
+
+    // Update active row highlight on student row
+    const activeRowIdx = this.selection.selectedCoords.size > 0 ? this.selection.endRow : null;
+    this.container.querySelectorAll('tbody tr[data-row-idx]').forEach(tr => {
+      const idx = parseInt(tr.getAttribute('data-row-idx'), 10);
+      if (activeRowIdx !== null && idx === activeRowIdx) {
+        tr.classList.add('is-active-row');
+      } else {
+        tr.classList.remove('is-active-row');
       }
     });
 
