@@ -1414,13 +1414,15 @@ thead th.score-sticky-col-4 {
   background-color: #1e293b !important;
 }
 
-/* Body Sticky Cells (z-index 20) */
+/* Body Sticky Cells (z-index 30) - ALWAYS on top of scrolling cells */
 tbody td.score-sticky-col-1,
 tbody td.score-sticky-col-2,
 tbody td.score-sticky-col-3,
 tbody td.score-sticky-col-4 {
   position: sticky !important;
-  z-index: 20 !important;
+  z-index: 30 !important;
+  transform: translateZ(0) !important;
+  isolation: isolate !important;
   background-color: #ffffff !important;
 }
 
@@ -1480,14 +1482,14 @@ tbody tr:hover td.score-sticky-col-4 {
 .score-cell-td:focus-within {
   outline: 2px solid #2563eb !important;
   outline-offset: -2px !important;
-  z-index: 15;
+  z-index: 4 !important;
   background-color: #ffffff !important;
 }
 
 .dark .score-cell-td:focus-within {
   outline: 2px solid #3b82f6 !important;
   outline-offset: -2px !important;
-  z-index: 15;
+  z-index: 4 !important;
   background-color: #0f172a !important;
 }
 
@@ -1496,7 +1498,7 @@ tbody tr:hover td.score-sticky-col-4 {
   background-color: rgba(59, 130, 246, 0.22) !important;
   outline: 1px solid #3b82f6 !important;
   outline-offset: -1px !important;
-  z-index: 10;
+  z-index: 3 !important;
 }
 
 .score-cell-td.is-selected .score-cell-input {

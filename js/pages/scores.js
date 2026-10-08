@@ -532,22 +532,22 @@ export const ScoresPage = {
       return `
         <tr class="hover:bg-muted/15 transition-colors group" data-student-id="${r.studentId}" data-row-idx="${rIdx}">
           <!-- 1. No (Centered) -->
-          <td class="score-sticky-col-1 p-0 text-center font-mono font-medium text-muted-foreground bg-white dark:bg-slate-900">
+          <td class="score-sticky-col-1 p-0 text-center font-mono font-medium text-muted-foreground bg-white dark:bg-slate-900" style="z-index: 30 !important; transform: translateZ(0) !important;">
             <div class="w-full whitespace-nowrap text-center py-1.5 bg-white dark:bg-slate-900">${rIdx + 1}</div>
           </td>
 
           <!-- 2. Surname (គោត្តនាម) - Left-aligned -->
-          <td class="score-sticky-col-2 p-0 text-left font-khmer font-semibold text-foreground bg-white dark:bg-slate-900">
-            <div class="w-full whitespace-nowrap text-left py-1.5 px-2 text-xs bg-white dark:bg-slate-900" title="${surname}">${surname || '—'}</div>
+          <td class="score-sticky-col-2 p-0 text-left font-khmer font-semibold text-foreground bg-white dark:bg-slate-900" style="z-index: 30 !important; transform: translateZ(0) !important;" title="${surname}">
+            <div class="w-full whitespace-nowrap text-left py-1.5 px-2 text-xs bg-white dark:bg-slate-900">${surname || '—'}</div>
           </td>
 
           <!-- 3. Given Name (នាម) - Left-aligned -->
-          <td class="score-sticky-col-3 p-0 text-left font-khmer font-semibold text-foreground bg-white dark:bg-slate-900">
-            <div class="w-full whitespace-nowrap text-left py-1.5 px-2 text-xs bg-white dark:bg-slate-900" title="${givenName}">${givenName || '—'}</div>
+          <td class="score-sticky-col-3 p-0 text-left font-khmer font-semibold text-foreground bg-white dark:bg-slate-900" style="z-index: 30 !important; transform: translateZ(0) !important;" title="${givenName}">
+            <div class="w-full whitespace-nowrap text-left py-1.5 px-2 text-xs bg-white dark:bg-slate-900">${givenName || '—'}</div>
           </td>
 
           <!-- 4. Gender (ភេទ) - Centered -->
-          <td class="score-sticky-col-4 p-0 text-center font-khmer text-xs ${genderColor} bg-white dark:bg-slate-900">
+          <td class="score-sticky-col-4 p-0 text-center font-khmer text-xs ${genderColor} bg-white dark:bg-slate-900" style="z-index: 30 !important; transform: translateZ(0) !important;">
             <div class="w-full whitespace-nowrap text-center py-1.5 px-1 bg-white dark:bg-slate-900">${genderText}</div>
           </td>
 
@@ -716,6 +716,17 @@ export const ScoresPage = {
     window.removeEventListener('mouseup', this._globalMouseUpHandler);
     this._globalMouseUpHandler = handleGlobalMouseUp;
     window.addEventListener('mouseup', this._globalMouseUpHandler);
+
+    // Dismiss lingering single-cell selection outline when user scrolls table horizontally or vertically
+    const handleTableScroll = () => {
+      if (this.selection.selectedCoords.size === 1 && !this.selection.isSelecting) {
+        this.selection.selectedCoords.clear();
+        this.updateSelectionVisuals();
+      }
+    };
+    tableContainer.removeEventListener('scroll', this._tableScrollHandler);
+    this._tableScrollHandler = handleTableScroll;
+    tableContainer.addEventListener('scroll', this._tableScrollHandler, { passive: true });
 
     // Transcript modal buttons
     this.container.querySelectorAll('.btn-student-transcript').forEach(btn => {
