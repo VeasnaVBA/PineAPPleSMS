@@ -3,6 +3,7 @@ import { ClassService } from './classService.js';
 import { SubjectService } from './subjectService.js';
 import { authService } from './authService.js';
 import { syncStateManager } from './syncStateManager.js';
+import { SettingsService } from './settingsService.js';
 
 export const EVALUATION_PERIODS = [
   // Months Jan to Dec
@@ -27,9 +28,79 @@ export const EVALUATION_PERIODS = [
   { id: 'Annual', nameKm: 'ប្រចាំឆ្នាំ', nameEn: 'Annual', group: 'exam' }
 ];
 
+export const DEFAULT_MONTHLY_COEFFICIENTS = {
+  'January': 10,
+  'February': 10,
+  'March': 10,
+  'April': 10,
+  'May': 10,
+  'June': 10,
+  'July': 10,
+  'August': 10,
+  'September': 10,
+  'October': 10,
+  'November': 10,
+  'December': 10,
+  'First Test': 10,
+  'Semester 1': 20,
+  'Semester 1 Exam': 20,
+  'Semester 2': 20,
+  'Semester 2 Exam': 20,
+  'Annual': 20
+};
+
 export const ScoreService = {
   getEvaluationPeriods() {
     return EVALUATION_PERIODS;
+  },
+
+  async getMonthlyCoefficients() {
+    try {
+      const fromDb = await SettingsService.get('monthly_coefficients');
+      if (fromDb && typeof fromDb === 'object') {
+        return { ...DEFAULT_MONTHLY_COEFFICIENTS, ...fromDb };
+      }
+      const fromLocal = localStorage.getItem('monthly_coefficients');
+      if (fromLocal) {
+        return { ...DEFAULT_MONTHLY_COEFFICIENTS, ...JSON.parse(fromLocal) };
+      }
+    } catch (_) {}
+    return { ...DEFAULT_MONTHLY_COEFFICIENTS };
+  },
+
+  getCachedMonthlyCoefficients() {
+    try {
+      const fromLocal = localStorage.getItem('monthly_coefficients');
+      if (fromLocal) {
+        return { ...DEFAULT_MONTHLY_COEFFICIENTS, ...JSON.parse(fromLocal) };
+      }
+    } catch (_) {}
+    return { ...DEFAULT_MONTHLY_COEFFICIENTS };
+  },
+
+  async saveMonthlyCoefficients(coefficients) {
+    try {
+      const merged = { ...DEFAULT_MONTHLY_COEFFICIENTS, ...coefficients };
+      localStorage.setItem('monthly_coefficients', JSON.stringify(merged));
+      await SettingsService.set('monthly_coefficients', merged);
+      syncStateManager.markDirty('settings.monthly_coefficients');
+      return merged;
+    } catch (e) {
+      console.warn('Failed to save monthly coefficients:', e);
+      return coefficients;
+    }
+  },
+
+  async getCoefficientForPeriod(period) {
+    const map = await this.getMonthlyCoefficients();
+    const val = Number(map[period]);
+    return (val && val > 0) ? val : (period && (period.includes('Semester') || period.includes('Annual')) ? 20 : 10);
+  },
+
+  getCachedCoefficientForPeriod(period) {
+    const map = this.getCachedMonthlyCoefficients();
+    const val = Number(map[period]);
+    return (val && val > 0) ? val : (period && (period.includes('Semester') || period.includes('Annual')) ? 20 : 10);
   },
 
   async getSubjects() {
@@ -127,6 +198,8 @@ export const ScoreService = {
       scoreMap.set(`${s.studentId}_${s.subjectId}`, s);
     });
 
+    const periodCoeff = await this.getCoefficientForPeriod(period);
+
     const rows = activeStudents.map(stu => {
       // User requirement: Student Name (khmer firstname + khmer last name)
       let fullNameKh = '';
@@ -184,7 +257,7 @@ export const ScoreService = {
         totalMax += sub.fullScore;
       });
 
-      const average = totalMax > 0 ? ((total / totalMax) * 100) : 0;
+      const averageVal = periodCoeff > 0 ? (total / periodCoeff) : total;
       const gradeInfo = SubjectService.calculateGrade(total, totalMax);
 
       return {
@@ -202,7 +275,7 @@ export const ScoreService = {
         subjectScores,
         total,
         totalMax,
-        average: Math.round(average * 10) / 10,
+        average: Math.round(averageVal * 100) / 100,
         grade: gradeInfo.grade,
         gradeColor: gradeInfo.color,
         rank: 1

@@ -116,6 +116,7 @@ export const ScoresPage = {
     selectedClassId: '',
     selectedPeriod: 'October',
     activeYear: '2024–2025',
+    coefficients: {},
     rows: [],
     searchQuery: '',
     isAutoSaving: false,
@@ -136,6 +137,7 @@ export const ScoresPage = {
     this.container = container;
     this.state.classes = await ClassService.getAll();
     this.state.activeYear = await SettingsService.getActiveAcademicYear();
+    this.state.coefficients = await ScoreService.getMonthlyCoefficients();
 
     if (authService.isTeacher()) {
       let teacherClassId = authService.getAssignedClassId();
@@ -251,6 +253,15 @@ export const ScoresPage = {
               </select>
             </div>
 
+            <!-- Coefficient Settings Button -->
+            <button id="btn-coefficient-settings" type="button" class="h-8.5 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'កំណត់មេគុណសម្រាប់ខែនីមួយៗ ដើម្បីគណនាមធ្យមភាគ' : 'Set coefficients to calculate monthly average'}">
+              <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+              </svg>
+              <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'មេគុណ' : 'Coefficient'}</span>
+              <span id="current-month-coeff-badge" class="ml-0.5 px-1.5 py-0.2 rounded font-mono font-bold text-[10px] bg-primary/10 text-primary border border-primary/20" title="${isKm ? 'មេគុណខែនេះ' : 'Current month coefficient'}">${this.getCurrentPeriodCoefficient()}</span>
+            </button>
+
             <!-- Download Template Button -->
             <button id="btn-download-template" type="button" class="h-8.5 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'ទាញយកឯកសារ Excel គំរូ' : 'Download Excel Template'}">
               <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
@@ -345,8 +356,28 @@ export const ScoresPage = {
     this.bindStaticEvents();
   },
 
+  getCurrentPeriodCoefficient() {
+    const period = this.state.selectedPeriod || 'October';
+    const map = this.state.coefficients || ScoreService.getCachedMonthlyCoefficients();
+    const val = Number(map[period]);
+    return (val && val > 0) ? val : (period.includes('Semester') || period.includes('Annual') ? 20 : 10);
+  },
+
+  updateCoefficientBadge() {
+    const coeff = this.getCurrentPeriodCoefficient();
+    const badge = document.getElementById('current-month-coeff-badge');
+    if (badge) {
+      badge.textContent = coeff;
+    }
+  },
+
   async loadScores() {
     if (!this.state.selectedClassId) return;
+
+    if (!this.state.coefficients || Object.keys(this.state.coefficients).length === 0) {
+      this.state.coefficients = await ScoreService.getMonthlyCoefficients();
+    }
+    this.updateCoefficientBadge();
 
     const data = await ScoreService.getMasterScoreSheet({
       classId: this.state.selectedClassId,
@@ -397,6 +428,7 @@ export const ScoresPage = {
     if (!headerRow) return;
 
     const groups = this.state.groupedSubjects;
+    const currentMonthCoeff = this.getCurrentPeriodCoefficient();
 
     // Fixed Column Widths via Colgroup
     if (colgroup) {
@@ -455,8 +487,9 @@ export const ScoresPage = {
         </div>
       </th>
       <th class="score-result-th p-0 text-center font-bold font-mono text-primary bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-        <div class="w-[68px] max-w-[68px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
+        <div class="w-[68px] max-w-[68px] h-full min-h-[96px] mx-auto flex flex-col items-center justify-center text-center px-1">
           <span class="font-khmer text-xs block text-primary text-center">${isKm ? 'មធ្យមភាគ' : 'Avg'}</span>
+          <span class="text-[9px] font-mono font-bold text-muted-foreground block text-center mt-0.5" title="${isKm ? 'មេគុណចែក: ' + currentMonthCoeff : 'Divisor: ' + currentMonthCoeff}">÷ ${currentMonthCoeff}</span>
         </div>
       </th>
       <th class="score-result-th p-0 text-center font-bold font-mono text-amber-600 dark:text-amber-400 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
@@ -584,9 +617,9 @@ export const ScoresPage = {
             <div class="w-[64px] max-w-[64px] truncate text-center py-1.5 px-1">${r.total !== undefined ? r.total : 0}</div>
           </td>
 
-          <!-- 7. Average % -->
+          <!-- 7. Average -->
           <td class="p-0 text-center font-bold font-mono text-primary col-average bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
-            <div class="w-[68px] max-w-[68px] truncate text-center py-1.5 px-1">${r.average !== undefined ? r.average : 0}%</div>
+            <div class="w-[68px] max-w-[68px] truncate text-center py-1.5 px-1">${r.average !== undefined ? r.average : 0}</div>
           </td>
 
           <!-- 8. Rank -->
@@ -962,18 +995,21 @@ export const ScoresPage = {
 
     rowData.total = Math.round(sum * 10) / 10;
     rowData.totalMax = maxTotal;
-    const avgPct = maxTotal > 0 ? (sum / maxTotal) * 100 : 0;
-    rowData.average = Math.round(avgPct * 10) / 10;
+
+    const coeff = this.getCurrentPeriodCoefficient();
+    const avgScore = coeff > 0 ? (sum / coeff) : sum;
+    rowData.average = Math.round(avgScore * 100) / 100;
+
     const gradeInfo = SubjectService.calculateGrade(sum, maxTotal);
     rowData.grade = gradeInfo.grade;
     rowData.gradeColor = gradeInfo.color;
 
     const trEl = this.container.querySelector(`tr[data-student-id="${rowData.studentId}"]`);
     if (trEl) {
-      const totEl = trEl.querySelector('.col-total');
+      const totEl = trEl.querySelector('.col-total div') || trEl.querySelector('.col-total');
       if (totEl) totEl.textContent = rowData.total;
-      const avgEl = trEl.querySelector('.col-average');
-      if (avgEl) avgEl.textContent = `${rowData.average}%`;
+      const avgEl = trEl.querySelector('.col-average div') || trEl.querySelector('.col-average');
+      if (avgEl) avgEl.textContent = rowData.average;
       const gradeEl = trEl.querySelector('.col-grade');
       if (gradeEl) {
         gradeEl.textContent = rowData.grade;
@@ -1239,7 +1275,13 @@ export const ScoresPage = {
     // Select Period / Month
     document.getElementById('select-score-period')?.addEventListener('change', async (e) => {
       this.state.selectedPeriod = e.target.value;
+      this.updateCoefficientBadge();
       await this.loadScores();
+    });
+
+    // Coefficient Settings Button
+    document.getElementById('btn-coefficient-settings')?.addEventListener('click', () => {
+      this.openCoefficientModal();
     });
 
     // Search filter
@@ -1623,5 +1665,217 @@ export const ScoresPage = {
 
     modal.element.querySelector('#btn-close-transcript')?.addEventListener('click', () => modal.close());
     modal.element.querySelector('#btn-print-transcript')?.addEventListener('click', () => window.print());
+  },
+
+  /**
+   * Monthly Coefficients Configuration Modal
+   */
+  async openCoefficientModal() {
+    const isKm = i18n.getLocale() === 'km';
+    if (!this.state.coefficients || Object.keys(this.state.coefficients).length === 0) {
+      this.state.coefficients = await ScoreService.getMonthlyCoefficients();
+    }
+
+    const periods = ScoreService.getEvaluationPeriods();
+    const months = periods.filter(p => p.group === 'month');
+    const exams = periods.filter(p => p.group === 'exam');
+    const currentPeriod = this.state.selectedPeriod || 'October';
+    const activePeriodObj = periods.find(p => p.id === currentPeriod) || months[0];
+    const currentVal = this.getCurrentPeriodCoefficient();
+
+    const content = `
+      <div class="space-y-4 text-xs select-none">
+        <!-- Active Month Highlight Banner -->
+        <div class="p-3.5 rounded-xl border border-primary/30 bg-primary/5 dark:bg-primary/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary text-primary-foreground font-khmer">
+                ${isKm ? 'ខែកំពុងជ្រើសរើស' : 'Active Period'}
+              </span>
+              <span class="font-bold text-sm text-foreground font-khmer">
+                ${isKm ? activePeriodObj.nameKm : activePeriodObj.nameEn}
+              </span>
+            </div>
+            <p class="text-[11px] text-muted-foreground mt-1 font-khmer">
+              ${isKm 
+                ? 'រូបមន្តគណនា៖ <strong>មធ្យមភាគ = ពិន្ទុសរុប ÷ មេគុណ</strong>' 
+                : 'Calculation formula: <strong>Average = Total Score ÷ Coefficient</strong>'}
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <label for="active-month-coeff-input" class="text-xs font-semibold text-foreground whitespace-nowrap font-khmer">
+              ${isKm ? 'មេគុណខែនេះ៖' : 'Coefficient:'}
+            </label>
+            <input type="number" step="0.1" min="0.1" id="active-month-coeff-input" 
+                   value="${currentVal}" 
+                   class="w-24 h-9 px-2 text-center font-mono font-bold text-sm rounded-lg border border-primary bg-background text-foreground shadow-xs focus:ring-2 focus:ring-primary focus:outline-none" />
+          </div>
+        </div>
+
+        <!-- Full monthly & exams coefficient grid -->
+        <div class="space-y-3 pt-1">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-2">
+            <span class="font-bold text-xs text-foreground flex items-center gap-1.5 font-khmer">
+              <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              ${isKm ? 'កំណត់មេគុណតាមខែនីមួយៗ' : 'Set coefficients for all periods'}
+            </span>
+            <div class="flex items-center gap-1.5">
+              <button type="button" id="btn-quick-set-months-10" class="text-[10px] px-2.5 py-1 rounded-md border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer font-khmer" title="Set all monthly evaluations to 10">
+                ${isKm ? 'គ្រប់ខែ = 10' : 'All Months = 10'}
+              </button>
+              <button type="button" id="btn-quick-set-exams-20" class="text-[10px] px-2.5 py-1 rounded-md border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer font-khmer" title="Set all semester/annual exams to 20">
+                ${isKm ? 'ឆមាស/ប្រចាំឆ្នាំ = 20' : 'Exams = 20'}
+              </button>
+            </div>
+          </div>
+
+          <!-- Monthly periods grid -->
+          <div class="space-y-1.5">
+            <span class="text-[11px] font-semibold text-muted-foreground font-khmer block">
+              ${isKm ? '១. ពិន្ទុប្រចាំខែ (Months)' : '1. Monthly Periods'}
+            </span>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              ${months.map(m => {
+                const val = this.state.coefficients[m.id] !== undefined ? this.state.coefficients[m.id] : 10;
+                const isActive = m.id === currentPeriod;
+                return `
+                  <div class="p-2 rounded-lg border ${isActive ? 'border-primary/50 bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-card'} flex items-center justify-between gap-1 shadow-2xs">
+                    <span class="text-xs font-semibold text-foreground truncate font-khmer" title="${isKm ? m.nameKm : m.nameEn}">
+                      ${isKm ? m.nameKm : m.nameEn}
+                    </span>
+                    <input type="number" step="0.1" min="0.1" 
+                           data-period-id="${m.id}" 
+                           class="coeff-period-input w-16 h-7 px-1 text-center font-mono font-bold text-xs rounded border border-input bg-background text-foreground focus:ring-1 focus:ring-primary focus:outline-none" 
+                           value="${val}" />
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- Exam & Semester periods grid -->
+          <div class="space-y-1.5 pt-2">
+            <span class="text-[11px] font-semibold text-muted-foreground font-khmer block">
+              ${isKm ? '២. ការប្រឡង និងឆមាស (Exams & Semesters)' : '2. Exams & Semesters'}
+            </span>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              ${exams.map(e => {
+                const defaultExamVal = (e.id.includes('Semester') || e.id.includes('Annual')) ? 20 : 10;
+                const val = this.state.coefficients[e.id] !== undefined ? this.state.coefficients[e.id] : defaultExamVal;
+                const isActive = e.id === currentPeriod;
+                return `
+                  <div class="p-2 rounded-lg border ${isActive ? 'border-primary/50 bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-card'} flex items-center justify-between gap-1 shadow-2xs">
+                    <span class="text-xs font-semibold text-foreground truncate font-khmer" title="${isKm ? e.nameKm : e.nameEn}">
+                      ${isKm ? e.nameKm : e.nameEn}
+                    </span>
+                    <input type="number" step="0.1" min="0.1" 
+                           data-period-id="${e.id}" 
+                           class="coeff-period-input w-16 h-7 px-1 text-center font-mono font-bold text-xs rounded border border-input bg-background text-foreground focus:ring-1 focus:ring-primary focus:outline-none" 
+                           value="${val}" />
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const modal = Modal.open({
+      title: isKm ? 'កំណត់មេគុណតាមខែ (Coefficients)' : 'Monthly Coefficient Settings',
+      content,
+      footer: `
+        <div class="flex items-center justify-between w-full">
+          <button id="btn-cancel-coeff" type="button" class="px-3.5 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium cursor-pointer font-khmer">
+            ${isKm ? 'បោះបង់' : 'Cancel'}
+          </button>
+          <button id="btn-save-coeff" type="button" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-bold shadow-xs hover:bg-primary/90 transition-all cursor-pointer font-khmer">
+            ${getIcon('check', 'w-3.5 h-3.5')}
+            <span>${isKm ? 'រក្សាទុក & គណនាឡើងវិញ' : 'Save & Recalculate'}</span>
+          </button>
+        </div>
+      `,
+      maxWidth: 'max-w-2xl'
+    });
+
+    const activeTopInput = modal.element.querySelector('#active-month-coeff-input');
+    const matchingGridInput = modal.element.querySelector(`.coeff-period-input[data-period-id="${currentPeriod}"]`);
+
+    // Sync active top input with grid input
+    if (activeTopInput && matchingGridInput) {
+      activeTopInput.addEventListener('input', () => {
+        matchingGridInput.value = activeTopInput.value;
+      });
+      matchingGridInput.addEventListener('input', () => {
+        activeTopInput.value = matchingGridInput.value;
+      });
+    }
+
+    // Quick set buttons
+    modal.element.querySelector('#btn-quick-set-months-10')?.addEventListener('click', () => {
+      months.forEach(m => {
+        const inp = modal.element.querySelector(`.coeff-period-input[data-period-id="${m.id}"]`);
+        if (inp) inp.value = '10';
+      });
+      if (activeTopInput && months.some(m => m.id === currentPeriod)) {
+        activeTopInput.value = '10';
+      }
+    });
+
+    modal.element.querySelector('#btn-quick-set-exams-20')?.addEventListener('click', () => {
+      exams.forEach(e => {
+        const inp = modal.element.querySelector(`.coeff-period-input[data-period-id="${e.id}"]`);
+        if (inp) inp.value = '20';
+      });
+      if (activeTopInput && exams.some(e => e.id === currentPeriod)) {
+        activeTopInput.value = '20';
+      }
+    });
+
+    // Close button
+    modal.element.querySelector('#btn-cancel-coeff')?.addEventListener('click', () => modal.close());
+
+    // Save button
+    modal.element.querySelector('#btn-save-coeff')?.addEventListener('click', async () => {
+      const newMap = { ...(this.state.coefficients || {}) };
+      modal.element.querySelectorAll('.coeff-period-input').forEach(inp => {
+        const pId = inp.getAttribute('data-period-id');
+        const num = parseFloat(inp.value);
+        if (pId && !isNaN(num) && num > 0) {
+          newMap[pId] = num;
+        }
+      });
+
+      if (activeTopInput) {
+        const activeNum = parseFloat(activeTopInput.value);
+        if (!isNaN(activeNum) && activeNum > 0) {
+          newMap[currentPeriod] = activeNum;
+        }
+      }
+
+      await ScoreService.saveMonthlyCoefficients(newMap);
+      this.state.coefficients = newMap;
+
+      // Update UI components
+      this.updateCoefficientBadge();
+      this.renderHeader();
+
+      // Recalculate all rows
+      this.state.rows.forEach(r => this.recalculateRowData(r));
+      ScoreService.rankStudents(this.state.rows);
+      this.updateRanksInDOM();
+      this.updateSummaryStats();
+      this.triggerDebouncedAutoSave();
+
+      modal.close();
+
+      const newCoeff = this.getCurrentPeriodCoefficient();
+      toast.success(
+        isKm 
+          ? `បានរក្សាទុកមេគុណ (${newCoeff}) និងគណនាមធ្យមភាគឡើងវិញដោយជោគជ័យ!` 
+          : `Saved coefficient (${newCoeff}) and recalculated averages successfully!`,
+        isKm ? 'ជោគជ័យ' : 'Success'
+      );
+    });
   }
 };
