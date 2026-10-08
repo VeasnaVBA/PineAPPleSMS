@@ -448,7 +448,7 @@ export const ScoresPage = {
         <col style="width: 64px; min-width: 64px; max-width: 64px;">
         ${this.state.subjects.map(() => `
           <col style="width: 46px; min-width: 46px; max-width: 46px;">
-          <col style="width: 38px; min-width: 38px; max-width: 38px;">
+          <col style="width: 46px; min-width: 46px; max-width: 46px;">
         `).join('')}
         <col style="width: 64px; min-width: 64px; max-width: 64px;">
         <col style="width: 68px; min-width: 68px; max-width: 68px;">
@@ -490,7 +490,7 @@ export const ScoresPage = {
             </div>
           </th>
           <th class="score-subject-th p-0 bg-amber-50/70 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border-l border-border/40" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + sub.name : 'Rank (' + sub.name + ')'}">
-            <div class="w-[38px] max-w-[38px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2 relative">
+            <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2 relative">
               <div class="score-vertical-title font-khmer text-amber-700 dark:text-amber-400 font-bold text-[10px]" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + sub.name : 'Rank (' + sub.name + ')'}">
                 ${isKm ? 'ចំណាត់ថ្នាក់' : 'Rank'}
               </div>
@@ -629,8 +629,8 @@ export const ScoresPage = {
                          placeholder="" />
                 </div>
               </td>
-              <td class="p-0 text-center font-bold font-mono text-[11px] text-amber-700 dark:text-amber-400 col-sub-rank bg-amber-50/30 dark:bg-amber-950/15 border-r border-b border-border/40 select-none" data-student="${r.studentId}" data-subject="${s.id}" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + s.name : 'Rank (' + s.name + ')'}">
-                <div class="w-[38px] max-w-[38px] truncate text-center py-1.5 px-0.5">${displayRank}</div>
+              <td class="score-cell-td p-0 text-center font-bold font-mono text-xs text-amber-700 dark:text-amber-400 col-sub-rank bg-amber-50/30 dark:bg-amber-950/15 border-r border-b border-border/40 select-none" data-student="${r.studentId}" data-subject="${s.id}" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + s.name : 'Rank (' + s.name + ')'}">
+                <div class="w-[46px] max-w-[46px] h-full flex items-center justify-center py-1.5 px-0.5 truncate">${displayRank}</div>
               </td>
             `;
           }).join('')}
