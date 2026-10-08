@@ -666,22 +666,18 @@ export const ScoresPage = {
               </td>
               ${showRank ? `
                 <td class="score-cell-td p-0 text-center font-bold font-mono text-xs col-sub-rank select-none" data-student="${r.studentId}" data-subject="${s.id}" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + s.name : 'Rank (' + s.name + ')'}">
-                  <div class="w-[46px] max-w-[46px] h-full flex items-center justify-center py-1">
-                    <div class="score-cell-box score-cell-rank-box shadow-2xs truncate font-bold font-mono text-xs">
-                      ${displayRank}
-                    </div>
+                  <div class="w-[46px] max-w-[46px] h-full flex items-center justify-center text-center px-0.5 truncate font-bold font-mono text-xs">
+                    ${displayRank}
                   </div>
                 </td>
               ` : ''}
               ${showGrade ? `
                 <td class="score-cell-td p-0 text-center col-sub-grade select-none" data-student="${r.studentId}" data-subject="${s.id}" title="${isKm ? 'និទ្ទេស ' + s.name : 'Grade (' + s.name + ')'}">
-                  <div class="w-[46px] max-w-[46px] h-full flex items-center justify-center py-1">
-                    <div class="score-cell-box score-cell-grade-box shadow-2xs">
-                      ${displayGrade !== '—'
-                        ? `<span class="col-sub-grade-badge inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${this.getGradeBadgeClasses(displayGrade)}">${displayGrade}</span>`
-                        : `<span class="text-sky-700/60 dark:text-sky-300/60 font-bold font-mono text-xs">—</span>`
-                      }
-                    </div>
+                  <div class="w-[46px] max-w-[46px] h-full flex items-center justify-center text-center px-0.5">
+                    ${displayGrade !== '—'
+                      ? `<span class="col-sub-grade-badge inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${this.getGradeBadgeClasses(displayGrade)}">${displayGrade}</span>`
+                      : `<span class="text-sky-700/60 dark:text-sky-300/60 font-bold font-mono text-xs">—</span>`
+                    }
                   </div>
                 </td>
               ` : ''}
@@ -700,21 +696,17 @@ export const ScoresPage = {
 
           <!-- 8. Rank -->
           <td class="p-0 text-center font-bold font-mono col-rank">
-            <div class="w-[72px] max-w-[72px] h-full flex items-center justify-center py-1">
-              <div class="score-cell-box score-cell-rank-box w-[52px]! font-bold font-mono text-xs shadow-2xs">
-                ${r.rank || 1}
-              </div>
+            <div class="w-[72px] max-w-[72px] h-full flex items-center justify-center py-1 text-xs">
+              ${r.rank || 1}
             </div>
           </td>
 
           <!-- 9. Grade -->
           <td class="p-0 text-center col-grade-cell">
-            <div class="w-[52px] max-w-[52px] h-full flex items-center justify-center py-1">
-              <div class="score-cell-box score-cell-grade-box w-[40px]! shadow-2xs">
-                <span class="col-grade inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${this.getGradeBadgeClasses(r.grade)}">
-                  ${r.grade || 'F'}
-                </span>
-              </div>
+            <div class="w-[52px] max-w-[52px] h-full flex items-center justify-center py-1 text-xs">
+              <span class="col-grade inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${this.getGradeBadgeClasses(r.grade)}">
+                ${r.grade || 'F'}
+              </span>
             </div>
           </td>
 
@@ -1326,20 +1318,20 @@ export const ScoresPage = {
       const rowData = this.state.rows.find(r => r.studentId === studentId);
       if (rowData) {
         // Overall rank
-        const rankEl = tr.querySelector('.col-rank .score-cell-rank-box') || tr.querySelector('.col-rank div') || tr.querySelector('.col-rank');
+        const rankEl = tr.querySelector('.col-rank div') || tr.querySelector('.col-rank');
         if (rankEl) rankEl.textContent = rowData.rank || 1;
 
         // Individual subject ranks & grades
         this.state.subjects.forEach(sub => {
-          const subRankEl = tr.querySelector(`.col-sub-rank[data-subject="${sub.id}"] .score-cell-rank-box`) || 
-                            tr.querySelector(`.col-sub-rank[data-subject="${sub.id}"] div`);
+          const subRankEl = tr.querySelector(`.col-sub-rank[data-subject="${sub.id}"] div`) || 
+                            tr.querySelector(`.col-sub-rank[data-subject="${sub.id}"]`);
           if (subRankEl) {
             const rk = rowData.subjectRanks ? rowData.subjectRanks[sub.id] : null;
             subRankEl.textContent = (rk !== null && rk !== undefined) ? rk : '—';
           }
 
-          const subGradeDiv = tr.querySelector(`.col-sub-grade[data-subject="${sub.id}"] .score-cell-grade-box`) ||
-                              tr.querySelector(`.col-sub-grade[data-subject="${sub.id}"] div`);
+          const subGradeDiv = tr.querySelector(`.col-sub-grade[data-subject="${sub.id}"] div`) ||
+                              tr.querySelector(`.col-sub-grade[data-subject="${sub.id}"]`);
           if (subGradeDiv) {
             const gd = rowData.subjectGrades ? rowData.subjectGrades[sub.id] : null;
             if (gd) {
