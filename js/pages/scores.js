@@ -417,8 +417,8 @@ export const ScoresPage = {
     // Single Clean Header Row
     headerRow.innerHTML = `
       <!-- Sticky Student Info Header Columns (Locked on X and Y with highest z-index) -->
-      <th class="score-sticky-col-1 p-0 text-center font-mono font-bold text-muted-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important;">
-        <div class="w-full whitespace-nowrap text-center py-2 bg-slate-100 dark:bg-slate-800">#</div>
+      <th class="score-sticky-col-1 p-0 text-center font-bold text-muted-foreground bg-slate-100 dark:bg-slate-800 ${isKm ? 'font-khmer text-xs' : 'font-mono text-xs'}" style="z-index: 50 !important; transform: translateZ(0) !important;">
+        <div class="w-full whitespace-nowrap text-center py-2 bg-slate-100 dark:bg-slate-800">${isKm ? 'ល.រ' : 'No.'}</div>
       </th>
       <th class="score-sticky-col-2 p-0 text-left font-bold font-khmer text-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important;">
         <div class="w-full whitespace-nowrap text-left py-2 px-2 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'គោត្តនាម' : 'Surname'}</div>
