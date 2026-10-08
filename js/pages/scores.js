@@ -36,50 +36,50 @@ const CATEGORY_DEFS = {
   khmer: {
     titleKm: 'ភាសាខ្មែរ',
     titleEn: 'Khmer Literature',
-    headerClass: 'bg-purple-100 dark:bg-purple-950/70 text-purple-950 dark:text-purple-200 border-purple-300 dark:border-purple-800',
-    subHeaderClass: 'bg-purple-50/80 dark:bg-purple-950/50 text-purple-950 dark:text-purple-200',
+    headerClass: 'bg-purple-100 dark:bg-purple-950 text-purple-950 dark:text-purple-200 border-purple-300 dark:border-purple-800',
+    subHeaderClass: 'bg-purple-100 dark:bg-purple-950 text-purple-950 dark:text-purple-200',
     cellBgClass: 'bg-purple-100/40 dark:bg-purple-950/25'
   },
   math: {
     titleKm: 'គណិតវិទ្យា',
     titleEn: 'Mathematics',
-    headerClass: 'bg-indigo-100 dark:bg-indigo-950/70 text-indigo-950 dark:text-indigo-200 border-indigo-300 dark:border-indigo-800',
-    subHeaderClass: 'bg-indigo-50/80 dark:bg-indigo-950/50 text-indigo-950 dark:text-indigo-200',
+    headerClass: 'bg-indigo-100 dark:bg-indigo-950 text-indigo-950 dark:text-indigo-200 border-indigo-300 dark:border-indigo-800',
+    subHeaderClass: 'bg-indigo-100 dark:bg-indigo-950 text-indigo-950 dark:text-indigo-200',
     cellBgClass: 'bg-indigo-100/40 dark:bg-indigo-950/25'
   },
   science: {
     titleKm: 'វិទ្យាសាស្ត្រ',
     titleEn: 'Sciences',
-    headerClass: 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-950 dark:text-emerald-200 border-emerald-300 dark:border-emerald-800',
-    subHeaderClass: 'bg-emerald-50/80 dark:bg-emerald-950/50 text-emerald-950 dark:text-emerald-200',
+    headerClass: 'bg-emerald-100 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-200 border-emerald-300 dark:border-emerald-800',
+    subHeaderClass: 'bg-emerald-100 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-200',
     cellBgClass: 'bg-emerald-100/40 dark:bg-emerald-950/25'
   },
   social: {
     titleKm: 'សិក្សាសង្គម',
     titleEn: 'Social Studies',
-    headerClass: 'bg-amber-100 dark:bg-amber-950/70 text-amber-950 dark:text-amber-200 border-amber-300 dark:border-amber-800',
-    subHeaderClass: 'bg-amber-50/80 dark:bg-amber-950/50 text-amber-950 dark:text-amber-200',
+    headerClass: 'bg-amber-100 dark:bg-amber-950 text-amber-950 dark:text-amber-200 border-amber-300 dark:border-amber-800',
+    subHeaderClass: 'bg-amber-100 dark:bg-amber-950 text-amber-950 dark:text-amber-200',
     cellBgClass: 'bg-amber-100/40 dark:bg-amber-950/25'
   },
   health_arts: {
     titleKm: 'អប់រំកាយ/សុខភាព សិល្បៈ',
     titleEn: 'PE, Health & Arts',
-    headerClass: 'bg-rose-100 dark:bg-rose-950/70 text-rose-950 dark:text-rose-200 border-rose-300 dark:border-rose-800',
-    subHeaderClass: 'bg-rose-50/80 dark:bg-rose-950/50 text-rose-950 dark:text-rose-200',
+    headerClass: 'bg-rose-100 dark:bg-rose-950 text-rose-950 dark:text-rose-200 border-rose-300 dark:border-rose-800',
+    subHeaderClass: 'bg-rose-100 dark:bg-rose-950 text-rose-950 dark:text-rose-200',
     cellBgClass: 'bg-rose-100/40 dark:bg-rose-950/25'
   },
   languages_ict: {
     titleKm: 'ស្វ័យសិក្សា / បរទេស / ICT',
     titleEn: 'Languages & ICT',
-    headerClass: 'bg-cyan-100 dark:bg-cyan-950/70 text-cyan-950 dark:text-cyan-200 border-cyan-300 dark:border-cyan-800',
-    subHeaderClass: 'bg-cyan-50/80 dark:bg-cyan-950/50 text-cyan-950 dark:text-cyan-200',
+    headerClass: 'bg-cyan-100 dark:bg-cyan-950 text-cyan-950 dark:text-cyan-200 border-cyan-300 dark:border-cyan-800',
+    subHeaderClass: 'bg-cyan-100 dark:bg-cyan-950 text-cyan-950 dark:text-cyan-200',
     cellBgClass: 'bg-cyan-100/40 dark:bg-cyan-950/25'
   },
   other: {
     titleKm: 'មុខវិជ្ជាផ្សេងៗ',
     titleEn: 'Other Subjects',
     headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700',
-    subHeaderClass: 'bg-slate-50 dark:bg-slate-900/40 text-slate-800 dark:text-slate-200',
+    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200',
     cellBgClass: 'bg-slate-50/50 dark:bg-slate-900/25'
   }
 };
@@ -161,7 +161,7 @@ export const ScoresPage = {
     const exams = this.state.periods.filter(p => p.group === 'exam');
 
     this.container.innerHTML = `
-      <div class="space-y-4 animate-fade-in pb-20 select-none print:p-0">
+      <div class="space-y-4 animate-fade-in pb-20 select-none print:p-0 w-full max-w-full overflow-hidden">
         <!-- Top Header: Back/Title + Pill Badges -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 print:hidden">
           <div class="flex items-center gap-3 flex-wrap">
@@ -205,7 +205,7 @@ export const ScoresPage = {
         </div>
 
         <!-- Filter & Toolbar (Matching screenshot: Class, Month, Template, Upload, A-F, Data menu, Search) -->
-        <div class="p-2.5 sm:p-3 rounded-xl border border-border bg-card shadow-2xs flex flex-wrap items-center justify-between gap-2.5 print:hidden">
+        <div class="p-2.5 sm:p-3 rounded-xl border border-border bg-card shadow-2xs flex flex-wrap items-center justify-between gap-2.5 print:hidden w-full max-w-full">
           <div class="flex items-center gap-2 flex-wrap flex-1 min-w-[280px]">
             <!-- Class Selector Pill -->
             <div class="relative">
@@ -302,8 +302,8 @@ export const ScoresPage = {
         </div>
 
         <!-- Master Score Table Container -->
-        <div class="rounded-xl border border-border bg-card shadow-xs overflow-hidden print:border-none print:shadow-none relative">
-          <div class="score-table-container max-h-[72vh] overflow-auto">
+        <div class="rounded-xl border border-border bg-card shadow-xs overflow-hidden print:border-none print:shadow-none relative w-full max-w-full">
+          <div class="score-table-container max-h-[72vh] overflow-auto w-full max-w-full">
             <table class="score-table text-left text-xs border-separate" id="master-score-table">
               <colgroup id="score-table-colgroup"></colgroup>
               <thead class="z-30">
@@ -404,51 +404,71 @@ export const ScoresPage = {
         <col style="width: 36px; min-width: 36px; max-width: 36px;">
         <col style="width: 72px; min-width: 72px; max-width: 72px;">
         <col style="width: 72px; min-width: 72px; max-width: 72px;">
-        <col style="width: 48px; min-width: 48px; max-width: 48px;">
+        <col style="width: 50px; min-width: 50px; max-width: 50px;">
         ${groups.map(g => g.subjects.map(() => `<col style="width: 46px; min-width: 46px; max-width: 46px;">`).join('')).join('')}
-        <col style="width: 55px; min-width: 55px;">
-        <col style="width: 52px; min-width: 52px;">
-        <col style="width: 46px; min-width: 46px;">
-        <col style="width: 46px; min-width: 46px;">
-        <col style="width: 40px; min-width: 40px;">
+        <col style="width: 55px; min-width: 55px; max-width: 55px;">
+        <col style="width: 52px; min-width: 52px; max-width: 52px;">
+        <col style="width: 46px; min-width: 46px; max-width: 46px;">
+        <col style="width: 46px; min-width: 46px; max-width: 46px;">
+        <col style="width: 40px; min-width: 40px; max-width: 40px;">
       `;
     }
 
     // Single Clean Header Row
     headerRow.innerHTML = `
       <!-- Sticky Student Info Header Columns (Locked on X and Y) -->
-      <th class="score-sticky-col-1 text-center font-mono font-bold text-muted-foreground">#</th>
-      <th class="score-sticky-col-2 text-center font-bold font-khmer text-foreground">${isKm ? 'គោត្តនាម' : 'Surname'}</th>
-      <th class="score-sticky-col-3 text-center font-bold font-khmer text-foreground">${isKm ? 'នាម' : 'Name'}</th>
-      <th class="score-sticky-col-4 text-center font-bold font-khmer text-foreground">${isKm ? 'ភេទ' : 'Sex'}</th>
+      <th class="score-sticky-col-1 p-0 text-center font-mono font-bold text-muted-foreground">
+        <div class="w-[36px] max-w-[36px] truncate text-center py-2">#</div>
+      </th>
+      <th class="score-sticky-col-2 p-0 text-center font-bold font-khmer text-foreground">
+        <div class="w-[72px] max-w-[72px] truncate text-center py-2 px-0.5 text-xs">${isKm ? 'គោត្តនាម' : 'Surname'}</div>
+      </th>
+      <th class="score-sticky-col-3 p-0 text-center font-bold font-khmer text-foreground">
+        <div class="w-[72px] max-w-[72px] truncate text-center py-2 px-0.5 text-xs">${isKm ? 'នាម' : 'Name'}</div>
+      </th>
+      <th class="score-sticky-col-4 p-0 text-center font-bold font-khmer text-foreground">
+        <div class="w-[50px] max-w-[50px] truncate text-center py-2 px-0.5 text-xs">${isKm ? 'ភេទ' : 'Sex'}</div>
+      </th>
 
       <!-- Subject Column Headers (Vertical Text + Category Color) -->
       ${groups.map(g => g.subjects.map(sub => `
-        <th class="score-subject-th ${g.subHeaderClass}" title="${sub.name} (Max: ${sub.fullScore})">
-          <div class="score-vertical-title font-khmer" title="${sub.name}">
-            ${sub.name}
+        <th class="score-subject-th p-0 ${g.subHeaderClass}" title="${sub.name} (Max: ${sub.fullScore})">
+          <div class="w-[46px] max-w-[46px] mx-auto flex flex-col items-center">
+            <div class="score-vertical-title font-khmer" title="${sub.name}">
+              ${sub.name}
+            </div>
+            <span class="score-coefficient-badge">×${sub.creditHours || 1}</span>
           </div>
-          <span class="score-coefficient-badge">×${sub.creditHours || 1}</span>
         </th>
       `).join('')).join('')}
 
       <!-- Result Columns -->
-      <th class="score-result-th px-2 py-2 text-center font-bold font-mono text-foreground min-w-[55px] bg-slate-100 dark:bg-slate-800">
-        <span class="font-khmer text-[11px] block">${isKm ? 'ពិន្ទុសរុប' : 'Total'}</span>
+      <th class="score-result-th p-0 text-center font-bold font-mono text-foreground bg-slate-100 dark:bg-slate-800">
+        <div class="w-[55px] max-w-[55px] text-center py-2 px-1">
+          <span class="font-khmer text-[11px] block">${isKm ? 'ពិន្ទុសរុប' : 'Total'}</span>
+        </div>
       </th>
-      <th class="score-result-th px-2 py-2 text-center font-bold font-mono text-primary min-w-[52px] bg-slate-100 dark:bg-slate-800">
-        <span class="font-khmer text-[11px] block">${isKm ? 'មធ្យម' : 'Avg'}</span>
+      <th class="score-result-th p-0 text-center font-bold font-mono text-primary bg-slate-100 dark:bg-slate-800">
+        <div class="w-[52px] max-w-[52px] text-center py-2 px-1">
+          <span class="font-khmer text-[11px] block text-primary">${isKm ? 'មធ្យម' : 'Avg'}</span>
+        </div>
       </th>
-      <th class="score-result-th px-2 py-2 text-center font-bold font-mono text-amber-600 dark:text-amber-400 min-w-[46px] bg-slate-100 dark:bg-slate-800">
-        <span class="font-khmer text-[11px] block">${isKm ? 'ចំណាត់' : 'Rank'}</span>
+      <th class="score-result-th p-0 text-center font-bold font-mono text-amber-600 dark:text-amber-400 bg-slate-100 dark:bg-slate-800">
+        <div class="w-[46px] max-w-[46px] text-center py-2 px-1">
+          <span class="font-khmer text-[11px] block text-amber-600 dark:text-amber-400">${isKm ? 'ចំណាត់' : 'Rank'}</span>
+        </div>
       </th>
-      <th class="score-result-th px-2 py-2 text-center font-bold min-w-[46px] bg-slate-100 dark:bg-slate-800">
-        <span class="font-khmer text-[11px] block">${isKm ? 'និទ្ទេស' : 'Grade'}</span>
+      <th class="score-result-th p-0 text-center font-bold bg-slate-100 dark:bg-slate-800">
+        <div class="w-[46px] max-w-[46px] text-center py-2 px-1">
+          <span class="font-khmer text-[11px] block">${isKm ? 'និទ្ទេស' : 'Grade'}</span>
+        </div>
       </th>
 
       <!-- Actions Column -->
-      <th class="text-center px-2 py-3 bg-slate-100 dark:bg-slate-800 text-[10px] text-muted-foreground font-khmer print:hidden">
-        ${isKm ? 'ផ្សេងៗ' : 'Actions'}
+      <th class="text-center p-0 bg-slate-100 dark:bg-slate-800 text-[10px] text-muted-foreground font-khmer print:hidden">
+        <div class="w-[40px] max-w-[40px] text-center py-2 px-0.5">
+          ${isKm ? 'ផ្សេងៗ' : 'Actions'}
+        </div>
       </th>
     `;
   },
@@ -509,23 +529,23 @@ export const ScoresPage = {
       return `
         <tr class="hover:bg-muted/15 transition-colors group" data-student-id="${r.studentId}" data-row-idx="${rIdx}">
           <!-- 1. No -->
-          <td class="score-sticky-col-1 text-center font-mono font-medium text-muted-foreground py-1.5">
-            ${rIdx + 1}
+          <td class="score-sticky-col-1 p-0 text-center font-mono font-medium text-muted-foreground">
+            <div class="w-[36px] max-w-[36px] truncate text-center py-1.5">${rIdx + 1}</div>
           </td>
 
           <!-- 2. Surname (គោត្តនាម) -->
-          <td class="score-sticky-col-2 text-center font-khmer font-semibold text-foreground px-1 py-1.5 truncate">
-            ${surname || '—'}
+          <td class="score-sticky-col-2 p-0 text-center font-khmer font-semibold text-foreground">
+            <div class="w-[72px] max-w-[72px] truncate text-center py-1.5 px-0.5 text-xs" title="${surname}">${surname || '—'}</div>
           </td>
 
           <!-- 3. Given Name (នាម) -->
-          <td class="score-sticky-col-3 text-center font-khmer font-semibold text-foreground px-1 py-1.5 truncate">
-            ${givenName || '—'}
+          <td class="score-sticky-col-3 p-0 text-center font-khmer font-semibold text-foreground">
+            <div class="w-[72px] max-w-[72px] truncate text-center py-1.5 px-0.5 text-xs" title="${givenName}">${givenName || '—'}</div>
           </td>
 
           <!-- 4. Gender (ភេទ) -->
-          <td class="score-sticky-col-4 text-center font-khmer text-xs ${genderColor} px-1 py-1.5">
-            ${genderText}
+          <td class="score-sticky-col-4 p-0 text-center font-khmer text-xs ${genderColor}">
+            <div class="w-[50px] max-w-[50px] truncate text-center py-1.5 px-0.5">${genderText}</div>
           </td>
 
           <!-- 5. Subject Score Grid Cells (Flat Grid with Column Pastel Colors) -->
@@ -535,53 +555,59 @@ export const ScoresPage = {
             const catKey = getSubjectCategoryKey(s);
             const cellBg = CATEGORY_DEFS[catKey]?.cellBgClass || 'bg-slate-50/40 dark:bg-slate-900/20';
             return `
-              <td class="score-cell-td ${cellBg}" data-row="${rIdx}" data-col="${cIdx}">
-                <input type="text"
-                       inputmode="decimal"
-                       autocomplete="off"
-                       class="score-cell-input"
-                       data-row="${rIdx}"
-                       data-col="${cIdx}"
-                       data-student="${r.studentId}"
-                       data-subject="${s.id}"
-                       data-max="${s.fullScore}"
-                       value="${displayVal}"
-                       placeholder="" />
+              <td class="score-cell-td ${cellBg} p-0" data-row="${rIdx}" data-col="${cIdx}">
+                <div class="w-[46px] max-w-[46px] h-full flex items-center justify-center">
+                  <input type="text"
+                         inputmode="decimal"
+                         autocomplete="off"
+                         class="score-cell-input"
+                         data-row="${rIdx}"
+                         data-col="${cIdx}"
+                         data-student="${r.studentId}"
+                         data-subject="${s.id}"
+                         data-max="${s.fullScore}"
+                         value="${displayVal}"
+                         placeholder="" />
+                </div>
               </td>
             `;
           }).join('')}
 
           <!-- 6. Total -->
-          <td class="px-2 py-1.5 text-center font-bold font-mono text-foreground col-total bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
-            ${r.total !== undefined ? r.total : 0}
+          <td class="p-0 text-center font-bold font-mono text-foreground col-total bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
+            <div class="w-[55px] max-w-[55px] truncate text-center py-1.5 px-1">${r.total !== undefined ? r.total : 0}</div>
           </td>
 
           <!-- 7. Average % -->
-          <td class="px-2 py-1.5 text-center font-bold font-mono text-primary col-average bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
-            ${r.average !== undefined ? r.average : 0}%
+          <td class="p-0 text-center font-bold font-mono text-primary col-average bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
+            <div class="w-[52px] max-w-[52px] truncate text-center py-1.5 px-1">${r.average !== undefined ? r.average : 0}%</div>
           </td>
 
           <!-- 8. Rank -->
-          <td class="px-2 py-1.5 text-center font-bold font-mono text-amber-600 dark:text-amber-400 col-rank bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
-            #${r.rank || 1}
+          <td class="p-0 text-center font-bold font-mono text-amber-600 dark:text-amber-400 col-rank bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
+            <div class="w-[46px] max-w-[46px] truncate text-center py-1.5 px-1">#${r.rank || 1}</div>
           </td>
 
           <!-- 9. Grade -->
-          <td class="px-2 py-1.5 text-center bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
-            <span class="col-grade inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold ${this.getGradeBadgeClasses(r.grade)}">
-              ${r.grade || 'F'}
-            </span>
+          <td class="p-0 text-center bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
+            <div class="w-[46px] max-w-[46px] flex items-center justify-center py-1.5">
+              <span class="col-grade inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${this.getGradeBadgeClasses(r.grade)}">
+                ${r.grade || 'F'}
+              </span>
+            </div>
           </td>
 
           <!-- 10. Actions -->
-          <td class="px-1.5 py-1 text-center border-b border-border/40 print:hidden">
-            <button type="button" 
-                    class="btn-student-transcript p-1 rounded hover:bg-primary/10 text-primary transition-colors cursor-pointer" 
-                    title="${isKm ? 'មើលព្រឹត្តិបត្រពិន្ទុ' : 'View Transcript'}"
-                    data-student="${r.studentId}" 
-                    data-name="${r.khmerFullName || (surname + ' ' + givenName)}">
-              ${getIcon('fileText', 'w-3.5 h-3.5')}
-            </button>
+          <td class="p-0 text-center border-b border-border/40 print:hidden">
+            <div class="w-[40px] max-w-[40px] flex items-center justify-center py-1">
+              <button type="button" 
+                      class="btn-student-transcript p-1 rounded hover:bg-primary/10 text-primary transition-colors cursor-pointer" 
+                      title="${isKm ? 'មើលព្រឹត្តិបត្រពិន្ទុ' : 'View Transcript'}"
+                      data-student="${r.studentId}" 
+                      data-name="${r.khmerFullName || (surname + ' ' + givenName)}">
+                ${getIcon('fileText', 'w-3.5 h-3.5')}
+              </button>
+            </div>
           </td>
         </tr>
       `;
