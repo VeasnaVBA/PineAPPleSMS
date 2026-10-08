@@ -254,7 +254,7 @@ export const ReportService = {
       if (i > 0 && rankedList[i].average < rankedList[i - 1].average) {
         currentRank = i + 1;
       }
-      rankedList[i].rank = `#${currentRank}`;
+      rankedList[i].rank = currentRank;
       rankedList[i].no = i + 1;
     }
 

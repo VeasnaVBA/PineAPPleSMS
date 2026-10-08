@@ -487,9 +487,8 @@ export const ScoresPage = {
         </div>
       </th>
       <th class="score-result-th p-0 text-center font-bold font-mono text-primary bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-        <div class="w-[68px] max-w-[68px] h-full min-h-[96px] mx-auto flex flex-col items-center justify-center text-center px-1">
+        <div class="w-[68px] max-w-[68px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
           <span class="font-khmer text-xs block text-primary text-center">${isKm ? 'មធ្យមភាគ' : 'Avg'}</span>
-          <span class="text-[9px] font-mono font-bold text-muted-foreground block text-center mt-0.5" title="${isKm ? 'មេគុណចែក: ' + currentMonthCoeff : 'Divisor: ' + currentMonthCoeff}">÷ ${currentMonthCoeff}</span>
         </div>
       </th>
       <th class="score-result-th p-0 text-center font-bold font-mono text-amber-600 dark:text-amber-400 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
@@ -624,7 +623,7 @@ export const ScoresPage = {
 
           <!-- 8. Rank -->
           <td class="p-0 text-center font-bold font-mono text-amber-600 dark:text-amber-400 col-rank bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
-            <div class="w-[72px] max-w-[72px] truncate text-center py-1.5 px-1">#${r.rank || 1}</div>
+            <div class="w-[72px] max-w-[72px] truncate text-center py-1.5 px-1">${r.rank || 1}</div>
           </td>
 
           <!-- 9. Grade -->
@@ -1225,8 +1224,8 @@ export const ScoresPage = {
       const studentId = tr.getAttribute('data-student-id');
       const rowData = this.state.rows.find(r => r.studentId === studentId);
       if (rowData) {
-        const rankEl = tr.querySelector('.col-rank');
-        if (rankEl) rankEl.textContent = `#${rowData.rank}`;
+        const rankEl = tr.querySelector('.col-rank div') || tr.querySelector('.col-rank');
+        if (rankEl) rankEl.textContent = rowData.rank || 1;
       }
     });
   },
