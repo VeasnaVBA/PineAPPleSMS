@@ -1497,38 +1497,108 @@ tbody tr.is-active-row td.score-cell-td[data-calculated-cell="true"]:not(.is-sel
 
 tbody tr:hover td.col-total,
 tbody tr:hover td.col-average,
-tbody tr:hover td.col-rank,
-tbody tr:hover td.col-sub-rank,
-tbody tr:hover td.col-sub-grade,
 tbody tr:focus-within td.col-total,
 tbody tr:focus-within td.col-average,
-tbody tr:focus-within td.col-rank,
-tbody tr:focus-within td.col-sub-rank,
-tbody tr:focus-within td.col-sub-grade,
 tbody tr.is-active-row td.col-total,
-tbody tr.is-active-row td.col-average,
-tbody tr.is-active-row td.col-rank,
-tbody tr.is-active-row td.col-sub-rank,
-tbody tr.is-active-row td.col-sub-grade {
+tbody tr.is-active-row td.col-average {
   background-color: #f1f5f9 !important;
 }
 
 .dark tbody tr:hover td.col-total,
 .dark tbody tr:hover td.col-average,
-.dark tbody tr:hover td.col-rank,
-.dark tbody tr:hover td.col-sub-rank,
-.dark tbody tr:hover td.col-sub-grade,
 .dark tbody tr:focus-within td.col-total,
 .dark tbody tr:focus-within td.col-average,
-.dark tbody tr:focus-within td.col-rank,
-.dark tbody tr:focus-within td.col-sub-rank,
-.dark tbody tr:focus-within td.col-sub-grade,
 .dark tbody tr.is-active-row td.col-total,
-.dark tbody tr.is-active-row td.col-average,
-.dark tbody tr.is-active-row td.col-rank,
-.dark tbody tr.is-active-row td.col-sub-rank,
-.dark tbody tr.is-active-row td.col-sub-grade {
+.dark tbody tr.is-active-row td.col-average {
   background-color: #1e293b !important;
+}
+
+/* Rank Columns (Light Orange Theme) */
+th.col-sub-rank-th,
+th.col-rank-th {
+  background-color: #fed7aa !important; /* Tailwind orange-200 */
+  color: #9a3412 !important; /* Tailwind orange-800 */
+}
+
+td.col-sub-rank,
+td.col-rank {
+  background-color: #ffedd5 !important; /* Tailwind orange-100 */
+  color: #c2410c !important; /* Tailwind orange-700 */
+}
+
+.dark th.col-sub-rank-th,
+.dark th.col-rank-th {
+  background-color: rgba(124, 45, 18, 0.7) !important;
+  color: #fed7aa !important;
+}
+
+.dark td.col-sub-rank,
+.dark td.col-rank {
+  background-color: rgba(124, 45, 18, 0.35) !important;
+  color: #fdba74 !important;
+}
+
+/* Rank on Hover / Active Row (Rich Light Orange) */
+tbody tr:hover td.col-sub-rank,
+tbody tr:hover td.col-rank,
+tbody tr:focus-within td.col-sub-rank,
+tbody tr:focus-within td.col-rank,
+tbody tr.is-active-row td.col-sub-rank,
+tbody tr.is-active-row td.col-rank {
+  background-color: #fed7aa !important; /* Tailwind orange-200 */
+}
+
+.dark tbody tr:hover td.col-sub-rank,
+.dark tbody tr:hover td.col-rank,
+.dark tbody tr:focus-within td.col-sub-rank,
+.dark tbody tr:focus-within td.col-rank,
+.dark tbody tr.is-active-row td.col-sub-rank,
+.dark tbody tr.is-active-row td.col-rank {
+  background-color: rgba(154, 52, 18, 0.55) !important;
+}
+
+/* Grade Columns (Light Blue Theme) */
+th.col-sub-grade-th,
+th.col-grade-th {
+  background-color: #bae6fd !important; /* Tailwind sky-200 */
+  color: #0369a1 !important; /* Tailwind sky-700 */
+}
+
+td.col-sub-grade,
+td.col-grade-cell {
+  background-color: #e0f2fe !important; /* Tailwind sky-100 */
+  color: #0369a1 !important;
+}
+
+.dark th.col-sub-grade-th,
+.dark th.col-grade-th {
+  background-color: rgba(14, 116, 144, 0.65) !important;
+  color: #bae6fd !important;
+}
+
+.dark td.col-sub-grade,
+.dark td.col-grade-cell {
+  background-color: rgba(12, 74, 110, 0.35) !important;
+  color: #7dd3fc !important;
+}
+
+/* Grade on Hover / Active Row (Rich Light Blue) */
+tbody tr:hover td.col-sub-grade,
+tbody tr:hover td.col-grade-cell,
+tbody tr:focus-within td.col-sub-grade,
+tbody tr:focus-within td.col-grade-cell,
+tbody tr.is-active-row td.col-sub-grade,
+tbody tr.is-active-row td.col-grade-cell {
+  background-color: #bae6fd !important; /* Tailwind sky-200 */
+}
+
+.dark tbody tr:hover td.col-sub-grade,
+.dark tbody tr:hover td.col-grade-cell,
+.dark tbody tr:focus-within td.col-sub-grade,
+.dark tbody tr:focus-within td.col-grade-cell,
+.dark tbody tr.is-active-row td.col-sub-grade,
+.dark tbody tr.is-active-row td.col-grade-cell {
+  background-color: rgba(3, 105, 161, 0.45) !important;
 }
 
 /* Flat Excel-like Grid Cell */

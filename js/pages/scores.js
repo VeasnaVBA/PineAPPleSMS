@@ -506,18 +506,18 @@ export const ScoresPage = {
             </div>
           </th>
           ${showRank ? `
-            <th class="score-subject-th p-0 bg-amber-50/70 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border-l border-border/40" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + sub.name : 'Rank (' + sub.name + ')'}">
+            <th class="score-subject-th p-0 col-sub-rank-th border-l border-border/40" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + sub.name : 'Rank (' + sub.name + ')'}">
               <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2 relative">
-                <div class="score-vertical-title font-khmer text-amber-700 dark:text-amber-400 font-bold text-[10px]" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + sub.name : 'Rank (' + sub.name + ')'}">
+                <div class="score-vertical-title font-khmer font-bold text-[10px]" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + sub.name : 'Rank (' + sub.name + ')'}">
                   ${isKm ? 'ចំណាត់ថ្នាក់' : 'Rank'}
                 </div>
               </div>
             </th>
           ` : ''}
           ${showGrade ? `
-            <th class="score-subject-th p-0 bg-blue-50/70 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300 border-l border-border/40" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${isKm ? 'និទ្ទេស ' + sub.name : 'Grade (' + sub.name + ')'}">
+            <th class="score-subject-th p-0 col-sub-grade-th border-l border-border/40" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${isKm ? 'និទ្ទេស ' + sub.name : 'Grade (' + sub.name + ')'}">
               <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2 relative">
-                <div class="score-vertical-title font-khmer text-blue-700 dark:text-blue-400 font-bold text-[10px]" title="${isKm ? 'និទ្ទេស ' + sub.name : 'Grade (' + sub.name + ')'}">
+                <div class="score-vertical-title font-khmer font-bold text-[10px]" title="${isKm ? 'និទ្ទេស ' + sub.name : 'Grade (' + sub.name + ')'}">
                   ${isKm ? 'និទ្ទេស' : 'Grade'}
                 </div>
               </div>
@@ -537,12 +537,12 @@ export const ScoresPage = {
           <span class="font-khmer text-xs block text-primary text-center">${isKm ? 'មធ្យមភាគ' : 'Avg'}</span>
         </div>
       </th>
-      <th class="score-result-th p-0 text-center font-bold font-mono text-amber-600 dark:text-amber-400 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+      <th class="score-result-th p-0 text-center font-bold font-mono col-rank-th" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
         <div class="w-[72px] max-w-[72px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
-          <span class="font-khmer text-xs block text-amber-600 dark:text-amber-400 text-center">${isKm ? 'ចំណាត់ថ្នាក់' : 'Rank'}</span>
+          <span class="font-khmer text-xs block text-center">${isKm ? 'ចំណាត់ថ្នាក់' : 'Rank'}</span>
         </div>
       </th>
-      <th class="score-result-th p-0 text-center font-bold bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+      <th class="score-result-th p-0 text-center font-bold col-grade-th" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
         <div class="w-[52px] max-w-[52px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
           <span class="font-khmer text-xs block text-center">${isKm ? 'និទ្ទេស' : 'Grade'}</span>
         </div>
@@ -665,16 +665,16 @@ export const ScoresPage = {
                 </div>
               </td>
               ${showRank ? `
-                <td class="score-cell-td p-0 text-center font-bold font-mono text-xs text-amber-700 dark:text-amber-400 col-sub-rank bg-amber-50/30 dark:bg-amber-950/15 border-r border-b border-border/40 select-none" data-student="${r.studentId}" data-subject="${s.id}" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + s.name : 'Rank (' + s.name + ')'}">
+                <td class="score-cell-td p-0 text-center font-bold font-mono text-xs col-sub-rank border-r border-b border-border/40 select-none" data-student="${r.studentId}" data-subject="${s.id}" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + s.name : 'Rank (' + s.name + ')'}">
                   <div class="w-[46px] max-w-[46px] h-full flex items-center justify-center py-1.5 px-0.5 truncate">${displayRank}</div>
                 </td>
               ` : ''}
               ${showGrade ? `
-                <td class="score-cell-td p-0 text-center col-sub-grade bg-blue-50/20 dark:bg-blue-950/15 border-r border-b border-border/40 select-none" data-student="${r.studentId}" data-subject="${s.id}" title="${isKm ? 'និទ្ទេស ' + s.name : 'Grade (' + s.name + ')'}">
+                <td class="score-cell-td p-0 text-center col-sub-grade border-r border-b border-border/40 select-none" data-student="${r.studentId}" data-subject="${s.id}" title="${isKm ? 'និទ្ទេស ' + s.name : 'Grade (' + s.name + ')'}">
                   <div class="w-[46px] max-w-[46px] h-full flex items-center justify-center py-1 px-0.5">
                     ${displayGrade !== '—'
                       ? `<span class="col-sub-grade-badge inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${this.getGradeBadgeClasses(displayGrade)}">${displayGrade}</span>`
-                      : `<span class="text-muted-foreground font-bold font-mono text-xs">—</span>`
+                      : `<span class="text-sky-700/60 dark:text-sky-300/60 font-bold font-mono text-xs">—</span>`
                     }
                   </div>
                 </td>
@@ -693,12 +693,12 @@ export const ScoresPage = {
           </td>
 
           <!-- 8. Rank -->
-          <td class="p-0 text-center font-bold font-mono text-amber-600 dark:text-amber-400 col-rank bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
+          <td class="p-0 text-center font-bold font-mono col-rank border-r border-b border-border/40">
             <div class="w-[72px] max-w-[72px] truncate text-center py-1.5 px-1">${r.rank || 1}</div>
           </td>
 
           <!-- 9. Grade -->
-          <td class="p-0 text-center bg-slate-50/60 dark:bg-slate-900/20 border-r border-b border-border/40">
+          <td class="p-0 text-center col-grade-cell border-r border-b border-border/40">
             <div class="w-[52px] max-w-[52px] flex items-center justify-center py-1.5">
               <span class="col-grade inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${this.getGradeBadgeClasses(r.grade)}">
                 ${r.grade || 'F'}
@@ -1332,7 +1332,7 @@ export const ScoresPage = {
             if (gd) {
               subGradeDiv.innerHTML = `<span class="col-sub-grade-badge inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${this.getGradeBadgeClasses(gd)}">${gd}</span>`;
             } else {
-              subGradeDiv.innerHTML = `<span class="text-muted-foreground font-bold font-mono text-xs">—</span>`;
+              subGradeDiv.innerHTML = `<span class="text-sky-700/60 dark:text-sky-300/60 font-bold font-mono text-xs">—</span>`;
             }
           }
         });
