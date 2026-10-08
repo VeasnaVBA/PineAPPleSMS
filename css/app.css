@@ -1288,37 +1288,25 @@ html[lang="km"] select {
   border-bottom: 1px solid #334155;
 }
 
-/* Category Headers (Tier 1) - Sticky Top */
-thead tr#score-category-header-row th.score-category-th {
+/* Table Header - Single Sticky Top Row */
+thead tr th {
   position: sticky !important;
-  top: 0 !important;
+  top: 0px !important;
   z-index: 30 !important;
-  height: 32px !important;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 6px 4px;
-  text-align: center;
-  white-space: nowrap;
-  box-sizing: border-box;
-}
-
-/* Vertical Column Subject Headers & Result Headers (Tier 2) - Sticky Top 32px */
-thead tr#score-subject-header-row th.score-subject-th,
-thead tr#score-subject-header-row th.score-result-th {
-  position: sticky !important;
-  top: 32px !important;
-  z-index: 30 !important;
-  box-sizing: border-box;
+  box-sizing: border-box !important;
 }
 
 .score-subject-th {
-  position: relative;
+  position: sticky !important;
+  top: 0px !important;
+  z-index: 30 !important;
   padding: 6px 2px 4px 2px;
   width: 46px;
   min-width: 46px;
   max-width: 46px;
   vertical-align: bottom;
   text-align: center;
+  box-sizing: border-box !important;
 }
 
 .score-vertical-title {

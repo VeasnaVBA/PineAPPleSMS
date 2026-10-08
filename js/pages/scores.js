@@ -307,12 +307,7 @@ export const ScoresPage = {
             <table class="score-table text-left text-xs border-separate" id="master-score-table">
               <colgroup id="score-table-colgroup"></colgroup>
               <thead class="z-30">
-                <!-- Tier 1: Category Groups Header -->
-                <tr id="score-category-header-row" class="border-b border-border/80">
-                  <!-- Populated dynamically -->
-                </tr>
-                <!-- Tier 2: Subject Names (Vertical Text) & Sub-columns -->
-                <tr id="score-subject-header-row" class="border-b border-border">
+                <tr id="score-table-header-row" class="border-b border-border">
                   <!-- Populated dynamically -->
                 </tr>
               </thead>
@@ -397,10 +392,9 @@ export const ScoresPage = {
 
   renderHeader() {
     const isKm = i18n.getLocale() === 'km';
-    const catRow = document.getElementById('score-category-header-row');
-    const subRow = document.getElementById('score-subject-header-row');
+    const headerRow = document.getElementById('score-table-header-row');
     const colgroup = document.getElementById('score-table-colgroup');
-    if (!catRow || !subRow) return;
+    if (!headerRow) return;
 
     const groups = this.state.groupedSubjects;
 
@@ -420,35 +414,15 @@ export const ScoresPage = {
       `;
     }
 
-    // Tier 1: Category Row
-    catRow.innerHTML = `
-      <!-- Sticky Student Info Header Columns (Rowspan 2, Locked on X and Y) -->
-      <th rowspan="2" class="score-sticky-col-1 text-center font-mono font-bold text-muted-foreground">#</th>
-      <th rowspan="2" class="score-sticky-col-2 text-center font-bold font-khmer text-foreground">${isKm ? 'គោត្តនាម' : 'Surname'}</th>
-      <th rowspan="2" class="score-sticky-col-3 text-center font-bold font-khmer text-foreground">${isKm ? 'នាម' : 'Name'}</th>
-      <th rowspan="2" class="score-sticky-col-4 text-center font-bold font-khmer text-foreground">${isKm ? 'ភេទ' : 'Sex'}</th>
+    // Single Clean Header Row
+    headerRow.innerHTML = `
+      <!-- Sticky Student Info Header Columns (Locked on X and Y) -->
+      <th class="score-sticky-col-1 text-center font-mono font-bold text-muted-foreground">#</th>
+      <th class="score-sticky-col-2 text-center font-bold font-khmer text-foreground">${isKm ? 'គោត្តនាម' : 'Surname'}</th>
+      <th class="score-sticky-col-3 text-center font-bold font-khmer text-foreground">${isKm ? 'នាម' : 'Name'}</th>
+      <th class="score-sticky-col-4 text-center font-bold font-khmer text-foreground">${isKm ? 'ភេទ' : 'Sex'}</th>
 
-      <!-- Subject Category Groups -->
-      ${groups.map(g => `
-        <th colspan="${g.subjects.length}" class="score-category-th ${g.headerClass} font-khmer">
-          ${isKm ? g.titleKm : g.titleEn}
-        </th>
-      `).join('')}
-
-      <!-- Results Group (4 columns) -->
-      <th colspan="4" class="score-category-th bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700 font-khmer">
-        ${isKm ? 'លទ្ធផល' : 'Results'}
-      </th>
-
-      <!-- Actions -->
-      <th rowspan="2" class="text-center px-2 py-3 bg-slate-100 dark:bg-slate-800 text-[10px] text-muted-foreground font-khmer print:hidden">
-        ${isKm ? 'ផ្សេងៗ' : 'Actions'}
-      </th>
-    `;
-
-    // Tier 2: Subject Column Headers (Vertical Text) & Result Columns
-    subRow.innerHTML = `
-      <!-- Subject Sub-headers with vertical writing and coefficient badge -->
+      <!-- Subject Column Headers (Vertical Text + Category Color) -->
       ${groups.map(g => g.subjects.map(sub => `
         <th class="score-subject-th ${g.subHeaderClass}" title="${sub.name} (Max: ${sub.fullScore})">
           <div class="score-vertical-title font-khmer" title="${sub.name}">
@@ -458,18 +432,23 @@ export const ScoresPage = {
         </th>
       `).join('')).join('')}
 
-      <!-- Result Sub-columns -->
-      <th class="score-result-th px-2 py-2 text-center font-bold font-mono text-foreground min-w-[55px] bg-slate-50 dark:bg-slate-900/40">
+      <!-- Result Columns -->
+      <th class="score-result-th px-2 py-2 text-center font-bold font-mono text-foreground min-w-[55px] bg-slate-100 dark:bg-slate-800">
         <span class="font-khmer text-[11px] block">${isKm ? 'ពិន្ទុសរុប' : 'Total'}</span>
       </th>
-      <th class="score-result-th px-2 py-2 text-center font-bold font-mono text-primary min-w-[52px] bg-slate-50 dark:bg-slate-900/40">
+      <th class="score-result-th px-2 py-2 text-center font-bold font-mono text-primary min-w-[52px] bg-slate-100 dark:bg-slate-800">
         <span class="font-khmer text-[11px] block">${isKm ? 'មធ្យម' : 'Avg'}</span>
       </th>
-      <th class="score-result-th px-2 py-2 text-center font-bold font-mono text-amber-600 dark:text-amber-400 min-w-[46px] bg-slate-50 dark:bg-slate-900/40">
+      <th class="score-result-th px-2 py-2 text-center font-bold font-mono text-amber-600 dark:text-amber-400 min-w-[46px] bg-slate-100 dark:bg-slate-800">
         <span class="font-khmer text-[11px] block">${isKm ? 'ចំណាត់' : 'Rank'}</span>
       </th>
-      <th class="score-result-th px-2 py-2 text-center font-bold min-w-[46px] bg-slate-50 dark:bg-slate-900/40">
+      <th class="score-result-th px-2 py-2 text-center font-bold min-w-[46px] bg-slate-100 dark:bg-slate-800">
         <span class="font-khmer text-[11px] block">${isKm ? 'និទ្ទេស' : 'Grade'}</span>
+      </th>
+
+      <!-- Actions Column -->
+      <th class="text-center px-2 py-3 bg-slate-100 dark:bg-slate-800 text-[10px] text-muted-foreground font-khmer print:hidden">
+        ${isKm ? 'ផ្សេងៗ' : 'Actions'}
       </th>
     `;
   },
