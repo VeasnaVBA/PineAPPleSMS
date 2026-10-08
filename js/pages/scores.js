@@ -562,9 +562,9 @@ export const ScoresPage = {
               <td class="score-cell-td ${cellBg} p-0 text-center ${isCalc ? 'bg-primary/5' : ''}" data-row="${rIdx}" data-col="${cIdx}">
                 <div class="w-[46px] max-w-[46px] h-full flex items-center justify-center">
                   <input type="text"
-                         inputmode="decimal"
+                         inputmode="${isCalc ? 'none' : 'decimal'}"
                          autocomplete="off"
-                         ${isCalc ? 'readonly tabindex="-1"' : ''}
+                         ${isCalc ? 'readonly disabled tabindex="-1"' : ''}
                          class="score-cell-input text-center ${isCalc ? 'font-bold text-primary bg-primary/10 cursor-not-allowed select-none opacity-90' : ''}"
                          data-row="${rIdx}"
                          data-col="${cIdx}"
@@ -843,12 +843,19 @@ export const ScoresPage = {
    * Handle single cell input change
    */
   handleCellInput(inp) {
+    if (inp.getAttribute('data-calculated') === 'true') {
+      return;
+    }
+
     const studentId = inp.getAttribute('data-student');
     const subjectId = inp.getAttribute('data-subject');
     const maxScore = Number(inp.getAttribute('data-max')) || 100;
 
     let enteredVal = inp.value.trim();
     let numVal = enteredVal === '' ? null : Math.max(0, Number(enteredVal));
+    if (enteredVal !== '' && isNaN(numVal)) {
+      numVal = null;
+    }
 
     if (numVal !== null && numVal > maxScore) {
       inp.classList.add('border-destructive', 'text-destructive', 'bg-destructive/10');
@@ -947,10 +954,22 @@ export const ScoresPage = {
     const totalCols = this.state.subjects.length;
 
     // 1. Delete / Backspace key multi-delete
-    if (e.key === 'Delete' || (e.key === 'Backspace' && (this.selection.selectedCoords.size > 1 || inp.selectionStart === 0 && inp.selectionEnd === inp.value.length))) {
+    if (e.key === 'Delete' || (e.key === 'Backspace' && (this.selection.selectedCoords.size > 1 || (inp.selectionStart === 0 && inp.selectionEnd === inp.value.length)))) {
       if (this.selection.selectedCoords.size > 1) {
         e.preventDefault();
         this.deleteSelectedCells();
+        return;
+      }
+      if (e.key === 'Delete') {
+        if (inp.getAttribute('data-calculated') === 'true') {
+          e.preventDefault();
+          return;
+        }
+        e.preventDefault();
+        if (inp.value !== '') {
+          inp.value = '';
+          this.handleCellInput(inp);
+        }
         return;
       }
     }

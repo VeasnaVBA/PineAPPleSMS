@@ -233,16 +233,32 @@ export const ScoreService = {
       if (cls && cls.name) className = cls.name;
     } catch (_) {}
 
+    // 1. Map existing score records for this class & period to properly delete cleared cells
+    const allScores = await db.getAll('scores');
+    const existingScoresMap = new Map();
+    allScores.forEach(s => {
+      if (
+        s.classId === classId &&
+        s.academicYear === academicYear &&
+        (s.month === period || s.assessmentType === period)
+      ) {
+        existingScoresMap.set(`${s.studentId}_${s.subjectId}`, s);
+      }
+    });
+
     for (const row of rows) {
       for (const sub of subjects) {
         const val = row.subjectScores[sub.id];
+        const existingRecord = existingScoresMap.get(`${row.studentId}_${sub.id}`);
+        const defaultId = `sc-${academicYear}-${classId}-${sub.id}-${period}-${row.studentId}`;
+        const recordId = existingRecord?.id || defaultId;
+
         if (val !== null && val !== undefined && val !== '') {
           const numVal = Math.max(0, Number(val) || 0);
           const fullScore = SubjectService.getSubjectFullScore(sub, className);
           const gradeInfo = SubjectService.calculateGrade(numVal, fullScore);
-          const id = `sc-${academicYear}-${classId}-${sub.id}-${period}-${row.studentId}`;
           const record = {
-            id,
+            id: recordId,
             studentId: row.studentId,
             classId: isTeacher && teacherClassId ? teacherClassId : classId,
             academicYear,
@@ -261,6 +277,12 @@ export const ScoreService = {
             updatedAt: new Date().toISOString()
           };
           await db.put('scores', record);
+        } else {
+          // Cell was cleared/deleted: remove from database so it never comes back
+          if (existingRecord) {
+            await db.delete('scores', existingRecord.id);
+          }
+          await db.delete('scores', defaultId);
         }
       }
     }

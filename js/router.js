@@ -55,6 +55,19 @@ export class Router {
 
     // Debounced refresh when data changes in background, avoiding jarring flickers
     window.addEventListener('app:refresh-data', (e) => {
+      const source = e.detail?.source || '';
+
+      // 1. Never reload if active page is scores and change originated from scores
+      if (this.currentRoute === 'scores' && (source.startsWith('scores') || source.includes('score'))) {
+        return;
+      }
+
+      // 2. Never reload if user is actively focusing/typing in any input, textarea, or editable element
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
+        return;
+      }
+
       if (this._refreshDebounce) clearTimeout(this._refreshDebounce);
       this._refreshDebounce = setTimeout(() => {
         // Only refresh if no modal is currently open to avoid disrupting user interaction
