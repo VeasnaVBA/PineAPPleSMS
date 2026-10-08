@@ -119,6 +119,7 @@ export const ScoresPage = {
     coefficients: {},
     rows: [],
     searchQuery: '',
+    subjectExtraCol: localStorage.getItem('scores_subject_extra_col') || 'rank', // 'rank' | 'grade' | 'both' | 'none'
     isAutoSaving: false,
     saveDebounceTimer: null
   },
@@ -281,6 +282,16 @@ export const ScoresPage = {
             </button>
             <input type="file" id="input-file-upload-excel" accept=".xlsx,.xls,.csv" class="hidden" />
 
+            <!-- Subject Extra Column Display Mode (Rank, Grade, Both, Hide Both) -->
+            <div class="relative">
+              <select id="select-subject-extra-col" class="h-8.5 px-3 pr-8 rounded-lg border border-input bg-card text-xs font-semibold text-foreground focus:ring-1 focus:ring-primary shadow-2xs cursor-pointer font-khmer" title="${isKm ? 'ជ្រើសរើសការបង្ហាញ៖ ចំណាត់ថ្នាក់, និទ្ទេស, ទាំងពីរ, ឬលាក់ទាំងពីរ' : 'Choose to show subject rank, grade, both, or hide both'}">
+                <option value="rank" ${this.state.subjectExtraCol === 'rank' ? 'selected' : ''}>${isKm ? 'បង្ហាញ៖ ចំណាត់ថ្នាក់' : 'Show: Rank'}</option>
+                <option value="grade" ${this.state.subjectExtraCol === 'grade' ? 'selected' : ''}>${isKm ? 'បង្ហាញ៖ និទ្ទេស' : 'Show: Grade'}</option>
+                <option value="both" ${this.state.subjectExtraCol === 'both' ? 'selected' : ''}>${isKm ? 'បង្ហាញ៖ ទាំងពីរ (ច.ថ & និទ្ទេស)' : 'Show: Both'}</option>
+                <option value="none" ${this.state.subjectExtraCol === 'none' ? 'selected' : ''}>${isKm ? 'លាក់ទាំងពីរ (ពិន្ទុសុទ្ធ)' : 'Hide Both'}</option>
+              </select>
+            </div>
+
             <!-- A-F Grading Guide Button -->
             <button id="btn-grade-scale-guide" type="button" class="h-8.5 px-2.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-bold font-mono shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'កម្រិតនិទ្ទេស A-F' : 'Grading Scale'}">
               A-F
@@ -394,8 +405,9 @@ export const ScoresPage = {
     this.state.rows = data.rows || [];
     this.state.subjects = data.subjects || [];
 
-    // Ensure subject ranks are computed across all rows
+    // Ensure subject ranks and grades are computed across all rows
     ScoreService.rankSubjectStudents(this.state.rows, this.state.subjects);
+    ScoreService.calculateSubjectGrades(this.state.rows, this.state.subjects);
 
     // Group subjects into MoEYS standard categories
     this.organizeGroupedSubjects();
@@ -438,6 +450,9 @@ export const ScoresPage = {
 
     const groups = this.state.groupedSubjects;
     const currentMonthCoeff = this.getCurrentPeriodCoefficient();
+    const mode = this.state.subjectExtraCol || 'rank'; // 'rank' | 'grade' | 'both' | 'none'
+    const showRank = mode === 'rank' || mode === 'both';
+    const showGrade = mode === 'grade' || mode === 'both';
 
     // Fixed Column Widths via Colgroup
     if (colgroup) {
@@ -448,7 +463,8 @@ export const ScoresPage = {
         <col style="width: 64px; min-width: 64px; max-width: 64px;">
         ${this.state.subjects.map(() => `
           <col style="width: 46px; min-width: 46px; max-width: 46px;">
-          <col style="width: 46px; min-width: 46px; max-width: 46px;">
+          ${showRank ? '<col style="width: 46px; min-width: 46px; max-width: 46px;">' : ''}
+          ${showGrade ? '<col style="width: 46px; min-width: 46px; max-width: 46px;">' : ''}
         `).join('')}
         <col style="width: 64px; min-width: 64px; max-width: 64px;">
         <col style="width: 68px; min-width: 68px; max-width: 68px;">
@@ -474,7 +490,7 @@ export const ScoresPage = {
         <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-center text-center px-1 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'ភេទ' : 'Sex'}</div>
       </th>
 
-      <!-- Subject Column Headers (Vertical Text + Category Color, with Subject Rank column right after each subject) -->
+      <!-- Subject Column Headers (Vertical Text + Category Color, with optional Rank and/or Grade column) -->
       ${this.state.subjects.map(sub => {
         const catKey = getSubjectCategoryKey(sub);
         const subHeaderClass = CATEGORY_DEFS[catKey]?.subHeaderClass || 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200';
@@ -489,13 +505,24 @@ export const ScoresPage = {
               </div>
             </div>
           </th>
-          <th class="score-subject-th p-0 bg-amber-50/70 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border-l border-border/40" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + sub.name : 'Rank (' + sub.name + ')'}">
-            <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2 relative">
-              <div class="score-vertical-title font-khmer text-amber-700 dark:text-amber-400 font-bold text-[10px]" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + sub.name : 'Rank (' + sub.name + ')'}">
-                ${isKm ? 'ចំណាត់ថ្នាក់' : 'Rank'}
+          ${showRank ? `
+            <th class="score-subject-th p-0 bg-amber-50/70 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border-l border-border/40" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + sub.name : 'Rank (' + sub.name + ')'}">
+              <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2 relative">
+                <div class="score-vertical-title font-khmer text-amber-700 dark:text-amber-400 font-bold text-[10px]" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + sub.name : 'Rank (' + sub.name + ')'}">
+                  ${isKm ? 'ចំណាត់ថ្នាក់' : 'Rank'}
+                </div>
               </div>
-            </div>
-          </th>
+            </th>
+          ` : ''}
+          ${showGrade ? `
+            <th class="score-subject-th p-0 bg-blue-50/70 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300 border-l border-border/40" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${isKm ? 'និទ្ទេស ' + sub.name : 'Grade (' + sub.name + ')'}">
+              <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2 relative">
+                <div class="score-vertical-title font-khmer text-blue-700 dark:text-blue-400 font-bold text-[10px]" title="${isKm ? 'និទ្ទេស ' + sub.name : 'Grade (' + sub.name + ')'}">
+                  ${isKm ? 'និទ្ទេស' : 'Grade'}
+                </div>
+              </div>
+            </th>
+          ` : ''}
         `;
       }).join('')}
 
@@ -535,6 +562,11 @@ export const ScoresPage = {
     const tbody = document.getElementById('scores-table-body');
     if (!tbody) return;
 
+    const mode = this.state.subjectExtraCol || 'rank'; // 'rank' | 'grade' | 'both' | 'none'
+    const showRank = mode === 'rank' || mode === 'both';
+    const showGrade = mode === 'grade' || mode === 'both';
+    const extraColsPerSub = (showRank ? 1 : 0) + (showGrade ? 1 : 0);
+
     let rows = this.state.rows;
     const query = (this.state.searchQuery || '').trim().toLowerCase();
     if (query) {
@@ -552,7 +584,7 @@ export const ScoresPage = {
     if (rows.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="${4 + (flatSubjects.length * 2) + 5}" class="py-16 text-center text-muted-foreground">
+          <td colspan="${4 + (flatSubjects.length * (1 + extraColsPerSub)) + 5}" class="py-16 text-center text-muted-foreground">
             <p class="text-xs ${isKm ? 'font-khmer' : ''}">
               ${isKm ? 'មិនមានសិស្សក្នុងថ្នាក់នេះទេ' : 'No students found in this class'}
             </p>
@@ -602,7 +634,7 @@ export const ScoresPage = {
             <div class="w-full whitespace-nowrap text-center py-1.5 px-1 bg-transparent">${genderText}</div>
           </td>
 
-          <!-- 5. Subject Score & Subject Rank Grid Cells -->
+          <!-- 5. Subject Score & Optional Rank/Grade Grid Cells -->
           ${flatSubjects.map((s, cIdx) => {
             const currentScore = r.subjectScores[s.id];
             const displayVal = (currentScore !== null && currentScore !== undefined) ? currentScore : '';
@@ -610,6 +642,9 @@ export const ScoresPage = {
             const cellBg = isCalc ? 'bg-rose-50/90 dark:bg-rose-950/30' : 'bg-white dark:bg-slate-900';
             const subRank = r.subjectRanks ? r.subjectRanks[s.id] : null;
             const displayRank = (subRank !== null && subRank !== undefined) ? subRank : '—';
+            const subGrade = r.subjectGrades ? r.subjectGrades[s.id] : null;
+            const displayGrade = (subGrade !== null && subGrade !== undefined) ? subGrade : '—';
+
             return `
               <td class="score-cell-td ${cellBg} p-0 text-center border-r border-b border-border/40" data-row="${rIdx}" data-col="${cIdx}" data-calculated-cell="${isCalc ? 'true' : 'false'}">
                 <div class="w-[46px] max-w-[46px] h-full flex items-center justify-center">
@@ -629,9 +664,21 @@ export const ScoresPage = {
                          placeholder="" />
                 </div>
               </td>
-              <td class="score-cell-td p-0 text-center font-bold font-mono text-xs text-amber-700 dark:text-amber-400 col-sub-rank bg-amber-50/30 dark:bg-amber-950/15 border-r border-b border-border/40 select-none" data-student="${r.studentId}" data-subject="${s.id}" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + s.name : 'Rank (' + s.name + ')'}">
-                <div class="w-[46px] max-w-[46px] h-full flex items-center justify-center py-1.5 px-0.5 truncate">${displayRank}</div>
-              </td>
+              ${showRank ? `
+                <td class="score-cell-td p-0 text-center font-bold font-mono text-xs text-amber-700 dark:text-amber-400 col-sub-rank bg-amber-50/30 dark:bg-amber-950/15 border-r border-b border-border/40 select-none" data-student="${r.studentId}" data-subject="${s.id}" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + s.name : 'Rank (' + s.name + ')'}">
+                  <div class="w-[46px] max-w-[46px] h-full flex items-center justify-center py-1.5 px-0.5 truncate">${displayRank}</div>
+                </td>
+              ` : ''}
+              ${showGrade ? `
+                <td class="score-cell-td p-0 text-center col-sub-grade bg-blue-50/20 dark:bg-blue-950/15 border-r border-b border-border/40 select-none" data-student="${r.studentId}" data-subject="${s.id}" title="${isKm ? 'និទ្ទេស ' + s.name : 'Grade (' + s.name + ')'}">
+                  <div class="w-[46px] max-w-[46px] h-full flex items-center justify-center py-1 px-0.5">
+                    ${displayGrade !== '—'
+                      ? `<span class="col-sub-grade-badge inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${this.getGradeBadgeClasses(displayGrade)}">${displayGrade}</span>`
+                      : `<span class="text-muted-foreground font-bold font-mono text-xs">—</span>`
+                    }
+                  </div>
+                </td>
+              ` : ''}
             `;
           }).join('')}
 
@@ -1028,6 +1075,17 @@ export const ScoresPage = {
     rowData.grade = gradeInfo.grade;
     rowData.gradeColor = gradeInfo.color;
 
+    // Update individual subject grades for this row
+    if (!rowData.subjectGrades) rowData.subjectGrades = {};
+    this.state.subjects.forEach(s => {
+      const v = rowData.subjectScores[s.id];
+      if (v !== null && v !== undefined && v !== '') {
+        rowData.subjectGrades[s.id] = SubjectService.calculateGrade(Number(v), s.fullScore).grade;
+      } else {
+        rowData.subjectGrades[s.id] = null;
+      }
+    });
+
     const trEl = this.container.querySelector(`tr[data-student-id="${rowData.studentId}"]`);
     if (trEl) {
       const totEl = trEl.querySelector('.col-total div') || trEl.querySelector('.col-total');
@@ -1246,6 +1304,7 @@ export const ScoresPage = {
 
   updateRanksInDOM() {
     ScoreService.rankSubjectStudents(this.state.rows, this.state.subjects);
+    ScoreService.calculateSubjectGrades(this.state.rows, this.state.subjects);
 
     this.container.querySelectorAll('tr[data-student-id]').forEach(tr => {
       const studentId = tr.getAttribute('data-student-id');
@@ -1255,13 +1314,23 @@ export const ScoresPage = {
         const rankEl = tr.querySelector('.col-rank div') || tr.querySelector('.col-rank');
         if (rankEl) rankEl.textContent = rowData.rank || 1;
 
-        // Individual subject ranks
+        // Individual subject ranks & grades
         this.state.subjects.forEach(sub => {
           const subRankEl = tr.querySelector(`.col-sub-rank[data-subject="${sub.id}"] div`) || 
                             tr.querySelector(`.col-sub-rank[data-subject="${sub.id}"]`);
           if (subRankEl) {
             const rk = rowData.subjectRanks ? rowData.subjectRanks[sub.id] : null;
             subRankEl.textContent = (rk !== null && rk !== undefined) ? rk : '—';
+          }
+
+          const subGradeDiv = tr.querySelector(`.col-sub-grade[data-subject="${sub.id}"] div`);
+          if (subGradeDiv) {
+            const gd = rowData.subjectGrades ? rowData.subjectGrades[sub.id] : null;
+            if (gd) {
+              subGradeDiv.innerHTML = `<span class="col-sub-grade-badge inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${this.getGradeBadgeClasses(gd)}">${gd}</span>`;
+            } else {
+              subGradeDiv.innerHTML = `<span class="text-muted-foreground font-bold font-mono text-xs">—</span>`;
+            }
           }
         });
       }
@@ -1324,6 +1393,14 @@ export const ScoresPage = {
     // Search filter
     document.getElementById('input-search-student')?.addEventListener('input', (e) => {
       this.state.searchQuery = e.target.value;
+      this.renderRows();
+    });
+
+    // Select Subject Extra Column Mode (Rank, Grade, Both, Hide Both)
+    document.getElementById('select-subject-extra-col')?.addEventListener('change', (e) => {
+      this.state.subjectExtraCol = e.target.value;
+      localStorage.setItem('scores_subject_extra_col', e.target.value);
+      this.renderHeader();
       this.renderRows();
     });
 
@@ -1410,6 +1487,7 @@ export const ScoresPage = {
       });
       ScoreService.rankStudents(this.state.rows);
       ScoreService.rankSubjectStudents(this.state.rows, this.state.subjects);
+      ScoreService.calculateSubjectGrades(this.state.rows, this.state.subjects);
       this.renderRows();
       this.updateSummaryStats();
       this.triggerDebouncedAutoSave();
@@ -1563,6 +1641,7 @@ export const ScoresPage = {
 
         ScoreService.rankStudents(this.state.rows);
         ScoreService.rankSubjectStudents(this.state.rows, this.state.subjects);
+        ScoreService.calculateSubjectGrades(this.state.rows, this.state.subjects);
         this.renderRows();
         this.updateSummaryStats();
         this.triggerDebouncedAutoSave();

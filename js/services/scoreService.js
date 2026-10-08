@@ -189,6 +189,26 @@ export const ScoreService = {
   },
 
   /**
+   * Calculate grade (A to F) for students in each individual subject
+   */
+  calculateSubjectGrades(studentRows, subjects) {
+    if (!studentRows || !subjects) return studentRows;
+    studentRows.forEach(r => {
+      if (!r.subjectGrades) r.subjectGrades = {};
+      subjects.forEach(sub => {
+        const val = r.subjectScores ? r.subjectScores[sub.id] : null;
+        if (val !== null && val !== undefined && val !== '') {
+          const gInfo = SubjectService.calculateGrade(Number(val), sub.fullScore);
+          r.subjectGrades[sub.id] = gInfo.grade;
+        } else {
+          r.subjectGrades[sub.id] = null;
+        }
+      });
+    });
+    return studentRows;
+  },
+
+  /**
    * Master Score Sheet across all subjects for a class and evaluation period
    */
   async getMasterScoreSheet({ classId, academicYear, period = 'October' }) {
@@ -317,6 +337,7 @@ export const ScoreService = {
 
     this.rankStudents(rows);
     this.rankSubjectStudents(rows, subjectsWithMeta);
+    this.calculateSubjectGrades(rows, subjectsWithMeta);
     return {
       rows,
       subjects: subjectsWithMeta,

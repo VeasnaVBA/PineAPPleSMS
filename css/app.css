@@ -1499,14 +1499,17 @@ tbody tr:hover td.col-total,
 tbody tr:hover td.col-average,
 tbody tr:hover td.col-rank,
 tbody tr:hover td.col-sub-rank,
+tbody tr:hover td.col-sub-grade,
 tbody tr:focus-within td.col-total,
 tbody tr:focus-within td.col-average,
 tbody tr:focus-within td.col-rank,
 tbody tr:focus-within td.col-sub-rank,
+tbody tr:focus-within td.col-sub-grade,
 tbody tr.is-active-row td.col-total,
 tbody tr.is-active-row td.col-average,
 tbody tr.is-active-row td.col-rank,
-tbody tr.is-active-row td.col-sub-rank {
+tbody tr.is-active-row td.col-sub-rank,
+tbody tr.is-active-row td.col-sub-grade {
   background-color: #f1f5f9 !important;
 }
 
@@ -1514,14 +1517,17 @@ tbody tr.is-active-row td.col-sub-rank {
 .dark tbody tr:hover td.col-average,
 .dark tbody tr:hover td.col-rank,
 .dark tbody tr:hover td.col-sub-rank,
+.dark tbody tr:hover td.col-sub-grade,
 .dark tbody tr:focus-within td.col-total,
 .dark tbody tr:focus-within td.col-average,
 .dark tbody tr:focus-within td.col-rank,
 .dark tbody tr:focus-within td.col-sub-rank,
+.dark tbody tr:focus-within td.col-sub-grade,
 .dark tbody tr.is-active-row td.col-total,
 .dark tbody tr.is-active-row td.col-average,
 .dark tbody tr.is-active-row td.col-rank,
-.dark tbody tr.is-active-row td.col-sub-rank {
+.dark tbody tr.is-active-row td.col-sub-rank,
+.dark tbody tr.is-active-row td.col-sub-grade {
   background-color: #1e293b !important;
 }
 
