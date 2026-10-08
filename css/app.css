@@ -1351,39 +1351,39 @@ thead tr th {
 .score-sticky-col-1 {
   position: sticky !important;
   left: 0px !important;
-  width: 36px !important;
-  min-width: 36px !important;
-  max-width: 36px !important;
+  width: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
 }
 
 .score-sticky-col-2 {
   position: sticky !important;
-  left: 36px !important;
-  width: 76px !important;
-  min-width: 76px !important;
-  max-width: 76px !important;
+  left: 42px !important;
+  width: 94px !important;
+  min-width: 94px !important;
+  max-width: 94px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
 }
 
 .score-sticky-col-3 {
   position: sticky !important;
-  left: 112px !important;
-  width: 76px !important;
-  min-width: 76px !important;
-  max-width: 76px !important;
+  left: 136px !important;
+  width: 94px !important;
+  min-width: 94px !important;
+  max-width: 94px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
 }
 
 .score-sticky-col-4 {
   position: sticky !important;
-  left: 188px !important;
-  width: 52px !important;
-  min-width: 52px !important;
-  max-width: 52px !important;
+  left: 230px !important;
+  width: 64px !important;
+  min-width: 64px !important;
+  max-width: 64px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
   border-right: 2px solid #94a3b8 !important;

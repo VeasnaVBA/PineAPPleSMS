@@ -401,10 +401,10 @@ export const ScoresPage = {
     // Fixed Column Widths via Colgroup
     if (colgroup) {
       colgroup.innerHTML = `
-        <col style="width: 36px; min-width: 36px; max-width: 36px;">
-        <col style="width: 76px; min-width: 76px; max-width: 76px;">
-        <col style="width: 76px; min-width: 76px; max-width: 76px;">
-        <col style="width: 52px; min-width: 52px; max-width: 52px;">
+        <col style="width: 42px; min-width: 42px; max-width: 42px;">
+        <col style="width: 94px; min-width: 94px; max-width: 94px;">
+        <col style="width: 94px; min-width: 94px; max-width: 94px;">
+        <col style="width: 64px; min-width: 64px; max-width: 64px;">
         ${groups.map(g => g.subjects.map(() => `<col style="width: 46px; min-width: 46px; max-width: 46px;">`).join('')).join('')}
         <col style="width: 55px; min-width: 55px; max-width: 55px;">
         <col style="width: 52px; min-width: 52px; max-width: 52px;">
@@ -418,16 +418,16 @@ export const ScoresPage = {
     headerRow.innerHTML = `
       <!-- Sticky Student Info Header Columns (Locked on X and Y with highest z-index) -->
       <th class="score-sticky-col-1 p-0 text-center font-mono font-bold text-muted-foreground bg-slate-100 dark:bg-slate-800">
-        <div class="w-full max-w-full truncate text-center py-2 bg-slate-100 dark:bg-slate-800">#</div>
+        <div class="w-full whitespace-nowrap text-center py-2 bg-slate-100 dark:bg-slate-800">#</div>
       </th>
       <th class="score-sticky-col-2 p-0 text-left font-bold font-khmer text-foreground bg-slate-100 dark:bg-slate-800">
-        <div class="w-full max-w-full truncate text-left py-2 px-2 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'គោត្តនាម' : 'Surname'}</div>
+        <div class="w-full whitespace-nowrap text-left py-2 px-2 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'គោត្តនាម' : 'Surname'}</div>
       </th>
       <th class="score-sticky-col-3 p-0 text-left font-bold font-khmer text-foreground bg-slate-100 dark:bg-slate-800">
-        <div class="w-full max-w-full truncate text-left py-2 px-2 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'នាម' : 'Name'}</div>
+        <div class="w-full whitespace-nowrap text-left py-2 px-2 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'នាម' : 'Name'}</div>
       </th>
       <th class="score-sticky-col-4 p-0 text-center font-bold font-khmer text-foreground bg-slate-100 dark:bg-slate-800">
-        <div class="w-full max-w-full truncate text-center py-2 px-1 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'ភេទ' : 'Sex'}</div>
+        <div class="w-full whitespace-nowrap text-center py-2 px-1 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'ភេទ' : 'Sex'}</div>
       </th>
 
       <!-- Subject Column Headers (Vertical Text + Category Color, z-index 10 in CSS) -->
@@ -530,22 +530,22 @@ export const ScoresPage = {
         <tr class="hover:bg-muted/15 transition-colors group" data-student-id="${r.studentId}" data-row-idx="${rIdx}">
           <!-- 1. No (Centered) -->
           <td class="score-sticky-col-1 p-0 text-center font-mono font-medium text-muted-foreground bg-white dark:bg-slate-900">
-            <div class="w-full max-w-full truncate text-center py-1.5 bg-white dark:bg-slate-900">${rIdx + 1}</div>
+            <div class="w-full whitespace-nowrap text-center py-1.5 bg-white dark:bg-slate-900">${rIdx + 1}</div>
           </td>
 
           <!-- 2. Surname (គោត្តនាម) - Left-aligned -->
           <td class="score-sticky-col-2 p-0 text-left font-khmer font-semibold text-foreground bg-white dark:bg-slate-900">
-            <div class="w-full max-w-full truncate text-left py-1.5 px-2 text-xs bg-white dark:bg-slate-900" title="${surname}">${surname || '—'}</div>
+            <div class="w-full whitespace-nowrap text-left py-1.5 px-2 text-xs bg-white dark:bg-slate-900" title="${surname}">${surname || '—'}</div>
           </td>
 
           <!-- 3. Given Name (នាម) - Left-aligned -->
           <td class="score-sticky-col-3 p-0 text-left font-khmer font-semibold text-foreground bg-white dark:bg-slate-900">
-            <div class="w-full max-w-full truncate text-left py-1.5 px-2 text-xs bg-white dark:bg-slate-900" title="${givenName}">${givenName || '—'}</div>
+            <div class="w-full whitespace-nowrap text-left py-1.5 px-2 text-xs bg-white dark:bg-slate-900" title="${givenName}">${givenName || '—'}</div>
           </td>
 
           <!-- 4. Gender (ភេទ) - Centered -->
           <td class="score-sticky-col-4 p-0 text-center font-khmer text-xs ${genderColor} bg-white dark:bg-slate-900">
-            <div class="w-full max-w-full truncate text-center py-1.5 px-1 bg-white dark:bg-slate-900">${genderText}</div>
+            <div class="w-full whitespace-nowrap text-center py-1.5 px-1 bg-white dark:bg-slate-900">${genderText}</div>
           </td>
 
           <!-- 5. Subject Score Grid Cells (Centered Values) -->
