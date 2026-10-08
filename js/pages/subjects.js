@@ -509,9 +509,9 @@ export const SubjectsPage = {
       });
     }
 
-    // Actions on table rows (toggle-scale, edit, delete)
+    // Actions on table rows (toggle-scale, edit, delete, move)
     this.container.querySelectorAll('[data-action]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const action = btn.getAttribute('data-action');
         const id = btn.getAttribute('data-id');
