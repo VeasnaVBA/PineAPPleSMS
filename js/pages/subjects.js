@@ -175,7 +175,7 @@ export const SubjectsPage = {
             <table class="w-full text-left border-collapse text-xs sm:text-sm ${fontClass}">
               <thead class="bg-muted/50 text-muted-foreground select-none border-b border-border">
                 <tr>
-                  <th scope="col" class="w-12 px-3 py-3 text-center font-semibold text-foreground border-r border-border/60">
+                  <th scope="col" class="w-16 min-w-[64px] px-2 py-3 text-center font-semibold text-foreground border-r border-border/60">
                     ${isKm ? 'ល.រ' : 'No.'}
                   </th>
                   <th scope="col" class="w-28 px-3.5 py-3 font-semibold text-foreground border-r border-border/60 whitespace-nowrap ${fontClass}">
@@ -244,11 +244,19 @@ export const SubjectsPage = {
                   const brackets = SubjectService.getGradingScaleSummary(activeFullScore);
 
                   return `
-                    <tr class="hover:bg-muted/20 transition-colors group ${isExpanded ? 'bg-muted/10' : ''}">
-                      <!-- Row No with Reorder Up/Down -->
-                      <td class="px-2 py-3 text-center text-muted-foreground border-r border-border/40 font-mono text-xs">
-                        <div class="flex items-center justify-center gap-1.5">
-                          <span class="font-bold text-foreground/80">${idx + 1}</span>
+                    <tr class="subject-row hover:bg-muted/20 transition-colors group select-none ${isExpanded ? 'bg-muted/10' : ''}" 
+                        data-subject-id="${item.id}"
+                        data-index="${idx}"
+                        draggable="true">
+                      <!-- Row No with Move Drag Handle & Reorder Up/Down -->
+                      <td class="px-1.5 py-2.5 text-center text-muted-foreground border-r border-border/40 font-mono text-xs select-none">
+                        <div class="flex items-center justify-center gap-1">
+                          <!-- Drag & Move Handle -->
+                          <span class="subject-drag-handle p-1 text-muted-foreground/40 hover:text-primary active:text-primary cursor-grab active:cursor-grabbing touch-none rounded transition-colors inline-flex items-center justify-center select-none"
+                                title="${isKm ? 'ចុចហើយអូសដើម្បីផ្លាស់ទីមុខវិជ្ជា (Drag to move)' : 'Drag to move subject'}">
+                            ${getIcon('gripVertical', 'w-3.5 h-3.5') || getIcon('move', 'w-3.5 h-3.5')}
+                          </span>
+                          <span class="font-bold text-foreground/80 min-w-[14px]">${idx + 1}</span>
                           <div class="inline-flex flex-col -space-y-0.5">
                             <button type="button" 
                                     data-action="move-up" 
@@ -553,6 +561,143 @@ export const SubjectsPage = {
         }
       });
     });
+
+    this.bindDragAndDropEvents();
+  },
+
+  /**
+   * Bind Desktop HTML5 Drag & Drop and Mobile Touch-to-move events
+   */
+  bindDragAndDropEvents() {
+    if (!this.container) return;
+    const tableBody = this.container.querySelector('tbody');
+    if (!tableBody) return;
+
+    let draggedId = null;
+    let draggedRow = null;
+
+    const rows = tableBody.querySelectorAll('tr[data-subject-id]');
+
+    // 1. Desktop HTML5 Drag & Drop
+    rows.forEach(row => {
+      row.addEventListener('dragstart', (e) => {
+        draggedRow = row;
+        draggedId = row.getAttribute('data-subject-id');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', draggedId);
+        row.classList.add('opacity-40', 'bg-primary/10');
+      });
+
+      row.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (row !== draggedRow) {
+          row.classList.add('border-t-2', 'border-primary');
+        }
+      });
+
+      row.addEventListener('dragleave', () => {
+        row.classList.remove('border-t-2', 'border-primary');
+      });
+
+      row.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        row.classList.remove('border-t-2', 'border-primary');
+        const targetId = row.getAttribute('data-subject-id');
+        if (draggedId && targetId && draggedId !== targetId) {
+          await this.handleReorder(draggedId, targetId);
+        }
+      });
+
+      row.addEventListener('dragend', () => {
+        row.classList.remove('opacity-40', 'bg-primary/10');
+        rows.forEach(r => r.classList.remove('border-t-2', 'border-primary'));
+        draggedRow = null;
+        draggedId = null;
+      });
+    });
+
+    // 2. Mobile Touch Move Support on .subject-drag-handle
+    const handles = tableBody.querySelectorAll('.subject-drag-handle');
+    let touchRow = null;
+    let touchId = null;
+    let currentOverRow = null;
+
+    handles.forEach(handle => {
+      handle.addEventListener('touchstart', (e) => {
+        const row = handle.closest('tr[data-subject-id]');
+        if (!row) return;
+        touchRow = row;
+        touchId = row.getAttribute('data-subject-id');
+        touchRow.classList.add('bg-primary/15');
+      }, { passive: true });
+
+      handle.addEventListener('touchmove', (e) => {
+        if (!touchRow || !e.touches || e.touches.length === 0) return;
+        const touch = e.touches[0];
+        const elUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+        const overRow = elUnder?.closest('tr[data-subject-id]');
+
+        if (currentOverRow && currentOverRow !== overRow) {
+          currentOverRow.classList.remove('border-t-2', 'border-primary');
+        }
+
+        if (overRow && overRow !== touchRow) {
+          currentOverRow = overRow;
+          currentOverRow.classList.add('border-t-2', 'border-primary');
+        }
+      }, { passive: false });
+
+      handle.addEventListener('touchend', async () => {
+        if (touchRow) {
+          touchRow.classList.remove('bg-primary/15');
+        }
+        if (currentOverRow) {
+          currentOverRow.classList.remove('border-t-2', 'border-primary');
+          const targetId = currentOverRow.getAttribute('data-subject-id');
+          if (touchId && targetId && touchId !== targetId) {
+            await this.handleReorder(touchId, targetId);
+          }
+        }
+        touchRow = null;
+        touchId = null;
+        currentOverRow = null;
+      });
+
+      handle.addEventListener('touchcancel', () => {
+        if (touchRow) touchRow.classList.remove('bg-primary/15');
+        if (currentOverRow) currentOverRow.classList.remove('border-t-2', 'border-primary');
+        touchRow = null;
+        touchId = null;
+        currentOverRow = null;
+      });
+    });
+  },
+
+  /**
+   * Reorder subject from sourceId to targetId position
+   */
+  async handleReorder(sourceId, targetId) {
+    if (!sourceId || !targetId || sourceId === targetId) return;
+    const isKm = i18n.getLocale() === 'km';
+    const list = [...this.state.subjects];
+    const sourceIdx = list.findIndex(s => s.id === sourceId);
+    const targetIdx = list.findIndex(s => s.id === targetId);
+
+    if (sourceIdx === -1 || targetIdx === -1 || sourceIdx === targetIdx) return;
+
+    const [moved] = list.splice(sourceIdx, 1);
+    list.splice(targetIdx, 0, moved);
+
+    const orderedIds = list.map(s => s.id);
+    try {
+      await SubjectService.reorderSubjects(orderedIds);
+      toast.success(isKm ? 'បានផ្លាស់ទីមុខវិជ្ជាដោយជោគជ័យ' : 'Subject moved successfully');
+      await this.loadData();
+      this.renderLayout();
+    } catch (err) {
+      toast.error(err.message || 'Error moving subject');
+    }
   },
 
   /**
