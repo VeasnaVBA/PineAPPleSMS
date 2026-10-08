@@ -159,6 +159,36 @@ export const ScoreService = {
   },
 
   /**
+   * Calculate rank for students in each individual subject based on subject scores
+   */
+  rankSubjectStudents(studentRows, subjects) {
+    if (!studentRows || !subjects) return studentRows;
+    subjects.forEach(sub => {
+      const valid = [];
+      studentRows.forEach(r => {
+        const val = r.subjectScores ? r.subjectScores[sub.id] : null;
+        if (val !== null && val !== undefined && val !== '') {
+          valid.push({ row: r, score: Number(val) });
+        } else {
+          if (!r.subjectRanks) r.subjectRanks = {};
+          r.subjectRanks[sub.id] = null;
+        }
+      });
+
+      valid.sort((a, b) => b.score - a.score);
+      let currentRank = 1;
+      for (let i = 0; i < valid.length; i++) {
+        if (i > 0 && valid[i].score < valid[i - 1].score) {
+          currentRank = i + 1;
+        }
+        if (!valid[i].row.subjectRanks) valid[i].row.subjectRanks = {};
+        valid[i].row.subjectRanks[sub.id] = currentRank;
+      }
+    });
+    return studentRows;
+  },
+
+  /**
    * Master Score Sheet across all subjects for a class and evaluation period
    */
   async getMasterScoreSheet({ classId, academicYear, period = 'October' }) {
@@ -286,6 +316,7 @@ export const ScoreService = {
     });
 
     this.rankStudents(rows);
+    this.rankSubjectStudents(rows, subjectsWithMeta);
     return {
       rows,
       subjects: subjectsWithMeta,

@@ -394,6 +394,9 @@ export const ScoresPage = {
     this.state.rows = data.rows || [];
     this.state.subjects = data.subjects || [];
 
+    // Ensure subject ranks are computed across all rows
+    ScoreService.rankSubjectStudents(this.state.rows, this.state.subjects);
+
     // Group subjects into MoEYS standard categories
     this.organizeGroupedSubjects();
 
@@ -443,7 +446,10 @@ export const ScoresPage = {
         <col style="width: 94px; min-width: 94px; max-width: 94px;">
         <col style="width: 94px; min-width: 94px; max-width: 94px;">
         <col style="width: 64px; min-width: 64px; max-width: 64px;">
-        ${this.state.subjects.map(() => `<col style="width: 46px; min-width: 46px; max-width: 46px;">`).join('')}
+        ${this.state.subjects.map(() => `
+          <col style="width: 46px; min-width: 46px; max-width: 46px;">
+          <col style="width: 38px; min-width: 38px; max-width: 38px;">
+        `).join('')}
         <col style="width: 64px; min-width: 64px; max-width: 64px;">
         <col style="width: 68px; min-width: 68px; max-width: 68px;">
         <col style="width: 72px; min-width: 72px; max-width: 72px;">
@@ -468,7 +474,7 @@ export const ScoresPage = {
         <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-center text-center px-1 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'ភេទ' : 'Sex'}</div>
       </th>
 
-      <!-- Subject Column Headers (Vertical Text + Category Color, z-index 10 in CSS, centered, ordered by user) -->
+      <!-- Subject Column Headers (Vertical Text + Category Color, with Subject Rank column right after each subject) -->
       ${this.state.subjects.map(sub => {
         const catKey = getSubjectCategoryKey(sub);
         const subHeaderClass = CATEGORY_DEFS[catKey]?.subHeaderClass || 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200';
@@ -480,6 +486,13 @@ export const ScoresPage = {
               ${isCalc ? `<span class="absolute top-1 right-1 text-[9px] font-mono font-extrabold text-rose-700 dark:text-rose-300 bg-rose-200/80 dark:bg-rose-900/80 rounded px-0.5 leading-none shadow-2xs" title="${isKm ? 'បូកសរុបស្វ័យប្រវត្តិ' : 'Auto-calculated'}">∑</span>` : ''}
               <div class="score-vertical-title font-khmer ${isCalc ? 'text-rose-900 dark:text-rose-200 font-bold' : ''}" title="${sub.name}">
                 ${sub.name}
+              </div>
+            </div>
+          </th>
+          <th class="score-subject-th p-0 bg-amber-50/70 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border-l border-border/40" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + sub.name : 'Rank (' + sub.name + ')'}">
+            <div class="w-[38px] max-w-[38px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2 relative">
+              <div class="score-vertical-title font-khmer text-amber-700 dark:text-amber-400 font-bold text-[10px]" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + sub.name : 'Rank (' + sub.name + ')'}">
+                ${isKm ? 'ចំណាត់ថ្នាក់' : 'Rank'}
               </div>
             </div>
           </th>
@@ -539,7 +552,7 @@ export const ScoresPage = {
     if (rows.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="${4 + flatSubjects.length + 5}" class="py-16 text-center text-muted-foreground">
+          <td colspan="${4 + (flatSubjects.length * 2) + 5}" class="py-16 text-center text-muted-foreground">
             <p class="text-xs ${isKm ? 'font-khmer' : ''}">
               ${isKm ? 'មិនមានសិស្សក្នុងថ្នាក់នេះទេ' : 'No students found in this class'}
             </p>
@@ -589,14 +602,16 @@ export const ScoresPage = {
             <div class="w-full whitespace-nowrap text-center py-1.5 px-1 bg-transparent">${genderText}</div>
           </td>
 
-          <!-- 5. Subject Score Grid Cells (Centered Values) -->
+          <!-- 5. Subject Score & Subject Rank Grid Cells -->
           ${flatSubjects.map((s, cIdx) => {
             const currentScore = r.subjectScores[s.id];
             const displayVal = (currentScore !== null && currentScore !== undefined) ? currentScore : '';
             const isCalc = SubjectService.isCalculatedSubject(s);
             const cellBg = isCalc ? 'bg-rose-50/90 dark:bg-rose-950/30' : 'bg-white dark:bg-slate-900';
+            const subRank = r.subjectRanks ? r.subjectRanks[s.id] : null;
+            const displayRank = (subRank !== null && subRank !== undefined) ? subRank : '—';
             return `
-              <td class="score-cell-td ${cellBg} p-0 text-center" data-row="${rIdx}" data-col="${cIdx}" data-calculated-cell="${isCalc ? 'true' : 'false'}">
+              <td class="score-cell-td ${cellBg} p-0 text-center border-r border-b border-border/40" data-row="${rIdx}" data-col="${cIdx}" data-calculated-cell="${isCalc ? 'true' : 'false'}">
                 <div class="w-[46px] max-w-[46px] h-full flex items-center justify-center">
                   <input type="text"
                          inputmode="${isCalc ? 'none' : 'decimal'}"
@@ -613,6 +628,9 @@ export const ScoresPage = {
                          title="${isCalc ? (isKm ? 'ពិន្ទុបូកសរុបដោយស្វ័យប្រវត្តិពី៖ ' + s.sumOfCourses : 'Auto-calculated sum from: ' + s.sumOfCourses) : ''}"
                          placeholder="" />
                 </div>
+              </td>
+              <td class="p-0 text-center font-bold font-mono text-[11px] text-amber-700 dark:text-amber-400 col-sub-rank bg-amber-50/30 dark:bg-amber-950/15 border-r border-b border-border/40 select-none" data-student="${r.studentId}" data-subject="${s.id}" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + s.name : 'Rank (' + s.name + ')'}">
+                <div class="w-[38px] max-w-[38px] truncate text-center py-1.5 px-0.5">${displayRank}</div>
               </td>
             `;
           }).join('')}
@@ -1227,12 +1245,25 @@ export const ScoresPage = {
   },
 
   updateRanksInDOM() {
+    ScoreService.rankSubjectStudents(this.state.rows, this.state.subjects);
+
     this.container.querySelectorAll('tr[data-student-id]').forEach(tr => {
       const studentId = tr.getAttribute('data-student-id');
       const rowData = this.state.rows.find(r => r.studentId === studentId);
       if (rowData) {
+        // Overall rank
         const rankEl = tr.querySelector('.col-rank div') || tr.querySelector('.col-rank');
         if (rankEl) rankEl.textContent = rowData.rank || 1;
+
+        // Individual subject ranks
+        this.state.subjects.forEach(sub => {
+          const subRankEl = tr.querySelector(`.col-sub-rank[data-subject="${sub.id}"] div`) || 
+                            tr.querySelector(`.col-sub-rank[data-subject="${sub.id}"]`);
+          if (subRankEl) {
+            const rk = rowData.subjectRanks ? rowData.subjectRanks[sub.id] : null;
+            subRankEl.textContent = (rk !== null && rk !== undefined) ? rk : '—';
+          }
+        });
       }
     });
   },
@@ -1378,6 +1409,7 @@ export const ScoresPage = {
         this.recalculateRowData(r);
       });
       ScoreService.rankStudents(this.state.rows);
+      ScoreService.rankSubjectStudents(this.state.rows, this.state.subjects);
       this.renderRows();
       this.updateSummaryStats();
       this.triggerDebouncedAutoSave();
@@ -1530,6 +1562,7 @@ export const ScoresPage = {
         }
 
         ScoreService.rankStudents(this.state.rows);
+        ScoreService.rankSubjectStudents(this.state.rows, this.state.subjects);
         this.renderRows();
         this.updateSummaryStats();
         this.triggerDebouncedAutoSave();

@@ -1498,24 +1498,30 @@ tbody tr.is-active-row td.score-cell-td[data-calculated-cell="true"]:not(.is-sel
 tbody tr:hover td.col-total,
 tbody tr:hover td.col-average,
 tbody tr:hover td.col-rank,
+tbody tr:hover td.col-sub-rank,
 tbody tr:focus-within td.col-total,
 tbody tr:focus-within td.col-average,
 tbody tr:focus-within td.col-rank,
+tbody tr:focus-within td.col-sub-rank,
 tbody tr.is-active-row td.col-total,
 tbody tr.is-active-row td.col-average,
-tbody tr.is-active-row td.col-rank {
+tbody tr.is-active-row td.col-rank,
+tbody tr.is-active-row td.col-sub-rank {
   background-color: #f1f5f9 !important;
 }
 
 .dark tbody tr:hover td.col-total,
 .dark tbody tr:hover td.col-average,
 .dark tbody tr:hover td.col-rank,
+.dark tbody tr:hover td.col-sub-rank,
 .dark tbody tr:focus-within td.col-total,
 .dark tbody tr:focus-within td.col-average,
 .dark tbody tr:focus-within td.col-rank,
+.dark tbody tr:focus-within td.col-sub-rank,
 .dark tbody tr.is-active-row td.col-total,
 .dark tbody tr.is-active-row td.col-average,
-.dark tbody tr.is-active-row td.col-rank {
+.dark tbody tr.is-active-row td.col-rank,
+.dark tbody tr.is-active-row td.col-sub-rank {
   background-color: #1e293b !important;
 }
 
