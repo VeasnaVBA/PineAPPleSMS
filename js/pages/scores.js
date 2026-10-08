@@ -20,15 +20,15 @@
  */
 
 import { ScoreService, EVALUATION_PERIODS } from '../services/scoreService.js';
-import { ClassService } from './classService.js';
-import { SubjectService } from './subjectService.js';
-import { SettingsService } from './settingsService.js';
-import { authService } from './authService.js';
+import { ClassService } from '../services/classService.js';
+import { SubjectService } from '../services/subjectService.js';
+import { SettingsService } from '../services/settingsService.js';
+import { authService } from '../services/authService.js';
 import { Modal } from '../components/modal.js';
 import { toast } from '../components/toast.js';
 import { i18n, t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
-import { syncStateManager } from './syncStateManager.js';
+import { syncStateManager } from '../services/syncStateManager.js';
 
 // Category Definitions matching Cambodian Primary / Secondary Score Sheets
 const CATEGORY_DEFS = {
