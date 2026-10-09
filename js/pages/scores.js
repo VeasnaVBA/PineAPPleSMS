@@ -36,50 +36,50 @@ const CATEGORY_DEFS = {
   khmer: {
     titleKm: 'ភាសាខ្មែរ',
     titleEn: 'Khmer Literature',
-    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700',
-    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200',
+    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-slate-300 dark:border-slate-700',
+    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100',
     cellBgClass: 'bg-white dark:bg-slate-900'
   },
   math: {
     titleKm: 'គណិតវិទ្យា',
     titleEn: 'Mathematics',
-    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700',
-    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200',
+    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-slate-300 dark:border-slate-700',
+    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100',
     cellBgClass: 'bg-white dark:bg-slate-900'
   },
   science: {
     titleKm: 'វិទ្យាសាស្ត្រ',
     titleEn: 'Sciences',
-    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700',
-    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200',
+    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-slate-300 dark:border-slate-700',
+    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100',
     cellBgClass: 'bg-white dark:bg-slate-900'
   },
   social: {
     titleKm: 'សិក្សាសង្គម',
     titleEn: 'Social Studies',
-    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700',
-    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200',
+    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-slate-300 dark:border-slate-700',
+    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100',
     cellBgClass: 'bg-white dark:bg-slate-900'
   },
   health_arts: {
     titleKm: 'អប់រំកាយ/សុខភាព សិល្បៈ',
     titleEn: 'PE, Health & Arts',
-    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700',
-    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200',
+    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-slate-300 dark:border-slate-700',
+    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100',
     cellBgClass: 'bg-white dark:bg-slate-900'
   },
   languages_ict: {
     titleKm: 'ស្វ័យសិក្សា / បរទេស / ICT',
     titleEn: 'Languages & ICT',
-    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700',
-    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200',
+    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-slate-300 dark:border-slate-700',
+    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100',
     cellBgClass: 'bg-white dark:bg-slate-900'
   },
   other: {
     titleKm: 'មុខវិជ្ជាផ្សេងៗ',
     titleEn: 'Other Subjects',
-    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700',
-    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200',
+    headerClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-slate-300 dark:border-slate-700',
+    subHeaderClass: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100',
     cellBgClass: 'bg-white dark:bg-slate-900'
   }
 };
@@ -330,7 +330,7 @@ export const ScoresPage = {
         <!-- Master Score Table Container -->
         <div class="rounded-xl border border-border bg-card shadow-xs overflow-hidden print:border-none print:shadow-none relative w-full max-w-full">
           <div class="score-table-container max-h-[72vh] overflow-auto w-full max-w-full">
-            <table class="score-table text-left text-xs border-separate" id="master-score-table">
+            <table class="score-table no-shadcn text-left text-xs border-separate" id="master-score-table">
               <colgroup id="score-table-colgroup"></colgroup>
               <thead>
                 <tr id="score-table-header-row" class="border-b border-border">
@@ -513,47 +513,47 @@ export const ScoresPage = {
     // Single Clean Header Row
     headerRow.innerHTML = `
       <!-- Sticky Student Info Header Columns (Locked on X and Y with highest z-index) -->
-      <th class="score-sticky-col-1 p-0 text-center font-bold text-muted-foreground bg-slate-100 dark:bg-slate-800 ${isKm ? 'font-khmer text-xs' : 'font-mono text-xs'}" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
-        <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-center text-center bg-slate-100 dark:bg-slate-800">${isKm ? 'ល.រ' : 'No.'}</div>
+      <th class="score-sticky-col-1 p-0 text-center font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 ${isKm ? 'font-khmer text-xs' : 'font-mono text-xs'}" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
+        <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-center text-center bg-transparent">${isKm ? 'ល.រ' : 'No.'}</div>
       </th>
-      <th class="score-sticky-col-2 p-0 text-left font-bold font-khmer text-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
-        <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-start text-left px-2 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'គោត្តនាម' : 'Surname'}</div>
+      <th class="score-sticky-col-2 p-0 text-left font-bold font-khmer text-slate-800 dark:text-slate-100 bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
+        <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-start text-left px-2 text-xs bg-transparent">${isKm ? 'គោត្តនាម' : 'Surname'}</div>
       </th>
-      <th class="score-sticky-col-3 p-0 text-left font-bold font-khmer text-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
-        <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-start text-left px-2 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'នាម' : 'Name'}</div>
+      <th class="score-sticky-col-3 p-0 text-left font-bold font-khmer text-slate-800 dark:text-slate-100 bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
+        <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-start text-left px-2 text-xs bg-transparent">${isKm ? 'នាម' : 'Name'}</div>
       </th>
-      <th class="score-sticky-col-4 p-0 text-center font-bold font-khmer text-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
-        <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-center text-center px-1 text-xs bg-slate-100 dark:bg-slate-800">${isKm ? 'ភេទ' : 'Sex'}</div>
+      <th class="score-sticky-col-4 p-0 text-center font-bold font-khmer text-slate-800 dark:text-slate-100 bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
+        <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-center text-center px-1 text-xs bg-transparent">${isKm ? 'ភេទ' : 'Sex'}</div>
       </th>
 
       <!-- Subject Column Headers (Vertical Text + Category Color, with optional Rank and/or Grade column) -->
       ${this.state.subjects.map(sub => {
         const catKey = getSubjectCategoryKey(sub);
-        const subHeaderClass = CATEGORY_DEFS[catKey]?.subHeaderClass || 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200';
+        const subHeaderClass = CATEGORY_DEFS[catKey]?.subHeaderClass || 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100';
         const isCalc = SubjectService.isCalculatedSubject(sub);
         const titleTip = `${sub.name} (Max: ${sub.fullScore})${isCalc ? ` [${isKm ? 'បូកសរុបពី' : 'Sum of'}: ${sub.sumOfCourses}]` : ''}`;
         return `
           <th class="score-subject-th p-0 ${isCalc ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-950 dark:text-rose-200 border-rose-300 dark:border-rose-800' : subHeaderClass}" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${titleTip}">
-            <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2 relative">
+            <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2 relative bg-transparent">
               ${isCalc ? `<span class="absolute top-1 right-1 text-[9px] font-mono font-extrabold text-rose-700 dark:text-rose-300 bg-rose-200/80 dark:bg-rose-900/80 rounded px-0.5 leading-none shadow-2xs" title="${isKm ? 'បូកសរុបស្វ័យប្រវត្តិ' : 'Auto-calculated'}">∑</span>` : ''}
-              <div class="score-vertical-title font-khmer ${isCalc ? 'text-rose-900 dark:text-rose-200 font-bold' : ''}" title="${sub.name}">
+              <div class="score-vertical-title font-khmer ${isCalc ? 'text-rose-900 dark:text-rose-200 font-bold' : 'text-slate-800 dark:text-slate-100 font-bold'}" title="${sub.name}">
                 ${sub.name}
               </div>
             </div>
           </th>
           ${showRank ? `
-            <th class="score-subject-th p-0 col-sub-rank-th border-l border-border/40" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + sub.name : 'Rank (' + sub.name + ')'}">
-              <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2 relative">
-                <div class="score-vertical-title font-khmer font-bold text-[10px]" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + sub.name : 'Rank (' + sub.name + ')'}">
+            <th class="score-subject-th p-0 col-sub-rank-th border-l border-border/40 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + sub.name : 'Rank (' + sub.name + ')'}">
+              <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2 relative bg-transparent">
+                <div class="score-vertical-title font-khmer font-bold text-[10px] text-amber-800 dark:text-amber-300" title="${isKm ? 'ចំណាត់ថ្នាក់ ' + sub.name : 'Rank (' + sub.name + ')'}">
                   ${isKm ? 'ចំណាត់ថ្នាក់' : 'Rank'}
                 </div>
               </div>
             </th>
           ` : ''}
           ${showGrade ? `
-            <th class="score-subject-th p-0 col-sub-grade-th border-l border-border/40" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${isKm ? 'និទ្ទេស ' + sub.name : 'Grade (' + sub.name + ')'}">
-              <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2 relative">
-                <div class="score-vertical-title font-khmer font-bold text-[10px]" title="${isKm ? 'និទ្ទេស ' + sub.name : 'Grade (' + sub.name + ')'}">
+            <th class="score-subject-th p-0 col-sub-grade-th border-l border-border/40 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${isKm ? 'និទ្ទេស ' + sub.name : 'Grade (' + sub.name + ')'}">
+              <div class="w-[46px] max-w-[46px] h-full min-h-[96px] mx-auto flex items-center justify-center py-2 relative bg-transparent">
+                <div class="score-vertical-title font-khmer font-bold text-[10px] text-sky-800 dark:text-sky-300" title="${isKm ? 'និទ្ទេស ' + sub.name : 'Grade (' + sub.name + ')'}">
                   ${isKm ? 'និទ្ទេស' : 'Grade'}
                 </div>
               </div>
@@ -563,30 +563,30 @@ export const ScoresPage = {
       }).join('')}
 
       <!-- Result Columns (Centered in the middle) -->
-      <th class="score-result-th p-0 text-center font-bold font-mono text-foreground bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-        <div class="w-[64px] max-w-[64px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
+      <th class="score-result-th p-0 text-center font-bold font-mono text-slate-800 dark:text-slate-100 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+        <div class="w-[64px] max-w-[64px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
           <span class="font-khmer text-xs block text-center">${isKm ? 'ពិន្ទុសរុប' : 'Total'}</span>
         </div>
       </th>
       <th class="score-result-th p-0 text-center font-bold font-mono text-primary bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-        <div class="w-[68px] max-w-[68px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
+        <div class="w-[68px] max-w-[68px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
           <span class="font-khmer text-xs block text-primary text-center">${isKm ? 'មធ្យមភាគ' : 'Avg'}</span>
         </div>
       </th>
-      <th class="score-result-th p-0 text-center font-bold font-mono col-rank-th" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-        <div class="w-[72px] max-w-[72px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
+      <th class="score-result-th p-0 text-center font-bold font-mono col-rank-th text-slate-800 dark:text-slate-100 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+        <div class="w-[72px] max-w-[72px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
           <span class="font-khmer text-xs block text-center">${isKm ? 'ចំណាត់ថ្នាក់' : 'Rank'}</span>
         </div>
       </th>
-      <th class="score-result-th p-0 text-center font-bold col-grade-th" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-        <div class="w-[52px] max-w-[52px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1">
+      <th class="score-result-th p-0 text-center font-bold col-grade-th text-slate-800 dark:text-slate-100 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+        <div class="w-[52px] max-w-[52px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
           <span class="font-khmer text-xs block text-center">${isKm ? 'និទ្ទេស' : 'Grade'}</span>
         </div>
       </th>
 
       <!-- Actions Column -->
-      <th class="text-center p-0 bg-slate-100 dark:bg-slate-800 text-[10px] text-muted-foreground font-khmer print:hidden" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-        <div class="w-[40px] max-w-[40px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-0.5">
+      <th class="text-center p-0 bg-slate-100 dark:bg-slate-800 text-[10px] text-slate-700 dark:text-slate-300 font-khmer print:hidden" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+        <div class="w-[40px] max-w-[40px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-0.5 bg-transparent">
           ${isKm ? 'ផ្សេងៗ' : 'Actions'}
         </div>
       </th>

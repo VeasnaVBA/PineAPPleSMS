@@ -1297,7 +1297,8 @@ html[lang="km"] select {
   -webkit-overflow-scrolling: touch;
 }
 
-.score-table {
+.score-table,
+table.score-table {
   border-collapse: separate !important;
   border-spacing: 0 !important;
   width: max-content !important;
@@ -1306,23 +1307,47 @@ html[lang="km"] select {
 }
 
 .score-table th,
-.score-table td {
+.score-table td,
+table.score-table th,
+table.score-table td {
   border-right: 1px solid #e2e8f0;
   border-bottom: 1px solid #e2e8f0;
   box-sizing: border-box;
+  padding: 0 !important;
 }
 
 .dark .score-table th,
-.dark .score-table td {
+.dark .score-table td,
+.dark table.score-table th,
+.dark table.score-table td {
   border-right: 1px solid #334155;
   border-bottom: 1px solid #334155;
 }
 
 /* Table Header - Single Sticky Top Row */
+.score-table thead tr th,
+table.score-table thead tr th,
 thead tr th {
   position: sticky !important;
   top: 0px !important;
   vertical-align: middle !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background-color: #f1f5f9 !important;
+  color: #1e293b !important;
+}
+
+.dark .score-table thead tr th,
+.dark table.score-table thead tr th {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+.score-table thead th > div,
+table.score-table thead th > div {
+  background-color: transparent !important;
+  background: transparent !important;
   box-sizing: border-box !important;
 }
 
@@ -1331,7 +1356,7 @@ thead tr th {
   top: 0px !important;
   z-index: 10 !important;
   isolation: isolate !important;
-  padding: 4px 0 !important;
+  padding: 0 !important;
   width: 46px !important;
   min-width: 46px !important;
   max-width: 46px !important;
@@ -1345,7 +1370,7 @@ thead tr th {
   top: 0px !important;
   z-index: 10 !important;
   isolation: isolate !important;
-  padding: 4px 2px !important;
+  padding: 0 !important;
   vertical-align: middle !important;
   text-align: center;
   box-sizing: border-box !important;
@@ -1363,6 +1388,10 @@ thead tr th {
   margin: 0 auto;
   line-height: 1.15;
   letter-spacing: -0.01em;
+}
+
+.dark .score-vertical-title {
+  color: #f8fafc !important;
 }
 
 .score-coefficient-badge {
@@ -1434,6 +1463,7 @@ thead th.score-sticky-col-4 {
   z-index: 50 !important;
   transform: translateZ(0) !important;
   background-color: #f1f5f9 !important;
+  color: #1e293b !important;
 }
 
 .dark thead th.score-sticky-col-1,
@@ -1441,6 +1471,27 @@ thead th.score-sticky-col-4 {
 .dark thead th.score-sticky-col-3,
 .dark thead th.score-sticky-col-4 {
   background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+.dark thead th.score-sticky-col-1 {
+  color: #cbd5e1 !important;
+}
+
+.dark thead th.score-sticky-col-2,
+.dark thead th.score-sticky-col-3,
+.dark thead th.score-sticky-col-4 {
+  color: #f8fafc !important;
+  font-weight: 700 !important;
+}
+
+thead th.score-sticky-col-1 > div,
+thead th.score-sticky-col-2 > div,
+thead th.score-sticky-col-3 > div,
+thead th.score-sticky-col-4 > div {
+  background-color: transparent !important;
+  background: transparent !important;
+  color: inherit !important;
 }
 
 /* Body Sticky Cells (z-index 30) - ALWAYS on top of scrolling cells */
