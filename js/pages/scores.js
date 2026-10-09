@@ -197,11 +197,6 @@ export const ScoresPage = {
 
           <!-- Top Action Buttons -->
           <div class="flex items-center gap-2 flex-wrap justify-end">
-            <span id="sync-status-indicator" class="text-[11px] text-muted-foreground flex items-center gap-1.5 font-khmer px-2 py-1 rounded bg-muted/40">
-              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span id="sync-status-text">${isKm ? 'បានធ្វើសមកាលកម្ម' : 'Synced'}</span>
-            </span>
-
             <button id="btn-save-scores" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold shadow-xs hover:bg-primary/90 transition-all cursor-pointer">
               ${getIcon('check', 'w-3.5 h-3.5')}
               <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'រក្សាទុក' : 'Save'}</span>
