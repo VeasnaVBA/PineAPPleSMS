@@ -643,7 +643,7 @@ export const CloudSyncService = {
         username: cleanUsername
       };
 
-      const result = await this.dispatchGoogleScriptRequest(endpoint, payload, 35000);
+      const result = await this.dispatchGoogleScriptRequest(endpoint, payload, 50000);
       if (result && result.success && result.found) {
         if (result.isNewlyCreated) {
           try {

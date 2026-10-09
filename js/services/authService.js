@@ -9,6 +9,8 @@ import { permissionService } from './permissionService.js';
 import { LocationService } from './locationService.js';
 import { SchoolService } from './schoolService.js';
 import { TeacherCatalogService } from './teacherCatalogService.js';
+import { toast } from '../components/toast.js';
+import { i18n } from '../i18n/i18n.js';
 
 export async function hashPassword(plainText) {
   if (typeof crypto !== 'undefined' && crypto.subtle) {
@@ -261,24 +263,36 @@ class AuthService {
     }
 
     // 7. Whenever logging into an account, ALWAYS load and give values from Drive sheet file to app
-    if (typeof navigator !== 'undefined' && navigator.onLine && sessionData.role !== 'ADMIN') {
-      try {
-        const { CloudSyncService } = await import('./cloudSyncService.js');
-        await CloudSyncService.restoreOnLogin(sessionData, { silent: false });
-      } catch (cloudErr) {
-        console.warn('[Auth] Workspace restore on login notice:', cloudErr);
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
+      if (sessionData.role !== 'ADMIN') {
+        try {
+          const { CloudSyncService } = await import('./cloudSyncService.js');
+          const restored = await CloudSyncService.restoreOnLogin(sessionData, { silent: false });
+          if (!restored) {
+            const isKm = i18n.getLocale() === 'km';
+            toast.warning(
+              isKm
+                ? 'ការទាញទិន្នន័យពី Drive ពេលចូលប្រព័ន្ធយឺត ឬមិនទាន់រួចរាល់។ អ្នកអាចចុចប៊ូតុង "ទាញទិន្នន័យ" នៅលើ Navbar គ្រប់ពេល!'
+                : 'Drive sync was slow during login. You can click "Get Data" on the top navbar at any time to force sync!',
+              isKm ? 'ដំណឹង Google Drive' : 'Google Drive Notice'
+            );
+          }
+        } catch (cloudErr) {
+          console.warn('[Auth] Workspace restore on login notice:', cloudErr);
+        }
+      } else {
+        // If Admin logs in, pull latest SchoolSystem_AdminData
+        try {
+          const { AdminDataService } = await import('./adminDataService.js');
+          await AdminDataService.pullFromGoogleSheet({ silent: false, force: true });
+        } catch (adminErr) {
+          console.warn('[Auth] Admin login sync notice:', adminErr);
+        }
       }
     }
 
     // Transition to App Shell with updated data
     this.notify(sessionData);
-
-    // If Admin logs in, auto verify and sync SchoolSystem_AdminData in Google Drive in background
-    if (sessionData.role === 'ADMIN') {
-      import('./adminDataService.js').then(({ AdminDataService }) => {
-        AdminDataService.syncOnAdminLogin().catch(e => console.warn('Admin login sync notice:', e));
-      }).catch(() => {});
-    }
 
     return sessionData;
   }
