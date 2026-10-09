@@ -285,7 +285,7 @@ export const ScoresPage = {
             <!-- Subject Extra Column Display Mode Toggle Button (None -> Rank -> Grade -> Both -> None) -->
             <button id="btn-toggle-subject-extra-col" 
                     type="button" 
-                    class="h-8.5 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer select-none font-khmer shrink-0" 
+                    class="h-8.5 px-3 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shadow-2xs transition-colors cursor-pointer select-none font-khmer shrink-0" 
                     title="${this.getSubjectExtraColBtnTitle()}">
               ${this.getSubjectExtraColBtnHtml()}
             </button>
@@ -405,33 +405,16 @@ export const ScoresPage = {
     const isKm = i18n.getLocale() === 'km';
     const mode = this.state.subjectExtraCol || 'none';
 
-    let label = isKm ? 'បង្ហាញ៖ លាក់' : 'Show: None';
-    let badgeClass = 'bg-muted text-muted-foreground border-border';
-    let iconColor = 'text-muted-foreground';
-
+    let label = isKm ? 'បង្ហាញ : លាក់' : 'Show : None';
     if (mode === 'rank') {
-      label = isKm ? 'បង្ហាញ៖ ចំណាត់ថ្នាក់' : 'Show: Rank';
-      badgeClass = 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30';
-      iconColor = 'text-amber-600 dark:text-amber-400';
+      label = isKm ? 'បង្ហាញ : ចំណាត់ថ្នាក់' : 'Show : Rank';
     } else if (mode === 'grade') {
-      label = isKm ? 'បង្ហាញ៖ និទ្ទេស' : 'Show: Grade';
-      badgeClass = 'bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-500/30';
-      iconColor = 'text-sky-600 dark:text-sky-400';
+      label = isKm ? 'បង្ហាញ : និទ្ទេស' : 'Show : Grade';
     } else if (mode === 'both') {
-      label = isKm ? 'បង្ហាញ៖ ទាំងពីរ' : 'Show: Both';
-      badgeClass = 'bg-primary/15 text-primary border-primary/30';
-      iconColor = 'text-primary';
+      label = isKm ? 'បង្ហាញ : ទាំងពីរ' : 'Show : Both';
     }
 
-    return `
-      <svg class="w-3.5 h-3.5 ${iconColor} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
-      </svg>
-      <span class="font-khmer font-semibold text-xs text-foreground whitespace-nowrap">${label}</span>
-      <span class="px-1.5 py-0.5 rounded text-[10px] font-bold border leading-none shrink-0 ${badgeClass}">
-        ${mode === 'none' ? (isKm ? 'បិទ' : 'OFF') : mode === 'rank' ? (isKm ? 'ច.ថ' : 'Rank') : mode === 'grade' ? (isKm ? 'និទ្ទេស' : 'Grade') : (isKm ? 'ទាំងពីរ' : 'Both')}
-      </span>
-    `;
+    return `<span class="font-khmer font-bold text-xs whitespace-nowrap leading-none">${label}</span>`;
   },
 
   updateSubjectExtraColBtn() {
