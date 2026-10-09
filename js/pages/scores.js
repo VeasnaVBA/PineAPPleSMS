@@ -119,7 +119,7 @@ export const ScoresPage = {
     coefficients: {},
     rows: [],
     searchQuery: '',
-    subjectExtraCol: localStorage.getItem('scores_subject_extra_col') || 'rank', // 'rank' | 'grade' | 'both' | 'none'
+    subjectExtraCol: localStorage.getItem('scores_subject_extra_col') || 'none', // 'none' | 'rank' | 'grade' | 'both'
     isAutoSaving: false,
     saveDebounceTimer: null
   },
@@ -282,15 +282,13 @@ export const ScoresPage = {
             </button>
             <input type="file" id="input-file-upload-excel" accept=".xlsx,.xls,.csv" class="hidden" />
 
-            <!-- Subject Extra Column Display Mode (Rank, Grade, Both, Hide Both) -->
-            <div class="relative">
-              <select id="select-subject-extra-col" class="h-8.5 px-3 pr-8 rounded-lg border border-input bg-card text-xs font-semibold text-foreground focus:ring-1 focus:ring-primary shadow-2xs cursor-pointer font-khmer" title="${isKm ? 'ជ្រើសរើសការបង្ហាញ៖ ចំណាត់ថ្នាក់, និទ្ទេស, ទាំងពីរ, ឬលាក់ទាំងពីរ' : 'Choose to show subject rank, grade, both, or hide both'}">
-                <option value="rank" ${this.state.subjectExtraCol === 'rank' ? 'selected' : ''}>${isKm ? 'បង្ហាញ៖ ចំណាត់ថ្នាក់' : 'Show: Rank'}</option>
-                <option value="grade" ${this.state.subjectExtraCol === 'grade' ? 'selected' : ''}>${isKm ? 'បង្ហាញ៖ និទ្ទេស' : 'Show: Grade'}</option>
-                <option value="both" ${this.state.subjectExtraCol === 'both' ? 'selected' : ''}>${isKm ? 'បង្ហាញ៖ ទាំងពីរ (ច.ថ & និទ្ទេស)' : 'Show: Both'}</option>
-                <option value="none" ${this.state.subjectExtraCol === 'none' ? 'selected' : ''}>${isKm ? 'លាក់ទាំងពីរ (ពិន្ទុសុទ្ធ)' : 'Hide Both'}</option>
-              </select>
-            </div>
+            <!-- Subject Extra Column Display Mode Toggle Button (None -> Rank -> Grade -> Both -> None) -->
+            <button id="btn-toggle-subject-extra-col" 
+                    type="button" 
+                    class="h-8.5 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer select-none font-khmer shrink-0" 
+                    title="${this.getSubjectExtraColBtnTitle()}">
+              ${this.getSubjectExtraColBtnHtml()}
+            </button>
 
             <!-- A-F Grading Guide Button -->
             <button id="btn-grade-scale-guide" type="button" class="h-8.5 px-2.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-bold font-mono shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'កម្រិតនិទ្ទេស A-F' : 'Grading Scale'}">
@@ -388,6 +386,61 @@ export const ScoresPage = {
     }
   },
 
+  getSubjectExtraColBtnTitle() {
+    const isKm = i18n.getLocale() === 'km';
+    const mode = this.state.subjectExtraCol || 'none';
+    if (mode === 'none') {
+      return isKm ? 'កំពុងលាក់ចំណាត់ថ្នាក់ និងនិទ្ទេស។ ចុចដើម្បីបង្ហាញចំណាត់ថ្នាក់មុខវិជ្ជា' : 'Currently hiding rank & grade. Click to show subject rank';
+    } else if (mode === 'rank') {
+      return isKm ? 'កំពុងបង្ហាញចំណាត់ថ្នាក់មុខវិជ្ជា។ ចុចដើម្បីបង្ហាញនិទ្ទេសមុខវិជ្ជា' : 'Currently showing subject rank. Click to show subject grade';
+    } else if (mode === 'grade') {
+      return isKm ? 'កំពុងបង្ហាញនិទ្ទេសមុខវិជ្ជា។ ចុចដើម្បីបង្ហាញទាំងពីរ (ច.ថ & និទ្ទេស)' : 'Currently showing subject grade. Click to show both rank and grade';
+    } else if (mode === 'both') {
+      return isKm ? 'កំពុងបង្ហាញទាំងពីរ។ ចុចដើម្បីលាក់ទាំងពីរ (ត្រឡប់ទៅពិន្ទុសុទ្ធ)' : 'Currently showing both. Click to hide both (scores only)';
+    }
+    return '';
+  },
+
+  getSubjectExtraColBtnHtml() {
+    const isKm = i18n.getLocale() === 'km';
+    const mode = this.state.subjectExtraCol || 'none';
+
+    let label = isKm ? 'បង្ហាញ៖ លាក់' : 'Show: None';
+    let badgeClass = 'bg-muted text-muted-foreground border-border';
+    let iconColor = 'text-muted-foreground';
+
+    if (mode === 'rank') {
+      label = isKm ? 'បង្ហាញ៖ ចំណាត់ថ្នាក់' : 'Show: Rank';
+      badgeClass = 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30';
+      iconColor = 'text-amber-600 dark:text-amber-400';
+    } else if (mode === 'grade') {
+      label = isKm ? 'បង្ហាញ៖ និទ្ទេស' : 'Show: Grade';
+      badgeClass = 'bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-500/30';
+      iconColor = 'text-sky-600 dark:text-sky-400';
+    } else if (mode === 'both') {
+      label = isKm ? 'បង្ហាញ៖ ទាំងពីរ' : 'Show: Both';
+      badgeClass = 'bg-primary/15 text-primary border-primary/30';
+      iconColor = 'text-primary';
+    }
+
+    return `
+      <svg class="w-3.5 h-3.5 ${iconColor} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
+      </svg>
+      <span class="font-khmer font-semibold text-xs text-foreground whitespace-nowrap">${label}</span>
+      <span class="px-1.5 py-0.5 rounded text-[10px] font-bold border leading-none shrink-0 ${badgeClass}">
+        ${mode === 'none' ? (isKm ? 'បិទ' : 'OFF') : mode === 'rank' ? (isKm ? 'ច.ថ' : 'Rank') : mode === 'grade' ? (isKm ? 'និទ្ទេស' : 'Grade') : (isKm ? 'ទាំងពីរ' : 'Both')}
+      </span>
+    `;
+  },
+
+  updateSubjectExtraColBtn() {
+    const btn = document.getElementById('btn-toggle-subject-extra-col');
+    if (!btn) return;
+    btn.title = this.getSubjectExtraColBtnTitle();
+    btn.innerHTML = this.getSubjectExtraColBtnHtml();
+  },
+
   async loadScores() {
     if (!this.state.selectedClassId) return;
 
@@ -450,7 +503,7 @@ export const ScoresPage = {
 
     const groups = this.state.groupedSubjects;
     const currentMonthCoeff = this.getCurrentPeriodCoefficient();
-    const mode = this.state.subjectExtraCol || 'rank'; // 'rank' | 'grade' | 'both' | 'none'
+    const mode = this.state.subjectExtraCol || 'none'; // 'none' | 'rank' | 'grade' | 'both'
     const showRank = mode === 'rank' || mode === 'both';
     const showGrade = mode === 'grade' || mode === 'both';
 
@@ -562,7 +615,7 @@ export const ScoresPage = {
     const tbody = document.getElementById('scores-table-body');
     if (!tbody) return;
 
-    const mode = this.state.subjectExtraCol || 'rank'; // 'rank' | 'grade' | 'both' | 'none'
+    const mode = this.state.subjectExtraCol || 'none'; // 'none' | 'rank' | 'grade' | 'both'
     const showRank = mode === 'rank' || mode === 'both';
     const showGrade = mode === 'grade' || mode === 'both';
     const extraColsPerSub = (showRank ? 1 : 0) + (showGrade ? 1 : 0);
@@ -1404,10 +1457,20 @@ export const ScoresPage = {
       this.renderRows();
     });
 
-    // Select Subject Extra Column Mode (Rank, Grade, Both, Hide Both)
-    document.getElementById('select-subject-extra-col')?.addEventListener('change', (e) => {
-      this.state.subjectExtraCol = e.target.value;
-      localStorage.setItem('scores_subject_extra_col', e.target.value);
+    // Toggle Subject Extra Column Mode Button: none -> rank -> grade -> both -> none
+    document.getElementById('btn-toggle-subject-extra-col')?.addEventListener('click', () => {
+      const cycle = {
+        'none': 'rank',
+        'rank': 'grade',
+        'grade': 'both',
+        'both': 'none'
+      };
+      const currentMode = this.state.subjectExtraCol || 'none';
+      const nextMode = cycle[currentMode] || 'none';
+
+      this.state.subjectExtraCol = nextMode;
+      localStorage.setItem('scores_subject_extra_col', nextMode);
+      this.updateSubjectExtraColBtn();
       this.renderHeader();
       this.renderRows();
     });
