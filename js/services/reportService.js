@@ -1,5 +1,5 @@
 import { db } from '../database/db.js';
-import { ScoreService } from './scoreService.js';
+import { ScoreService, isStudentActive } from './scoreService.js';
 import { SettingsService } from './settingsService.js';
 import { authService } from './authService.js';
 import { normalizeStudentRecord } from './studentService.js';
@@ -205,7 +205,7 @@ export const ReportService = {
       ScoreService.getSubjects()
     ]);
 
-    const classStudents = students.filter(s => s.classId === classId && (s.status === 'Active' || s.status === 'Inactive'));
+    const classStudents = students.filter(s => s.classId === classId && isStudentActive(s));
     const subjectMap = new Map(subjects.map(sub => [sub.id, sub.nameEn]));
 
     // Compute aggregated marks per student

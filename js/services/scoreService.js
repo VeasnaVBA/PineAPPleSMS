@@ -49,7 +49,39 @@ export const DEFAULT_MONTHLY_COEFFICIENTS = {
   'Annual': 20
 };
 
+/**
+ * Helper to determine if a student is active (excludes Inactive, Dropout, Transferred, Graduated, etc.)
+ */
+export function isStudentActive(s) {
+  if (!s) return false;
+  const statusStr = String(s.status || '').trim().toLowerCase();
+  const rawStatus = String(s.status || '').trim();
+  const isInactive = statusStr === 'inactive' || 
+    statusStr === 'dropout' || 
+    statusStr === 'dropped' || 
+    statusStr === 'left' || 
+    statusStr === 'graduated' || 
+    statusStr === 'transferred' ||
+    rawStatus.includes('អសកម្ម') || 
+    rawStatus.includes('បោះបង់') || 
+    rawStatus.includes('ឈប់រៀន') || 
+    rawStatus.includes('ផ្អាក') ||
+    Boolean(s.dropoutDate || s.dropoutReason);
+
+  if (isInactive) return false;
+
+  // If status is explicitly specified, verify it's Active / សកម្ម
+  if (s.status && statusStr !== 'active' && !rawStatus.includes('សកម្ម')) {
+    return false;
+  }
+  return true;
+}
+
 export const ScoreService = {
+  isStudentActive(student) {
+    return isStudentActive(student);
+  },
+
   getEvaluationPeriods() {
     return EVALUATION_PERIODS;
   },
@@ -223,7 +255,7 @@ export const ScoreService = {
     }
 
     const students = await ClassService.getEnrolledStudents(classId);
-    const activeStudents = students.filter(s => s.status === 'Active' || s.status === 'Inactive');
+    const activeStudents = students.filter(isStudentActive);
 
     let className = '7A';
     try {
@@ -434,7 +466,7 @@ export const ScoreService = {
     }
 
     const students = await ClassService.getEnrolledStudents(classId);
-    const activeStudents = students.filter(s => s.status === 'Active' || s.status === 'Inactive');
+    const activeStudents = students.filter(isStudentActive);
 
     // Fetch class info to detect grade level (e.g. '7A' -> 'G7')
     let className = '7A';
