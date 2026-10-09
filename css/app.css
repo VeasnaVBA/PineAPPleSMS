@@ -533,6 +533,35 @@ button.bg-primary:hover {
   padding: 0;
 }
 
+/* Topbar Action Buttons: Guarantee Identical 36px (2.25rem) Height & Proportions */
+#btn-lang-toggle {
+  height: 2.25rem !important;
+  min-height: 2.25rem !important;
+  max-height: 2.25rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+
+#btn-cloud-sync-to-drive,
+#btn-cloud-restore-from-drive,
+#btn-theme-toggle,
+#btn-theme-color,
+#btn-notifications,
+#btn-toggle-sidebar {
+  height: 2.25rem !important;
+  width: 2.25rem !important;
+  min-height: 2.25rem !important;
+  min-width: 2.25rem !important;
+  max-height: 2.25rem !important;
+  max-width: 2.25rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+
 /* Cards: Subtle borders, clean shadows, rounded-xl */
 .card-shadcn, [class*="bg-card"]:not([class*="fixed"]):not([class*="absolute"]):not(select):not(button) {
   border-color: hsl(var(--border));

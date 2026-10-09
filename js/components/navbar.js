@@ -102,7 +102,7 @@ export class NavbarSyncButtons {
           type="button"
           title="${saveTooltip}"
           ${isSyncActive ? 'disabled' : ''}
-          class="w-8 h-8 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-foreground transition-all shadow-xs cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed group shrink-0">
+          class="w-9 h-9 min-w-[36px] min-h-[36px] max-w-[36px] max-h-[36px] flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-foreground transition-all shadow-xs cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed group shrink-0">
           <span class="btn-icon text-primary group-hover:scale-110 transition-transform flex items-center justify-center">
             ${isSyncActive ? getIcon('loader2', 'w-4 h-4 text-primary animate-spin') : getIcon('cloudUpload', 'w-4 h-4 text-primary')}
           </span>
@@ -114,7 +114,7 @@ export class NavbarSyncButtons {
           type="button"
           title="${restoreTooltip}"
           ${isRestoreActive ? 'disabled' : ''}
-          class="w-8 h-8 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-foreground transition-all shadow-xs cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed group shrink-0">
+          class="w-9 h-9 min-w-[36px] min-h-[36px] max-w-[36px] max-h-[36px] flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-foreground transition-all shadow-xs cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed group shrink-0">
           <span class="btn-icon text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform flex items-center justify-center">
             ${isRestoreActive ? getIcon('loader2', 'w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-spin') : getIcon('cloudDownload', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
           </span>

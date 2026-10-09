@@ -63,7 +63,7 @@ export class Topbar {
         <div class="flex items-center gap-3">
           <button id="btn-toggle-sidebar" 
                   aria-label="Toggle Sidebar"
-                  class="w-8 h-8 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring shrink-0">
+                  class="w-9 h-9 min-w-[36px] min-h-[36px] max-w-[36px] max-h-[36px] flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring shrink-0">
             ${getIcon('menu', 'w-5 h-5')}
           </button>
         </div>
@@ -73,7 +73,7 @@ export class Topbar {
 
           <!-- Academic Year Badge (Hidden for Admin) -->
           ${currentUser?.role !== 'ADMIN' ? `
-            <div class="hidden md:flex items-center gap-1.5 h-8 px-2.5 rounded-full bg-secondary text-secondary-foreground border border-border text-xs font-medium shrink-0">
+            <div class="hidden md:flex items-center gap-1.5 h-9 px-2.5 rounded-full bg-secondary text-secondary-foreground border border-border text-xs font-medium shrink-0">
               ${getIcon('calendar', 'w-3.5 h-3.5')}
               <span id="topbar-active-ay-badge">${this.activeYear}</span>
             </div>
@@ -86,7 +86,7 @@ export class Topbar {
           <button id="btn-lang-toggle" 
                   type="button"
                   title="${currentLocale === 'km' ? 'Switch to English' : 'ប្តូរទៅភាសាខ្មែរ'}"
-                  class="h-8 px-2 sm:px-2.5 flex items-center gap-1.5 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-xs font-medium text-foreground transition-all duration-150 shadow-xs cursor-pointer select-none shrink-0">
+                  class="h-9 min-h-[36px] max-h-[36px] px-2.5 flex items-center justify-center gap-1.5 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-xs font-medium text-foreground transition-all duration-150 shadow-xs cursor-pointer select-none shrink-0">
             ${currentLocale === 'km' ? `
               ${getIcon('flagKm', 'w-4.5 h-3 rounded-[2px] shadow-2xs shrink-0 overflow-hidden')}
               <span class="font-khmer font-semibold text-xs leading-none">ខ្មែរ</span>
@@ -100,7 +100,7 @@ export class Topbar {
           <button id="btn-theme-toggle" 
                   type="button"
                   title="${themeTitle}"
-                  class="w-8 h-8 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-muted-foreground hover:text-foreground transition-colors shadow-xs cursor-pointer select-none shrink-0">
+                  class="w-9 h-9 min-w-[36px] min-h-[36px] max-w-[36px] max-h-[36px] flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-muted-foreground hover:text-foreground transition-colors shadow-xs cursor-pointer select-none shrink-0">
             ${getIcon(themeIconName, 'w-4 h-4')}
           </button>
 
@@ -108,7 +108,7 @@ export class Topbar {
           <button id="btn-theme-color" 
                   type="button"
                   title="${currentLocale === 'km' ? 'ប្តូរពណ៌ចម្បង / ពណ៌ប៊ូតុង' : 'Customize Primary Theme Color'}"
-                  class="w-8 h-8 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-muted-foreground hover:text-foreground transition-colors shadow-xs cursor-pointer select-none shrink-0">
+                  class="w-9 h-9 min-w-[36px] min-h-[36px] max-w-[36px] max-h-[36px] flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-muted-foreground hover:text-foreground transition-colors shadow-xs cursor-pointer select-none shrink-0">
             <span class="text-primary flex items-center justify-center">${getIcon('palette', 'w-4 h-4')}</span>
           </button>
 
@@ -117,7 +117,7 @@ export class Topbar {
             <button id="btn-notifications" 
                     type="button"
                     title="${t('topbar.notifications')}"
-                    class="w-8 h-8 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-muted-foreground hover:text-foreground relative transition-colors shadow-xs cursor-pointer select-none shrink-0">
+                    class="w-9 h-9 min-w-[36px] min-h-[36px] max-w-[36px] max-h-[36px] flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-muted-foreground hover:text-foreground relative transition-colors shadow-xs cursor-pointer select-none shrink-0">
               ${getIcon('bell', 'w-4 h-4')}
               <span id="notif-badge" class="hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-[10px] font-bold text-white flex items-center justify-center shadow-xs animate-pulse"></span>
             </button>
@@ -129,7 +129,7 @@ export class Topbar {
                 </div>
                 <span id="notif-header-count" class="text-[11px] text-muted-foreground font-medium"></span>
               </div>
-              <div id="notif-items-list" class="max-h-80 overflow-y-auto divide-y divide-border/40 p-1">
+              <div id="notif-items-list" class="max-h-80 overflow-y-auto divide-y border-border/40 p-1">
                 <!-- Loaded dynamically -->
               </div>
             </div>
@@ -152,7 +152,7 @@ export class Topbar {
             return `
               <div class="relative inline-block text-left shrink-0" id="user-dropdown-wrapper">
                 <button id="btn-user-profile" 
-                        class="h-8 flex items-center gap-2 pl-1 pr-1 cursor-pointer select-none focus:outline-none rounded-md hover:bg-accent transition-colors shrink-0">
+                        class="h-9 min-h-[36px] max-h-[36px] flex items-center gap-2 pl-1 pr-1 cursor-pointer select-none focus:outline-none rounded-md hover:bg-accent transition-colors shrink-0">
                   <div class="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs shrink-0">
                     ${userInitials}
                   </div>
