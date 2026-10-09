@@ -102,12 +102,9 @@ export class NavbarSyncButtons {
           type="button"
           title="${saveTooltip}"
           ${isSyncActive ? 'disabled' : ''}
-          class="inline-flex items-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-xs font-medium text-foreground transition-all shadow-xs cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed group">
-          <span class="btn-icon text-primary group-hover:scale-105 transition-transform flex items-center">
+          class="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-foreground transition-all shadow-xs cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed group shrink-0">
+          <span class="btn-icon text-primary group-hover:scale-110 transition-transform flex items-center justify-center">
             ${isSyncActive ? getIcon('loader2', 'w-4 h-4 text-primary animate-spin') : getIcon('cloudUpload', 'w-4 h-4 text-primary')}
-          </span>
-          <span class="btn-label hidden sm:inline">
-            ${isSyncActive ? t('cloudSync.savingShort') : t('cloudSync.saveNavbar')}
           </span>
         </button>
 
@@ -117,12 +114,9 @@ export class NavbarSyncButtons {
           type="button"
           title="${restoreTooltip}"
           ${isRestoreActive ? 'disabled' : ''}
-          class="inline-flex items-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-xs font-medium text-foreground transition-all shadow-xs cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed group">
-          <span class="btn-icon text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform flex items-center">
+          class="w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-foreground transition-all shadow-xs cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed group shrink-0">
+          <span class="btn-icon text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform flex items-center justify-center">
             ${isRestoreActive ? getIcon('loader2', 'w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-spin') : getIcon('cloudDownload', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
-          </span>
-          <span class="btn-label hidden sm:inline">
-            ${isRestoreActive ? restoreLoadingText : restoreLabelText}
           </span>
         </button>
       </div>
@@ -217,14 +211,10 @@ export class NavbarSyncButtons {
     if (restoreBtn) restoreBtn.disabled = isLoading;
 
     const iconSpan = syncBtn.querySelector('.btn-icon');
-    const labelSpan = syncBtn.querySelector('.btn-label');
-
-    if (isLoading) {
-      if (iconSpan) iconSpan.innerHTML = getIcon('loader2', 'w-4 h-4 text-primary animate-spin');
-      if (labelSpan) labelSpan.textContent = t('cloudSync.savingShort');
-    } else {
-      if (iconSpan) iconSpan.innerHTML = getIcon('cloudUpload', 'w-4 h-4 text-primary');
-      if (labelSpan) labelSpan.textContent = t('cloudSync.saveNavbar');
+    if (iconSpan) {
+      iconSpan.innerHTML = isLoading 
+        ? getIcon('loader2', 'w-4 h-4 text-primary animate-spin') 
+        : getIcon('cloudUpload', 'w-4 h-4 text-primary');
     }
   }
 
@@ -241,25 +231,10 @@ export class NavbarSyncButtons {
     if (syncBtn) syncBtn.disabled = isLoading;
 
     const iconSpan = restoreBtn.querySelector('.btn-icon');
-    const labelSpan = restoreBtn.querySelector('.btn-label');
-    const currentUser = authService.getCurrentUser();
-    const isAdmin = currentUser?.role === 'ADMIN';
-    const isKm = i18n.getLocale() === 'km';
-
-    const restoreLabelText = isAdmin 
-      ? (isKm ? 'ទាញគណនី' : 'Get User Acc')
-      : (isKm ? 'ទាញទិន្នន័យ' : 'Get Data');
-
-    const restoreLoadingText = isAdmin
-      ? (isKm ? 'កំពុងទាញគណនី...' : 'Getting Accounts...')
-      : (isKm ? 'កំពុងទាញយក...' : 'Getting Data...');
-
-    if (isLoading) {
-      if (iconSpan) iconSpan.innerHTML = getIcon('loader2', 'w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-spin');
-      if (labelSpan) labelSpan.textContent = restoreLoadingText;
-    } else {
-      if (iconSpan) iconSpan.innerHTML = getIcon('cloudDownload', 'w-4 h-4 text-emerald-600 dark:text-emerald-400');
-      if (labelSpan) labelSpan.textContent = restoreLabelText;
+    if (iconSpan) {
+      iconSpan.innerHTML = isLoading 
+        ? getIcon('loader2', 'w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-spin') 
+        : getIcon('cloudDownload', 'w-4 h-4 text-emerald-600 dark:text-emerald-400');
     }
   }
 }
