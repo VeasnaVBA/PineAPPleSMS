@@ -238,7 +238,8 @@ export const AdminDataService = {
         action: 'GET_ADMIN_DATA'
       };
 
-      const result = await CloudSyncService.dispatchGoogleScriptRequest(endpoint, payload, 45000);
+      const timeoutMs = options.force === true ? 60000 : 45000;
+      const result = await CloudSyncService.dispatchGoogleScriptRequest(endpoint, payload, timeoutMs);
 
       if (!result || result.success === false) {
         throw new Error(result?.error || 'Failed to fetch admin data from Google Sheets.');

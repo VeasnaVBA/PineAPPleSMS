@@ -263,8 +263,10 @@ export const CloudSyncService = {
 
   /**
    * 2. Push Data to App (Restore from Google Drive into local IndexedDB)
+   * @param {Object} [user=null] - Active user account
+   * @param {Object} [options={}] - Options (e.g. { force: true } to force restore immediately without confirmation modal)
    */
-  async pushToApp(user = null) {
+  async pushToApp(user = null, options = {}) {
     // 1. Safeguard: Check internet connection
     if (!this.isOnline()) {
       toast.error(t('cloudSync.offlineError'), t('cloudSync.errorTitle'));
@@ -281,9 +283,11 @@ export const CloudSyncService = {
     // 3. Check endpoint URL
     const endpoint = getCloudSyncUrl();
     if (!endpoint) {
-      this.openConfigModal(() => this.pushToApp(currentUser));
+      this.openConfigModal(() => this.pushToApp(currentUser, options));
       return false;
     }
+
+    const isForce = options?.force === true;
 
     try {
       const payload = {
@@ -291,7 +295,8 @@ export const CloudSyncService = {
         username: currentUser.username
       };
 
-      const result = await this.dispatchGoogleScriptRequest(endpoint, payload);
+      const timeoutMs = isForce ? 60000 : 45000;
+      const result = await this.dispatchGoogleScriptRequest(endpoint, payload, timeoutMs);
 
       if (!result || result.success === false) {
         throw new Error(result?.error || 'Failed to retrieve data from Google Drive.');
@@ -306,9 +311,16 @@ export const CloudSyncService = {
         return false;
       }
 
-      // 5. Data found -> Show confirmation dialog before merging
-      const expectedFileName = result.fileName || getWorkspaceSpreadsheetName(currentUser.username);
       const incomingData = result.data || {};
+
+      // 5. If force option is active, apply immediately without confirmation prompt
+      if (isForce) {
+        await this.applyRestoredData(incomingData, currentUser, { silent: false });
+        return true;
+      }
+
+      // Otherwise show confirmation dialog before merging
+      const expectedFileName = result.fileName || getWorkspaceSpreadsheetName(currentUser.username);
 
       Modal.confirm({
         title: t('cloudSync.confirmRestoreTitle'),

@@ -80,8 +80,8 @@ export class NavbarSyncButtons {
       : t('cloudSync.saveToDriveTooltip');
 
     const restoreTooltip = isAdmin
-      ? (isKm ? 'ទាញគណនីអ្នកប្រើប្រាស់ និងសិទ្ធិពី Google Sheet ក្នុង Drive' : 'Get user accounts and permissions from Google Sheet in Drive')
-      : (isKm ? 'ទាញទិន្នន័យពី Google Sheet ក្នុង Drive សម្រាប់គណនីនេះ' : 'Get data from Google Sheet in Drive for this user account');
+      ? (isKm ? 'ទាញគណនីបង្ខំពី Google Sheet ក្នុង Drive (Force Get User Acc)' : 'Force get user accounts and permissions from Google Sheet in Drive')
+      : (isKm ? 'ទាញទិន្នន័យបង្ខំពី Google Sheet ក្នុង Drive សម្រាប់គណនីនេះ (Force Get Data)' : 'Force get data from Google Sheet in Drive for this user account');
 
     const restoreLabelText = isAdmin
       ? (isKm ? 'ទាញគណនី' : 'Get User Acc')
@@ -184,16 +184,19 @@ export class NavbarSyncButtons {
       if (this.isSyncing || this.isRestoring) return;
 
       this.setRestoreLoading(true, parentElement);
+      const isKm = i18n.getLocale() === 'km';
+      const currentUser = authService.getCurrentUser();
+      const isAdmin = currentUser?.role === 'ADMIN';
+
       try {
-        const currentUser = authService.getCurrentUser();
-        if (currentUser?.role === 'ADMIN') {
-          const res = await AdminDataService.pullFromGoogleSheet({ silent: false });
+        if (isAdmin) {
+          const res = await AdminDataService.pullFromGoogleSheet({ silent: false, force: true });
           if (res?.success) {
             window.dispatchEvent(new CustomEvent('app:refresh-data'));
             window.dispatchEvent(new CustomEvent('users:reload'));
           }
         } else {
-          await CloudSyncService.pushToApp(currentUser);
+          await CloudSyncService.pushToApp(currentUser, { force: true });
         }
       } finally {
         this.setRestoreLoading(false, parentElement);

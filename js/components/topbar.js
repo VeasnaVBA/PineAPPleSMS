@@ -382,7 +382,7 @@ export class Topbar {
       userMenu?.classList.add('hidden');
       syncUserAccBtn.disabled = true;
       try {
-        const res = await AdminDataService.pullFromGoogleSheet({ silent: false });
+        const res = await AdminDataService.pullFromGoogleSheet({ silent: false, force: true });
         if (res?.success) {
           window.dispatchEvent(new CustomEvent('app:refresh-data'));
           window.dispatchEvent(new CustomEvent('users:reload'));
