@@ -11,6 +11,7 @@
 import { getIcon } from './icons.js';
 import { i18n, t } from '../i18n/i18n.js';
 import { CloudSyncService } from '../services/cloudSyncService.js';
+import { AdminDataService } from '../services/adminDataService.js';
 import { authService } from '../services/authService.js';
 import { syncStateManager } from '../services/syncStateManager.js';
 
@@ -69,6 +70,26 @@ export class NavbarSyncButtons {
    */
   static renderHtml() {
     const isSyncActive = this.isSyncing;
+    const isRestoreActive = this.isRestoring;
+    const currentUser = authService.getCurrentUser();
+    const isAdmin = currentUser?.role === 'ADMIN';
+    const isKm = i18n.getLocale() === 'km';
+
+    const saveTooltip = isAdmin
+      ? (isKm ? 'រក្សាទុកគណនីអ្នកប្រើប្រាស់ និងសិទ្ធិទៅ Google Sheet ក្នុង Drive' : 'Save user accounts and permissions to Google Sheet in Drive')
+      : t('cloudSync.saveToDriveTooltip');
+
+    const restoreTooltip = isAdmin
+      ? (isKm ? 'ទាញគណនីអ្នកប្រើប្រាស់ និងសិទ្ធិពី Google Sheet ក្នុង Drive' : 'Get user accounts and permissions from Google Sheet in Drive')
+      : (isKm ? 'ទាញទិន្នន័យពី Google Sheet ក្នុង Drive សម្រាប់គណនីនេះ' : 'Get data from Google Sheet in Drive for this user account');
+
+    const restoreLabelText = isAdmin
+      ? (isKm ? 'ទាញគណនី' : 'Get User Acc')
+      : (isKm ? 'ទាញទិន្នន័យ' : 'Get Data');
+
+    const restoreLoadingText = isAdmin
+      ? (isKm ? 'កំពុងទាញគណនី...' : 'Getting Accounts...')
+      : (isKm ? 'កំពុងទាញយក...' : 'Getting Data...');
 
     return `
       <div id="topbar-cloud-sync-group" class="flex items-center gap-1.5 sm:gap-2">
@@ -79,7 +100,7 @@ export class NavbarSyncButtons {
         <button 
           id="btn-cloud-sync-to-drive"
           type="button"
-          title="${t('cloudSync.saveToDriveTooltip')}"
+          title="${saveTooltip}"
           ${isSyncActive ? 'disabled' : ''}
           class="inline-flex items-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-xs font-medium text-foreground transition-all shadow-xs cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed group">
           <span class="btn-icon text-primary group-hover:scale-105 transition-transform flex items-center">
@@ -87,6 +108,21 @@ export class NavbarSyncButtons {
           </span>
           <span class="btn-label hidden sm:inline">
             ${isSyncActive ? t('cloudSync.savingShort') : t('cloudSync.saveNavbar')}
+          </span>
+        </button>
+
+        <!-- Button: Get Data from Drive for User Account -->
+        <button 
+          id="btn-cloud-restore-from-drive"
+          type="button"
+          title="${restoreTooltip}"
+          ${isRestoreActive ? 'disabled' : ''}
+          class="inline-flex items-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-xs font-medium text-foreground transition-all shadow-xs cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed group">
+          <span class="btn-icon text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform flex items-center">
+            ${isRestoreActive ? getIcon('loader2', 'w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-spin') : getIcon('cloudDownload', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
+          </span>
+          <span class="btn-label hidden sm:inline">
+            ${isRestoreActive ? restoreLoadingText : restoreLabelText}
           </span>
         </button>
       </div>
@@ -133,7 +169,11 @@ export class NavbarSyncButtons {
       this.setSyncLoading(true, parentElement);
       try {
         const currentUser = authService.getCurrentUser();
-        await CloudSyncService.pullToDrive(currentUser);
+        if (currentUser?.role === 'ADMIN') {
+          await AdminDataService.saveToGoogleSheet({ silent: false });
+        } else {
+          await CloudSyncService.pullToDrive(currentUser);
+        }
       } finally {
         this.setSyncLoading(false, parentElement);
       }
@@ -146,7 +186,15 @@ export class NavbarSyncButtons {
       this.setRestoreLoading(true, parentElement);
       try {
         const currentUser = authService.getCurrentUser();
-        await CloudSyncService.pushToApp(currentUser);
+        if (currentUser?.role === 'ADMIN') {
+          const res = await AdminDataService.pullFromGoogleSheet({ silent: false });
+          if (res?.success) {
+            window.dispatchEvent(new CustomEvent('app:refresh-data'));
+            window.dispatchEvent(new CustomEvent('users:reload'));
+          }
+        } else {
+          await CloudSyncService.pushToApp(currentUser);
+        }
       } finally {
         this.setRestoreLoading(false, parentElement);
       }
@@ -191,13 +239,24 @@ export class NavbarSyncButtons {
 
     const iconSpan = restoreBtn.querySelector('.btn-icon');
     const labelSpan = restoreBtn.querySelector('.btn-label');
+    const currentUser = authService.getCurrentUser();
+    const isAdmin = currentUser?.role === 'ADMIN';
+    const isKm = i18n.getLocale() === 'km';
+
+    const restoreLabelText = isAdmin 
+      ? (isKm ? 'ទាញគណនី' : 'Get User Acc')
+      : (isKm ? 'ទាញទិន្នន័យ' : 'Get Data');
+
+    const restoreLoadingText = isAdmin
+      ? (isKm ? 'កំពុងទាញគណនី...' : 'Getting Accounts...')
+      : (isKm ? 'កំពុងទាញយក...' : 'Getting Data...');
 
     if (isLoading) {
       if (iconSpan) iconSpan.innerHTML = getIcon('loader2', 'w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-spin');
-      if (labelSpan) labelSpan.textContent = t('cloudSync.restoring');
+      if (labelSpan) labelSpan.textContent = restoreLoadingText;
     } else {
       if (iconSpan) iconSpan.innerHTML = getIcon('cloudDownload', 'w-4 h-4 text-emerald-600 dark:text-emerald-400');
-      if (labelSpan) labelSpan.textContent = t('cloudSync.restoreFromDrive');
+      if (labelSpan) labelSpan.textContent = restoreLabelText;
     }
   }
 }

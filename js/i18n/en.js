@@ -92,7 +92,8 @@ export const en = {
     themeSystem: "System",
     language: "Language",
     profile: "Administrator",
-    role: "Super Admin"
+    role: "Super Admin",
+    syncUserAcc: "Sync User Acc from Drive"
   },
   theme: {
     colorTitle: "Primary Button & Brand Color",
@@ -817,6 +818,11 @@ export const en = {
     savingShort: "Saving...",
     saveToDrive: "Save to Drive",
     syncToDrive: "Save to Drive",
+    restoreNavbar: "Get Data",
+    restoreUserAccNavbar: "Get User Acc",
+    restoreUserAccTooltip: "Get user accounts and permissions from Google Sheet in Drive",
+    getUserAccLoading: "Getting Accounts...",
+    gettingShort: "Getting...",
     restoreFromDrive: "Restore from Drive",
     saveToDriveTooltip: "Save local data to Google Drive & Google Sheets",
     syncToDriveTooltip: "Save local data to Google Drive & Google Sheets",

@@ -47,6 +47,12 @@ export const UsersPage = {
       toast.error('Failed to load user accounts or permissions.');
     }
 
+    if (this._usersReloadHandler) {
+      window.removeEventListener('users:reload', this._usersReloadHandler);
+    }
+    this._usersReloadHandler = () => this.reload();
+    window.addEventListener('users:reload', this._usersReloadHandler);
+
     const currentLocale = i18n.getLocale();
     const isKm = currentLocale === 'km';
 

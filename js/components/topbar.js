@@ -10,6 +10,7 @@ import { SearchModal } from './searchModal.js';
 import { NavbarSyncButtons } from './navbar.js';
 import { ThemeColorModal } from './themeColorModal.js';
 import { Modal } from './modal.js';
+import { AdminDataService } from '../services/adminDataService.js';
 
 export class Topbar {
   constructor(containerId, sidebar) {
@@ -169,6 +170,14 @@ export class Topbar {
                       ${userRole}
                     </span>
                   </div>
+                  <!-- Sync User Accounts from Drive -->
+                  <button id="btn-topbar-sync-user-accounts" 
+                          type="button" 
+                          title="${currentLocale === 'km' ? 'ទាញគណនីអ្នកប្រើប្រាស់ និងសិទ្ធិពី Google Sheet ក្នុង Drive' : 'Sync user accounts and permissions from Google Sheet in Drive'}" 
+                          class="w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-accent text-foreground font-medium transition-colors border-b border-border/40 cursor-pointer">
+                    ${getIcon('users', 'w-3.5 h-3.5 text-primary shrink-0')}
+                    <span>${t('topbar.syncUserAcc')}</span>
+                  </button>
                   ${user?.role === 'TEACHER' ? `
                     <button id="btn-topbar-clear-teacher-students" 
                             type="button" 
@@ -364,6 +373,23 @@ export class Topbar {
       e.stopPropagation();
       userMenu?.classList.add('hidden');
       this.openTeacherDeleteStudentsModal();
+    });
+
+    // Sync User Accounts from Drive (in profile menu)
+    const syncUserAccBtn = document.getElementById('btn-topbar-sync-user-accounts');
+    syncUserAccBtn?.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      userMenu?.classList.add('hidden');
+      syncUserAccBtn.disabled = true;
+      try {
+        const res = await AdminDataService.pullFromGoogleSheet({ silent: false });
+        if (res?.success) {
+          window.dispatchEvent(new CustomEvent('app:refresh-data'));
+          window.dispatchEvent(new CustomEvent('users:reload'));
+        }
+      } finally {
+        syncUserAccBtn.disabled = false;
+      }
     });
 
     // Topbar logout

@@ -92,7 +92,8 @@ export const km = {
     themeSystem: "តាមប្រព័ន្ធ",
     language: "ភាសា",
     profile: "អ្នកគ្រប់គ្រងប្រព័ន្ធ",
-    role: "អភិបាលជាន់ខ្ពស់"
+    role: "អភិបាលជាន់ខ្ពស់",
+    syncUserAcc: "ទាញគណនីពី Drive (Sheet)"
   },
   theme: {
     colorTitle: "ជ្រើសរើសពណ៌ប៊ូតុងចម្បង",
@@ -817,6 +818,11 @@ export const km = {
     savingShort: "កំពុងរក្សាទុក...",
     saveToDrive: "រក្សាទុកទៅ Drive",
     syncToDrive: "រក្សាទុកទៅ Drive",
+    restoreNavbar: "ទាញទិន្នន័យ",
+    restoreUserAccNavbar: "ទាញគណនី",
+    restoreUserAccTooltip: "ទាញគណនីអ្នកប្រើប្រាស់ និងសិទ្ធិពី Google Sheet ក្នុង Drive",
+    getUserAccLoading: "កំពុងទាញគណនី...",
+    gettingShort: "កំពុងទាញយក...",
     restoreFromDrive: "ទាញទិន្នន័យពី Drive",
     saveToDriveTooltip: "រក្សាទុកទិន្នន័យក្នុងម៉ាស៊ីនទៅកាន់ Google Drive & Google Sheets",
     syncToDriveTooltip: "រក្សាទុកទិន្នន័យក្នុងម៉ាស៊ីនទៅកាន់ Google Drive & Google Sheets",
