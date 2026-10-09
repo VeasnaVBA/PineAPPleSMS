@@ -1794,3 +1794,71 @@ td.col-grade-cell {
 }
 
 
+
+
+/* ==========================================================================
+   Scores Page Toolbar - Strict Uniform Height Across All Form Elements
+   ========================================================================== */
+.score-toolbar-item,
+#select-score-class,
+#select-score-period,
+#btn-coefficient-settings,
+#btn-download-template,
+#btn-upload-scores,
+#btn-toggle-subject-extra-col,
+#btn-grade-scale-guide,
+#btn-data-menu,
+#input-search-student,
+.score-assigned-class-badge {
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  font-size: 12px !important;
+}
+
+select.score-toolbar-item,
+select#select-score-class,
+select#select-score-period {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: 34px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+}
+
+button.score-toolbar-item,
+button#btn-coefficient-settings,
+button#btn-download-template,
+button#btn-upload-scores,
+button#btn-toggle-subject-extra-col,
+button#btn-grade-scale-guide,
+button#btn-data-menu {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  line-height: normal !important;
+}
+
+div.score-toolbar-item,
+div.score-assigned-class-badge,
+a.score-toolbar-item {
+  display: inline-flex !important;
+  align-items: center !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  box-sizing: border-box !important;
+}
+
+#input-search-student {
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  box-sizing: border-box !important;
+}

@@ -221,17 +221,17 @@ export const ScoresPage = {
               ${authService.isTeacher() && classes.length <= 1 ? (() => {
                 const assignedCls = classes.find(c => c.id === this.state.selectedClassId) || classes[0];
                 return assignedCls ? `
-                  <div class="h-8.5 px-3 rounded-lg border border-primary/30 bg-primary/10 text-xs font-bold text-primary flex items-center gap-1.5">
+                  <div class="score-toolbar-item score-assigned-class-badge h-9 px-3 rounded-lg border border-primary/30 bg-primary/10 text-xs font-bold text-primary flex items-center gap-1.5">
                     ${getIcon('classes', 'w-3.5 h-3.5')}
                     <span>${assignedCls.name}</span>
                   </div>
                 ` : `
-                  <a href="#classes" class="h-8.5 px-3 rounded-lg border border-dashed border-amber-500/40 bg-amber-500/10 text-xs font-medium text-amber-700 flex items-center gap-1.5">
+                  <a href="#classes" class="score-toolbar-item h-9 px-3 rounded-lg border border-dashed border-amber-500/40 bg-amber-500/10 text-xs font-medium text-amber-700 flex items-center gap-1.5">
                     <span>${isKm ? '+ បង្កើតថ្នាក់' : '+ Add Class'}</span>
                   </a>
                 `;
               })() : `
-                <select id="select-score-class" class="h-8.5 px-3 pr-8 rounded-lg border border-input bg-card text-xs font-bold text-foreground focus:ring-1 focus:ring-primary shadow-2xs cursor-pointer">
+                <select id="select-score-class" class="score-toolbar-item h-9 px-3 pr-8 rounded-lg border border-input bg-card text-xs font-bold text-foreground focus:ring-1 focus:ring-primary shadow-2xs cursor-pointer">
                   ${classes.length === 0 ? `<option value="">${isKm ? 'គ្មានថ្នាក់រៀន' : 'No classes'}</option>` : ''}
                   ${classes.map(c => `
                     <option value="${c.id}" ${this.state.selectedClassId === c.id ? 'selected' : ''}>${c.name}</option>
@@ -242,7 +242,7 @@ export const ScoresPage = {
 
             <!-- Month / Period Selector Pill -->
             <div class="relative">
-              <select id="select-score-period" class="h-8.5 px-3 pr-8 rounded-lg border border-input bg-card text-xs font-bold text-foreground focus:ring-1 focus:ring-primary shadow-2xs cursor-pointer">
+              <select id="select-score-period" class="score-toolbar-item h-9 px-3 pr-8 rounded-lg border border-input bg-card text-xs font-bold text-foreground focus:ring-1 focus:ring-primary shadow-2xs cursor-pointer">
                 <optgroup label="${isKm ? 'ខែសិក្សា' : 'Months'}">
                   ${months.map(m => `
                     <option value="${m.id}" ${this.state.selectedPeriod === m.id ? 'selected' : ''}>
@@ -261,7 +261,7 @@ export const ScoresPage = {
             </div>
 
             <!-- Coefficient Settings Button -->
-            <button id="btn-coefficient-settings" type="button" class="h-8.5 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'កំណត់មេគុណសម្រាប់ខែនីមួយៗ ដើម្បីគណនាមធ្យមភាគ' : 'Set coefficients to calculate monthly average'}">
+            <button id="btn-coefficient-settings" type="button" class="score-toolbar-item h-9 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'កំណត់មេគុណសម្រាប់ខែនីមួយៗ ដើម្បីគណនាមធ្យមភាគ' : 'Set coefficients to calculate monthly average'}">
               <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
               </svg>
@@ -270,13 +270,13 @@ export const ScoresPage = {
             </button>
 
             <!-- Download Template Button -->
-            <button id="btn-download-template" type="button" class="h-8.5 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'ទាញយកឯកសារ Excel គំរូ' : 'Download Excel Template'}">
+            <button id="btn-download-template" type="button" class="score-toolbar-item h-9 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'ទាញយកឯកសារ Excel គំរូ' : 'Download Excel Template'}">
               <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
               <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'ទាញយកគំរូ' : 'Template'}</span>
             </button>
 
             <!-- Upload Scores Button -->
-            <button id="btn-upload-scores" type="button" class="h-8.5 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'បញ្ចូលពិន្ទុពីឯកសារ Excel' : 'Upload from Excel'}">
+            <button id="btn-upload-scores" type="button" class="score-toolbar-item h-9 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'បញ្ចូលពិន្ទុពីឯកសារ Excel' : 'Upload from Excel'}">
               <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"/></svg>
               <span>Upload</span>
             </button>
@@ -285,21 +285,21 @@ export const ScoresPage = {
             <!-- Subject Extra Column Display Mode Toggle Button (None -> Rank -> Grade -> Both -> None) -->
             <button id="btn-toggle-subject-extra-col" 
                     type="button" 
-                    class="h-8.5 px-3 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shadow-2xs transition-colors cursor-pointer select-none font-khmer shrink-0" 
+                    class="score-toolbar-item h-9 px-3 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shadow-2xs transition-colors cursor-pointer select-none font-khmer shrink-0" 
                     title="${this.getSubjectExtraColBtnTitle()}">
               ${this.getSubjectExtraColBtnHtml()}
             </button>
 
             <!-- A-F Grading Guide Button -->
-            <button id="btn-grade-scale-guide" type="button" class="h-8.5 px-2.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-bold font-mono shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'កម្រិតនិទ្ទេស A-F' : 'Grading Scale'}">
+            <button id="btn-grade-scale-guide" type="button" class="score-toolbar-item h-9 px-2.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-bold font-mono shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'កម្រិតនិទ្ទេស A-F' : 'Grading Scale'}">
               A-F
             </button>
 
             <!-- Data Actions Dropdown -->
             <div class="relative">
-              <button id="btn-data-menu" type="button" class="h-8.5 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1 shadow-2xs transition-colors cursor-pointer">
+              <button id="btn-data-menu" type="button" class="score-toolbar-item h-9 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1 shadow-2xs transition-colors cursor-pointer">
                 <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'ទិន្នន័យ' : 'Data'}</span>
-                <svg class="w-3 h-3 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
               </button>
               <div id="dropdown-data-menu" class="hidden absolute left-0 top-full mt-1 w-48 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg z-50 py-1 text-xs font-khmer">
                 <button id="action-recalculate-all" type="button" class="w-full text-left px-3 py-2 hover:bg-muted flex items-center gap-2 cursor-pointer">
@@ -320,7 +320,7 @@ export const ScoresPage = {
                    id="input-search-student" 
                    placeholder="${isKm ? 'ស្វែងរកសិស្ស...' : 'Search student...'}" 
                    value="${this.state.searchQuery}"
-                   class="w-full h-8.5 pl-8 pr-3 rounded-lg border border-input bg-background text-foreground text-xs focus:ring-1 focus:ring-primary shadow-2xs" />
+                   class="score-toolbar-item w-full h-9 pl-8 pr-3 rounded-lg border border-input bg-background text-foreground text-xs focus:ring-1 focus:ring-primary shadow-2xs" />
             <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
               ${getIcon('search', 'w-3.5 h-3.5')}
             </span>
