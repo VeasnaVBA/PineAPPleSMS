@@ -86,6 +86,34 @@ export const ScoreService = {
     return EVALUATION_PERIODS;
   },
 
+  isSemesterPeriod(period) {
+    return period === 'Semester 1' || period === 'Semester 2';
+  },
+
+  /**
+   * Fetch active students' monthly average for a specific month in a class.
+   * Returns a Map of studentId -> average.
+   */
+  async getStudentAveragesForMonth(classId, academicYear, monthId) {
+    if (!monthId) return new Map();
+    try {
+      const sheet = await this.getMasterScoreSheet({ classId, academicYear, period: monthId });
+      const map = new Map();
+      (sheet.rows || []).forEach(r => {
+        const hasScores = Object.values(r.subjectScores || {}).some(v => v !== null && v !== undefined && v !== '');
+        if (hasScores && r.average !== null && r.average !== undefined) {
+          map.set(r.studentId, Number(r.average));
+        } else {
+          map.set(r.studentId, null);
+        }
+      });
+      return map;
+    } catch (e) {
+      console.warn(`Failed to fetch student averages for month ${monthId}:`, e);
+      return new Map();
+    }
+  },
+
   async getMonthlyCoefficients() {
     try {
       const fromDb = await SettingsService.get('monthly_coefficients');
@@ -343,6 +371,23 @@ export const ScoreService = {
         totalMax += sub.fullScore;
       });
 
+      // 5. If Semester 1 or Semester 2, include 6 monthly scores
+      const monthScores = {};
+      let monthlySum = 0;
+      if (this.isSemesterPeriod(period)) {
+        for (let mIdx = 0; mIdx < 6; mIdx++) {
+          const sc = scoreMap.get(`${stu.id}_sem_month_${mIdx}`);
+          const val = (sc !== undefined && sc !== null) 
+            ? (Number(sc.totalScore ?? sc.examScore) || 0) 
+            : null;
+          monthScores[mIdx] = val;
+          if (val !== null && val !== undefined) {
+            monthlySum += Number(val);
+          }
+        }
+        total += monthlySum;
+      }
+
       const averageVal = periodCoeff > 0 ? (total / periodCoeff) : total;
       const roundedAvg = Math.round(averageVal * 100) / 100;
       // Grade is calculated from average with full average = 50.00 (< 25 is F)
@@ -360,6 +405,7 @@ export const ScoreService = {
         className,
         academicYear,
         period,
+        monthScores,
         subjectScores,
         total,
         totalMax,
@@ -446,6 +492,46 @@ export const ScoreService = {
             await db.delete('scores', existingRecord.id);
           }
           await db.delete('scores', defaultId);
+        }
+      }
+
+      // If Semester 1 or Semester 2, save 6 monthly scores
+      if (this.isSemesterPeriod(period) && row.monthScores) {
+        for (let mIdx = 0; mIdx < 6; mIdx++) {
+          const val = row.monthScores[mIdx];
+          const subId = `sem_month_${mIdx}`;
+          const existingRecord = existingScoresMap.get(`${row.studentId}_${subId}`);
+          const defaultId = `sc-${academicYear}-${classId}-${subId}-${period}-${row.studentId}`;
+          const recordId = existingRecord?.id || defaultId;
+
+          if (val !== null && val !== undefined && val !== '') {
+            const numVal = Math.max(0, Number(val) || 0);
+            const record = {
+              id: recordId,
+              studentId: row.studentId,
+              classId: isTeacher && teacherClassId ? teacherClassId : classId,
+              academicYear,
+              subjectId: subId,
+              subjectNameKm: `ពិន្ទុខែទី${mIdx + 1}`,
+              subjectNameEn: `Month ${mIdx + 1}`,
+              month: period,
+              assessmentType: period,
+              assignmentScore: 0,
+              examScore: numVal,
+              totalScore: numVal,
+              fullScore: 50,
+              percentage: Math.min(100, Math.round((numVal / 50) * 100)),
+              grade: SubjectService.calculateGrade(numVal, 50).grade,
+              notes: '',
+              updatedAt: new Date().toISOString()
+            };
+            await db.put('scores', record);
+          } else {
+            if (existingRecord) {
+              await db.delete('scores', existingRecord.id);
+            }
+            await db.delete('scores', defaultId);
+          }
         }
       }
     }
