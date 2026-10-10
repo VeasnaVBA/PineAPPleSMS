@@ -239,13 +239,13 @@ export const SchoolsPage = {
                             {
                               label: isKm ? 'ព័ត៌មានលម្អិត' : 'View Details',
                               icon: 'eye',
-                              onClick: () => this.showSchoolDetailsModal(school)
+                              onClick: () => this.openSchoolDetailsModal(school)
                             },
                             {
                               label: isKm ? 'កែប្រែ' : 'Edit',
                               icon: 'pencil',
                               show: canEdit,
-                              onClick: () => this.openSchoolModal(school)
+                              onClick: () => this.openSchoolFormModal(school)
                             },
                             {
                               label: isKm ? 'លុប' : 'Delete',
@@ -362,6 +362,15 @@ export const SchoolsPage = {
         this.renderLayout();
       }
     });
+  },
+
+  // Aliases for compatibility
+  openSchoolModal(school = null) {
+    return this.openSchoolFormModal(school);
+  },
+
+  showSchoolDetailsModal(school) {
+    return this.openSchoolDetailsModal(school);
   },
 
   /**
