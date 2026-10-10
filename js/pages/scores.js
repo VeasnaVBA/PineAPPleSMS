@@ -2235,7 +2235,7 @@ export const ScoresPage = {
                       title="${isKm ? 'ជ្រើសរើសកាលបរិច្ឆេទ (ចន្ទគតិ & សុរិយគតិ)' : 'Select Date'}">
                 <span class="flex items-center gap-1.5 truncate">
                   ${getIcon('calendar', 'w-3.5 h-3.5 text-primary flex-shrink-0')}
-                  <span id="rv-result-date-trigger-text" class="truncate">${toKhmerNumerals(formatDisplayDate(selectedReportDate.toISOString().split('T')[0]))}</span>
+                  <span id="rv-result-date-trigger-text" class="truncate">${formatDisplayDate(selectedReportDate.toISOString().split('T')[0])}</span>
                 </span>
                 ${getIcon('chevronDown', 'w-3.5 h-3.5 text-muted-foreground flex-shrink-0 transition-transform duration-150 rv-result-date-chevron')}
               </button>
@@ -2407,7 +2407,7 @@ export const ScoresPage = {
 
         const updateDateDisplay = (d) => {
           if (!d) return;
-          if (dateText) dateText.textContent = toKhmerNumerals(formatDisplayDate(d.toISOString().split('T')[0]));
+          if (dateText) dateText.textContent = formatDisplayDate(d.toISOString().split('T')[0]);
           if (previewLunar) previewLunar.textContent = formatKhmerLunarDate(d);
           if (previewSolar) previewSolar.textContent = `${schoolName ? `${schoolName}, ` : ''}${formatKhmerSolarDate(d)}`;
           if (dateInput) dateInput.value = d.toISOString().split('T')[0];
@@ -2566,32 +2566,32 @@ export const ScoresPage = {
 
         // 8. Row HTML Builder (Columns: ល.រ, អត្តលេខ, គោត្តនាម និងនាម, ភេទ, មធ្យមភាគ, ចំណាត់ថ្នាក់, និទ្ទេស, មានច្បាប់, ឥតច្បាប់, សរុប)
         const buildRow = (r, idx) => {
-          const khmerNum = toKhmerNumerals(idx + 1);
+          const rowNum = idx + 1;
           const studentCode = r.studentNumber || r.studentId || '';
           const fullName = r.khmerFullName || `${r.lastNameKh || ''} ${r.firstNameKh || ''}`.trim() || '—';
           const isFemale = r.gender === 'Female' || r.gender === 'ស្រី';
           const genderText = isFemale ? 'ស្រី' : 'ប្រុស';
           const avgNum = typeof r.average === 'number' ? r.average : Number(r.average || 0);
-          const avgText = toKhmerNumerals(avgNum.toFixed(2));
-          const rankText = toKhmerNumerals(r.rank || (idx + 1));
+          const avgText = avgNum.toFixed(2);
+          const rankText = (r.rank !== undefined && r.rank !== null && r.rank !== '') ? r.rank : (idx + 1);
           const gradeText = r.grade || '—';
           const att = attMap.get(r.studentId) || { excused: 0, unexcused: 0, total: 0 };
-          const excusedText = att.excused > 0 ? toKhmerNumerals(att.excused) : '';
-          const unexcusedText = att.unexcused > 0 ? toKhmerNumerals(att.unexcused) : '';
-          const totalAbsText = att.total > 0 ? toKhmerNumerals(att.total) : '';
+          const excusedText = att.excused > 0 ? att.excused : '';
+          const unexcusedText = att.unexcused > 0 ? att.unexcused : '';
+          const totalAbsText = att.total > 0 ? att.total : '';
 
           return `
             <tr class="score-sheet-row hover:bg-muted/30 border-b border-border/50 text-[8.5px]" data-student-id="${r.studentId}">
-              <td class="px-0.5 py-1 text-center font-khmer font-medium border border-black select-none whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${khmerNum}</td>
+              <td class="px-0.5 py-1 text-center font-mono font-medium border border-black select-none whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${rowNum}</td>
               <td class="px-0.5 py-1 text-center font-mono border border-black select-none whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${studentCode}</td>
               <td class="px-1 py-1 text-left font-khmer border border-black truncate" style="border: 1px solid #000000 !important; padding: 2.5px 3px !important;" title="${fullName}">${fullName}</td>
               <td class="px-0.5 py-1 text-center font-khmer border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${genderText}</td>
-              <td class="px-0.5 py-1 text-center font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${avgText}</td>
-              <td class="px-0.5 py-1 text-center font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${rankText}</td>
+              <td class="px-0.5 py-1 text-center font-mono font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${avgText}</td>
+              <td class="px-0.5 py-1 text-center font-mono font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${rankText}</td>
               <td class="px-0.5 py-1 text-center font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${gradeText}</td>
-              <td class="px-0.5 py-1 text-center font-medium border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${excusedText}</td>
-              <td class="px-0.5 py-1 text-center font-medium border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${unexcusedText}</td>
-              <td class="px-0.5 py-1 text-center font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${totalAbsText}</td>
+              <td class="px-0.5 py-1 text-center font-mono font-medium border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${excusedText}</td>
+              <td class="px-0.5 py-1 text-center font-mono font-medium border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${unexcusedText}</td>
+              <td class="px-0.5 py-1 text-center font-mono font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${totalAbsText}</td>
             </tr>
           `;
         };
