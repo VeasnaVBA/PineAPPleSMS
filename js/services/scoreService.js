@@ -46,7 +46,7 @@ export const DEFAULT_MONTHLY_COEFFICIENTS = {
   'Semester 1 Exam': 20,
   'Semester 2': 20,
   'Semester 2 Exam': 20,
-  'Annual': 20
+  'Annual': 2
 };
 
 /**
@@ -90,6 +90,34 @@ export const ScoreService = {
     return period === 'Semester 1' || period === 'Semester 2';
   },
 
+  isAnnualPeriod(period) {
+    return period === 'Annual';
+  },
+
+  /**
+   * Fetch active students' semester average for Semester 1 or Semester 2.
+   * Returns a Map of studentId -> average.
+   */
+  async getStudentAveragesForSemester(classId, academicYear, semester) {
+    if (!semester) return new Map();
+    try {
+      const sheet = await this.getMasterScoreSheet({ classId, academicYear, period: semester });
+      const map = new Map();
+      (sheet.rows || []).forEach(r => {
+        const hasScores = (Number(r.total) > 0) || (r.monthScores && Object.values(r.monthScores).some(v => v !== null && v !== undefined && v !== ''));
+        if (hasScores && r.average !== null && r.average !== undefined && r.average !== '' && !isNaN(Number(r.average))) {
+          map.set(r.studentId, Number(r.average));
+        } else {
+          map.set(r.studentId, null);
+        }
+      });
+      return map;
+    } catch (e) {
+      console.warn(`Failed to fetch student averages for ${semester}:`, e);
+      return new Map();
+    }
+  },
+
   /**
    * Fetch active students' monthly average for a specific month in a class.
    * Returns a Map of studentId -> average.
@@ -118,11 +146,15 @@ export const ScoreService = {
     try {
       const fromDb = await SettingsService.get('monthly_coefficients');
       if (fromDb && typeof fromDb === 'object') {
-        return { ...DEFAULT_MONTHLY_COEFFICIENTS, ...fromDb };
+        const res = { ...DEFAULT_MONTHLY_COEFFICIENTS, ...fromDb };
+        if (Number(res.Annual) === 20) res.Annual = 2;
+        return res;
       }
       const fromLocal = localStorage.getItem('monthly_coefficients');
       if (fromLocal) {
-        return { ...DEFAULT_MONTHLY_COEFFICIENTS, ...JSON.parse(fromLocal) };
+        const res = { ...DEFAULT_MONTHLY_COEFFICIENTS, ...JSON.parse(fromLocal) };
+        if (Number(res.Annual) === 20) res.Annual = 2;
+        return res;
       }
     } catch (_) {}
     return { ...DEFAULT_MONTHLY_COEFFICIENTS };
@@ -132,7 +164,9 @@ export const ScoreService = {
     try {
       const fromLocal = localStorage.getItem('monthly_coefficients');
       if (fromLocal) {
-        return { ...DEFAULT_MONTHLY_COEFFICIENTS, ...JSON.parse(fromLocal) };
+        const res = { ...DEFAULT_MONTHLY_COEFFICIENTS, ...JSON.parse(fromLocal) };
+        if (Number(res.Annual) === 20) res.Annual = 2;
+        return res;
       }
     } catch (_) {}
     return { ...DEFAULT_MONTHLY_COEFFICIENTS };
@@ -152,15 +186,17 @@ export const ScoreService = {
   },
 
   async getCoefficientForPeriod(period) {
+    if (period === 'Annual') return 2;
     const map = await this.getMonthlyCoefficients();
     const val = Number(map[period]);
-    return (val && val > 0) ? val : (period && (period.includes('Semester') || period.includes('Annual')) ? 20 : 10);
+    return (val && val > 0) ? val : (period && period.includes('Semester') ? 20 : 10);
   },
 
   getCachedCoefficientForPeriod(period) {
+    if (period === 'Annual') return 2;
     const map = this.getCachedMonthlyCoefficients();
     const val = Number(map[period]);
-    return (val && val > 0) ? val : (period && (period.includes('Semester') || period.includes('Annual')) ? 20 : 10);
+    return (val && val > 0) ? val : (period && period.includes('Semester') ? 20 : 10);
   },
 
   async getSubjects() {
@@ -344,6 +380,14 @@ export const ScoreService = {
       }
     }
 
+    // If Annual, pre-fetch live averages for Semester 1 and Semester 2
+    let sem1Map = null;
+    let sem2Map = null;
+    if (this.isAnnualPeriod(period)) {
+      sem1Map = await this.getStudentAveragesForSemester(classId, academicYear, 'Semester 1');
+      sem2Map = await this.getStudentAveragesForSemester(classId, academicYear, 'Semester 2');
+    }
+
     const rows = activeStudents.map(stu => {
       // User requirement: Student Name (khmer firstname + khmer last name)
       let fullNameKh = '';
@@ -392,6 +436,7 @@ export const ScoreService = {
 
       // 4. Calculate total & totalMax
       const monthScores = {};
+      const annualScores = {};
       let monthlySum = 0;
 
       if (this.isSemesterPeriod(period)) {
@@ -414,6 +459,16 @@ export const ScoreService = {
           }
         }
         total = Math.round(monthlySum * 100) / 100;
+      } else if (this.isAnnualPeriod(period)) {
+        const s1 = sem1Map ? sem1Map.get(stu.id) : null;
+        const s2 = sem2Map ? sem2Map.get(stu.id) : null;
+        annualScores.sem1 = (s1 !== undefined && s1 !== null) ? Number(s1) : null;
+        annualScores.sem2 = (s2 !== undefined && s2 !== null) ? Number(s2) : null;
+
+        let annSum = 0;
+        if (annualScores.sem1 !== null) annSum += annualScores.sem1;
+        if (annualScores.sem2 !== null) annSum += annualScores.sem2;
+        total = Math.round(annSum * 100) / 100;
       } else {
         subjectsWithMeta.forEach(sub => {
           if (subComponentIds.has(sub.id)) return; // Exclude sub-components from grand total
@@ -427,7 +482,22 @@ export const ScoreService = {
         total = Math.round(total * 10) / 10;
       }
 
-      const averageVal = periodCoeff > 0 ? (total / periodCoeff) : total;
+      let averageVal = 0;
+      if (this.isAnnualPeriod(period)) {
+        const s1 = annualScores.sem1;
+        const s2 = annualScores.sem2;
+        const count = (s1 !== null ? 1 : 0) + (s2 !== null ? 1 : 0);
+        if (count === 2) {
+          const coeff = periodCoeff > 0 ? periodCoeff : 2;
+          averageVal = total / coeff;
+        } else if (count === 1) {
+          averageVal = (s1 !== null ? s1 : s2);
+        } else {
+          averageVal = 0;
+        }
+      } else {
+        averageVal = periodCoeff > 0 ? (total / periodCoeff) : total;
+      }
       const roundedAvg = Math.round(averageVal * 100) / 100;
       // Grade is calculated from average with full average = 50.00 (< 25 is F)
       const gradeInfo = SubjectService.calculateGrade(roundedAvg, 50);
@@ -445,6 +515,7 @@ export const ScoreService = {
         academicYear,
         period,
         monthScores,
+        annualScores,
         subjectScores,
         total,
         totalMax,
@@ -495,9 +566,10 @@ export const ScoreService = {
     });
 
     const isSemester = this.isSemesterPeriod(period);
+    const isAnnual = this.isAnnualPeriod(period);
 
     for (const row of rows) {
-      if (!isSemester) {
+      if (!isSemester && !isAnnual) {
         for (const sub of subjects) {
           const val = row.subjectScores[sub.id];
           const existingRecord = existingScoresMap.get(`${row.studentId}_${sub.id}`);
@@ -557,6 +629,50 @@ export const ScoreService = {
               subjectId: subId,
               subjectNameKm: `ពិន្ទុខែទី${mIdx + 1}`,
               subjectNameEn: `Month ${mIdx + 1}`,
+              month: period,
+              assessmentType: period,
+              assignmentScore: 0,
+              examScore: numVal,
+              totalScore: numVal,
+              fullScore: 50,
+              percentage: Math.min(100, Math.round((numVal / 50) * 100)),
+              grade: SubjectService.calculateGrade(numVal, 50).grade,
+              notes: '',
+              updatedAt: new Date().toISOString()
+            };
+            await db.put('scores', record);
+          } else {
+            if (existingRecord) {
+              await db.delete('scores', existingRecord.id);
+            }
+            await db.delete('scores', defaultId);
+          }
+        }
+      }
+
+      // If Annual, save semester 1 and semester 2 average scores
+      if (this.isAnnualPeriod(period) && row.annualScores) {
+        const semKeys = [
+          { key: 'sem1', subId: 'annual_sem1', nameKm: 'ម.ភាគ ឆមាសទី១', nameEn: 'Semester 1 Average' },
+          { key: 'sem2', subId: 'annual_sem2', nameKm: 'ម.ភាគ ឆមាសទី២', nameEn: 'Semester 2 Average' }
+        ];
+        for (const item of semKeys) {
+          const val = row.annualScores[item.key];
+          const subId = item.subId;
+          const existingRecord = existingScoresMap.get(`${row.studentId}_${subId}`);
+          const defaultId = `sc-${academicYear}-${classId}-${subId}-${period}-${row.studentId}`;
+          const recordId = existingRecord?.id || defaultId;
+
+          if (val !== null && val !== undefined && val !== '') {
+            const numVal = Math.max(0, Number(val) || 0);
+            const record = {
+              id: recordId,
+              studentId: row.studentId,
+              classId: isTeacher && teacherClassId ? teacherClassId : classId,
+              academicYear,
+              subjectId: subId,
+              subjectNameKm: item.nameKm,
+              subjectNameEn: item.nameEn,
               month: period,
               assessmentType: period,
               assignmentScore: 0,
