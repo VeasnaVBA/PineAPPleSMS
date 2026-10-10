@@ -481,14 +481,14 @@ export const ScoresPage = {
   },
 
   async prefetchSemesterMonthlyAverages() {
-    if (!this.state._monthAveragesCache) this.state._monthAveragesCache = {};
+    this.state._monthAveragesCache = {}; // Always clear cache to guarantee fresh live scores from DB!
     const clsId = this.state.selectedClassId;
     const yr = this.state.activeYear;
     if (!clsId) return;
 
     for (let i = 0; i < 6; i++) {
       const mId = this.state.semesterMonths[i];
-      if (mId && !this.state._monthAveragesCache[mId]) {
+      if (mId) {
         const map = await ScoreService.getStudentAveragesForMonth(clsId, yr, mId);
         this.state._monthAveragesCache[mId] = map;
       }
@@ -504,11 +504,9 @@ export const ScoresPage = {
       for (let mIdx = 0; mIdx < 6; mIdx++) {
         const mId = this.state.semesterMonths[mIdx];
         if (mId) {
-          // If monthScores not set yet or null, populate from monthly average
-          if (r.monthScores[mIdx] === null || r.monthScores[mIdx] === undefined) {
-            const avgVal = cache[mId]?.get(r.studentId);
-            r.monthScores[mIdx] = (avgVal !== undefined && avgVal !== null) ? avgVal : null;
-          }
+          // Always populate from the latest fresh monthly average!
+          const avgVal = cache[mId]?.get(r.studentId);
+          r.monthScores[mIdx] = (avgVal !== undefined && avgVal !== null) ? Number(avgVal) : null;
         } else {
           r.monthScores[mIdx] = null;
         }
@@ -553,6 +551,7 @@ export const ScoresPage = {
 
     if (isSemester) {
       this.populateSemesterMonthScores();
+      this.triggerDebouncedAutoSave();
     }
 
     // Ensure subject ranks and grades are computed across all rows
@@ -1828,8 +1827,26 @@ export const ScoresPage = {
   },
 
   bindStaticEvents() {
+    // Helper to flush pending save immediately
+    const flushPendingSave = async () => {
+      if (this.state.saveDebounceTimer) {
+        clearTimeout(this.state.saveDebounceTimer);
+        this.state.saveDebounceTimer = null;
+        try {
+          await ScoreService.saveMasterScoreSheet({
+            classId: this.state.selectedClassId,
+            academicYear: this.state.activeYear,
+            period: this.state.selectedPeriod,
+            rows: this.state.rows,
+            subjects: this.state.subjects
+          });
+        } catch (_) {}
+      }
+    };
+
     // Select Class
     document.getElementById('select-score-class')?.addEventListener('change', async (e) => {
+      await flushPendingSave();
       this.state.selectedClassId = e.target.value;
       if (authService.isTeacher() && this.state.selectedClassId) {
         await authService.setAssignedClassId(this.state.selectedClassId);
@@ -1839,6 +1856,7 @@ export const ScoresPage = {
 
     // Select Period / Month
     document.getElementById('select-score-period')?.addEventListener('change', async (e) => {
+      await flushPendingSave();
       this.state.selectedPeriod = e.target.value;
       this.updateCoefficientBadge();
       await this.loadScores();

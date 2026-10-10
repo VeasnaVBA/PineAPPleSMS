@@ -314,6 +314,36 @@ export const ScoreService = {
 
     const periodCoeff = await this.getCoefficientForPeriod(period);
 
+    // If Semester 1 or Semester 2, pre-fetch live monthly averages for the chosen months
+    const semesterMonthMaps = [];
+    if (this.isSemesterPeriod(period)) {
+      const semMonthsKey = `semester_months_${classId || 'default'}_${period}_${academicYear || 'default'}`;
+      let chosenMonths = null;
+      try {
+        const fromLocal = localStorage.getItem(semMonthsKey);
+        if (fromLocal) chosenMonths = JSON.parse(fromLocal);
+      } catch (_) {}
+      if (!Array.isArray(chosenMonths)) {
+        if (period === 'Semester 1') {
+          chosenMonths = ['October', 'November', 'December', 'January', 'February', null];
+        } else if (period === 'Semester 2') {
+          chosenMonths = ['March', 'April', 'May', 'June', 'July', null];
+        } else {
+          chosenMonths = [null, null, null, null, null, null];
+        }
+      }
+
+      for (let mIdx = 0; mIdx < 6; mIdx++) {
+        const mId = chosenMonths[mIdx];
+        if (mId) {
+          const avgMap = await this.getStudentAveragesForMonth(classId, academicYear, mId);
+          semesterMonthMaps[mIdx] = avgMap;
+        } else {
+          semesterMonthMaps[mIdx] = null;
+        }
+      }
+    }
+
     const rows = activeStudents.map(stu => {
       // User requirement: Student Name (khmer firstname + khmer last name)
       let fullNameKh = '';
@@ -366,10 +396,18 @@ export const ScoreService = {
 
       if (this.isSemesterPeriod(period)) {
         for (let mIdx = 0; mIdx < 6; mIdx++) {
-          const sc = scoreMap.get(`${stu.id}_sem_month_${mIdx}`);
-          const val = (sc !== undefined && sc !== null) 
-            ? (Number(sc.totalScore ?? sc.examScore) || 0) 
-            : null;
+          const avgMap = semesterMonthMaps[mIdx];
+          let val = null;
+          if (avgMap) {
+            const mVal = avgMap.get(stu.id);
+            val = (mVal !== undefined && mVal !== null) ? Number(mVal) : null;
+          }
+          if (val === null) {
+            const sc = scoreMap.get(`${stu.id}_sem_month_${mIdx}`);
+            val = (sc !== undefined && sc !== null) 
+              ? (Number(sc.totalScore ?? sc.examScore) || null) 
+              : null;
+          }
           monthScores[mIdx] = val;
           if (val !== null && val !== undefined) {
             monthlySum += Number(val);
