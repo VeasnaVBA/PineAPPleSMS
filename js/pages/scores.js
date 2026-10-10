@@ -2533,7 +2533,7 @@ export const ScoresPage = {
         const btnExcel = viewer?.overlay?.querySelector('#rv-btn-result-export-excel');
         if (btnExcel) {
           btnExcel.onclick = async () => {
-            const exportHeaders = ['ល.រ', 'អត្តលេខ', 'គោត្តនាម និងនាម', 'ភេទ', 'មធ្យមភាគ', 'ចំណាត់ថ្នាក់', 'និទ្ទេស', 'អវត្តមានមានច្បាប់', 'អវត្តមានឥតច្បាប់', 'អវត្តមានសរុប'];
+            const exportHeaders = ['ល.រ', 'អត្តលេខ', 'គោត្តនាម និងនាម', 'ភេទ', 'មធ្យមភាគ', 'ចំណាត់ថ្នាក់', 'និទ្ទេស', 'ច្បាប់', 'ឥតច្បាប់', 'អវត្តមានសរុប'];
             const exportData = activeRows.map((r, idx) => {
               const att = attMap.get(r.studentId) || { excused: 0, unexcused: 0, total: 0 };
               return [
@@ -2625,7 +2625,7 @@ export const ScoresPage = {
             <th colspan="3" class="text-center whitespace-nowrap" style="height: 13px !important; width: 31% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">អវត្តមាន</th>
           </tr>
           <tr style="height: 12px !important; background-color: #0045ff !important; color: #ffffff !important; font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important; font-weight: bold !important; font-size: 7px !important; line-height: 1.0 !important;">
-            <th class="text-center whitespace-nowrap" style="height: 12px !important; width: 10.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 0.5px 0.5px !important; line-height: 1.0 !important; vertical-align: middle !important;">មានច្បាប់</th>
+            <th class="text-center whitespace-nowrap" style="height: 12px !important; width: 10.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 0.5px 0.5px !important; line-height: 1.0 !important; vertical-align: middle !important;">ច្បាប់</th>
             <th class="text-center whitespace-nowrap" style="height: 12px !important; width: 10.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 0.5px 0.5px !important; line-height: 1.0 !important; vertical-align: middle !important;">ឥតច្បាប់</th>
             <th class="text-center whitespace-nowrap" style="height: 12px !important; width: 10% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 0.5px 0.5px !important; line-height: 1.0 !important; vertical-align: middle !important;">សរុប</th>
           </tr>
