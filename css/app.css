@@ -1242,22 +1242,33 @@ html[lang="km"] select {
   color: #ffffff !important;
   font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important;
   font-weight: bold !important;
-  font-size: 8.5px !important;
-  padding: 3px 1.5px !important;
-  line-height: 1.2 !important;
+  font-size: 7.5px !important;
+  padding: 2px 1px !important;
+  line-height: 1.25 !important;
   text-align: center !important;
+  vertical-align: middle !important;
   border: 1px solid #000000 !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;
 }
 
+.score-result-2row-table thead tr:last-child th {
+  font-size: 7px !important;
+  padding: 1.5px 0.5px !important;
+}
+
 .score-result-2row-table td {
   font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important;
-  padding: 2.5px 2px !important;
+  padding: 2.5px 1.5px !important;
   line-height: 1.2 !important;
-  font-size: 8.5px !important;
+  font-size: 8px !important;
   box-sizing: border-box !important;
   border: 1px solid #000000 !important;
+  vertical-align: middle !important;
 }
 
 /* Admissions Staging Table Sticky Action Column Support */

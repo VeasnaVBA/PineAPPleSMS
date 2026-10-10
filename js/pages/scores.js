@@ -2582,17 +2582,17 @@ export const ScoresPage = {
           const totalAbsText = att.total > 0 ? att.total : '';
 
           return `
-            <tr class="score-sheet-row hover:bg-muted/30 border-b border-border/50 text-[8.5px]" data-student-id="${r.studentId}">
-              <td class="px-0.5 py-1 text-center font-mono font-medium border border-black select-none whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${rowNum}</td>
-              <td class="px-0.5 py-1 text-center font-mono border border-black select-none whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${studentCode}</td>
-              <td class="px-1 py-1 text-left font-khmer border border-black truncate" style="border: 1px solid #000000 !important; padding: 2.5px 3px !important;" title="${fullName}">${fullName}</td>
-              <td class="px-0.5 py-1 text-center font-khmer border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${genderText}</td>
-              <td class="px-0.5 py-1 text-center font-mono font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${avgText}</td>
-              <td class="px-0.5 py-1 text-center font-mono font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${rankText}</td>
-              <td class="px-0.5 py-1 text-center font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${gradeText}</td>
-              <td class="px-0.5 py-1 text-center font-mono font-medium border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${excusedText}</td>
-              <td class="px-0.5 py-1 text-center font-mono font-medium border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${unexcusedText}</td>
-              <td class="px-0.5 py-1 text-center font-mono font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${totalAbsText}</td>
+            <tr class="score-sheet-row hover:bg-muted/30 border-b border-border/50 text-[8px]" data-student-id="${r.studentId}">
+              <td class="px-0.5 py-1 text-center font-mono font-medium border border-black select-none whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important;">${rowNum}</td>
+              <td class="px-0.5 py-1 text-center font-mono border border-black select-none whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important;">${studentCode}</td>
+              <td class="px-1 py-1 text-left font-khmer border border-black truncate" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important; vertical-align: middle !important;" title="${fullName}">${fullName}</td>
+              <td class="px-0.5 py-1 text-center font-khmer border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important;">${genderText}</td>
+              <td class="px-0.5 py-1 text-center font-mono font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important;">${avgText}</td>
+              <td class="px-0.5 py-1 text-center font-mono font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important;">${rankText}</td>
+              <td class="px-0.5 py-1 text-center font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important;">${gradeText}</td>
+              <td class="px-0.5 py-1 text-center font-mono font-medium border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important;">${excusedText}</td>
+              <td class="px-0.5 py-1 text-center font-mono font-medium border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important;">${unexcusedText}</td>
+              <td class="px-0.5 py-1 text-center font-mono font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important;">${totalAbsText}</td>
             </tr>
           `;
         };
@@ -2614,20 +2614,20 @@ export const ScoresPage = {
 
         // 10. Two-Level Table Header Matching User Specification
         const theadHtml = `
-          <tr style="background-color: #0045ff !important; color: #ffffff !important; font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important; font-weight: bold !important; font-size: 8.5px !important;">
-            <th rowspan="2" class="px-0.5 py-1 text-center whitespace-nowrap" style="width: 6% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">ល.រ</th>
-            <th rowspan="2" class="px-0.5 py-1 text-center whitespace-nowrap" style="width: 9% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">អត្តលេខ</th>
-            <th rowspan="2" class="px-1 py-1 text-center whitespace-nowrap" style="width: 25% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">គោត្តនាម និងនាម</th>
-            <th rowspan="2" class="px-0.5 py-1 text-center whitespace-nowrap" style="width: 6% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">ភេទ</th>
-            <th rowspan="2" class="px-0.5 py-1 text-center whitespace-nowrap" style="width: 11% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">មធ្យមភាគ</th>
-            <th rowspan="2" class="px-0.5 py-1 text-center whitespace-nowrap" style="width: 9% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">ចំណាត់ថ្នាក់</th>
-            <th rowspan="2" class="px-0.5 py-1 text-center whitespace-nowrap" style="width: 8% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">និទ្ទេស</th>
-            <th colspan="3" class="px-1 py-0.5 text-center whitespace-nowrap" style="width: 26% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">អវត្តមាន</th>
+          <tr style="background-color: #0045ff !important; color: #ffffff !important; font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important; font-weight: bold !important; font-size: 7.5px !important; line-height: 1.25 !important;">
+            <th rowspan="2" class="text-center" style="width: 5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 2px 1px !important; vertical-align: middle !important;">ល.រ</th>
+            <th rowspan="2" class="text-center" style="width: 7.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 2px 1px !important; vertical-align: middle !important;">អត្តលេខ</th>
+            <th rowspan="2" class="text-center" style="width: 23.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 2px 1px !important; vertical-align: middle !important;">គោត្តនាម និងនាម</th>
+            <th rowspan="2" class="text-center" style="width: 5.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 2px 1px !important; vertical-align: middle !important;">ភេទ</th>
+            <th rowspan="2" class="text-center" style="width: 11% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 2px 1px !important; vertical-align: middle !important;">មធ្យម&#8203;ភាគ</th>
+            <th rowspan="2" class="text-center" style="width: 13% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 2px 1px !important; vertical-align: middle !important;">ចំណាត់&#8203;ថ្នាក់</th>
+            <th rowspan="2" class="text-center" style="width: 6.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 2px 1px !important; vertical-align: middle !important;">និទ្ទេស</th>
+            <th colspan="3" class="text-center" style="width: 28% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 2px 1px !important; vertical-align: middle !important;">អវត្តមាន</th>
           </tr>
-          <tr style="background-color: #0045ff !important; color: #ffffff !important; font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important; font-weight: bold !important; font-size: 8px !important;">
-            <th class="px-0.5 py-0.5 text-center whitespace-nowrap" style="width: 8% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">មានច្បាប់</th>
-            <th class="px-0.5 py-0.5 text-center whitespace-nowrap" style="width: 8% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">ឥតច្បាប់</th>
-            <th class="px-0.5 py-0.5 text-center whitespace-nowrap" style="width: 10% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">សរុប</th>
+          <tr style="background-color: #0045ff !important; color: #ffffff !important; font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important; font-weight: bold !important; font-size: 7px !important; line-height: 1.2 !important;">
+            <th class="text-center" style="width: 9.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1.5px 0.5px !important; vertical-align: middle !important;">មាន&#8203;ច្បាប់</th>
+            <th class="text-center" style="width: 9.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1.5px 0.5px !important; vertical-align: middle !important;">ឥត&#8203;ច្បាប់</th>
+            <th class="text-center" style="width: 9% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1.5px 0.5px !important; vertical-align: middle !important;">សរុប</th>
           </tr>
         `;
 
