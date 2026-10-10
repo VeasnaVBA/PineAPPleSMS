@@ -629,8 +629,8 @@ export const ScoresPage = {
           <col style="width: 52px; min-width: 52px; max-width: 52px;">
           <col style="width: 52px; min-width: 52px; max-width: 52px;">
         ` : (isAnnual ? `
-          <col style="width: 72px; min-width: 72px; max-width: 72px;">
-          <col style="width: 72px; min-width: 72px; max-width: 72px;">
+          <col style="width: 90px; min-width: 90px; max-width: 90px;">
+          <col style="width: 90px; min-width: 90px; max-width: 90px;">
         ` : this.state.subjects.map(() => `
           <col style="width: 46px; min-width: 46px; max-width: 46px;">
           ${showRank ? '<col style="width: 46px; min-width: 46px; max-width: 46px;">' : ''}
@@ -744,21 +744,17 @@ export const ScoresPage = {
       <th class="score-annual-th p-0 bg-sky-50/90 dark:bg-sky-950/40 text-sky-950 dark:text-sky-200 border-r border-border/40 select-none"
           style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;"
           title="${isKm ? 'មធ្យមភាគប្រចាំឆមាសទី១' : 'Semester 1 Average'}">
-        <div class="w-[72px] max-w-[72px] h-full min-h-[96px] mx-auto flex items-center justify-center py-1.5 relative bg-transparent">
-          <div class="score-vertical-title flex-col gap-0.5 font-khmer text-[11px] leading-tight text-sky-950 dark:text-sky-100 font-bold">
-            <span>${isKm ? 'មធ្យមភាគ' : 'Semester 1'}</span>
-            <span>${isKm ? 'ប្រចាំឆមាសទី១' : 'Average'}</span>
-          </div>
+        <div class="w-[90px] max-w-[90px] h-full min-h-[96px] mx-auto flex flex-col items-center justify-center text-center px-1 py-1.5 relative bg-transparent font-khmer text-[11px] font-bold leading-snug text-sky-950 dark:text-sky-100">
+          <span class="block whitespace-nowrap">${isKm ? 'មធ្យមភាគ' : 'Semester 1'}</span>
+          <span class="block whitespace-nowrap">${isKm ? 'ប្រចាំឆមាសទី១' : 'Average'}</span>
         </div>
       </th>
       <th class="score-annual-th p-0 bg-indigo-50/90 dark:bg-indigo-950/40 text-indigo-950 dark:text-indigo-200 border-r border-border/40 select-none"
           style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;"
           title="${isKm ? 'មធ្យមភាគប្រចាំឆមាសទី២' : 'Semester 2 Average'}">
-        <div class="w-[72px] max-w-[72px] h-full min-h-[96px] mx-auto flex items-center justify-center py-1.5 relative bg-transparent">
-          <div class="score-vertical-title flex-col gap-0.5 font-khmer text-[11px] leading-tight text-indigo-950 dark:text-indigo-100 font-bold">
-            <span>${isKm ? 'មធ្យមភាគ' : 'Semester 2'}</span>
-            <span>${isKm ? 'ប្រចាំឆមាសទី២' : 'Average'}</span>
-          </div>
+        <div class="w-[90px] max-w-[90px] h-full min-h-[96px] mx-auto flex flex-col items-center justify-center text-center px-1 py-1.5 relative bg-transparent font-khmer text-[11px] font-bold leading-snug text-indigo-950 dark:text-indigo-100">
+          <span class="block whitespace-nowrap">${isKm ? 'មធ្យមភាគ' : 'Semester 2'}</span>
+          <span class="block whitespace-nowrap">${isKm ? 'ប្រចាំឆមាសទី២' : 'Average'}</span>
         </div>
       </th>
     `;
@@ -1091,13 +1087,13 @@ export const ScoresPage = {
             `;
           }).join('') : (isAnnual ? `
             <td class="score-cell-td bg-sky-50/40 dark:bg-sky-950/20 p-0 text-center border-r border-b border-border/40 select-none cursor-default" data-row="${rIdx}" data-col="0">
-              <div class="w-[72px] max-w-[72px] h-full min-h-[34px] flex items-center justify-center font-mono font-bold text-sky-950 dark:text-sky-200 text-xs select-none py-1.5 px-1 truncate"
+              <div class="w-[90px] max-w-[90px] h-full min-h-[34px] flex items-center justify-center font-mono font-bold text-sky-950 dark:text-sky-200 text-xs select-none py-1.5 px-1 truncate"
                    title="${isKm ? 'ពិន្ទុមធ្យមភាគឆមាសទី១ (ទាញយកស្វ័យប្រវត្តិ)' : 'Semester 1 Average (Auto-calculated)'}">
                 ${sem1Display || '<span class="text-sky-900/40 dark:text-sky-300/40 font-normal">—</span>'}
               </div>
             </td>
             <td class="score-cell-td bg-indigo-50/40 dark:bg-indigo-950/20 p-0 text-center border-r border-b border-border/40 select-none cursor-default" data-row="${rIdx}" data-col="1">
-              <div class="w-[72px] max-w-[72px] h-full min-h-[34px] flex items-center justify-center font-mono font-bold text-indigo-950 dark:text-indigo-200 text-xs select-none py-1.5 px-1 truncate"
+              <div class="w-[90px] max-w-[90px] h-full min-h-[34px] flex items-center justify-center font-mono font-bold text-indigo-950 dark:text-indigo-200 text-xs select-none py-1.5 px-1 truncate"
                    title="${isKm ? 'ពិន្ទុមធ្យមភាគឆមាសទី២ (ទាញយកស្វ័យប្រវត្តិ)' : 'Semester 2 Average (Auto-calculated)'}">
                 ${sem2Display || '<span class="text-indigo-900/40 dark:text-indigo-300/40 font-normal">—</span>'}
               </div>
