@@ -19,16 +19,21 @@
  * - Instant Dynamic Calculations & Background Auto-Sync
  */
 
-import { ScoreService, EVALUATION_PERIODS } from '../services/scoreService.js';
+import { ScoreService, EVALUATION_PERIODS, isStudentActive } from '../services/scoreService.js';
 import { ClassService } from '../services/classService.js';
 import { SubjectService } from '../services/subjectService.js';
 import { SettingsService } from '../services/settingsService.js';
+import { SchoolService } from '../services/schoolService.js';
 import { authService } from '../services/authService.js';
+import { db } from '../database/db.js';
 import { Modal } from '../components/modal.js';
+import { ReportViewer } from '../components/reportViewer.js';
 import { toast } from '../components/toast.js';
 import { i18n, t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { syncStateManager } from '../services/syncStateManager.js';
+import { formatKhmerLunarDate } from '../utils/khmerLunar.js';
+import { formatDisplayDate, toKhmerNumerals, formatKhmerSolarDate } from '../utils/dateUtils.js';
 
 // Category Definitions matching Cambodian Primary / Secondary Score Sheets
 // Category Definitions matching Cambodian Primary / Secondary Score Sheets
@@ -197,6 +202,10 @@ export const ScoresPage = {
 
           <!-- Top Action Buttons -->
           <div class="flex items-center gap-2 flex-wrap justify-end">
+            <button id="btn-result-2row-table" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'តារាងលទ្ធផល ២ ជួរ' : '2 Row Table'}">
+              ${getIcon('table', 'w-3.5 h-3.5 text-primary')}
+              <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'តារាងលទ្ធផល' : '2 Row Table'}</span>
+            </button>
             <button id="btn-save-scores" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold shadow-xs hover:bg-primary/90 transition-all cursor-pointer">
               ${getIcon('check', 'w-3.5 h-3.5')}
               <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'រក្សាទុក' : 'Save'}</span>
@@ -297,6 +306,10 @@ export const ScoresPage = {
                 <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
               </button>
               <div id="dropdown-data-menu" class="hidden absolute left-0 top-full mt-1 w-48 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg z-50 py-1 text-xs font-khmer">
+                <button id="action-open-result-2row" type="button" class="w-full text-left px-3 py-2 hover:bg-muted flex items-center gap-2 cursor-pointer border-b border-border/40">
+                  ${getIcon('table', 'w-3.5 h-3.5 text-primary')}
+                  <span>${isKm ? 'តារាងលទ្ធផល (២ជួរ)' : '2 Row Table'}</span>
+                </button>
                 <button id="action-recalculate-all" type="button" class="w-full text-left px-3 py-2 hover:bg-muted flex items-center gap-2 cursor-pointer">
                   ${getIcon('refresh', 'w-3.5 h-3.5 text-primary')}
                   <span>${isKm ? 'គណនាពិន្ទុឡើងវិញ' : 'Recalculate All'}</span>
@@ -1489,6 +1502,15 @@ export const ScoresPage = {
       }
     });
 
+    // 2-Row Result Table Modal buttons
+    document.getElementById('btn-result-2row-table')?.addEventListener('click', () => {
+      this.openResultTable2RowModal();
+    });
+    document.getElementById('action-open-result-2row')?.addEventListener('click', () => {
+      document.getElementById('dropdown-data-menu')?.classList.add('hidden');
+      this.openResultTable2RowModal();
+    });
+
     // Print button
     document.getElementById('btn-print-scores')?.addEventListener('click', () => {
       window.print();
@@ -2064,6 +2086,665 @@ export const ScoresPage = {
           : `Saved coefficient (${newCoeff}) and recalculated averages successfully!`,
         isKm ? 'ជោគជ័យ' : 'Success'
       );
+    });
+  },
+
+  /**
+   * Open 2-Row / Dual-Column Score Result Table (តារាងលទ្ធផលប្រឡងប្រចាំខែ) in ReportViewer
+   * Layout matches Cambodian MoEYS dual-table standard:
+   * Columns: ល.រ | អត្តលេខ | គោត្តនាម និងនាម | ភេទ | មធ្យមភាគ | ចំណាត់ថ្នាក់ | និទ្ទេស | អវត្តមាន (មានច្បាប់ | ឥតច្បាប់ | សរុប)
+   * Students sorted by Rank #1 on top and subsequent ranks in ascending order.
+   */
+  async openResultTable2RowModal() {
+    const isKm = i18n.getLocale() === 'km';
+    const isTeacher = authService.isTeacher();
+    const teacherClassId = authService.getAssignedClassId();
+    const currentUser = authService.getCurrentUser();
+
+    let classes = [];
+    try {
+      classes = await ClassService.getAll();
+    } catch (_) {}
+    if (!classes || classes.length === 0) {
+      classes = this.state?.classes || [];
+    }
+
+    let academicYears = [];
+    try {
+      academicYears = await SettingsService.getAcademicYears() || [];
+    } catch (_) {}
+    if (!academicYears || academicYears.length === 0) {
+      academicYears = [{ id: 'ay-1', name: '2025–2026' }, { id: 'ay-2', name: '2024–2025' }];
+    }
+
+    let allSchools = [];
+    let schoolName = '';
+    let schoolProvince = 'សៀមរាប';
+
+    try {
+      allSchools = await SchoolService.getAllSchools();
+    } catch (_) {}
+    if (!allSchools || allSchools.length === 0) {
+      allSchools = [
+        { name: isKm ? 'សាលាបឋមសិក្សា វត្តបូព៌' : 'Wat Bo Primary School', province: 'សៀមរាប' },
+        { name: isKm ? 'អនុវិទ្យាល័យ ហ៊ុន សែន ស្វាយធំ' : 'Hun Sen Svay Thom Secondary School', province: 'សៀមរាប' }
+      ];
+    }
+
+    const defaultSchoolName = currentUser?.school || (allSchools[0]?.name) || (isKm ? 'សាលាបឋមសិក្សា វត្តបូព៌' : 'Wat Bo Primary School');
+    const matchedSchool = allSchools.find(s => s.name === defaultSchoolName);
+    schoolName = defaultSchoolName;
+    schoolProvince = matchedSchool?.province || currentUser?.province || 'សៀមរាប';
+
+    let selectedClassId = this.state.selectedClassId || (isTeacher ? (teacherClassId || classes[0]?.id) : (classes[0]?.id || ''));
+    let selectedYear = this.state.activeYear || (typeof academicYears[0] === 'string' ? academicYears[0] : (academicYears[0]?.name || '2024–2025'));
+    let selectedPeriod = this.state.selectedPeriod || 'October';
+    let selectedReportDate = new Date();
+    let currentClassName = '';
+
+    const periods = ScoreService.getEvaluationPeriods();
+    const months = periods.filter(p => p.group === 'month');
+    const exams = periods.filter(p => p.group === 'exam');
+
+    const escapeHtml = (str) => String(str ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+
+    const getPeriodDisplayName = (pId) => {
+      const pObj = periods.find(p => p.id === pId);
+      if (pObj) return isKm ? pObj.nameKm : pObj.nameEn;
+      return pId;
+    };
+
+    await ReportViewer.open({
+      reportKey: 'score_result_table_2row',
+      title: isKm ? 'តារាងលទ្ធផលប្រឡងប្រចាំខែ' : '2-Row Result Table',
+      alwaysFresh: true,
+      defaultOrientation: 'portrait',
+      defaultPaperSize: 'A4',
+      defaultMargins: { top: 8, bottom: 8, left: 8, right: 8 },
+      defaultFontFamily: 'Khmer OS Siemreap',
+      defaultFontSize: 8.5,
+      renderHeaderControls: (controlsContainer, viewer) => {
+        const schoolOptsHtml = (allSchools || []).map(s => {
+          const isSel = s.name === schoolName;
+          return `<option value="${escapeHtml(s.name)}" ${isSel ? 'selected' : ''}>${escapeHtml(s.name)}</option>`;
+        }).join('');
+
+        const classOptionsHtml = isTeacher && teacherClassId
+          ? `<option value="${selectedClassId}">${escapeHtml(classes.find(c => String(c.id).trim() === String(selectedClassId).trim())?.name || selectedClassId)}</option>`
+          : classes.map(c => `<option value="${c.id}" ${c.id === selectedClassId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('');
+
+        controlsContainer.className = 'flex items-center gap-2 sm:gap-3 flex-wrap font-khmer';
+        controlsContainer.innerHTML = `
+          <!-- School Filter -->
+          <div class="flex items-center gap-1.5 text-xs font-khmer">
+            <span class="text-muted-foreground whitespace-nowrap">${isKm ? 'សាលារៀន:' : 'School:'}</span>
+            <select id="rv-result-filter-school" class="h-8 py-0 leading-[30px] px-2.5 rounded-md border border-input bg-card text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary shadow-xs truncate max-w-[150px] sm:max-w-[180px] cursor-pointer box-border">
+              ${schoolOptsHtml || `<option value="${escapeHtml(schoolName)}">${escapeHtml(schoolName || 'វិទ្យាល័យ')}</option>`}
+            </select>
+          </div>
+
+          <!-- Class Filter -->
+          <div class="flex items-center gap-1.5 text-xs font-khmer">
+            <span class="text-muted-foreground whitespace-nowrap">${isKm ? 'ថ្នាក់រៀន:' : 'Class:'}</span>
+            <select id="rv-result-filter-class" class="h-8 py-0 leading-[30px] px-2.5 rounded-md border border-input bg-card text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary shadow-xs truncate cursor-pointer box-border">
+              ${classOptionsHtml}
+            </select>
+          </div>
+
+          <!-- Academic Year Trigger & Popover -->
+          <div class="flex items-center gap-1.5 text-xs font-khmer">
+            <span class="text-muted-foreground whitespace-nowrap">${isKm ? 'ឆ្នាំសិក្សា:' : 'Year:'}</span>
+            <div id="rv-result-year-group" class="relative">
+              <button type="button" 
+                      id="rv-btn-result-year-trigger" 
+                      class="h-8 py-0 leading-[30px] px-2.5 rounded-md border border-input bg-card hover:bg-muted text-xs font-medium text-foreground transition-colors flex items-center justify-between gap-1.5 shadow-xs cursor-pointer min-w-[110px] max-w-[160px] box-border" 
+                      title="${isKm ? 'ជ្រើសរើស ឬបន្ថែមឆ្នាំសិក្សា' : 'Select Academic Year'}">
+                <span id="rv-result-year-text" class="truncate">${selectedYear}</span>
+                ${getIcon('chevronDown', 'w-3.5 h-3.5 text-muted-foreground flex-shrink-0 transition-transform duration-150 rv-result-year-chevron')}
+              </button>
+              <div id="rv-popover-result-year-menu" class="hidden absolute top-9 left-0 z-50 w-72 p-2.5 bg-card text-card-foreground border border-border rounded-xl shadow-xl space-y-2 font-khmer select-none box-border animate-slide-down">
+                <div class="flex items-center gap-1.5 border-b border-border pb-1.5 w-full box-border">
+                  <input type="text" id="rv-input-result-new-year" placeholder="${isKm ? 'បញ្ចូលឆ្នាំថ្មី... (2025–2026)' : 'New year (2025–2026)...'}" class="flex-1 min-w-0 h-8 px-2.5 bg-background border border-input rounded text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary box-border" />
+                  <button type="button" id="rv-btn-result-add-year" class="h-8 px-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold flex items-center gap-1 shadow-xs transition-colors flex-shrink-0 cursor-pointer whitespace-nowrap">${getIcon('plus', 'w-3.5 h-3.5')}<span>${isKm ? 'បន្ថែម' : 'Add'}</span></button>
+                </div>
+                <div class="max-h-48 overflow-y-auto divide-y divide-border/20 rounded-md border border-border/40 bg-background/50 p-0.5 space-y-0.5" id="rv-result-year-list"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Evaluation Period Selector -->
+          <div class="flex items-center gap-1.5 text-xs font-khmer">
+            <span class="text-muted-foreground whitespace-nowrap">${isKm ? 'ប្រចាំខែ:' : 'Period:'}</span>
+            <select id="rv-result-filter-period" class="h-8 py-0 leading-[30px] px-2.5 rounded-md border border-input bg-card text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary shadow-xs cursor-pointer box-border">
+              <optgroup label="${isKm ? 'ខែសិក្សា' : 'Months'}">
+                ${months.map(m => `<option value="${m.id}" ${m.id === selectedPeriod ? 'selected' : ''}>${isKm ? m.nameKm : m.nameEn}</option>`).join('')}
+              </optgroup>
+              <optgroup label="${isKm ? 'ការប្រឡង និងឆមាស' : 'Exams'}">
+                ${exams.map(e => `<option value="${e.id}" ${e.id === selectedPeriod ? 'selected' : ''}>${isKm ? e.nameKm : e.nameEn}</option>`).join('')}
+              </optgroup>
+            </select>
+          </div>
+
+          <!-- Date Picker Popover -->
+          <div class="flex items-center gap-1.5 text-xs font-khmer">
+            <span class="text-muted-foreground whitespace-nowrap">${isKm ? 'កាលបរិច្ឆេទ:' : 'Date:'}</span>
+            <div id="rv-result-date-container" class="relative">
+              <button type="button" 
+                      id="rv-result-btn-date-trigger" 
+                      class="h-8 py-0 leading-[30px] px-2.5 rounded-md border border-input bg-card hover:bg-muted text-xs font-medium text-foreground transition-colors flex items-center justify-between gap-1.5 shadow-xs cursor-pointer min-w-[125px] max-w-[170px] box-border" 
+                      title="${isKm ? 'ជ្រើសរើសកាលបរិច្ឆេទ (ចន្ទគតិ & សុរិយគតិ)' : 'Select Date'}">
+                <span class="flex items-center gap-1.5 truncate">
+                  ${getIcon('calendar', 'w-3.5 h-3.5 text-primary flex-shrink-0')}
+                  <span id="rv-result-date-trigger-text" class="truncate">${toKhmerNumerals(formatDisplayDate(selectedReportDate.toISOString().split('T')[0]))}</span>
+                </span>
+                ${getIcon('chevronDown', 'w-3.5 h-3.5 text-muted-foreground flex-shrink-0 transition-transform duration-150 rv-result-date-chevron')}
+              </button>
+
+              <div id="rv-result-popover-date-menu" 
+                   class="hidden absolute right-0 top-[calc(100%+4px)] z-[80] w-80 p-3 bg-card text-card-foreground border border-border rounded-xl shadow-xl space-y-3 font-khmer select-none animate-slide-down box-border">
+                <div class="flex items-center justify-between border-b border-border/50 pb-2">
+                  <span class="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                    ${getIcon('calendar', 'w-4 h-4 text-primary')}
+                    <span>${isKm ? 'ជ្រើសរើសកាលបរិច្ឆេទ' : 'Select Date'}</span>
+                  </span>
+                  <button type="button" 
+                          id="rv-result-btn-date-today" 
+                          class="px-2 py-0.5 rounded text-[11px] font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer">
+                    ${isKm ? 'ថ្ងៃនេះ' : 'Today'}
+                  </button>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="text-[11px] text-muted-foreground">${isKm ? 'កាលបរិច្ឆេទសុរិយគតិ:' : 'Solar Date:'}</label>
+                  <input type="date" 
+                         id="rv-result-input-report-date" 
+                         value="${selectedReportDate.toISOString().split('T')[0]}"
+                         class="w-full h-8 px-2.5 rounded-md border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary box-border cursor-pointer" />
+                </div>
+
+                <div class="space-y-2 pt-1">
+                  <div class="p-2.5 rounded-lg border border-primary/20 bg-primary/5 space-y-1">
+                    <div class="flex items-center justify-between text-[11px] text-primary font-semibold">
+                      <span>${isKm ? 'ចន្ទគតិ' : 'Khmer Lunar Date'}</span>
+                      ${getIcon('moon', 'w-3.5 h-3.5')}
+                    </div>
+                    <p id="rv-result-preview-lunar-text" class="text-xs text-foreground font-medium break-words leading-relaxed">
+                      ${formatKhmerLunarDate(selectedReportDate)}
+                    </p>
+                  </div>
+                  <div class="p-2.5 rounded-lg border border-border/60 bg-muted/30 space-y-1">
+                    <div class="flex items-center justify-between text-[11px] text-muted-foreground font-semibold">
+                      <span>${isKm ? 'សុរិយគតិ' : 'Khmer Solar Date'}</span>
+                      ${getIcon('sun', 'w-3.5 h-3.5')}
+                    </div>
+                    <p id="rv-result-preview-solar-text" class="text-xs text-foreground font-medium break-words leading-relaxed">
+                      ${schoolName ? `${schoolName}, ` : ''}${formatKhmerSolarDate(selectedReportDate)}
+                    </p>
+                  </div>
+                </div>
+
+                <button type="button" 
+                        id="rv-result-btn-date-apply" 
+                        class="w-full h-8 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold flex items-center justify-center gap-1 shadow-xs transition-colors cursor-pointer">
+                  ${getIcon('check', 'w-3.5 h-3.5')}
+                  <span>${isKm ? 'យល់ព្រម (Apply)' : 'Apply'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Export Excel Button -->
+          <button type="button" 
+                  id="rv-btn-result-export-excel" 
+                  class="h-8 py-0 leading-[30px] px-3 rounded-md border border-input bg-card hover:bg-muted text-emerald-600 dark:text-emerald-400 text-xs font-medium transition-colors flex items-center gap-1.5 font-khmer shadow-xs cursor-pointer select-none box-border"
+                  title="${isKm ? 'ទាញយកតារាងលទ្ធផលជា Excel' : 'Export Result Table to Excel'}">
+            ${getIcon('fileSpreadsheet', 'w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400')}
+            <span>Excel</span>
+          </button>
+        `;
+
+        // School select binding
+        const schoolSelect = controlsContainer.querySelector('#rv-result-filter-school');
+        schoolSelect?.addEventListener('change', async (e) => {
+          schoolName = e.target.value;
+          const matched = allSchools.find(s => s.name === schoolName);
+          if (matched && matched.province) {
+            schoolProvince = matched.province;
+          }
+          if (viewer) await viewer.refreshContent(false);
+        });
+
+        // Class select binding
+        const classSelect = controlsContainer.querySelector('#rv-result-filter-class');
+        classSelect?.addEventListener('change', async (e) => {
+          selectedClassId = e.target.value;
+          if (viewer) await viewer.refreshContent(false);
+        });
+
+        // Period select binding
+        const periodSelect = controlsContainer.querySelector('#rv-result-filter-period');
+        periodSelect?.addEventListener('change', async (e) => {
+          selectedPeriod = e.target.value;
+          if (viewer) await viewer.refreshContent(false);
+        });
+
+        // Academic Year Popover
+        const yearTriggerBtn = controlsContainer.querySelector('#rv-btn-result-year-trigger');
+        const yearTriggerText = controlsContainer.querySelector('#rv-result-year-text');
+        const yearChevron = controlsContainer.querySelector('.rv-result-year-chevron');
+        const yearMenu = controlsContainer.querySelector('#rv-popover-result-year-menu');
+        const yearListEl = controlsContainer.querySelector('#rv-result-year-list');
+        const yearInputEl = controlsContainer.querySelector('#rv-input-result-new-year');
+        const yearAddBtn = controlsContainer.querySelector('#rv-btn-result-add-year');
+
+        const renderYearList = () => {
+          if (!yearListEl) return;
+          yearListEl.innerHTML = academicYears.map(y => {
+            const yName = typeof y === 'string' ? y : (y.name || y.id || '');
+            const isSelected = String(selectedYear).trim().toLowerCase() === String(yName).trim().toLowerCase();
+            return `
+              <div class="rv-year-item flex items-center justify-between px-2.5 py-1.5 rounded hover:bg-accent text-xs group cursor-pointer transition-colors ${isSelected ? 'bg-primary/10 text-primary font-semibold' : 'text-foreground'}" data-year="${escapeHtml(yName)}">
+                <span class="truncate flex-1">${escapeHtml(yName)}</span>
+              </div>
+            `;
+          }).join('');
+        };
+        renderYearList();
+
+        yearTriggerBtn?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isHidden = yearMenu?.classList.contains('hidden');
+          if (isHidden) {
+            yearMenu?.classList.remove('hidden');
+            yearChevron?.classList.add('rotate-180');
+          } else {
+            yearMenu?.classList.add('hidden');
+            yearChevron?.classList.remove('rotate-180');
+          }
+        });
+
+        yearListEl?.addEventListener('click', async (e) => {
+          const item = e.target.closest('.rv-year-item');
+          if (item && item.dataset.year) {
+            selectedYear = item.dataset.year;
+            if (yearTriggerText) yearTriggerText.textContent = selectedYear;
+            yearMenu?.classList.add('hidden');
+            yearChevron?.classList.remove('rotate-180');
+            renderYearList();
+            if (viewer) await viewer.refreshContent(false);
+          }
+        });
+
+        yearAddBtn?.addEventListener('click', async () => {
+          const val = (yearInputEl?.value || '').trim();
+          if (!val) return;
+          try {
+            const created = await SettingsService.createAcademicYear({ name: val });
+            academicYears = await SettingsService.getAcademicYears() || [];
+            selectedYear = created?.name || val;
+            if (yearInputEl) yearInputEl.value = '';
+            if (yearTriggerText) yearTriggerText.textContent = selectedYear;
+            renderYearList();
+            yearMenu?.classList.add('hidden');
+            yearChevron?.classList.remove('rotate-180');
+            if (viewer) await viewer.refreshContent(false);
+            toast.success(isKm ? 'បានបន្ថែមឆ្នាំសិក្សាដោយជោគជ័យ' : 'Academic year added');
+          } catch (err) {
+            toast.error(err.message || String(err));
+          }
+        });
+
+        // Date Picker Popover
+        const dateBtn = controlsContainer.querySelector('#rv-result-btn-date-trigger');
+        const dateMenu = controlsContainer.querySelector('#rv-result-popover-date-menu');
+        const dateChevron = controlsContainer.querySelector('.rv-result-date-chevron');
+        const dateInput = controlsContainer.querySelector('#rv-result-input-report-date');
+        const dateText = controlsContainer.querySelector('#rv-result-date-trigger-text');
+        const previewLunar = controlsContainer.querySelector('#rv-result-preview-lunar-text');
+        const previewSolar = controlsContainer.querySelector('#rv-result-preview-solar-text');
+        const todayBtn = controlsContainer.querySelector('#rv-result-btn-date-today');
+        const applyBtn = controlsContainer.querySelector('#rv-result-btn-date-apply');
+
+        const updateDateDisplay = (d) => {
+          if (!d) return;
+          if (dateText) dateText.textContent = toKhmerNumerals(formatDisplayDate(d.toISOString().split('T')[0]));
+          if (previewLunar) previewLunar.textContent = formatKhmerLunarDate(d);
+          if (previewSolar) previewSolar.textContent = `${schoolName ? `${schoolName}, ` : ''}${formatKhmerSolarDate(d)}`;
+          if (dateInput) dateInput.value = d.toISOString().split('T')[0];
+        };
+
+        dateBtn?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isHidden = dateMenu?.classList.contains('hidden');
+          if (isHidden) {
+            dateMenu?.classList.remove('hidden');
+            dateChevron?.classList.add('rotate-180');
+          } else {
+            dateMenu?.classList.add('hidden');
+            dateChevron?.classList.remove('rotate-180');
+          }
+        });
+
+        dateInput?.addEventListener('change', (e) => {
+          const val = e.target.value;
+          if (val) {
+            selectedReportDate = new Date(val);
+            updateDateDisplay(selectedReportDate);
+          }
+        });
+
+        todayBtn?.addEventListener('click', () => {
+          selectedReportDate = new Date();
+          updateDateDisplay(selectedReportDate);
+        });
+
+        applyBtn?.addEventListener('click', async () => {
+          dateMenu?.classList.add('hidden');
+          dateChevron?.classList.remove('rotate-180');
+          const docLunar = viewer?.overlay?.querySelector('#score-result-lunar-date');
+          const docSolar = viewer?.overlay?.querySelector('#score-result-solar-date');
+          if (docLunar) docLunar.textContent = formatKhmerLunarDate(selectedReportDate);
+          if (docSolar) docSolar.textContent = `${schoolName ? `${schoolName}, ` : ''}${formatKhmerSolarDate(selectedReportDate)}`;
+          viewer?.saveStateForUndo?.();
+          toast.success(isKm ? 'បានកំណត់កាលបរិច្ឆេទដោយជោគជ័យ' : 'Date applied successfully');
+        });
+
+        // Click outside dismiss
+        document.addEventListener('click', (e) => {
+          if (!controlsContainer.contains(e.target)) {
+            yearMenu?.classList.add('hidden');
+            yearChevron?.classList.remove('rotate-180');
+            dateMenu?.classList.add('hidden');
+            dateChevron?.classList.remove('rotate-180');
+          }
+        });
+      },
+      renderContent: async (contentContainer, viewer) => {
+        contentContainer.innerHTML = `
+          <div class="py-12 flex items-center justify-center gap-2 text-muted-foreground text-xs font-khmer">
+            <div class="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+            <span>${isKm ? 'កំពុងទាញយកទិន្នន័យពិន្ទុ និងអវត្តមាន...' : 'Loading score data...'}</span>
+          </div>
+        `;
+
+        // 1. Fetch Class Details
+        const foundClass = classes.find(c => String(c.id).trim() === String(selectedClassId).trim());
+        currentClassName = foundClass ? (foundClass.name || foundClass.grade || '—') : (selectedClassId || '—');
+
+        // 2. Fetch Master Score Sheet Data
+        const scoreData = await ScoreService.getMasterScoreSheet({
+          classId: selectedClassId,
+          academicYear: selectedYear,
+          period: selectedPeriod
+        });
+
+        // 3. Filter Active Students Only (Excludes Inactive & Dropout Students)
+        let activeRows = (scoreData.rows || []).filter(isStudentActive);
+
+        // 4. Ensure Student Ranks are calculated
+        ScoreService.rankStudents(activeRows);
+
+        // 5. SORT BY RANK ASCENDING: Rank #1 is at top, then next rank in ascending order
+        activeRows.sort((a, b) => {
+          const rA = Number(a.rank) || 9999;
+          const rB = Number(b.rank) || 9999;
+          if (rA !== rB) return rA - rB;
+          const tA = Number(a.total) || 0;
+          const tB = Number(b.total) || 0;
+          if (tA !== tB) return tB - tA;
+          return (a.khmerFullName || '').localeCompare(b.khmerFullName || '', 'km');
+        });
+
+        // 6. Fetch Attendance Records to Compute Absences (អវត្តមាន: មានច្បាប់, ឥតច្បាប់, សរុប)
+        let allAtt = [];
+        try {
+          allAtt = await db.getAll('attendance');
+        } catch (_) {}
+
+        const MONTH_NUM_MAP = {
+          'January': 1, 'February': 2, 'March': 3, 'April': 4,
+          'May': 5, 'June': 6, 'July': 7, 'August': 8,
+          'September': 9, 'October': 10, 'November': 11, 'December': 12
+        };
+        const targetMonthNum = MONTH_NUM_MAP[selectedPeriod];
+
+        const attMap = new Map();
+        allAtt.forEach(att => {
+          if (att.classId !== selectedClassId) return;
+          if (targetMonthNum) {
+            if (!att.date) return;
+            const d = new Date(att.date);
+            if (d.getMonth() + 1 !== targetMonthNum) return;
+          }
+          const current = attMap.get(att.studentId) || { excused: 0, unexcused: 0, total: 0 };
+          const st = String(att.status || '').trim();
+          if (st === 'Excused' || st === 'មានច្បាប់') {
+            current.excused++;
+            current.total++;
+          } else if (st === 'Absent' || st === 'ឥតច្បាប់') {
+            current.unexcused++;
+            current.total++;
+          }
+          attMap.set(att.studentId, current);
+        });
+
+        // 7. Bind Excel Export Handler for Header Controls
+        const btnExcel = viewer?.overlay?.querySelector('#rv-btn-result-export-excel');
+        if (btnExcel) {
+          btnExcel.onclick = async () => {
+            const exportHeaders = ['ល.រ', 'អត្តលេខ', 'គោត្តនាម និងនាម', 'ភេទ', 'មធ្យមភាគ', 'ចំណាត់ថ្នាក់', 'និទ្ទេស', 'អវត្តមានមានច្បាប់', 'អវត្តមានឥតច្បាប់', 'អវត្តមានសរុប'];
+            const exportData = activeRows.map((r, idx) => {
+              const att = attMap.get(r.studentId) || { excused: 0, unexcused: 0, total: 0 };
+              return [
+                idx + 1,
+                r.studentNumber || r.studentId || '',
+                r.khmerFullName || `${r.lastNameKh || ''} ${r.firstNameKh || ''}`.trim() || '',
+                (r.gender === 'Female' || r.gender === 'ស្រី') ? 'ស្រី' : 'ប្រុស',
+                Number(r.average || 0).toFixed(2),
+                r.rank || (idx + 1),
+                r.grade || '',
+                att.excused || 0,
+                att.unexcused || 0,
+                att.total || 0
+              ];
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet([
+              [`តារាងលទ្ធផលប្រឡងប្រចាំខែ ${getPeriodDisplayName(selectedPeriod)}`],
+              [`សាលារៀន: ${schoolName} / ${schoolProvince}`],
+              [`ថ្នាក់ទី: ${currentClassName} | ឆ្នាំសិក្សា: ${selectedYear}`],
+              [],
+              exportHeaders,
+              ...exportData
+            ]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, isKm ? 'តារាងលទ្ធផល' : 'Result Table');
+            XLSX.writeFile(wb, `Result_Table_${currentClassName}_${selectedPeriod}.xlsx`);
+            toast.success(isKm ? 'បានទាញយក Excel ដោយជោគជ័យ' : 'Excel exported successfully');
+          };
+        }
+
+        // 8. Row HTML Builder (Columns: ល.រ, អត្តលេខ, គោត្តនាម និងនាម, ភេទ, មធ្យមភាគ, ចំណាត់ថ្នាក់, និទ្ទេស, មានច្បាប់, ឥតច្បាប់, សរុប)
+        const buildRow = (r, idx) => {
+          const khmerNum = toKhmerNumerals(idx + 1);
+          const studentCode = r.studentNumber || r.studentId || '';
+          const fullName = r.khmerFullName || `${r.lastNameKh || ''} ${r.firstNameKh || ''}`.trim() || '—';
+          const isFemale = r.gender === 'Female' || r.gender === 'ស្រី';
+          const genderText = isFemale ? 'ស្រី' : 'ប្រុស';
+          const avgNum = typeof r.average === 'number' ? r.average : Number(r.average || 0);
+          const avgText = toKhmerNumerals(avgNum.toFixed(2));
+          const rankText = toKhmerNumerals(r.rank || (idx + 1));
+          const gradeText = r.grade || '—';
+          const att = attMap.get(r.studentId) || { excused: 0, unexcused: 0, total: 0 };
+          const excusedText = att.excused > 0 ? toKhmerNumerals(att.excused) : '';
+          const unexcusedText = att.unexcused > 0 ? toKhmerNumerals(att.unexcused) : '';
+          const totalAbsText = att.total > 0 ? toKhmerNumerals(att.total) : '';
+
+          return `
+            <tr class="score-sheet-row hover:bg-muted/30 border-b border-border/50 text-[8.5px]" data-student-id="${r.studentId}">
+              <td class="px-0.5 py-1 text-center font-khmer font-medium border border-black select-none whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${khmerNum}</td>
+              <td class="px-0.5 py-1 text-center font-mono border border-black select-none whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${studentCode}</td>
+              <td class="px-1 py-1 text-left font-khmer border border-black truncate" style="border: 1px solid #000000 !important; padding: 2.5px 3px !important;" title="${fullName}">${fullName}</td>
+              <td class="px-0.5 py-1 text-center font-khmer border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${genderText}</td>
+              <td class="px-0.5 py-1 text-center font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${avgText}</td>
+              <td class="px-0.5 py-1 text-center font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${rankText}</td>
+              <td class="px-0.5 py-1 text-center font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${gradeText}</td>
+              <td class="px-0.5 py-1 text-center font-medium border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${excusedText}</td>
+              <td class="px-0.5 py-1 text-center font-medium border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${unexcusedText}</td>
+              <td class="px-0.5 py-1 text-center font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important;">${totalAbsText}</td>
+            </tr>
+          `;
+        };
+
+        // 9. Split into Dual Columns (Left Table & Right Table side-by-side)
+        const halfCount = Math.max(1, Math.ceil(activeRows.length / 2));
+        const leftStudents = activeRows.slice(0, halfCount);
+        const rightStudents = activeRows.slice(halfCount);
+
+        const leftRowsHtml = leftStudents.length === 0 ? `
+          <tr class="border-b border-border/50">
+            <td colspan="10" class="py-6 text-center text-muted-foreground italic border border-black text-[9px]" style="border: 1px solid #000000 !important; padding: 6px !important;">
+              ${isKm ? 'គ្មានទិន្នន័យសិស្សទេ' : 'No student data'}
+            </td>
+          </tr>
+        ` : leftStudents.map((r, idx) => buildRow(r, idx)).join('');
+
+        const rightRowsHtml = rightStudents.map((r, idx) => buildRow(r, halfCount + idx)).join('');
+
+        // 10. Two-Level Table Header Matching User Specification
+        const theadHtml = `
+          <tr style="background-color: #0045ff !important; color: #ffffff !important; font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important; font-weight: bold !important; font-size: 8.5px !important;">
+            <th rowspan="2" class="px-0.5 py-1 text-center whitespace-nowrap" style="width: 6% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">ល.រ</th>
+            <th rowspan="2" class="px-0.5 py-1 text-center whitespace-nowrap" style="width: 9% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">អត្តលេខ</th>
+            <th rowspan="2" class="px-1 py-1 text-center whitespace-nowrap" style="width: 25% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">គោត្តនាម និងនាម</th>
+            <th rowspan="2" class="px-0.5 py-1 text-center whitespace-nowrap" style="width: 6% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">ភេទ</th>
+            <th rowspan="2" class="px-0.5 py-1 text-center whitespace-nowrap" style="width: 11% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">មធ្យមភាគ</th>
+            <th rowspan="2" class="px-0.5 py-1 text-center whitespace-nowrap" style="width: 9% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">ចំណាត់ថ្នាក់</th>
+            <th rowspan="2" class="px-0.5 py-1 text-center whitespace-nowrap" style="width: 8% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">និទ្ទេស</th>
+            <th colspan="3" class="px-1 py-0.5 text-center whitespace-nowrap" style="width: 26% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">អវត្តមាន</th>
+          </tr>
+          <tr style="background-color: #0045ff !important; color: #ffffff !important; font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important; font-weight: bold !important; font-size: 8px !important;">
+            <th class="px-0.5 py-0.5 text-center whitespace-nowrap" style="width: 8% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">មានច្បាប់</th>
+            <th class="px-0.5 py-0.5 text-center whitespace-nowrap" style="width: 8% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">ឥតច្បាប់</th>
+            <th class="px-0.5 py-0.5 text-center whitespace-nowrap" style="width: 10% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important;">សរុប</th>
+          </tr>
+        `;
+
+        // 11. Merge into saved template if exists
+        if (viewer && (viewer.savedHtmlContent || viewer.savedHtml)) {
+          try {
+            const staging = document.createElement('div');
+            staging.innerHTML = viewer.savedHtmlContent || viewer.savedHtml;
+
+            const leftTable = staging.querySelector('#score-result-left-table');
+            const rightTable = staging.querySelector('#score-result-right-table');
+
+            if (leftTable && rightTable) {
+              const leftThead = leftTable.querySelector('thead');
+              if (leftThead) leftThead.innerHTML = theadHtml;
+              const rightThead = rightTable.querySelector('thead');
+              if (rightThead) rightThead.innerHTML = theadHtml;
+
+              const leftTbody = leftTable.querySelector('tbody');
+              const rightTbody = rightTable.querySelector('tbody');
+              if (leftTbody) leftTbody.innerHTML = leftRowsHtml;
+              if (rightTbody) rightTbody.innerHTML = rightRowsHtml;
+
+              const periodLabel = staging.querySelector('#score-result-period-label');
+              if (periodLabel) periodLabel.textContent = getPeriodDisplayName(selectedPeriod);
+              const classLabel = staging.querySelector('#score-result-class-label');
+              if (classLabel) classLabel.textContent = currentClassName;
+              const yearLabel = staging.querySelector('#score-result-year-label');
+              if (yearLabel) yearLabel.textContent = selectedYear;
+
+              contentContainer.innerHTML = staging.innerHTML;
+              return;
+            }
+          } catch (e) {
+            console.warn('Error merging saved result template:', e);
+          }
+        }
+
+        // 12. Full Paper Sheet Document Layout
+        contentContainer.innerHTML = `
+          <div class="moeys-report-document score-sheet-container max-w-full mx-auto space-y-2 text-[9px]" style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 9px !important; box-sizing: border-box !important; width: 100% !important;">
+            <!-- Top Header Section -->
+            <div class="flex items-start justify-between font-khmer select-none leading-tight text-[10px]" style="font-size: 10px !important;">
+              <!-- Top Left: School Name -->
+              <div class="text-left space-y-0.5">
+                <p class="font-khmer-muol" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif; font-size: 10px !important; letter-spacing: normal !important; line-height: 1.8;"><span class="report-nudge-box" style="display: inline-block; position: relative; left: 0px; top: 15px;">${schoolName}</span></p>
+              </div>
+
+              <!-- Top Right: Royal Motto -->
+              <div class="text-center space-y-0.5">
+                <p class="font-khmer-muol" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif; font-size: 10px !important; letter-spacing: normal !important; line-height: 1.8;">ព្រះរាជាណាចក្រកម្ពុជា</p>
+                <p class="font-khmer-muol" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif; font-size: 10px !important; letter-spacing: normal !important; line-height: 1.8;">ជាតិ សាសនា ព្រះមហាក្សត្រ</p>
+                <div class="flex justify-center text-muted-foreground font-serif pt-0.5" style="font-size: 9px !important;">~ ~ ~ 🙞 🙞 🙞 ~ ~ ~</div>
+              </div>
+            </div>
+
+            <!-- Center Title Section -->
+            <div class="text-center space-y-1 pt-1 pb-1 font-khmer text-[10px]">
+              <h2 class="font-khmer-muol text-foreground" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif; font-size: 12px !important; letter-spacing: normal !important; line-height: 1.8; text-decoration: none !important;">
+                តារាងលទ្ធផលប្រឡងប្រចាំខែ <span id="score-result-period-label">${getPeriodDisplayName(selectedPeriod)}</span>
+              </h2>
+              
+              <!-- Meta Row: Class & Academic Year -->
+              <div class="flex items-center justify-center flex-wrap gap-x-6 gap-y-1 text-[9.5px] font-khmer text-foreground pt-0.5" style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif;">
+                <div class="whitespace-nowrap">
+                  <span>ថ្នាក់ទី៖ </span>
+                  <span id="score-result-class-label" class="font-bold">${currentClassName}</span>
+                </div>
+                <div class="whitespace-nowrap">
+                  <span>ឆ្នាំសិក្សា៖ </span>
+                  <span id="score-result-year-label" class="font-bold">${selectedYear}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dual-Column Side-by-Side Table Layout -->
+            <div class="score-sheet-dual-grid grid grid-cols-2 gap-2 w-full max-w-full box-border">
+              <!-- Left Table (Column 1) -->
+              <div class="w-full max-w-full min-w-0 box-border">
+                <table id="score-result-left-table" class="score-sheet-table score-result-2row-table moeys-table border-collapse text-[8.5px]" style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 8.5px !important; width: 100% !important; table-layout: fixed !important; border: 1px solid #000000 !important;">
+                  <thead>${theadHtml}</thead>
+                  <tbody style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 8.5px !important;">${leftRowsHtml}</tbody>
+                </table>
+              </div>
+
+              <!-- Right Table (Column 2) -->
+              <div class="w-full max-w-full min-w-0 box-border">
+                <table id="score-result-right-table" class="score-sheet-table score-result-2row-table moeys-table border-collapse text-[8.5px]" style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 8.5px !important; width: 100% !important; table-layout: fixed !important; border: 1px solid #000000 !important;">
+                  <thead>${theadHtml}</thead>
+                  <tbody style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 8.5px !important;">${rightRowsHtml}</tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Footer Signatures & Date Block -->
+            <div class="mt-5 pt-2 grid grid-cols-2 gap-8 font-khmer text-[9.5px] text-center select-none" style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 9.5px !important;">
+              <!-- Bottom Left: Principal Approval -->
+              <div class="flex flex-col items-center justify-between min-h-[95px]" style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 9.5px !important;">
+                <div class="space-y-1" style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 9.5px !important;">
+                  <p class="font-normal" style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 9.5px !important; color: #000000 !important;">បានឃើញ និងឯកភាព</p>
+                  <p class="font-khmer-muol" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif; font-size: 9.5px !important; line-height: 1.8; color: #000000 !important;">នាយក</p>
+                </div>
+                <div class="h-10 w-36 mx-auto"></div>
+              </div>
+
+              <!-- Bottom Right: Class Teacher Signature -->
+              <div class="flex flex-col items-center justify-between min-h-[95px]" style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 9.5px !important;">
+                <div class="space-y-0.5" style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 9.5px !important;">
+                  <p id="score-result-lunar-date" class="font-normal text-foreground text-[9.5px]" style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 9.5px !important; color: #000000 !important;">${formatKhmerLunarDate(selectedReportDate)}</p>
+                  <p id="score-result-solar-date" class="font-medium text-foreground text-[9.5px]" style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 9.5px !important; font-weight: 500 !important; color: #000000 !important;">${schoolName ? `${schoolName}, ` : ''}${formatKhmerSolarDate(selectedReportDate)}</p>
+                  <p class="font-bold pt-1 text-foreground" style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 9.5px !important; font-weight: 700 !important; color: #000000 !important;"><b>គ្រូបន្ទុកថ្នាក់</b></p>
+                </div>
+                <div class="h-10 w-36 mx-auto"></div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
     });
   }
 };
