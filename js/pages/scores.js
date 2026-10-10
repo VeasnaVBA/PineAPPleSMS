@@ -281,8 +281,8 @@ export const ScoresPage = {
               <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'ទាញយកគំរូ' : 'Template'}</span>
             </button>
 
-            <!-- Upload Scores Button -->
-            <button id="btn-upload-scores" type="button" class="score-toolbar-item h-9 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'បញ្ចូលពិន្ទុពីឯកសារ Excel' : 'Upload from Excel'}">
+            <!-- Upload Scores Button (Hidden in Semester periods) -->
+            <button id="btn-upload-scores" type="button" class="score-toolbar-item h-9 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer ${this.isSemesterPeriod() ? 'hidden' : ''}" title="${isKm ? 'បញ្ចូលពិន្ទុពីឯកសារ Excel' : 'Upload from Excel'}">
               <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"/></svg>
               <span>Upload</span>
             </button>
@@ -536,6 +536,7 @@ export const ScoresPage = {
     this.updateSubjectExtraColBtn();
 
     const isSemester = this.isSemesterPeriod();
+    document.getElementById('btn-upload-scores')?.classList.toggle('hidden', isSemester);
     if (isSemester) {
       this.loadSemesterMonths();
       await this.prefetchSemesterMonthlyAverages();
@@ -1027,30 +1028,20 @@ export const ScoresPage = {
             <div class="w-full whitespace-nowrap text-center py-1.5 px-1 bg-transparent">${genderText}</div>
           </td>
 
-          <!-- 6 Month Grid Cells for Semester 1 / Semester 2 OR Subject Score & Optional Rank/Grade Grid Cells -->
+          <!-- 6 Month Grid Cells for Semester 1 / Semester 2 (Read-only, auto-fetched from monthly averages) -->
           ${isSemester ? Array.from({ length: 6 }).map((_, mIdx) => {
             const mId = (this.state.semesterMonths || [])[mIdx];
             const mName = this.getMonthName(mId);
             const val = r.monthScores ? r.monthScores[mIdx] : null;
             const displayVal = (val !== null && val !== undefined && val !== '') ? Number(val).toFixed(2) : '';
             return `
-              <td class="score-cell-td bg-amber-50/40 dark:bg-amber-950/20 p-0 text-center border-r border-b border-border/40" 
+              <td class="score-cell-td bg-amber-50/40 dark:bg-amber-950/20 p-0 text-center border-r border-b border-border/40 select-none cursor-default" 
                   data-row="${rIdx}" 
                   data-col="${mIdx}" 
                   data-month-col="${mIdx}">
-                <div class="w-[52px] max-w-[52px] h-full flex items-center justify-center">
-                  <input type="text"
-                         inputmode="decimal"
-                         autocomplete="off"
-                         class="score-cell-input text-center font-mono font-bold text-amber-950 dark:text-amber-200 bg-transparent focus:bg-background"
-                         data-row="${rIdx}"
-                         data-col="${mIdx}"
-                         data-month-col="${mIdx}"
-                         data-student="${r.studentId}"
-                         data-max="100"
-                         value="${displayVal}"
-                         placeholder="${mName ? '—' : ''}"
-                         title="${mName ? (isKm ? `ពិន្ទុមធ្យមភាគខែ ${mName}` : `Month avg: ${mName}`) : (isKm ? 'មិនទាន់ជ្រើសរើសខែ' : 'No month selected')}" />
+                <div class="w-[52px] max-w-[52px] h-full min-h-[34px] flex items-center justify-center font-mono font-bold text-amber-950 dark:text-amber-200 text-xs select-none py-1.5 px-0.5 truncate"
+                     title="${mName ? (isKm ? `ពិន្ទុមធ្យមភាគខែ ${mName} (ទាញយកស្វ័យប្រវត្តិ)` : `Month avg: ${mName} (Auto-fetched)`) : (isKm ? 'សូមជ្រើសរើសខែនៅខាងលើ' : 'Select month in header')}">
+                  ${displayVal ? displayVal : (mName ? '<span class="text-amber-900/40 dark:text-amber-300/40 font-normal">—</span>' : '')}
                 </div>
               </td>
             `;
@@ -1229,16 +1220,6 @@ export const ScoresPage = {
       // Keyboard Navigation (Excel-like Arrows, Enter, Tab)
       inp.addEventListener('keydown', (e) => {
         this.handleCellKeydown(e, inp);
-      });
-
-      // Auto-format on blur (2 decimal places for semester month inputs)
-      inp.addEventListener('blur', () => {
-        if (inp.getAttribute('data-month-col') !== null && inp.value.trim() !== '') {
-          const n = Number(inp.value);
-          if (!isNaN(n)) {
-            inp.value = n.toFixed(2);
-          }
-        }
       });
 
       // Excel Multi-cell Paste Support
