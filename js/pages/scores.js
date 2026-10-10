@@ -291,7 +291,7 @@ export const ScoresPage = {
             <!-- Subject Extra Column Display Mode Toggle Button (None -> Rank -> Grade -> Both -> None) -->
             <button id="btn-toggle-subject-extra-col" 
                     type="button" 
-                    class="score-toolbar-item h-9 px-3 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shadow-2xs transition-colors cursor-pointer select-none font-khmer shrink-0" 
+                    class="score-toolbar-item h-9 px-3 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shadow-2xs transition-colors cursor-pointer select-none font-khmer shrink-0 ${this.isSemesterPeriod() ? 'hidden' : ''}" 
                     title="${this.getSubjectExtraColBtnTitle()}">
               ${this.getSubjectExtraColBtnHtml()}
             </button>
@@ -430,6 +430,11 @@ export const ScoresPage = {
   updateSubjectExtraColBtn() {
     const btn = document.getElementById('btn-toggle-subject-extra-col');
     if (!btn) return;
+    if (this.isSemesterPeriod()) {
+      btn.classList.add('hidden');
+      return;
+    }
+    btn.classList.remove('hidden');
     btn.title = this.getSubjectExtraColBtnTitle();
     btn.innerHTML = this.getSubjectExtraColBtnHtml();
   },
@@ -528,6 +533,7 @@ export const ScoresPage = {
       this.state.coefficients = await ScoreService.getMonthlyCoefficients();
     }
     this.updateCoefficientBadge();
+    this.updateSubjectExtraColBtn();
 
     const isSemester = this.isSemesterPeriod();
     if (isSemester) {
@@ -612,8 +618,7 @@ export const ScoresPage = {
           <col style="width: 52px; min-width: 52px; max-width: 52px;">
           <col style="width: 52px; min-width: 52px; max-width: 52px;">
           <col style="width: 52px; min-width: 52px; max-width: 52px;">
-        ` : ''}
-        ${this.state.subjects.map(() => `
+        ` : this.state.subjects.map(() => `
           <col style="width: 46px; min-width: 46px; max-width: 46px;">
           ${showRank ? '<col style="width: 46px; min-width: 46px; max-width: 46px;">' : ''}
           ${showGrade ? '<col style="width: 46px; min-width: 46px; max-width: 46px;">' : ''}
@@ -642,11 +647,8 @@ export const ScoresPage = {
         <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-center text-center px-1 text-xs bg-transparent">${isKm ? 'ភេទ' : 'Sex'}</div>
       </th>
 
-      <!-- 6 Month Column Headers for Semester 1 / Semester 2 -->
-      ${isSemester ? this.renderSemesterMonthHeadersHtml() : ''}
-
-      <!-- Subject Column Headers (Vertical Text + Category Color, with optional Rank and/or Grade column) -->
-      ${this.state.subjects.map(sub => {
+      <!-- 6 Month Column Headers for Semester 1 / Semester 2 OR Subject Column Headers -->
+      ${isSemester ? this.renderSemesterMonthHeadersHtml() : this.state.subjects.map(sub => {
         const catKey = getSubjectCategoryKey(sub);
         const subHeaderClass = CATEGORY_DEFS[catKey]?.subHeaderClass || 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100';
         const isCalc = SubjectService.isCalculatedSubject(sub);
@@ -1025,12 +1027,12 @@ export const ScoresPage = {
             <div class="w-full whitespace-nowrap text-center py-1.5 px-1 bg-transparent">${genderText}</div>
           </td>
 
-          <!-- 6 Month Grid Cells for Semester 1 / Semester 2 -->
+          <!-- 6 Month Grid Cells for Semester 1 / Semester 2 OR Subject Score & Optional Rank/Grade Grid Cells -->
           ${isSemester ? Array.from({ length: 6 }).map((_, mIdx) => {
             const mId = (this.state.semesterMonths || [])[mIdx];
             const mName = this.getMonthName(mId);
             const val = r.monthScores ? r.monthScores[mIdx] : null;
-            const displayVal = (val !== null && val !== undefined && val !== '') ? val : '';
+            const displayVal = (val !== null && val !== undefined && val !== '') ? Number(val).toFixed(2) : '';
             return `
               <td class="score-cell-td bg-amber-50/40 dark:bg-amber-950/20 p-0 text-center border-r border-b border-border/40" 
                   data-row="${rIdx}" 
@@ -1052,11 +1054,7 @@ export const ScoresPage = {
                 </div>
               </td>
             `;
-          }).join('') : ''}
-
-          <!-- 5. Subject Score & Optional Rank/Grade Grid Cells -->
-          ${flatSubjects.map((s, subIdx) => {
-            const cIdx = isSemester ? (6 + subIdx) : subIdx;
+          }).join('') : flatSubjects.map((s, cIdx) => {
             const currentScore = r.subjectScores[s.id];
             const displayVal = (currentScore !== null && currentScore !== undefined) ? currentScore : '';
             const isCalc = SubjectService.isCalculatedSubject(s);
@@ -1107,7 +1105,7 @@ export const ScoresPage = {
 
           <!-- 6. Total -->
           <td class="p-0 text-center font-bold font-mono text-foreground col-total bg-slate-50/60 dark:bg-slate-900/20">
-            <div class="w-[64px] max-w-[64px] truncate text-center py-1.5 px-1">${r.total !== undefined ? r.total : 0}</div>
+            <div class="w-[64px] max-w-[64px] truncate text-center py-1.5 px-1">${r.total !== undefined ? (isSemester ? (Number(r.total) || 0).toFixed(2) : r.total) : (isSemester ? '0.00' : 0)}</div>
           </td>
 
           <!-- 7. Average -->
@@ -1231,6 +1229,16 @@ export const ScoresPage = {
       // Keyboard Navigation (Excel-like Arrows, Enter, Tab)
       inp.addEventListener('keydown', (e) => {
         this.handleCellKeydown(e, inp);
+      });
+
+      // Auto-format on blur (2 decimal places for semester month inputs)
+      inp.addEventListener('blur', () => {
+        if (inp.getAttribute('data-month-col') !== null && inp.value.trim() !== '') {
+          const n = Number(inp.value);
+          if (!isNaN(n)) {
+            inp.value = n.toFixed(2);
+          }
+        }
       });
 
       // Excel Multi-cell Paste Support
@@ -1487,9 +1495,12 @@ export const ScoresPage = {
       }
     });
 
-    // 3. Compute grand total and totalMax (including Semester 6-Month Averages if in Semester period)
-    let monthlySum = 0;
+    // 3. Compute grand total and totalMax
+    let sum = 0;
+    let maxTotal = 0;
+
     if (this.isSemesterPeriod()) {
+      let monthlySum = 0;
       for (let mIdx = 0; mIdx < 6; mIdx++) {
         if (rowData.monthScores) {
           const mv = rowData.monthScores[mIdx];
@@ -1498,24 +1509,24 @@ export const ScoresPage = {
           }
         }
       }
+      sum = monthlySum;
+      rowData.total = Math.round(sum * 100) / 100;
+      rowData.totalMax = maxTotal;
+    } else {
+      let examSum = 0;
+      this.state.subjects.forEach(s => {
+        if (subComponentIds.has(s.id)) return; // Don't double count sub-components
+
+        const v = rowData.subjectScores[s.id];
+        if (v !== null && v !== undefined && v !== '') {
+          examSum += Number(v);
+        }
+        maxTotal += s.fullScore;
+      });
+      sum = examSum;
+      rowData.total = Math.round(sum * 10) / 10;
+      rowData.totalMax = maxTotal;
     }
-
-    let examSum = 0;
-    let maxTotal = 0;
-
-    this.state.subjects.forEach(s => {
-      if (subComponentIds.has(s.id)) return; // Don't double count sub-components
-
-      const v = rowData.subjectScores[s.id];
-      if (v !== null && v !== undefined && v !== '') {
-        examSum += Number(v);
-      }
-      maxTotal += s.fullScore;
-    });
-
-    const sum = monthlySum + examSum;
-    rowData.total = Math.round(sum * 10) / 10;
-    rowData.totalMax = maxTotal;
 
     const coeff = this.getCurrentPeriodCoefficient();
     const avgScore = coeff > 0 ? (sum / coeff) : sum;
@@ -1526,24 +1537,28 @@ export const ScoresPage = {
     rowData.grade = gradeInfo.grade;
     rowData.gradeColor = gradeInfo.color;
 
-    // Update individual subject grades for this row
+    // Update individual subject grades for this row (only for non-semester periods)
     if (!rowData.subjectGrades) rowData.subjectGrades = {};
-    this.state.subjects.forEach(s => {
-      const v = rowData.subjectScores[s.id];
-      if (v !== null && v !== undefined && v !== '') {
-        const max = Number(s.fullScore) > 0 
-          ? Number(s.fullScore) 
-          : (Number(s.maxScore) > 0 ? Number(s.maxScore) : 100);
-        rowData.subjectGrades[s.id] = SubjectService.calculateGrade(Number(v), max).grade;
-      } else {
-        rowData.subjectGrades[s.id] = null;
-      }
-    });
+    if (!this.isSemesterPeriod()) {
+      this.state.subjects.forEach(s => {
+        const v = rowData.subjectScores[s.id];
+        if (v !== null && v !== undefined && v !== '') {
+          const max = Number(s.fullScore) > 0 
+            ? Number(s.fullScore) 
+            : (Number(s.maxScore) > 0 ? Number(s.maxScore) : 100);
+          rowData.subjectGrades[s.id] = SubjectService.calculateGrade(Number(v), max).grade;
+        } else {
+          rowData.subjectGrades[s.id] = null;
+        }
+      });
+    }
 
     const trEl = this.container.querySelector(`tr[data-student-id="${rowData.studentId}"]`);
     if (trEl) {
       const totEl = trEl.querySelector('.col-total div') || trEl.querySelector('.col-total');
-      if (totEl) totEl.textContent = rowData.total;
+      if (totEl) {
+        totEl.textContent = this.isSemesterPeriod() ? (Number(rowData.total) || 0).toFixed(2) : rowData.total;
+      }
       const avgEl = trEl.querySelector('.col-average div') || trEl.querySelector('.col-average');
       if (avgEl) avgEl.textContent = (Number(rowData.average) || 0).toFixed(2);
       const gradeEl = trEl.querySelector('.col-grade');
@@ -1561,7 +1576,7 @@ export const ScoresPage = {
     const curR = parseInt(inp.getAttribute('data-row'), 10);
     const curC = parseInt(inp.getAttribute('data-col'), 10);
     const totalRows = this.state.rows.length;
-    const totalCols = (this.isSemesterPeriod() ? 6 : 0) + this.state.subjects.length;
+    const totalCols = this.isSemesterPeriod() ? 6 : this.state.subjects.length;
 
     // 1. Delete / Backspace key multi-delete
     if (e.key === 'Delete' || (e.key === 'Backspace' && (this.selection.selectedCoords.size > 1 || (inp.selectionStart === 0 && inp.selectionEnd === inp.value.length)))) {
@@ -2031,12 +2046,12 @@ export const ScoresPage = {
         const mName = this.getMonthName(mId);
         headers.push(mName ? (isKm ? `ខែ${mName}` : mName) : (isKm ? `ខែទី${toKhmerNumerals(i + 1)}` : `Month ${i + 1}`));
       }
+    } else {
+      const flatSubjects = this.state.subjects;
+      flatSubjects.forEach(s => {
+        headers.push(`${s.name} (Max:${s.fullScore})`);
+      });
     }
-
-    const flatSubjects = this.state.subjects;
-    flatSubjects.forEach(s => {
-      headers.push(`${s.name} (Max:${s.fullScore})`);
-    });
 
     const data = [headers];
 
@@ -2060,14 +2075,14 @@ export const ScoresPage = {
       if (this.isSemesterPeriod()) {
         for (let i = 0; i < 6; i++) {
           const val = r.monthScores ? r.monthScores[i] : '';
-          row.push((val !== null && val !== undefined) ? val : '');
+          row.push((val !== null && val !== undefined && val !== '') ? Number(val).toFixed(2) : '');
         }
+      } else {
+        this.state.subjects.forEach(s => {
+          const score = r.subjectScores[s.id];
+          row.push(score !== null && score !== undefined ? score : '');
+        });
       }
-
-      flatSubjects.forEach(s => {
-        const score = r.subjectScores[s.id];
-        row.push(score !== null && score !== undefined ? score : '');
-      });
 
       data.push(row);
     });
@@ -2124,16 +2139,34 @@ export const ScoresPage = {
           );
 
           if (targetStudent) {
-            this.state.subjects.forEach(sub => {
-              const subName = (sub.name || '').toLowerCase();
-              const colIdx = headerRow.findIndex(h => h.includes(subName) || (sub.nameEn && h.includes(sub.nameEn.toLowerCase())));
-              if (colIdx !== -1 && row[colIdx] !== undefined && row[colIdx] !== '') {
-                const val = Number(row[colIdx]);
-                if (!isNaN(val)) {
-                  targetStudent.subjectScores[sub.id] = Math.max(0, val);
+            if (this.isSemesterPeriod()) {
+              if (!targetStudent.monthScores) targetStudent.monthScores = {};
+              for (let mIdx = 0; mIdx < 6; mIdx++) {
+                const mId = this.state.semesterMonths[mIdx];
+                const mName = (this.getMonthName(mId) || '').toLowerCase();
+                const colIdx = headerRow.findIndex((h, idx) => {
+                  if (idx < 5) return false;
+                  return (mName && h.includes(mName)) || h.includes(`month ${mIdx + 1}`) || h.includes(`ខែទី${toKhmerNumerals(mIdx + 1)}`) || (idx === 5 + mIdx);
+                });
+                if (colIdx !== -1 && row[colIdx] !== undefined && row[colIdx] !== '') {
+                  const val = Number(row[colIdx]);
+                  if (!isNaN(val)) {
+                    targetStudent.monthScores[mIdx] = Math.max(0, val);
+                  }
                 }
               }
-            });
+            } else {
+              this.state.subjects.forEach(sub => {
+                const subName = (sub.name || '').toLowerCase();
+                const colIdx = headerRow.findIndex(h => h.includes(subName) || (sub.nameEn && h.includes(sub.nameEn.toLowerCase())));
+                if (colIdx !== -1 && row[colIdx] !== undefined && row[colIdx] !== '') {
+                  const val = Number(row[colIdx]);
+                  if (!isNaN(val)) {
+                    targetStudent.subjectScores[sub.id] = Math.max(0, val);
+                  }
+                }
+              });
+            }
             this.recalculateRowData(targetStudent);
             importedCount++;
           }

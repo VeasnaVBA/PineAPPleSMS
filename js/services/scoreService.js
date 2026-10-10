@@ -361,19 +361,9 @@ export const ScoreService = {
       });
 
       // 4. Calculate total & totalMax
-      subjectsWithMeta.forEach(sub => {
-        if (subComponentIds.has(sub.id)) return; // Exclude sub-components from grand total
-
-        const val = subjectScores[sub.id];
-        if (val !== null && val !== undefined) {
-          total += Number(val);
-        }
-        totalMax += sub.fullScore;
-      });
-
-      // 5. If Semester 1 or Semester 2, include 6 monthly scores
       const monthScores = {};
       let monthlySum = 0;
+
       if (this.isSemesterPeriod(period)) {
         for (let mIdx = 0; mIdx < 6; mIdx++) {
           const sc = scoreMap.get(`${stu.id}_sem_month_${mIdx}`);
@@ -385,7 +375,18 @@ export const ScoreService = {
             monthlySum += Number(val);
           }
         }
-        total += monthlySum;
+        total = Math.round(monthlySum * 100) / 100;
+      } else {
+        subjectsWithMeta.forEach(sub => {
+          if (subComponentIds.has(sub.id)) return; // Exclude sub-components from grand total
+
+          const val = subjectScores[sub.id];
+          if (val !== null && val !== undefined) {
+            total += Number(val);
+          }
+          totalMax += sub.fullScore;
+        });
+        total = Math.round(total * 10) / 10;
       }
 
       const averageVal = periodCoeff > 0 ? (total / periodCoeff) : total;
@@ -455,43 +456,47 @@ export const ScoreService = {
       }
     });
 
-    for (const row of rows) {
-      for (const sub of subjects) {
-        const val = row.subjectScores[sub.id];
-        const existingRecord = existingScoresMap.get(`${row.studentId}_${sub.id}`);
-        const defaultId = `sc-${academicYear}-${classId}-${sub.id}-${period}-${row.studentId}`;
-        const recordId = existingRecord?.id || defaultId;
+    const isSemester = this.isSemesterPeriod(period);
 
-        if (val !== null && val !== undefined && val !== '') {
-          const numVal = Math.max(0, Number(val) || 0);
-          const fullScore = SubjectService.getSubjectFullScore(sub, className);
-          const gradeInfo = SubjectService.calculateGrade(numVal, fullScore);
-          const record = {
-            id: recordId,
-            studentId: row.studentId,
-            classId: isTeacher && teacherClassId ? teacherClassId : classId,
-            academicYear,
-            subjectId: sub.id,
-            subjectNameKm: sub.name,
-            subjectNameEn: sub.nameEn || sub.name,
-            month: period,
-            assessmentType: period,
-            assignmentScore: 0,
-            examScore: numVal,
-            totalScore: numVal,
-            fullScore,
-            percentage: fullScore > 0 ? Math.min(100, Math.round((numVal / fullScore) * 100)) : 0,
-            grade: gradeInfo.grade,
-            notes: '',
-            updatedAt: new Date().toISOString()
-          };
-          await db.put('scores', record);
-        } else {
-          // Cell was cleared/deleted: remove from database so it never comes back
-          if (existingRecord) {
-            await db.delete('scores', existingRecord.id);
+    for (const row of rows) {
+      if (!isSemester) {
+        for (const sub of subjects) {
+          const val = row.subjectScores[sub.id];
+          const existingRecord = existingScoresMap.get(`${row.studentId}_${sub.id}`);
+          const defaultId = `sc-${academicYear}-${classId}-${sub.id}-${period}-${row.studentId}`;
+          const recordId = existingRecord?.id || defaultId;
+
+          if (val !== null && val !== undefined && val !== '') {
+            const numVal = Math.max(0, Number(val) || 0);
+            const fullScore = SubjectService.getSubjectFullScore(sub, className);
+            const gradeInfo = SubjectService.calculateGrade(numVal, fullScore);
+            const record = {
+              id: recordId,
+              studentId: row.studentId,
+              classId: isTeacher && teacherClassId ? teacherClassId : classId,
+              academicYear,
+              subjectId: sub.id,
+              subjectNameKm: sub.name,
+              subjectNameEn: sub.nameEn || sub.name,
+              month: period,
+              assessmentType: period,
+              assignmentScore: 0,
+              examScore: numVal,
+              totalScore: numVal,
+              fullScore,
+              percentage: fullScore > 0 ? Math.min(100, Math.round((numVal / fullScore) * 100)) : 0,
+              grade: gradeInfo.grade,
+              notes: '',
+              updatedAt: new Date().toISOString()
+            };
+            await db.put('scores', record);
+          } else {
+            // Cell was cleared/deleted: remove from database so it never comes back
+            if (existingRecord) {
+              await db.delete('scores', existingRecord.id);
+            }
+            await db.delete('scores', defaultId);
           }
-          await db.delete('scores', defaultId);
         }
       }
 
