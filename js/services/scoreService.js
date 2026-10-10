@@ -653,8 +653,8 @@ export const ScoreService = {
       // If Annual, save semester 1 and semester 2 average scores
       if (this.isAnnualPeriod(period) && row.annualScores) {
         const semKeys = [
-          { key: 'sem1', subId: 'annual_sem1', nameKm: 'ម.ភាគ ឆមាសទី១', nameEn: 'Semester 1 Average' },
-          { key: 'sem2', subId: 'annual_sem2', nameKm: 'ម.ភាគ ឆមាសទី២', nameEn: 'Semester 2 Average' }
+          { key: 'sem1', subId: 'annual_sem1', nameKm: 'មធ្យមភាគប្រចាំឆមាសទី១', nameEn: 'Semester 1 Average' },
+          { key: 'sem2', subId: 'annual_sem2', nameKm: 'មធ្យមភាគប្រចាំឆមាសទី២', nameEn: 'Semester 2 Average' }
         ];
         for (const item of semKeys) {
           const val = row.annualScores[item.key];

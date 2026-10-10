@@ -743,28 +743,20 @@ export const ScoresPage = {
     return `
       <th class="score-annual-th p-0 bg-sky-50/90 dark:bg-sky-950/40 text-sky-950 dark:text-sky-200 border-r border-border/40 select-none"
           style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;"
-          title="${isKm ? 'ពិន្ទុមធ្យមភាគឆមាសទី១ (ទាញយកស្វ័យប្រវត្តិ)' : 'Semester 1 Average (Auto-calculated)'}">
-        <div class="w-[72px] max-w-[72px] h-full min-h-[96px] mx-auto flex flex-col items-center justify-between py-2 relative bg-transparent">
-          <span class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full bg-sky-200/90 dark:bg-sky-900/90 text-sky-950 dark:text-sky-100 leading-none shadow-2xs">
-            ${isKm ? 'ឆមាសទី១' : 'Sem 1'}
-          </span>
-          <div class="score-vertical-title font-khmer text-xs leading-tight text-sky-950 dark:text-sky-100 font-bold">
-            ${isKm ? 'ម.ភាគ ឆមាសទី១' : 'Sem 1 Avg'}
+          title="${isKm ? 'មធ្យមភាគប្រចាំឆមាសទី១' : 'Semester 1 Average'}">
+        <div class="w-[72px] max-w-[72px] h-full min-h-[96px] mx-auto flex items-center justify-center py-1.5 relative bg-transparent">
+          <div class="score-vertical-title font-khmer text-[11px] leading-tight text-sky-950 dark:text-sky-100 font-bold">
+            ${isKm ? 'មធ្យមភាគប្រចាំឆមាសទី១' : 'Semester 1 Average'}
           </div>
-          <span class="text-[9px] text-sky-600/80 dark:text-sky-400/80 font-mono font-semibold">50.00</span>
         </div>
       </th>
       <th class="score-annual-th p-0 bg-indigo-50/90 dark:bg-indigo-950/40 text-indigo-950 dark:text-indigo-200 border-r border-border/40 select-none"
           style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;"
-          title="${isKm ? 'ពិន្ទុមធ្យមភាគឆមាសទី២ (ទាញយកស្វ័យប្រវត្តិ)' : 'Semester 2 Average (Auto-calculated)'}">
-        <div class="w-[72px] max-w-[72px] h-full min-h-[96px] mx-auto flex flex-col items-center justify-between py-2 relative bg-transparent">
-          <span class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full bg-indigo-200/90 dark:bg-indigo-900/90 text-indigo-950 dark:text-indigo-100 leading-none shadow-2xs">
-            ${isKm ? 'ឆមាសទី២' : 'Sem 2'}
-          </span>
-          <div class="score-vertical-title font-khmer text-xs leading-tight text-indigo-950 dark:text-indigo-100 font-bold">
-            ${isKm ? 'ម.ភាគ ឆមាសទី២' : 'Sem 2 Avg'}
+          title="${isKm ? 'មធ្យមភាគប្រចាំឆមាសទី២' : 'Semester 2 Average'}">
+        <div class="w-[72px] max-w-[72px] h-full min-h-[96px] mx-auto flex items-center justify-center py-1.5 relative bg-transparent">
+          <div class="score-vertical-title font-khmer text-[11px] leading-tight text-indigo-950 dark:text-indigo-100 font-bold">
+            ${isKm ? 'មធ្យមភាគប្រចាំឆមាសទី២' : 'Semester 2 Average'}
           </div>
-          <span class="text-[9px] text-indigo-600/80 dark:text-indigo-400/80 font-mono font-semibold">50.00</span>
         </div>
       </th>
     `;
@@ -2136,8 +2128,8 @@ export const ScoresPage = {
       }
     } else if (this.isAnnualPeriod()) {
       headers.push(
-        isKm ? 'ម.ភាគ ឆមាសទី១' : 'Semester 1 Avg',
-        isKm ? 'ម.ភាគ ឆមាសទី២' : 'Semester 2 Avg'
+        isKm ? 'មធ្យមភាគប្រចាំឆមាសទី១' : 'Semester 1 Average',
+        isKm ? 'មធ្យមភាគប្រចាំឆមាសទី២' : 'Semester 2 Average'
       );
     } else {
       const flatSubjects = this.state.subjects;
