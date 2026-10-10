@@ -2768,7 +2768,7 @@ export const ScoresPage = {
           </div>
         `;
 
-        const periodLabelEl = paperContainer.querySelector('#score-result-period-label');
+        const periodLabelEl = contentContainer.querySelector('#score-result-period-label');
         if (periodLabelEl) {
           periodLabelEl.addEventListener('input', () => {
             const txt = periodLabelEl.textContent.trim();
