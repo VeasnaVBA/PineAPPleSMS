@@ -2612,22 +2612,22 @@ export const ScoresPage = {
 
         const rightRowsHtml = rightStudents.map((r, idx) => buildRow(r, halfCount + idx)).join('');
 
-        // 10. Two-Level Table Header Matching User Specification
+        // 10. Two-Level Table Header Matching User Specification (Compact Height)
         const theadHtml = `
-          <tr style="background-color: #0045ff !important; color: #ffffff !important; font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important; font-weight: bold !important; font-size: 7.5px !important; line-height: 1.25 !important;">
-            <th rowspan="2" class="text-center whitespace-nowrap" style="width: 5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 2px 1px !important; vertical-align: middle !important;">ល.រ</th>
-            <th rowspan="2" class="text-center whitespace-nowrap" style="width: 7.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 2px 1px !important; vertical-align: middle !important;">អត្តលេខ</th>
-            <th rowspan="2" class="text-center whitespace-nowrap" style="width: 23% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 2px 1px !important; vertical-align: middle !important;">គោត្តនាម និងនាម</th>
-            <th rowspan="2" class="text-center whitespace-nowrap" style="width: 5.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 2px 1px !important; vertical-align: middle !important;">ភេទ</th>
-            <th rowspan="2" class="text-center whitespace-nowrap" style="width: 12% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 2px 1px !important; vertical-align: middle !important;">មធ្យមភាគ</th>
-            <th rowspan="2" class="text-center whitespace-nowrap" style="width: 6.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 2px 1px !important; vertical-align: middle !important;" title="${isKm ? 'ចំណាត់ថ្នាក់' : 'Rank'}">ចំ.</th>
-            <th rowspan="2" class="text-center whitespace-nowrap" style="width: 9.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 2px 1px !important; vertical-align: middle !important;">និទ្ទេស</th>
-            <th colspan="3" class="text-center whitespace-nowrap" style="width: 31% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 2px 1px !important; vertical-align: middle !important;">អវត្តមាន</th>
+          <tr style="height: 13px !important; background-color: #0045ff !important; color: #ffffff !important; font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important; font-weight: bold !important; font-size: 7.5px !important; line-height: 1.05 !important;">
+            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">ល.រ</th>
+            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 7.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">អត្តលេខ</th>
+            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 23% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">គោត្តនាម និងនាម</th>
+            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 5.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">ភេទ</th>
+            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 12% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">មធ្យមភាគ</th>
+            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 6.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;" title="${isKm ? 'ចំណាត់ថ្នាក់' : 'Rank'}">ចំ.</th>
+            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 9.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">និទ្ទេស</th>
+            <th colspan="3" class="text-center whitespace-nowrap" style="height: 13px !important; width: 31% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">អវត្តមាន</th>
           </tr>
-          <tr style="background-color: #0045ff !important; color: #ffffff !important; font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important; font-weight: bold !important; font-size: 7px !important; line-height: 1.2 !important;">
-            <th class="text-center whitespace-nowrap" style="width: 10.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1.5px 0.5px !important; vertical-align: middle !important;">មានច្បាប់</th>
-            <th class="text-center whitespace-nowrap" style="width: 10.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1.5px 0.5px !important; vertical-align: middle !important;">ឥតច្បាប់</th>
-            <th class="text-center whitespace-nowrap" style="width: 10% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1.5px 0.5px !important; vertical-align: middle !important;">សរុប</th>
+          <tr style="height: 12px !important; background-color: #0045ff !important; color: #ffffff !important; font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important; font-weight: bold !important; font-size: 7px !important; line-height: 1.0 !important;">
+            <th class="text-center whitespace-nowrap" style="height: 12px !important; width: 10.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 0.5px 0.5px !important; line-height: 1.0 !important; vertical-align: middle !important;">មានច្បាប់</th>
+            <th class="text-center whitespace-nowrap" style="height: 12px !important; width: 10.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 0.5px 0.5px !important; line-height: 1.0 !important; vertical-align: middle !important;">ឥតច្បាប់</th>
+            <th class="text-center whitespace-nowrap" style="height: 12px !important; width: 10% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 0.5px 0.5px !important; line-height: 1.0 !important; vertical-align: middle !important;">សរុប</th>
           </tr>
         `;
 
@@ -2707,15 +2707,15 @@ export const ScoresPage = {
             <div class="score-sheet-dual-grid grid grid-cols-2 gap-2 w-full max-w-full box-border">
               <!-- Left Table (Column 1) -->
               <div class="w-full max-w-full min-w-0 box-border">
-                <table id="score-result-left-table" class="score-sheet-table score-result-2row-table moeys-table border-collapse text-[8.5px]" style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 8.5px !important; width: 100% !important; table-layout: fixed !important; border: 1px solid #000000 !important;">
+                <table id="score-result-left-table" class="score-result-2row-table moeys-table border-collapse text-[8px]" style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 8px !important; width: 100% !important; table-layout: fixed !important; border: 1px solid #000000 !important;">
                   <thead>${theadHtml}</thead>
-                  <tbody style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 8.5px !important;">${leftRowsHtml}</tbody>
+                  <tbody style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 8px !important;">${leftRowsHtml}</tbody>
                 </table>
               </div>
 
               <!-- Right Table (Column 2) -->
               <div class="w-full max-w-full min-w-0 box-border">
-                <table id="score-result-right-table" class="score-sheet-table score-result-2row-table moeys-table border-collapse text-[8.5px]" style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 8.5px !important; width: 100% !important; table-layout: fixed !important; border: 1px solid #000000 !important;">
+                <table id="score-result-right-table" class="score-result-2row-table moeys-table border-collapse text-[8px]" style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 8px !important; width: 100% !important; table-layout: fixed !important; border: 1px solid #000000 !important;">
                   <thead>${theadHtml}</thead>
                   <tbody style="font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif; font-size: 8.5px !important;">${rightRowsHtml}</tbody>
                 </table>
