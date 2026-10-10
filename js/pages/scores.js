@@ -2139,10 +2139,8 @@ export const ScoresPage = {
     let selectedClassId = this.state.selectedClassId || (isTeacher ? (teacherClassId || classes[0]?.id) : (classes[0]?.id || ''));
     let selectedYear = this.state.activeYear || (typeof academicYears[0] === 'string' ? academicYears[0] : (academicYears[0]?.name || '2024–2025'));
     let selectedPeriod = this.state.selectedPeriod || 'October';
-    let selectedMonth = '';
     let selectedReportDate = new Date();
     let currentClassName = '';
-    let controlsContainerRef = null;
 
     const periods = ScoreService.getEvaluationPeriods();
     const months = periods.filter(p => p.group === 'month');
@@ -2166,7 +2164,6 @@ export const ScoresPage = {
       defaultFontFamily: 'Khmer OS Siemreap',
       defaultFontSize: 8.5,
       renderHeaderControls: (controlsContainer, viewer) => {
-        controlsContainerRef = controlsContainer;
         const schoolOptsHtml = (allSchools || []).map(s => {
           const isSel = s.name === schoolName;
           return `<option value="${escapeHtml(s.name)}" ${isSel ? 'selected' : ''}>${escapeHtml(s.name)}</option>`;
@@ -2215,7 +2212,7 @@ export const ScoresPage = {
             </div>
           </div>
 
-          <!-- Evaluation Period Selector (Data Source) -->
+          <!-- Evaluation Period Selector (Data Source & Title Month) -->
           <div class="flex items-center gap-1.5 text-xs font-khmer">
             <span class="text-muted-foreground whitespace-nowrap">${isKm ? 'ពិន្ទុខែ:' : 'Scores:'}</span>
             <select id="rv-result-filter-period" class="h-8 py-0 leading-[30px] px-2 rounded-md border border-input bg-card text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary shadow-xs cursor-pointer box-border" title="${isKm ? 'ជ្រើសរើសសម័យប្រឡងដើម្បីទាញយកពិន្ទុ' : 'Select score period'}">
@@ -2226,16 +2223,6 @@ export const ScoresPage = {
                 ${exams.map(e => `<option value="${e.id}" ${e.id === selectedPeriod ? 'selected' : ''}>${isKm ? e.nameKm : e.nameEn}</option>`).join('')}
               </optgroup>
             </select>
-          </div>
-
-          <!-- Month Title Input (Controls title month or empty dots) -->
-          <div class="flex items-center gap-1.5 text-xs font-khmer">
-            <span class="text-muted-foreground whitespace-nowrap">${isKm ? 'ប្រចាំខែ:' : 'Month:'}</span>
-            <input type="text" 
-                   id="rv-result-input-month" 
-                   placeholder="${isKm ? 'ខែ... (....................)' : 'Month...'}" 
-                   value="${escapeHtml(selectedMonth)}"
-                   class="h-8 py-0 leading-[30px] w-24 px-2 rounded-md border border-input bg-card text-xs font-medium text-foreground placeholder:text-muted-foreground shadow-xs focus:outline-none focus:ring-1 focus:ring-ring box-border" />
           </div>
 
           <!-- Date Picker Popover -->
@@ -2339,16 +2326,6 @@ export const ScoresPage = {
         periodSelect?.addEventListener('change', async (e) => {
           selectedPeriod = e.target.value;
           if (viewer) await viewer.refreshContent(false);
-        });
-
-        // Month text input binding (live update title)
-        const monthInput = controlsContainer.querySelector('#rv-result-input-month');
-        monthInput?.addEventListener('input', (e) => {
-          selectedMonth = e.target.value.trim();
-          const pLabel = viewer?.overlay?.querySelector('#score-result-period-label');
-          if (pLabel) pLabel.textContent = selectedMonth ? selectedMonth : '.........................';
-          viewer?.saveStateForUndo?.();
-          viewer?.autoSaveIfEnabled?.();
         });
 
         // Academic Year Popover
@@ -2493,6 +2470,7 @@ export const ScoresPage = {
         // 1. Fetch Class Details
         const foundClass = classes.find(c => String(c.id).trim() === String(selectedClassId).trim());
         currentClassName = foundClass ? (foundClass.name || foundClass.grade || '—') : (selectedClassId || '—');
+        const periodDisplayName = getPeriodDisplayName(selectedPeriod) || '.........................';
 
         // 2. Fetch Master Score Sheet Data
         const scoreData = await ScoreService.getMasterScoreSheet({
@@ -2573,7 +2551,7 @@ export const ScoresPage = {
             });
 
             const ws = XLSX.utils.aoa_to_sheet([
-              [`តារាងលទ្ធផលប្រចាំខែ ${selectedMonth ? selectedMonth : '.........................'}`],
+              [`តារាងលទ្ធផលប្រចាំខែ ${periodDisplayName}`],
               [`សាលារៀន: ${schoolName} / ${schoolProvince}`],
               [`ថ្នាក់ទី: ${currentClassName} | ឆ្នាំសិក្សា: ${selectedYear}`],
               [],
@@ -2674,7 +2652,7 @@ export const ScoresPage = {
               if (rightTbody) rightTbody.innerHTML = rightRowsHtml;
 
               const periodLabel = staging.querySelector('#score-result-period-label');
-              if (periodLabel) periodLabel.textContent = selectedMonth ? selectedMonth : '.........................';
+              if (periodLabel) periodLabel.textContent = periodDisplayName;
               const classLabel = staging.querySelector('#score-result-class-label');
               if (classLabel) classLabel.textContent = currentClassName;
               const yearLabel = staging.querySelector('#score-result-year-label');
@@ -2709,7 +2687,7 @@ export const ScoresPage = {
             <!-- Center Title Section -->
             <div class="text-center space-y-1 pt-1 pb-1 font-khmer text-[10px]">
               <h2 class="font-khmer-muol text-foreground" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif; font-size: 12px !important; letter-spacing: normal !important; line-height: 1.8; text-decoration: none !important;">
-                តារាងលទ្ធផលប្រចាំខែ <span id="score-result-period-label" contenteditable="true" spellcheck="false" class="outline-none focus:ring-1 focus:ring-primary/40 rounded px-1 cursor-text" title="${isKm ? 'ចុចទីនេះដើម្បីកែប្រែឈ្មោះខែ' : 'Click to edit month'}">${selectedMonth ? escapeHtml(selectedMonth) : '.........................'}</span>
+                តារាងលទ្ធផលប្រចាំខែ <span id="score-result-period-label" contenteditable="true" spellcheck="false" class="outline-none focus:ring-1 focus:ring-primary/40 rounded px-1 cursor-text" title="${isKm ? 'ចុចទីនេះដើម្បីកែប្រែ' : 'Click to edit'}">${escapeHtml(periodDisplayName)}</span>
               </h2>
               
               <!-- Meta Row: Class & Academic Year -->
@@ -2767,24 +2745,6 @@ export const ScoresPage = {
             </div>
           </div>
         `;
-
-        const periodLabelEl = contentContainer.querySelector('#score-result-period-label');
-        if (periodLabelEl) {
-          periodLabelEl.addEventListener('input', () => {
-            const txt = periodLabelEl.textContent.trim();
-            selectedMonth = (txt === '.........................' || txt === '....') ? '' : txt;
-            const mInput = controlsContainerRef?.querySelector('#rv-result-input-month');
-            if (mInput) mInput.value = selectedMonth;
-          });
-          periodLabelEl.addEventListener('blur', () => {
-            if (!periodLabelEl.textContent.trim()) {
-              periodLabelEl.textContent = '.........................';
-              selectedMonth = '';
-              const mInput = controlsContainerRef?.querySelector('#rv-result-input-month');
-              if (mInput) mInput.value = '';
-            }
-          });
-        }
       }
     });
   }
