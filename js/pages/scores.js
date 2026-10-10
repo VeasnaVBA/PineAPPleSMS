@@ -745,8 +745,9 @@ export const ScoresPage = {
           style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;"
           title="${isKm ? 'មធ្យមភាគប្រចាំឆមាសទី១' : 'Semester 1 Average'}">
         <div class="w-[72px] max-w-[72px] h-full min-h-[96px] mx-auto flex items-center justify-center py-1.5 relative bg-transparent">
-          <div class="score-vertical-title font-khmer text-[11px] leading-tight text-sky-950 dark:text-sky-100 font-bold">
-            ${isKm ? 'មធ្យមភាគប្រចាំឆមាសទី១' : 'Semester 1 Average'}
+          <div class="score-vertical-title flex-col gap-0.5 font-khmer text-[11px] leading-tight text-sky-950 dark:text-sky-100 font-bold">
+            <span>${isKm ? 'មធ្យមភាគ' : 'Semester 1'}</span>
+            <span>${isKm ? 'ប្រចាំឆមាសទី១' : 'Average'}</span>
           </div>
         </div>
       </th>
@@ -754,8 +755,9 @@ export const ScoresPage = {
           style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;"
           title="${isKm ? 'មធ្យមភាគប្រចាំឆមាសទី២' : 'Semester 2 Average'}">
         <div class="w-[72px] max-w-[72px] h-full min-h-[96px] mx-auto flex items-center justify-center py-1.5 relative bg-transparent">
-          <div class="score-vertical-title font-khmer text-[11px] leading-tight text-indigo-950 dark:text-indigo-100 font-bold">
-            ${isKm ? 'មធ្យមភាគប្រចាំឆមាសទី២' : 'Semester 2 Average'}
+          <div class="score-vertical-title flex-col gap-0.5 font-khmer text-[11px] leading-tight text-indigo-950 dark:text-indigo-100 font-bold">
+            <span>${isKm ? 'មធ្យមភាគ' : 'Semester 2'}</span>
+            <span>${isKm ? 'ប្រចាំឆមាសទី២' : 'Average'}</span>
           </div>
         </div>
       </th>
