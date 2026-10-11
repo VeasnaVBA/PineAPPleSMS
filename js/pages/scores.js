@@ -717,31 +717,31 @@ export const ScoresPage = {
       }).join(''))}
 
       <!-- Result Columns (Centered in the middle) -->
-      <th class="score-result-th p-0 text-center font-bold font-mono text-slate-800 dark:text-slate-100 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+      <th class="score-result-th p-0 text-center font-bold font-mono col-total-th text-emerald-700 dark:text-emerald-300 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
         <div class="w-[64px] max-w-[64px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
-          <span class="font-khmer text-xs block text-center">${isKm ? 'ពិន្ទុសរុប' : 'Total'}</span>
+          <span class="font-khmer text-xs font-bold block text-emerald-700 dark:text-emerald-300 text-center">${isKm ? 'ពិន្ទុសរុប' : 'Total'}</span>
         </div>
       </th>
-      <th class="score-result-th p-0 text-center font-bold font-mono text-primary bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+      <th class="score-result-th p-0 text-center font-bold font-mono col-average-th text-primary bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
         <div class="w-[68px] max-w-[68px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
-          <span class="font-khmer text-xs block text-primary text-center">${isKm ? 'មធ្យមភាគ' : 'Avg'}</span>
+          <span class="font-khmer text-xs font-bold block text-primary text-center">${isKm ? 'មធ្យមភាគ' : 'Avg'}</span>
         </div>
       </th>
-      <th class="score-result-th p-0 text-center font-bold font-mono col-rank-th text-slate-800 dark:text-slate-100 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+      <th class="score-result-th p-0 text-center font-bold font-mono col-rank-th text-orange-700 dark:text-orange-300 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
         <div class="w-[72px] max-w-[72px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
-          <span class="font-khmer text-xs block text-center">${isKm ? 'ចំណាត់ថ្នាក់' : 'Rank'}</span>
+          <span class="font-khmer text-xs font-bold block text-orange-700 dark:text-orange-300 text-center">${isKm ? 'ចំណាត់ថ្នាក់' : 'Rank'}</span>
         </div>
       </th>
-      <th class="score-result-th p-0 text-center font-bold col-grade-th text-slate-800 dark:text-slate-100 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+      <th class="score-result-th p-0 text-center font-bold col-grade-th text-sky-700 dark:text-sky-300 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
         <div class="w-[52px] max-w-[52px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
-          <span class="font-khmer text-xs block text-center">${isKm ? 'និទ្ទេស' : 'Grade'}</span>
+          <span class="font-khmer text-xs font-bold block text-sky-700 dark:text-sky-300 text-center">${isKm ? 'និទ្ទេស' : 'Grade'}</span>
         </div>
       </th>
 
       <!-- Actions Column -->
-      <th class="text-center p-0 bg-slate-100 dark:bg-slate-800 text-[10px] text-slate-700 dark:text-slate-300 font-khmer print:hidden" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+      <th class="score-result-th text-center p-0 col-actions-th bg-slate-100 dark:bg-slate-800 text-xs font-bold text-violet-700 dark:text-violet-300 font-khmer print:hidden" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
         <div class="w-[40px] max-w-[40px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-0.5 bg-transparent">
-          ${isKm ? 'ផ្សេងៗ' : 'Actions'}
+          <span class="font-khmer text-xs font-bold block text-violet-700 dark:text-violet-300 text-center">${isKm ? 'ផ្សេងៗ' : 'Actions'}</span>
         </div>
       </th>
     `;
@@ -2350,8 +2350,14 @@ export const ScoresPage = {
           bgArgb = 'FFE0F2FE';
           fgArgb = 'FF075985';
           fontSize = 9.5;
+        } else if (c.type === 'total') {
+          fgArgb = 'FF047857'; // Emerald-700
         } else if (c.type === 'average') {
-          fgArgb = 'FF1D4ED8'; // Primary Blue
+          fgArgb = 'FFE11D48'; // Primary Rose-600
+        } else if (c.type === 'rank') {
+          fgArgb = 'FFC2410C'; // Orange-700
+        } else if (c.type === 'grade') {
+          fgArgb = 'FF0369A1'; // Sky-700
         }
 
         cell.font = {

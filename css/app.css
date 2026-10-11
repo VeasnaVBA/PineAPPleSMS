@@ -1664,6 +1664,52 @@ tbody tr.is-active-row td.col-average {
   background-color: #1e293b !important;
 }
 
+/* 5 Summary & Action Column Headers - Distinct Text Colors */
+table.score-table thead tr th.col-total-th,
+table.score-table thead tr th.col-total-th span {
+  color: #047857 !important; /* Emerald-700 */
+}
+
+.dark table.score-table thead tr th.col-total-th,
+.dark table.score-table thead tr th.col-total-th span {
+  color: #6ee7b7 !important; /* Emerald-300 */
+}
+
+table.score-table thead tr th.col-average-th,
+table.score-table thead tr th.col-average-th span {
+  color: hsl(var(--primary)) !important; /* Primary / Rose */
+}
+
+table.score-table thead tr th.col-rank-th,
+table.score-table thead tr th.col-rank-th span {
+  color: #c2410c !important; /* Orange-700 */
+}
+
+.dark table.score-table thead tr th.col-rank-th,
+.dark table.score-table thead tr th.col-rank-th span {
+  color: #fdba74 !important; /* Orange-300 */
+}
+
+table.score-table thead tr th.col-grade-th,
+table.score-table thead tr th.col-grade-th span {
+  color: #0369a1 !important; /* Sky-700 */
+}
+
+.dark table.score-table thead tr th.col-grade-th,
+.dark table.score-table thead tr th.col-grade-th span {
+  color: #7dd3fc !important; /* Sky-300 */
+}
+
+table.score-table thead tr th.col-actions-th,
+table.score-table thead tr th.col-actions-th span {
+  color: #6d28d9 !important; /* Violet-700 */
+}
+
+.dark table.score-table thead tr th.col-actions-th,
+.dark table.score-table thead tr th.col-actions-th span {
+  color: #c4b5fd !important; /* Violet-300 */
+}
+
 /* Rank Columns (Light Orange Theme) */
 th.col-sub-rank-th,
 th.col-rank-th {
