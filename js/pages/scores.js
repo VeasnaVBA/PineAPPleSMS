@@ -2295,14 +2295,15 @@ export const ScoresPage = {
       ws.columns = colMeta.map(c => ({ key: c.key, width: c.width }));
 
       // Row 1: Title Banner
+      const isExamPeriod = period === 'Semester 1 Exam' || period === 'Semester 2 Exam' || period === 'First Test';
       const titleText = isKm
-        ? `តារាងពិន្ទុ${isAnnual ? 'ប្រចាំឆ្នាំ' : (isSemester ? periodName : 'ប្រចាំខែ ' + periodName)} - ថ្នាក់ទី ${className} (${academicYear})`
+        ? `តារាងពិន្ទុ${isAnnual ? 'ប្រចាំឆ្នាំ' : (isSemester ? 'ប្រចាំ' + periodName : (isExamPeriod ? periodName : 'ប្រចាំខែ ' + periodName))} - ថ្នាក់ទី ${className} (${academicYear})`
         : `Score Sheet (${periodName}) - Class ${className} (${academicYear})`;
       const titleRow = ws.addRow([titleText]);
       titleRow.height = 28;
       ws.mergeCells(1, 1, 1, totalCols);
       const titleCell = titleRow.getCell(1);
-      titleCell.font = { name: 'Khmer OS Muol Light', size: 12, bold: true, color: { argb: 'FF0F172A' } };
+      titleCell.font = { name: 'Khmer OS Muol Light', size: 12, bold: false, color: { argb: 'FF0F172A' } };
       titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
       titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
 
@@ -3252,9 +3253,18 @@ export const ScoresPage = {
       return pId;
     };
 
+    const getResultReportTitle = (pId) => {
+      const pName = getPeriodDisplayName(pId) || '.........................';
+      if (!isKm) return `${pName} Result Table`;
+      if (pId === 'Annual') return 'តារាងលទ្ធផលប្រចាំឆ្នាំ';
+      if (pId === 'Semester 1' || pId === 'Semester 2') return `តារាងលទ្ធផលប្រចាំ${pName}`;
+      if (pId === 'Semester 1 Exam' || pId === 'Semester 2 Exam' || pId === 'First Test') return `តារាងលទ្ធផល${pName}`;
+      return `តារាងលទ្ធផលប្រចាំខែ ${pName}`;
+    };
+
     await ReportViewer.open({
       reportKey: 'score_result_table_2row',
-      title: isKm ? 'តារាងលទ្ធផលប្រចាំខែ' : '2-Row Result Table',
+      title: isKm ? 'តារាងលទ្ធផល' : '2-Row Result Table',
       alwaysFresh: true,
       defaultOrientation: 'portrait',
       defaultPaperSize: 'A4',
@@ -3569,6 +3579,7 @@ export const ScoresPage = {
         const foundClass = classes.find(c => String(c.id).trim() === String(selectedClassId).trim());
         currentClassName = foundClass ? (foundClass.name || foundClass.grade || '—') : (selectedClassId || '—');
         const periodDisplayName = getPeriodDisplayName(selectedPeriod) || '.........................';
+        const reportTitleText = getResultReportTitle(selectedPeriod);
 
         // 2. Fetch Master Score Sheet Data
         const scoreData = await ScoreService.getMasterScoreSheet({
@@ -3641,10 +3652,10 @@ export const ScoresPage = {
                 views: [{ state: 'frozen', xSplit: 0, ySplit: 4, showGridLines: true }]
               });
 
-              const r1 = ws.addRow([`តារាងលទ្ធផលប្រចាំខែ ${periodDisplayName}`]);
+              const r1 = ws.addRow([reportTitleText]);
               r1.height = 26;
               ws.mergeCells(1, 1, 1, exportHeaders.length);
-              r1.getCell(1).font = { name: 'Khmer OS Muol Light', size: 12, bold: true, color: { argb: 'FF0F172A' } };
+              r1.getCell(1).font = { name: 'Khmer OS Muol Light', size: 12, bold: false, color: { argb: 'FF0F172A' } };
               r1.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
 
               const r2 = ws.addRow([`សាលារៀន: ${schoolName} / ${schoolProvince}   |   ថ្នាក់ទី: ${currentClassName}   |   ឆ្នាំសិក្សា: ${selectedYear}`]);
@@ -3739,7 +3750,7 @@ export const ScoresPage = {
               });
 
               const ws = XLSX.utils.aoa_to_sheet([
-                [`តារាងលទ្ធផលប្រចាំខែ ${periodDisplayName}`],
+                [reportTitleText],
                 [`សាលារៀន: ${schoolName} / ${schoolProvince}`],
                 [`ថ្នាក់ទី: ${currentClassName} | ឆ្នាំសិក្សា: ${selectedYear}`],
                 [],
@@ -3841,7 +3852,15 @@ export const ScoresPage = {
               if (rightTbody) rightTbody.innerHTML = rightRowsHtml;
 
               const periodLabel = staging.querySelector('#score-result-period-label');
-              if (periodLabel) periodLabel.textContent = periodDisplayName;
+              if (periodLabel) {
+                const parentH2 = periodLabel.closest('h2');
+                if (parentH2) {
+                  Array.from(parentH2.childNodes).forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE) node.textContent = '';
+                  });
+                }
+                periodLabel.textContent = reportTitleText;
+              }
               const classLabel = staging.querySelector('#score-result-class-label');
               if (classLabel) classLabel.textContent = currentClassName;
               const yearLabel = staging.querySelector('#score-result-year-label');
@@ -3875,8 +3894,8 @@ export const ScoresPage = {
 
             <!-- Center Title Section -->
             <div class="text-center space-y-1 pt-1 pb-1 font-khmer text-[10px]">
-              <h2 class="font-khmer-muol text-foreground" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif; font-size: 12px !important; letter-spacing: normal !important; line-height: 1.8; text-decoration: none !important;">
-                តារាងលទ្ធផលប្រចាំខែ <span id="score-result-period-label" contenteditable="true" spellcheck="false" class="outline-none focus:ring-1 focus:ring-primary/40 rounded px-1 cursor-text" title="${isKm ? 'ចុចទីនេះដើម្បីកែប្រែ' : 'Click to edit'}">${escapeHtml(periodDisplayName)}</span>
+              <h2 id="score-result-title-heading" class="font-khmer-muol text-foreground" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif; font-size: 12px !important; font-weight: 400 !important; letter-spacing: normal !important; line-height: 2.0 !important; text-decoration: none !important;">
+                <span id="score-result-period-label" contenteditable="true" spellcheck="false" class="font-khmer-muol outline-none focus:ring-1 focus:ring-primary/40 rounded px-1 cursor-text" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-weight: 400 !important; line-height: 2.0 !important;" title="${isKm ? 'ចុចទីនេះដើម្បីកែប្រែ' : 'Click to edit'}">${escapeHtml(reportTitleText)}</span>
               </h2>
               
               <!-- Meta Row: Class & Academic Year -->

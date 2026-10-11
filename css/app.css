@@ -91,16 +91,19 @@
 
 /* 2. Enforce OpenType Ligatures, Subscript Shaping & Text Rendering CSS */
 .font-khmer-muol,
+.font-khmer-muol span,
 [style*="Khmer OS Muol Light"],
 [style*="Khmer OS Moul Light"],
 [style*="Moul"] {
   font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important;
+  font-weight: 400 !important;
+  font-synthesis: none !important;
   letter-spacing: normal !important;
   font-feature-settings: normal !important;
   -webkit-font-feature-settings: normal !important;
   font-variant-ligatures: normal !important;
   text-rendering: optimizeLegibility !important;
-  line-height: 1.8 !important; /* Muol requires higher line-height to prevent clipping */
+  line-height: 2.0 !important; /* Muol requires higher line-height to prevent clipping */
 }
 
 /* Root Typographic Scaling & Display Density */
