@@ -2,8 +2,65 @@ import { db } from '../database/db.js';
 import { ClassService } from './classService.js';
 import { authService } from './authService.js';
 import { syncStateManager } from './syncStateManager.js';
+import { isStudentActive, EVALUATION_PERIODS } from './scoreService.js';
+
+export const ATTENDANCE_MONTHS = EVALUATION_PERIODS.filter(p => p.group === 'month').map((m, idx) => ({
+  ...m,
+  monthNum: idx + 1
+}));
+
+export function classifyAttendanceMark(rawVal) {
+  const v = String(rawVal ?? '').trim();
+  if (!v) return { status: 'Present', mark: '' };
+  const upper = v.toUpperCase();
+  // Permission / Excused: ច, ច្បាប់, មានច្បាប់, P, E
+  if (
+    upper === 'P' ||
+    upper === 'E' ||
+    upper === 'EX' ||
+    v.startsWith('ច') ||
+    v.includes('ច្បាប់')
+  ) {
+    return { status: 'Excused', mark: v };
+  }
+  // Absent / Unexcused: អ, ឥ, ឥតច្បាប់, A, X, 0
+  if (
+    upper === 'A' ||
+    upper === 'X' ||
+    upper === 'U' ||
+    v.startsWith('អ') ||
+    v.startsWith('ឥ')
+  ) {
+    return { status: 'Absent', mark: v };
+  }
+  // Default non-empty mark in attendance grid treated as Absent unless P/ច
+  return { status: 'Absent', mark: v };
+}
+
+export function resolveCalendarYearForMonth(academicYear, monthNum) {
+  const str = String(academicYear || '').trim();
+  const matches = str.match(/\d{4}/g);
+  if (matches && matches.length >= 2) {
+    const startYear = parseInt(matches[0], 10);
+    const endYear = parseInt(matches[1], 10);
+    // Months Sep(9)–Dec(12) belong to startYear; Jan(1)–Aug(8) belong to endYear
+    return monthNum >= 9 ? startYear : endYear;
+  }
+  if (matches && matches.length === 1) {
+    return parseInt(matches[0], 10);
+  }
+  return new Date().getFullYear();
+}
+
+export function getDaysInMonth(yearNum, monthNum) {
+  return new Date(yearNum, monthNum, 0).getDate();
+}
 
 export const AttendanceService = {
+  getMonths() {
+    return ATTENDANCE_MONTHS;
+  },
+
   async getByDate(date) {
     let records = await db.queryByIndex('attendance', 'date', date);
     if (authService.isTeacher()) {
@@ -35,6 +92,239 @@ export const AttendanceService = {
     // Present + Late counts as attended
     const percentage = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
     return { total, present, absent, late, excused, percentage };
+  },
+
+  /**
+   * Get monthly attendance grid sheet for a specific class, academicYear, and month ID (e.g. 'October').
+   */
+  async getMonthlyAttendanceSheet({ classId, academicYear, month }) {
+    if (authService.isTeacher()) {
+      const teacherClassId = authService.getAssignedClassId();
+      if (teacherClassId) {
+        classId = teacherClassId;
+      }
+    }
+
+    const monthObj = ATTENDANCE_MONTHS.find(m => m.id === month || String(m.monthNum) === String(month));
+    const monthNum = monthObj ? monthObj.monthNum : 10;
+    const yearNum = resolveCalendarYearForMonth(academicYear, monthNum);
+    const daysInMonth = getDaysInMonth(yearNum, monthNum);
+    const ymPrefix = `${yearNum}-${String(monthNum).padStart(2, '0')}-`;
+
+    const enrolled = await ClassService.getEnrolledStudents(classId);
+    const activeStudents = (enrolled || []).filter(isStudentActive);
+
+    // Sort in Khmer alphabetical order by full Khmer name
+    activeStudents.sort((a, b) => {
+      const nameA = (a.khmerName || `${a.lastNameKh || ''} ${a.firstNameKh || ''}`).trim();
+      const nameB = (b.khmerName || `${b.lastNameKh || ''} ${b.firstNameKh || ''}`).trim();
+      return nameA.localeCompare(nameB, 'km');
+    });
+
+    const allAtt = await db.getAll('attendance');
+    const classMonthAtt = (allAtt || []).filter(r => {
+      if (String(r.classId).trim() !== String(classId).trim()) return false;
+      if (!r.date) return false;
+      if (String(r.date).startsWith(ymPrefix)) return true;
+      const d = new Date(r.date);
+      return !isNaN(d.getTime()) && (d.getMonth() + 1 === monthNum) && (d.getFullYear() === yearNum);
+    });
+
+    const stuAttMap = new Map();
+    for (const rec of classMonthAtt) {
+      if (!stuAttMap.has(rec.studentId)) {
+        stuAttMap.set(rec.studentId, []);
+      }
+      stuAttMap.get(rec.studentId).push(rec);
+    }
+
+    const rows = activeStudents.map(stu => {
+      const surname = (stu.lastNameKh || '').trim();
+      const givenName = (stu.firstNameKh || '').trim();
+      const khmerFullName = (surname || givenName)
+        ? `${surname} ${givenName}`.trim()
+        : (stu.khmerName || stu.englishName || '—');
+
+      const days = {};
+      for (let d = 1; d <= daysInMonth; d++) {
+        days[d] = { status: 'Present', mark: '' };
+      }
+
+      let manualExcused = 0;
+      let manualAbsent = 0;
+      const recs = stuAttMap.get(stu.id) || [];
+
+      for (const rec of recs) {
+        const st = String(rec.status || '').trim();
+        const isExc = st === 'Excused' || st === 'មានច្បាប់';
+        const isAbs = st === 'Absent' || st === 'ឥតច្បាប់';
+        if (!isExc && !isAbs) continue;
+
+        if (rec.isManualSummary) {
+          if (isExc) manualExcused++;
+          else if (isAbs) manualAbsent++;
+          continue;
+        }
+
+        const dateParts = String(rec.date || '').split('-');
+        const dayNum = dateParts.length === 3 ? parseInt(dateParts[2], 10) : new Date(rec.date).getDate();
+        if (dayNum >= 1 && dayNum <= daysInMonth) {
+          const defaultMark = isExc ? 'ច' : 'អ';
+          days[dayNum] = {
+            status: isExc ? 'Excused' : 'Absent',
+            mark: rec.mark ? String(rec.mark) : defaultMark
+          };
+        }
+      }
+
+      let dayExcusedCount = 0;
+      let dayAbsentCount = 0;
+      for (let d = 1; d <= daysInMonth; d++) {
+        if (days[d].status === 'Excused') dayExcusedCount++;
+        else if (days[d].status === 'Absent') dayAbsentCount++;
+      }
+
+      const permission = dayExcusedCount + manualExcused;
+      const absent = dayAbsentCount + manualAbsent;
+      const total = permission + absent;
+
+      return {
+        studentId: stu.id,
+        studentNumber: stu.studentId || stu.code || '',
+        khmerFullName,
+        lastNameKh: surname,
+        firstNameKh: givenName,
+        englishName: stu.englishName || '',
+        gender: stu.gender || 'Male',
+        classId,
+        academicYear,
+        month,
+        monthNum,
+        yearNum,
+        days,
+        permission,
+        absent,
+        total
+      };
+    });
+
+    return {
+      classId,
+      academicYear,
+      month,
+      monthNum,
+      yearNum,
+      daysInMonth,
+      rows
+    };
+  },
+
+  /**
+   * Save monthly attendance sheet to IndexedDB 'attendance' store.
+   */
+  async saveMonthlyAttendanceSheet({ classId, academicYear, month, yearNum, monthNum, daysInMonth, rows }) {
+    const isTeacher = authService.isTeacher();
+    const teacherClassId = authService.getAssignedClassId();
+    if (isTeacher && teacherClassId) {
+      if (String(classId).trim() !== String(teacherClassId).trim()) {
+        throw new Error('Access denied: Cannot record attendance for another classroom.');
+      }
+      classId = teacherClassId;
+    }
+
+    const ymPrefix = `${yearNum}-${String(monthNum).padStart(2, '0')}-`;
+    const allAtt = await db.getAll('attendance');
+    const existingMonthRecs = (allAtt || []).filter(r => {
+      if (String(r.classId).trim() !== String(classId).trim()) return false;
+      return String(r.date || '').startsWith(ymPrefix);
+    });
+
+    const existingIdsToDelete = new Set(existingMonthRecs.map(r => r.id));
+    const recordsToPut = [];
+    const nowIso = new Date().toISOString();
+
+    for (const row of (rows || [])) {
+      let dayExcusedCount = 0;
+      let dayAbsentCount = 0;
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const cell = row.days?.[d];
+        const { status, mark } = classifyAttendanceMark(cell?.mark ?? '');
+        if (status === 'Excused' || status === 'Absent') {
+          if (status === 'Excused') dayExcusedCount++;
+          else dayAbsentCount++;
+
+          const dateStr = `${yearNum}-${String(monthNum).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          const id = `att-${dateStr}-${row.studentId}`;
+          existingIdsToDelete.delete(id);
+          recordsToPut.push({
+            id,
+            date: dateStr,
+            classId,
+            academicYear,
+            month,
+            studentId: row.studentId,
+            status,
+            mark,
+            notes: '',
+            updatedAt: nowIso
+          });
+        }
+      }
+
+      // If user manually typed a summary permission/absent count greater than the marked days
+      const targetPerm = Math.max(0, parseInt(row.permission, 10) || 0);
+      const targetAbs = Math.max(0, parseInt(row.absent, 10) || 0);
+      const extraPerm = Math.max(0, targetPerm - dayExcusedCount);
+      const extraAbs = Math.max(0, targetAbs - dayAbsentCount);
+      const fallbackDate = `${yearNum}-${String(monthNum).padStart(2, '0')}-01`;
+
+      for (let k = 1; k <= extraPerm; k++) {
+        const id = `att-manual-exc-${yearNum}-${String(monthNum).padStart(2, '0')}-${k}-${row.studentId}`;
+        existingIdsToDelete.delete(id);
+        recordsToPut.push({
+          id,
+          date: fallbackDate,
+          classId,
+          academicYear,
+          month,
+          studentId: row.studentId,
+          status: 'Excused',
+          mark: 'ច',
+          isManualSummary: true,
+          notes: '',
+          updatedAt: nowIso
+        });
+      }
+
+      for (let k = 1; k <= extraAbs; k++) {
+        const id = `att-manual-abs-${yearNum}-${String(monthNum).padStart(2, '0')}-${k}-${row.studentId}`;
+        existingIdsToDelete.delete(id);
+        recordsToPut.push({
+          id,
+          date: fallbackDate,
+          classId,
+          academicYear,
+          month,
+          studentId: row.studentId,
+          status: 'Absent',
+          mark: 'អ',
+          isManualSummary: true,
+          notes: '',
+          updatedAt: nowIso
+        });
+      }
+    }
+
+    for (const delId of existingIdsToDelete) {
+      await db.delete('attendance', delId);
+    }
+    for (const rec of recordsToPut) {
+      await db.put('attendance', rec);
+    }
+
+    syncStateManager.markDirty('attendance.save');
+    return true;
   },
 
   /**

@@ -1986,3 +1986,159 @@ a.score-toolbar-item:not(.hidden) {
   max-height: 36px !important;
   box-sizing: border-box !important;
 }
+
+/* ==========================================================================
+   Attendance Monthly Grid Table - Sticky Columns & Distinct Header Colors
+   ========================================================================== */
+.att-sticky-col-1 {
+  position: sticky !important;
+  left: 0px !important;
+  width: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.att-sticky-col-2 {
+  position: sticky !important;
+  left: 42px !important;
+  width: 90px !important;
+  min-width: 90px !important;
+  max-width: 90px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.att-sticky-col-3 {
+  position: sticky !important;
+  left: 132px !important;
+  width: 165px !important;
+  min-width: 165px !important;
+  max-width: 165px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.att-sticky-col-4 {
+  position: sticky !important;
+  left: 297px !important;
+  width: 58px !important;
+  min-width: 58px !important;
+  max-width: 58px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  border-right: 2px solid #94a3b8 !important;
+}
+
+.dark .att-sticky-col-4 {
+  border-right: 2px solid #475569 !important;
+}
+
+thead th.att-sticky-col-1,
+thead th.att-sticky-col-2,
+thead th.att-sticky-col-3,
+thead th.att-sticky-col-4 {
+  position: sticky !important;
+  top: 0px !important;
+  z-index: 50 !important;
+  transform: translateZ(0) !important;
+  background-color: #f1f5f9 !important;
+  color: #1e293b !important;
+}
+
+.dark thead th.att-sticky-col-1,
+.dark thead th.att-sticky-col-2,
+.dark thead th.att-sticky-col-3,
+.dark thead th.att-sticky-col-4 {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+tbody td.att-sticky-col-1,
+tbody td.att-sticky-col-2,
+tbody td.att-sticky-col-3,
+tbody td.att-sticky-col-4 {
+  position: sticky !important;
+  z-index: 30 !important;
+  transform: translateZ(0) !important;
+  isolation: isolate !important;
+  background-color: #ffffff !important;
+}
+
+.dark tbody td.att-sticky-col-1,
+.dark tbody td.att-sticky-col-2,
+.dark tbody td.att-sticky-col-3,
+.dark tbody td.att-sticky-col-4 {
+  background-color: #0f172a !important;
+}
+
+tbody tr:hover td.att-sticky-col-1,
+tbody tr:hover td.att-sticky-col-2,
+tbody tr:hover td.att-sticky-col-3,
+tbody tr:hover td.att-sticky-col-4,
+tbody tr:focus-within td.att-sticky-col-1,
+tbody tr:focus-within td.att-sticky-col-2,
+tbody tr:focus-within td.att-sticky-col-3,
+tbody tr:focus-within td.att-sticky-col-4 {
+  background-color: #f1f5f9 !important;
+}
+
+.dark tbody tr:hover td.att-sticky-col-1,
+.dark tbody tr:hover td.att-sticky-col-2,
+.dark tbody tr:hover td.att-sticky-col-3,
+.dark tbody tr:hover td.att-sticky-col-4,
+.dark tbody tr:focus-within td.att-sticky-col-1,
+.dark tbody tr:focus-within td.att-sticky-col-2,
+.dark tbody tr:focus-within td.att-sticky-col-3,
+.dark tbody tr:focus-within td.att-sticky-col-4 {
+  background-color: #1e293b !important;
+}
+
+/* Attendance Summary Header Colors */
+table.score-table thead tr th.att-col-perm-th,
+table.score-table thead tr th.att-col-perm-th span {
+  color: #0369a1 !important; /* Sky-700 */
+  background-color: #e0f2fe !important;
+}
+
+.dark table.score-table thead tr th.att-col-perm-th,
+.dark table.score-table thead tr th.att-col-perm-th span {
+  color: #7dd3fc !important; /* Sky-300 */
+  background-color: rgba(12, 74, 110, 0.45) !important;
+}
+
+table.score-table thead tr th.att-col-absent-th,
+table.score-table thead tr th.att-col-absent-th span {
+  color: #be123c !important; /* Rose-700 */
+  background-color: #ffe4e6 !important;
+}
+
+.dark table.score-table thead tr th.att-col-absent-th,
+.dark table.score-table thead tr th.att-col-absent-th span {
+  color: #fda4af !important; /* Rose-300 */
+  background-color: rgba(136, 19, 55, 0.45) !important;
+}
+
+table.score-table thead tr th.att-col-total-th,
+table.score-table thead tr th.att-col-total-th span {
+  color: #6d28d9 !important; /* Violet-700 */
+  background-color: #ede9fe !important;
+  border-right: 2px solid #94a3b8 !important;
+}
+
+.dark table.score-table thead tr th.att-col-total-th,
+.dark table.score-table thead tr th.att-col-total-th span {
+  color: #c4b5fd !important; /* Violet-300 */
+  background-color: rgba(76, 29, 149, 0.45) !important;
+  border-right: 2px solid #475569 !important;
+}
+
+td.att-col-total-td {
+  border-right: 2px solid #94a3b8 !important;
+}
+
+.dark td.att-col-total-td {
+  border-right: 2px solid #475569 !important;
+}
+

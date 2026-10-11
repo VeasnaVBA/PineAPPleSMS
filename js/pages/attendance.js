@@ -1,25 +1,30 @@
 /**
- * Attendance Management Module (Section 15)
- * Class roll-call, Present/Absent/Late/Excused status, Mark all present,
- * dynamic statistics calculation, and historical audit logs.
+ * Monthly Attendance Management Module (Section 15)
+ * Excel-style monthly attendance grid with columns:
+ * No (ល.រ), Student ID (អត្តលេខ), Khmer Full Name (គោត្តនាម និងនាម), Gender (ភេទ),
+ * Permission (ច្បាប់), Absent (ឥតច្បាប់), Total (សរុប), and Days of Selected Month (1..N).
  */
-import { AttendanceService } from '../services/attendanceService.js';
+import {
+  AttendanceService,
+  ATTENDANCE_MONTHS,
+  classifyAttendanceMark
+} from '../services/attendanceService.js';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
-import { photoService } from '../services/photoService.js';
 import { authService } from '../services/authService.js';
-import { Modal } from '../components/modal.js';
 import { toast } from '../components/toast.js';
 import { getIcon } from '../components/icons.js';
-import { formatDisplayDate } from '../utils/dateUtils.js';
 
 export const AttendancePage = {
   state: {
     classes: [],
     selectedClassId: '',
-    selectedDate: new Date().toISOString().split('T')[0],
+    selectedMonth: '',
     activeYear: '2024–2025',
-    records: []
+    searchQuery: '',
+    sheet: null,
+    autoSaveTimer: null,
+    isSaving: false
   },
 
   async render(container) {
@@ -46,36 +51,55 @@ export const AttendancePage = {
 
   renderLayout() {
     const classes = this.state.classes;
+    const months = ATTENDANCE_MONTHS;
 
     this.container.innerHTML = `
-      <div class="space-y-6 animate-fade-in pb-12">
+      <div class="space-y-4 animate-fade-in pb-12">
         <!-- Page Header -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">${t('attendance.title')}</h1>
-            <p class="text-sm text-muted-foreground mt-1">${t('attendance.subtitle')}</p>
+            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-khmer">${t('attendance.title')}</h1>
+            <p class="text-xs sm:text-sm text-muted-foreground mt-0.5 font-khmer">${t('attendance.subtitle')}</p>
           </div>
-          <div class="flex items-center gap-2">
-            <button id="btn-view-history" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-border bg-card hover:bg-muted text-xs sm:text-sm font-medium transition-colors">
-              ${getIcon('clock', 'w-4 h-4')}
-              <span>${t('attendance.historyBtn')}</span>
+          <div class="flex items-center gap-2 flex-wrap">
+            <!-- Typing Legend -->
+            <div class="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-lg border border-border bg-card text-xs font-khmer">
+              <span class="inline-flex items-center gap-1 font-semibold text-sky-700 dark:text-sky-300">
+                <kbd class="px-1.5 py-0.5 rounded bg-sky-500/15 border border-sky-500/30 font-mono text-[11px]">ច</kbd>
+                <span>ឬ</span>
+                <kbd class="px-1.5 py-0.5 rounded bg-sky-500/15 border border-sky-500/30 font-mono text-[11px]">P</kbd>
+                <span>= ច្បាប់</span>
+              </span>
+              <span class="text-border">|</span>
+              <span class="inline-flex items-center gap-1 font-semibold text-rose-700 dark:text-rose-300">
+                <kbd class="px-1.5 py-0.5 rounded bg-rose-500/15 border border-rose-500/30 font-mono text-[11px]">អ</kbd>
+                <span>ឬ</span>
+                <kbd class="px-1.5 py-0.5 rounded bg-rose-500/15 border border-rose-500/30 font-mono text-[11px]">A</kbd>
+                <span>= ឥតច្បាប់</span>
+              </span>
+            </div>
+
+            <button id="btn-export-att-excel" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-border bg-card hover:bg-muted text-xs font-medium text-foreground transition-colors cursor-pointer">
+              ${getIcon('download', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
+              <span>នាំចេញ Excel</span>
             </button>
-            <button id="btn-save-attendance" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs sm:text-sm font-medium shadow-sm hover:bg-primary/90 transition-colors">
+
+            <button id="btn-save-attendance" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium shadow-sm hover:bg-primary/90 transition-colors cursor-pointer">
               ${getIcon('check', 'w-4 h-4')}
-              <span>${t('attendance.saveAttendance')}</span>
+              <span id="btn-save-att-label">${t('attendance.saveAttendance')}</span>
             </button>
           </div>
         </div>
 
-        <!-- Filter & Date Controls -->
-        <div class="p-4 rounded-xl border border-border bg-card shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div class="flex items-center gap-3 w-full sm:w-auto flex-wrap">
+        <!-- Filter & Month Controls -->
+        <div class="p-3.5 rounded-xl border border-border bg-card shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5 flex-wrap">
             <!-- Class Selector -->
             <div class="flex items-center gap-2">
-              <span class="text-xs text-muted-foreground font-medium">${t('attendance.class')}:</span>
+              <span class="text-xs text-muted-foreground font-medium font-khmer whitespace-nowrap">${t('attendance.class')}:</span>
               ${authService.isTeacher() && classes.length <= 1 ? (() => {
-                const assignedCls = classes.find(c => c.id === this.state.selectedClassId) || 
-                                    classes.find(c => c.id === authService.getAssignedClassId()) || 
+                const assignedCls = classes.find(c => c.id === this.state.selectedClassId) ||
+                                    classes.find(c => c.id === authService.getAssignedClassId()) ||
                                     classes[0];
                 return assignedCls ? `
                   <div class="h-9 px-3 py-1.5 rounded-md border border-primary/30 bg-primary/10 text-xs font-semibold text-primary flex items-center gap-1.5 box-border">
@@ -89,7 +113,7 @@ export const AttendancePage = {
                   </a>
                 `;
               })() : `
-                <select id="select-att-class" class="h-9 px-3 py-1.5 pr-8 rounded-md border border-input bg-background text-xs sm:text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs">
+                <select id="select-att-class" class="h-9 px-3 py-1.5 pr-8 rounded-md border border-input bg-background text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs">
                   ${classes.length === 0 ? `<option value="">${t('classes.emptyList')}</option>` : ''}
                   ${classes.map(c => `
                     <option value="${c.id}" ${this.state.selectedClassId === c.id ? 'selected' : ''}>${c.name}</option>
@@ -98,69 +122,68 @@ export const AttendancePage = {
               `}
             </div>
 
-            <!-- Date Picker -->
+            <!-- Month Selector -->
             <div class="flex items-center gap-2">
-              <span class="text-xs text-muted-foreground font-medium">${t('attendance.date')}:</span>
-              <input type="date" id="input-att-date" value="${this.state.selectedDate}" class="h-9 px-3 py-1.5 rounded-md border border-input bg-background text-xs sm:text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs" />
+              <span class="text-xs text-muted-foreground font-medium font-khmer whitespace-nowrap">ខែសិក្សា:</span>
+              <select id="select-att-month" class="h-9 min-w-[165px] px-3 py-1.5 pr-8 rounded-md border border-input bg-background text-xs font-semibold text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs font-khmer">
+                <option value="" ${!this.state.selectedMonth ? 'selected' : ''}>— ជ្រើសរើសខែ —</option>
+                ${months.map(m => `
+                  <option value="${m.id}" ${this.state.selectedMonth === m.id ? 'selected' : ''}>ខែ${m.nameKm} (${m.nameEn})</option>
+                `).join('')}
+              </select>
+            </div>
+
+            <!-- Academic Year Badge -->
+            <div class="h-9 px-3 rounded-md border border-border bg-muted/40 text-xs font-medium text-muted-foreground inline-flex items-center gap-1.5">
+              ${getIcon('calendar', 'w-3.5 h-3.5 text-primary')}
+              <span>ឆ្នាំសិក្សា: <strong class="text-foreground font-mono">${this.state.activeYear}</strong></span>
             </div>
           </div>
 
-          <!-- Quick Action: Mark All Present -->
-          <button id="btn-mark-all-present" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-medium hover:bg-emerald-500/20 transition-colors self-start sm:self-auto">
-            ${getIcon('check', 'w-3.5 h-3.5')}
-            <span>${t('attendance.markAllPresent')}</span>
-          </button>
-        </div>
-
-        <!-- Live Summary Stats Banner -->
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="att-summary-banner">
-          <div class="p-3 rounded-lg bg-card border border-border">
-            <span class="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">Total Learners</span>
-            <p class="text-lg font-bold text-foreground mt-0.5" id="stat-att-total">0</p>
-          </div>
-          <div class="p-3 rounded-lg bg-card border border-border">
-            <span class="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase font-bold tracking-wider block">${t('attendance.present')}</span>
-            <p class="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-0.5" id="stat-att-present">0</p>
-          </div>
-          <div class="p-3 rounded-lg bg-card border border-border">
-            <span class="text-[10px] text-rose-600 dark:text-rose-400 uppercase font-bold tracking-wider block">${t('attendance.absent')}</span>
-            <p class="text-lg font-bold text-rose-600 dark:text-rose-400 mt-0.5" id="stat-att-absent">0</p>
-          </div>
-          <div class="p-3 rounded-lg bg-card border border-border">
-            <span class="text-[10px] text-amber-600 dark:text-amber-400 uppercase font-bold tracking-wider block">${t('attendance.late')}</span>
-            <p class="text-lg font-bold text-amber-600 dark:text-amber-400 mt-0.5" id="stat-att-late">0</p>
-          </div>
-          <div class="p-3 rounded-lg bg-card border border-border col-span-2 sm:col-span-1">
-            <span class="text-[10px] text-blue-600 dark:text-blue-400 uppercase font-bold tracking-wider block">${t('attendance.attendanceRate')}</span>
-            <p class="text-lg font-bold text-primary mt-0.5" id="stat-att-rate">0%</p>
+          <!-- Search Student Input -->
+          <div class="relative w-full lg:w-64">
+            <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-muted-foreground">
+              ${getIcon('search', 'w-3.5 h-3.5')}
+            </span>
+            <input
+              type="text"
+              id="input-att-search"
+              value="${this.state.searchQuery}"
+              placeholder="ស្វែងរកឈ្មោះ ឬ អត្តលេខសិស្ស..."
+              class="h-9 w-full pl-8 pr-3 rounded-md border border-input bg-background text-xs text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
           </div>
         </div>
 
-        <!-- Attendance Sheet Table Card -->
-        <div class="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs sm:text-sm">
-              <thead>
-                <tr class="border-b border-border bg-muted/40 text-muted-foreground font-medium select-none">
-                  <th class="w-12 px-4 py-3 text-center">#</th>
-                  <th class="px-4 py-3">${t('students.studentId')}</th>
-                  <th class="px-4 py-3">${t('students.khmerName')} / ${t('students.englishName')}</th>
-                  <th class="px-4 py-3">${t('common.gender')}</th>
-                  <th class="px-4 py-3 text-center">${t('common.status')}</th>
-                </tr>
-              </thead>
-              <tbody id="attendance-table-body" class="divide-y divide-border">
-                <tr>
-                  <td colspan="5" class="py-12 text-center text-muted-foreground">
-                    <div class="flex items-center justify-center gap-2">
-                      <div class="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
-                      <span>${t('common.loading')}</span>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        <!-- Live Monthly Summary Banner -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="att-summary-banner">
+          <div class="p-3 rounded-lg bg-card border border-border flex items-center justify-between">
+            <div>
+              <span class="text-[11px] text-muted-foreground font-khmer font-semibold block">សិស្សសរុប</span>
+              <p class="text-lg font-bold text-foreground mt-0.5 font-mono" id="stat-att-total">0 នាក់</p>
+            </div>
+            <span class="text-xs font-khmer font-medium px-2 py-0.5 rounded-full bg-pink-500/10 text-pink-600 dark:text-pink-400" id="stat-att-female">ស្រី 0 នាក់</span>
           </div>
+          <div class="p-3 rounded-lg bg-card border border-border">
+            <span class="text-[11px] text-sky-700 dark:text-sky-400 font-khmer font-semibold block">ច្បាប់សរុប (ខែនេះ)</span>
+            <p class="text-lg font-bold text-sky-700 dark:text-sky-400 mt-0.5 font-mono" id="stat-att-perm">0 ដង</p>
+          </div>
+          <div class="p-3 rounded-lg bg-card border border-border">
+            <span class="text-[11px] text-rose-600 dark:text-rose-400 font-khmer font-semibold block">ឥតច្បាប់សរុប (ខែនេះ)</span>
+            <p class="text-lg font-bold text-rose-600 dark:text-rose-400 mt-0.5 font-mono" id="stat-att-absent">0 ដង</p>
+          </div>
+          <div class="p-3 rounded-lg bg-card border border-border">
+            <span class="text-[11px] text-violet-700 dark:text-violet-400 font-khmer font-semibold block">សរុបអវត្តមាន (ខែនេះ)</span>
+            <p class="text-lg font-bold text-violet-700 dark:text-violet-400 mt-0.5 font-mono" id="stat-att-sum">0 ដង</p>
+          </div>
+        </div>
+
+        <!-- Monthly Attendance Grid Container -->
+        <div class="score-table-container rounded-xl border border-border bg-card shadow-sm" id="att-table-wrapper">
+          <table class="score-table" id="attendance-grid-table">
+            <thead id="attendance-table-head"></thead>
+            <tbody id="attendance-table-body"></tbody>
+          </table>
         </div>
       </div>
     `;
@@ -169,135 +192,485 @@ export const AttendancePage = {
   },
 
   async loadSheet() {
-    this.state.records = await AttendanceService.getAttendanceSheet(
-      this.state.selectedDate,
-      this.state.selectedClassId,
-      this.state.activeYear
-    );
+    const thead = document.getElementById('attendance-table-head');
+    const tbody = document.getElementById('attendance-table-body');
+    if (!thead || !tbody) return;
 
-    this.renderRows();
+    if (!this.state.selectedClassId) {
+      this.state.sheet = null;
+      thead.innerHTML = '';
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="10" class="py-16 text-center text-muted-foreground font-khmer">
+            សូមជ្រើសរើសថ្នាក់រៀនជាមុនសិន
+          </td>
+        </tr>
+      `;
+      this.updateStats();
+      return;
+    }
+
+    if (!this.state.selectedMonth) {
+      this.state.sheet = null;
+      thead.innerHTML = '';
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="10" class="py-16 text-center text-muted-foreground">
+            <div class="flex flex-col items-center justify-center gap-2">
+              <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                ${getIcon('calendar', 'w-5 h-5')}
+              </div>
+              <p class="text-sm font-semibold text-foreground font-khmer">សូមជ្រើសរើសខែសិក្សាជាមុនសិន</p>
+              <p class="text-xs text-muted-foreground font-khmer">ជ្រើសរើសខែនៅខាងលើ ដើម្បីបង្ហាញតារាងវត្តមានប្រចាំខែ</p>
+            </div>
+          </td>
+        </tr>
+      `;
+      this.updateStats();
+      return;
+    }
+
+    this.state.sheet = await AttendanceService.getMonthlyAttendanceSheet({
+      classId: this.state.selectedClassId,
+      academicYear: this.state.activeYear,
+      month: this.state.selectedMonth
+    });
+
+    this.renderTable();
     this.updateStats();
   },
 
-  renderRows() {
+  getFilteredRows() {
+    if (!this.state.sheet || !Array.isArray(this.state.sheet.rows)) return [];
+    const q = (this.state.searchQuery || '').trim().toLowerCase();
+    if (!q) return this.state.sheet.rows;
+    return this.state.sheet.rows.filter(r => {
+      const fullKm = (r.khmerFullName || '').toLowerCase();
+      const code = (r.studentNumber || '').toLowerCase();
+      const en = (r.englishName || '').toLowerCase();
+      return fullKm.includes(q) || code.includes(q) || en.includes(q);
+    });
+  },
+
+  renderTable() {
+    const thead = document.getElementById('attendance-table-head');
     const tbody = document.getElementById('attendance-table-body');
-    if (!tbody) return;
+    if (!thead || !tbody || !this.state.sheet) return;
 
-    const records = this.state.records;
+    const { daysInMonth } = this.state.sheet;
+    const rows = this.getFilteredRows();
 
-    if (records.length === 0) {
+    // Build Day Header Columns (1..daysInMonth)
+    let dayHeadersHtml = '';
+    for (let d = 1; d <= daysInMonth; d++) {
+      dayHeadersHtml += `
+        <th class="text-center font-mono text-[11px] font-bold" style="width: 34px; min-width: 34px; max-width: 34px; height: 42px;">
+          <div class="flex items-center justify-center h-full w-full">${d}</div>
+        </th>
+      `;
+    }
+
+    thead.innerHTML = `
+      <tr style="height: 42px;">
+        <th class="att-sticky-col-1 text-center font-khmer text-[11px] font-bold">
+          <div class="flex items-center justify-center h-full px-1">ល.រ</div>
+        </th>
+        <th class="att-sticky-col-2 text-center font-khmer text-[11px] font-bold">
+          <div class="flex items-center justify-center h-full px-1.5">អត្តលេខ</div>
+        </th>
+        <th class="att-sticky-col-3 text-center font-khmer text-[11px] font-bold">
+          <div class="flex items-center justify-center h-full px-2">គោត្តនាម និងនាម</div>
+        </th>
+        <th class="att-sticky-col-4 text-center font-khmer text-[11px] font-bold">
+          <div class="flex items-center justify-center h-full px-1">ភេទ</div>
+        </th>
+        <th class="att-col-perm-th text-center font-khmer text-[11px] font-bold" style="width: 54px; min-width: 54px; max-width: 54px;">
+          <div class="flex items-center justify-center h-full px-1">ច្បាប់</div>
+        </th>
+        <th class="att-col-absent-th text-center font-khmer text-[11px] font-bold" style="width: 62px; min-width: 62px; max-width: 62px;">
+          <div class="flex items-center justify-center h-full px-1">ឥតច្បាប់</div>
+        </th>
+        <th class="att-col-total-th text-center font-khmer text-[11px] font-bold" style="width: 54px; min-width: 54px; max-width: 54px;">
+          <div class="flex items-center justify-center h-full px-1">សរុប</div>
+        </th>
+        ${dayHeadersHtml}
+      </tr>
+    `;
+
+    if (rows.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="5" class="py-12 text-center text-muted-foreground">
-            <p class="text-xs">${t('attendance.emptyStudents')}</p>
+          <td colspan="${7 + daysInMonth}" class="py-12 text-center text-muted-foreground font-khmer text-xs">
+            ${t('attendance.emptyStudents')}
           </td>
         </tr>
       `;
       return;
     }
 
-    tbody.innerHTML = records.map((r, idx) => {
-      const photoUrl = r.photoBlob ? photoService.getUrlForBlob(r.photoBlob) : null;
+    tbody.innerHTML = rows.map((row, rowIdx) => {
+      const isFemale = row.gender === 'Female' || row.gender === 'ស្រី' || row.gender === 'F';
+      const genderLabel = isFemale ? 'ស្រី' : 'ប្រុស';
+      const genderClass = isFemale
+        ? 'text-pink-600 dark:text-pink-400 font-semibold'
+        : 'text-sky-700 dark:text-sky-400 font-medium';
+
+      let dayCellsHtml = '';
+      for (let d = 1; d <= daysInMonth; d++) {
+        const cellObj = row.days[d] || { status: 'Present', mark: '' };
+        const markVal = cellObj.mark || '';
+        const statusColorClass = cellObj.status === 'Excused'
+          ? 'text-sky-700 dark:text-sky-300 bg-sky-500/10 font-bold'
+          : cellObj.status === 'Absent'
+            ? 'text-rose-600 dark:text-rose-400 bg-rose-500/10 font-bold'
+            : 'text-foreground';
+
+        dayCellsHtml += `
+          <td class="score-cell-td ${statusColorClass}" style="width: 34px; min-width: 34px; max-width: 34px;">
+            <input
+              type="text"
+              maxlength="3"
+              value="${markVal.replace(/"/g, '&quot;')}"
+              data-student-id="${row.studentId}"
+              data-day="${d}"
+              data-row-idx="${rowIdx}"
+              data-col-idx="${d + 2}"
+              placeholder=""
+              title="ថ្ងៃទី ${d} (វាយ ច/P = ច្បាប់, អ/A = ឥតច្បាប់)"
+              class="score-cell-input att-day-input font-khmer"
+            />
+          </td>
+        `;
+      }
 
       return `
-        <tr class="hover:bg-muted/30 transition-colors" data-student-id="${r.studentId}">
-          <td class="px-4 py-3 text-center text-muted-foreground font-mono">
-            ${idx + 1}
+        <tr data-student-row="${row.studentId}">
+          <!-- 1. No (ល.រ) -->
+          <td class="att-sticky-col-1 text-center font-mono text-xs text-muted-foreground" style="padding: 0 4px !important; height: 32px;">
+            ${rowIdx + 1}
           </td>
-          <td class="px-4 py-3 font-mono font-medium text-foreground">
-            ${r.studentNumber}
+          <!-- 2. Student ID (អត្តលេខ) -->
+          <td class="att-sticky-col-2 text-center font-mono text-xs font-medium text-foreground" style="padding: 0 6px !important; height: 32px;">
+            <div class="truncate">${row.studentNumber || '—'}</div>
           </td>
-          <td class="px-4 py-3">
-            <div class="flex items-center gap-3">
-              <div class="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 bg-primary/10 text-primary flex items-center justify-center font-bold text-xs border border-border">
-                ${photoUrl 
-                  ? `<img src="${photoUrl}" class="w-full h-full object-cover" />` 
-                  : (r.englishName ? r.englishName.charAt(0).toUpperCase() : 'S')}
-              </div>
-              <div class="min-w-0">
-                <p class="font-medium text-foreground truncate font-khmer">${r.khmerName || '—'}</p>
-                <p class="text-[11px] text-muted-foreground truncate">${r.englishName || ''}</p>
-              </div>
-            </div>
+          <!-- 3. Student Khmer Last Name + First Name (គោត្តនាម និងនាម) -->
+          <td class="att-sticky-col-3 text-left font-khmer text-xs font-semibold text-foreground" style="padding: 0 8px !important; height: 32px;">
+            <div class="truncate" title="${row.khmerFullName}">${row.khmerFullName}</div>
           </td>
-          <td class="px-4 py-3 text-muted-foreground text-xs">
-            ${r.gender === 'Female' ? t('common.female') : t('common.male')}
+          <!-- 4. Gender (ភេទ) -->
+          <td class="att-sticky-col-4 text-center font-khmer text-xs ${genderClass}" style="padding: 0 4px !important; height: 32px;">
+            ${genderLabel}
           </td>
-          <td class="px-4 py-3">
-            <!-- Status Button Pills (Present, Absent, Late, Excused) -->
-            <div class="flex items-center justify-center gap-1.5 select-none" data-student="${r.studentId}">
-              <button type="button" class="btn-att-pill px-2.5 py-1 rounded text-xs font-medium transition-all ${r.status === 'Present' ? 'bg-emerald-500 text-white font-bold shadow-sm' : 'border border-border text-muted-foreground hover:bg-muted'}" data-status="Present">
-                ${t('attendance.present')}
-              </button>
-              <button type="button" class="btn-att-pill px-2.5 py-1 rounded text-xs font-medium transition-all ${r.status === 'Absent' ? 'bg-rose-500 text-white font-bold shadow-sm' : 'border border-border text-muted-foreground hover:bg-muted'}" data-status="Absent">
-                ${t('attendance.absent')}
-              </button>
-              <button type="button" class="btn-att-pill px-2.5 py-1 rounded text-xs font-medium transition-all ${r.status === 'Late' ? 'bg-amber-500 text-white font-bold shadow-sm' : 'border border-border text-muted-foreground hover:bg-muted'}" data-status="Late">
-                ${t('attendance.late')}
-              </button>
-              <button type="button" class="btn-att-pill px-2.5 py-1 rounded text-xs font-medium transition-all ${r.status === 'Excused' ? 'bg-blue-500 text-white font-bold shadow-sm' : 'border border-border text-muted-foreground hover:bg-muted'}" data-status="Excused">
-                ${t('attendance.excused')}
-              </button>
-            </div>
+          <!-- 5. Permission (ច្បាប់) -->
+          <td class="score-cell-td bg-sky-500/5" style="width: 54px; min-width: 54px; max-width: 54px;">
+            <input
+              type="text"
+              inputmode="numeric"
+              value="${row.permission || 0}"
+              data-student-id="${row.studentId}"
+              data-summary-field="permission"
+              data-row-idx="${rowIdx}"
+              data-col-idx="1"
+              class="score-cell-input att-summary-input font-mono font-bold text-sky-700 dark:text-sky-300"
+            />
           </td>
+          <!-- 6. Absent (ឥតច្បាប់) -->
+          <td class="score-cell-td bg-rose-500/5" style="width: 62px; min-width: 62px; max-width: 62px;">
+            <input
+              type="text"
+              inputmode="numeric"
+              value="${row.absent || 0}"
+              data-student-id="${row.studentId}"
+              data-summary-field="absent"
+              data-row-idx="${rowIdx}"
+              data-col-idx="2"
+              class="score-cell-input att-summary-input font-mono font-bold text-rose-600 dark:text-rose-400"
+            />
+          </td>
+          <!-- 7. Total (សរុប) -->
+          <td
+            class="score-cell-td att-col-total-td bg-violet-500/5 font-mono text-xs font-bold text-violet-700 dark:text-violet-300"
+            data-total-cell="${row.studentId}"
+            style="width: 54px; min-width: 54px; max-width: 54px;"
+          >
+            ${row.total || 0}
+          </td>
+          <!-- 8..N. Days of Month (1..daysInMonth) -->
+          ${dayCellsHtml}
         </tr>
       `;
     }).join('');
 
-    this.bindRowEvents();
+    this.bindGridEvents();
   },
 
-  bindRowEvents() {
-    this.container.querySelectorAll('.btn-att-pill').forEach(pill => {
-      pill.addEventListener('click', () => {
-        const studentId = pill.closest('[data-student]').getAttribute('data-student');
-        const status = pill.getAttribute('data-status');
+  bindGridEvents() {
+    const tbody = document.getElementById('attendance-table-body');
+    if (!tbody || !this.state.sheet) return;
 
-        const record = this.state.records.find(r => r.studentId === studentId);
-        if (record) {
-          record.status = status;
-          // Update button styling in DOM
-          const group = pill.closest('[data-student]');
-          group.querySelectorAll('.btn-att-pill').forEach(b => {
-            const bStatus = b.getAttribute('data-status');
-            b.className = `btn-att-pill px-2.5 py-1 rounded text-xs font-medium transition-all ${bStatus === status ? this.getPillActiveStyle(status) : 'border border-border text-muted-foreground hover:bg-muted'}`;
-          });
-          this.updateStats();
+    // Select input text on focus for fast overwriting
+    tbody.querySelectorAll('input.score-cell-input').forEach(inp => {
+      inp.addEventListener('focus', () => {
+        inp.select();
+      });
+
+      // Arrow key & Enter navigation across cells
+      inp.addEventListener('keydown', (e) => {
+        const rowIdx = parseInt(inp.getAttribute('data-row-idx'), 10);
+        const colIdx = parseInt(inp.getAttribute('data-col-idx'), 10);
+        let targetRow = rowIdx;
+        let targetCol = colIdx;
+
+        if (e.key === 'ArrowRight') {
+          targetCol = colIdx + 1;
+        } else if (e.key === 'ArrowLeft') {
+          targetCol = colIdx - 1;
+        } else if (e.key === 'ArrowDown' || e.key === 'Enter') {
+          targetRow = rowIdx + 1;
+        } else if (e.key === 'ArrowUp') {
+          targetRow = rowIdx - 1;
+        } else {
+          return;
         }
+
+        const nextInput = tbody.querySelector(
+          `input[data-row-idx="${targetRow}"][data-col-idx="${targetCol}"]`
+        );
+        if (nextInput) {
+          e.preventDefault();
+          nextInput.focus();
+          nextInput.select();
+        }
+      });
+    });
+
+    // Day cell input handler
+    tbody.querySelectorAll('input.att-day-input').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const studentId = inp.getAttribute('data-student-id');
+        const day = parseInt(inp.getAttribute('data-day'), 10);
+        const row = this.state.sheet.rows.find(r => r.studentId === studentId);
+        if (!row) return;
+
+        const { status, mark } = classifyAttendanceMark(inp.value);
+        row.days[day] = { status, mark };
+
+        // Update cell visual style
+        const td = inp.closest('td');
+        if (td) {
+          td.classList.remove(
+            'text-sky-700', 'dark:text-sky-300', 'bg-sky-500/10',
+            'text-rose-600', 'dark:text-rose-400', 'bg-rose-500/10',
+            'text-foreground', 'font-bold'
+          );
+          if (status === 'Excused') {
+            td.classList.add('text-sky-700', 'dark:text-sky-300', 'bg-sky-500/10', 'font-bold');
+          } else if (status === 'Absent') {
+            td.classList.add('text-rose-600', 'dark:text-rose-400', 'bg-rose-500/10', 'font-bold');
+          } else {
+            td.classList.add('text-foreground');
+          }
+        }
+
+        // Recalculate permission, absent, and total from all days in the month
+        let permCount = 0;
+        let absCount = 0;
+        for (let d = 1; d <= this.state.sheet.daysInMonth; d++) {
+          const st = row.days[d]?.status;
+          if (st === 'Excused') permCount++;
+          else if (st === 'Absent') absCount++;
+        }
+        row.permission = permCount;
+        row.absent = absCount;
+        row.total = permCount + absCount;
+
+        // Update summary cells in DOM
+        const tr = inp.closest('tr');
+        if (tr) {
+          const permInput = tr.querySelector('input[data-summary-field="permission"]');
+          const absInput = tr.querySelector('input[data-summary-field="absent"]');
+          const totalTd = tr.querySelector(`[data-total-cell="${studentId}"]`);
+          if (permInput) permInput.value = row.permission;
+          if (absInput) absInput.value = row.absent;
+          if (totalTd) totalTd.textContent = row.total;
+        }
+
+        this.updateStats();
+        this.scheduleAutoSave();
+      });
+    });
+
+    // Summary cell (ច្បាប់ / ឥតច្បាប់) direct input handler
+    tbody.querySelectorAll('input.att-summary-input').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const studentId = inp.getAttribute('data-student-id');
+        const field = inp.getAttribute('data-summary-field');
+        const row = this.state.sheet.rows.find(r => r.studentId === studentId);
+        if (!row) return;
+
+        const cleanNum = Math.max(0, parseInt(String(inp.value).replace(/[^\d]/g, ''), 10) || 0);
+        row[field] = cleanNum;
+        row.total = (parseInt(row.permission, 10) || 0) + (parseInt(row.absent, 10) || 0);
+
+        const tr = inp.closest('tr');
+        if (tr) {
+          const totalTd = tr.querySelector(`[data-total-cell="${studentId}"]`);
+          if (totalTd) totalTd.textContent = row.total;
+        }
+
+        this.updateStats();
+        this.scheduleAutoSave();
       });
     });
   },
 
-  getPillActiveStyle(status) {
-    if (status === 'Present') return 'bg-emerald-500 text-white font-bold shadow-sm';
-    if (status === 'Absent') return 'bg-rose-500 text-white font-bold shadow-sm';
-    if (status === 'Late') return 'bg-amber-500 text-white font-bold shadow-sm';
-    return 'bg-blue-500 text-white font-bold shadow-sm';
+  scheduleAutoSave() {
+    if (this.state.autoSaveTimer) {
+      clearTimeout(this.state.autoSaveTimer);
+    }
+    this.state.autoSaveTimer = setTimeout(async () => {
+      await this.saveSheet({ silent: true });
+    }, 650);
+  },
+
+  async saveSheet({ silent = false } = {}) {
+    if (!this.state.sheet || this.state.isSaving) return;
+    this.state.isSaving = true;
+    const saveLabel = document.getElementById('btn-save-att-label');
+    if (saveLabel && !silent) {
+      saveLabel.textContent = 'កំពុងរក្សាទុក...';
+    }
+
+    try {
+      await AttendanceService.saveMonthlyAttendanceSheet(this.state.sheet);
+      if (!silent) {
+        const selectedCls = this.state.classes.find(c => c.id === this.state.selectedClassId);
+        const monthObj = ATTENDANCE_MONTHS.find(m => m.id === this.state.selectedMonth);
+        toast.success(`បានរក្សាទុកវត្តមាន ${selectedCls?.name || ''} (${monthObj ? 'ខែ' + monthObj.nameKm : ''}) ដោយជោគជ័យ`);
+      }
+    } catch (err) {
+      if (!silent) {
+        toast.error(err.message || 'បរាជ័យក្នុងការរក្សាទុកវត្តមាន');
+      }
+    } finally {
+      this.state.isSaving = false;
+      if (saveLabel) {
+        saveLabel.textContent = t('attendance.saveAttendance');
+      }
+    }
   },
 
   updateStats() {
-    const total = this.state.records.length;
-    const present = this.state.records.filter(r => r.status === 'Present').length;
-    const absent = this.state.records.filter(r => r.status === 'Absent').length;
-    const late = this.state.records.filter(r => r.status === 'Late').length;
-    const excused = this.state.records.filter(r => r.status === 'Excused').length;
-    const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
-
     const elTotal = document.getElementById('stat-att-total');
-    const elPresent = document.getElementById('stat-att-present');
+    const elFemale = document.getElementById('stat-att-female');
+    const elPerm = document.getElementById('stat-att-perm');
     const elAbsent = document.getElementById('stat-att-absent');
-    const elLate = document.getElementById('stat-att-late');
-    const elRate = document.getElementById('stat-att-rate');
+    const elSum = document.getElementById('stat-att-sum');
 
-    if (elTotal) elTotal.textContent = total;
-    if (elPresent) elPresent.textContent = present;
-    if (elAbsent) elAbsent.textContent = absent;
-    if (elLate) elLate.textContent = late;
-    if (elRate) elRate.textContent = `${rate}%`;
+    const rows = this.state.sheet?.rows || [];
+    const totalStudents = rows.length;
+    const femaleStudents = rows.filter(
+      r => r.gender === 'Female' || r.gender === 'ស្រី' || r.gender === 'F'
+    ).length;
+
+    let sumPerm = 0;
+    let sumAbsent = 0;
+    for (const r of rows) {
+      sumPerm += parseInt(r.permission, 10) || 0;
+      sumAbsent += parseInt(r.absent, 10) || 0;
+    }
+    const sumTotal = sumPerm + sumAbsent;
+
+    if (elTotal) elTotal.textContent = `${totalStudents} នាក់`;
+    if (elFemale) elFemale.textContent = `ស្រី ${femaleStudents} នាក់`;
+    if (elPerm) elPerm.textContent = `${sumPerm} ដង`;
+    if (elAbsent) elAbsent.textContent = `${sumAbsent} ដង`;
+    if (elSum) elSum.textContent = `${sumTotal} ដង`;
+  },
+
+  exportExcel() {
+    if (!this.state.sheet || !this.state.selectedMonth) {
+      toast.warning('សូមជ្រើសរើសខែសិក្សាជាមុនសិន មុនពេលនាំចេញ Excel');
+      return;
+    }
+
+    const { daysInMonth, rows, academicYear } = this.state.sheet;
+    const selectedCls = this.state.classes.find(c => c.id === this.state.selectedClassId);
+    const monthObj = ATTENDANCE_MONTHS.find(m => m.id === this.state.selectedMonth);
+    const className = selectedCls?.name || '';
+    const monthLabel = monthObj ? `ខែ${monthObj.nameKm}` : this.state.selectedMonth;
+
+    let dayHeaderCells = '';
+    for (let d = 1; d <= daysInMonth; d++) {
+      dayHeaderCells += `<th style="border:1px solid #94a3b8; background:#f1f5f9; text-align:center; width:28px;">${d}</th>`;
+    }
+
+    const bodyRowsHtml = rows.map((r, i) => {
+      const isFemale = r.gender === 'Female' || r.gender === 'ស្រី' || r.gender === 'F';
+      let dayCells = '';
+      for (let d = 1; d <= daysInMonth; d++) {
+        const mk = r.days[d]?.mark || '';
+        dayCells += `<td style="border:1px solid #cbd5e1; text-align:center;">${mk}</td>`;
+      }
+      return `
+        <tr>
+          <td style="border:1px solid #cbd5e1; text-align:center;">${i + 1}</td>
+          <td style="border:1px solid #cbd5e1; text-align:center; mso-number-format:'\\@';">${r.studentNumber || ''}</td>
+          <td style="border:1px solid #cbd5e1; text-align:left;">${r.khmerFullName || ''}</td>
+          <td style="border:1px solid #cbd5e1; text-align:center;">${isFemale ? 'ស្រី' : 'ប្រុស'}</td>
+          <td style="border:1px solid #cbd5e1; text-align:center; font-weight:bold; color:#0369a1;">${r.permission || 0}</td>
+          <td style="border:1px solid #cbd5e1; text-align:center; font-weight:bold; color:#be123c;">${r.absent || 0}</td>
+          <td style="border:1px solid #cbd5e1; text-align:center; font-weight:bold; color:#6d28d9;">${r.total || 0}</td>
+          ${dayCells}
+        </tr>
+      `;
+    }).join('');
+
+    const html = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          table { border-collapse: collapse; font-family: 'Kantumruy Pro', 'Khmer OS Siemreap', sans-serif; font-size: 11pt; }
+          th, td { padding: 4px 6px; }
+        </style>
+      </head>
+      <body>
+        <table>
+          <tr>
+            <th colspan="${7 + daysInMonth}" style="font-size:14pt; font-weight:bold; text-align:center; padding:8px;">
+              តារាងវត្តមានសិស្សប្រចាំ${monthLabel} — ថ្នាក់ ${className} (ឆ្នាំសិក្សា ${academicYear})
+            </th>
+          </tr>
+          <tr>
+            <th style="border:1px solid #94a3b8; background:#f1f5f9; text-align:center;">ល.រ</th>
+            <th style="border:1px solid #94a3b8; background:#f1f5f9; text-align:center;">អត្តលេខ</th>
+            <th style="border:1px solid #94a3b8; background:#f1f5f9; text-align:center;">គោត្តនាម និងនាម</th>
+            <th style="border:1px solid #94a3b8; background:#f1f5f9; text-align:center;">ភេទ</th>
+            <th style="border:1px solid #94a3b8; background:#e0f2fe; color:#0369a1; text-align:center;">ច្បាប់</th>
+            <th style="border:1px solid #94a3b8; background:#ffe4e6; color:#be123c; text-align:center;">ឥតច្បាប់</th>
+            <th style="border:1px solid #94a3b8; background:#ede9fe; color:#6d28d9; text-align:center;">សរុប</th>
+            ${dayHeaderCells}
+          </tr>
+          ${bodyRowsHtml}
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Attendance_${className}_${this.state.selectedMonth}_${academicYear}.xls`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   },
 
   bindStaticEvents() {
-    // Change class
+    // Change Class
     document.getElementById('select-att-class')?.addEventListener('change', async (e) => {
       this.state.selectedClassId = e.target.value;
       if (authService.isTeacher() && this.state.selectedClassId) {
@@ -306,101 +679,32 @@ export const AttendancePage = {
       await this.loadSheet();
     });
 
-    // Change date
-    document.getElementById('input-att-date')?.addEventListener('change', async (e) => {
-      this.state.selectedDate = e.target.value;
+    // Change Month
+    document.getElementById('select-att-month')?.addEventListener('change', async (e) => {
+      this.state.selectedMonth = e.target.value;
       await this.loadSheet();
     });
 
-    // Mark All Present
-    document.getElementById('btn-mark-all-present')?.addEventListener('click', () => {
-      for (const r of this.state.records) {
-        r.status = 'Present';
+    // Search Student
+    document.getElementById('input-att-search')?.addEventListener('input', (e) => {
+      this.state.searchQuery = e.target.value || '';
+      if (this.state.sheet) {
+        this.renderTable();
       }
-      this.renderRows();
-      this.updateStats();
-      toast.info('Marked all students as Present');
     });
 
-    // Save Attendance
+    // Save Attendance Button
     document.getElementById('btn-save-attendance')?.addEventListener('click', async () => {
-      if (this.state.records.length === 0) return;
-      try {
-        await AttendanceService.saveAttendanceSheet(this.state.records);
-        const selectedCls = this.state.classes.find(c => c.id === this.state.selectedClassId);
-        toast.success(t('attendance.savedSuccess', { 
-          class: selectedCls?.name || '', 
-          date: this.state.selectedDate 
-        }));
-      } catch (err) {
-        toast.error(err.message);
+      if (!this.state.selectedMonth) {
+        toast.warning('សូមជ្រើសរើសខែសិក្សាជាមុនសិន');
+        return;
       }
+      await this.saveSheet({ silent: false });
     });
 
-    // View History Modal
-    document.getElementById('btn-view-history')?.addEventListener('click', async () => {
-      const history = await AttendanceService.getAttendanceHistory(this.state.selectedClassId, 20);
-      this.openHistoryModal(history);
-    });
-  },
-
-  openHistoryModal(history) {
-    const content = `
-      <div class="space-y-4 text-xs">
-        <p class="text-muted-foreground">Select a past session to load or inspect roll-call:</p>
-        
-        ${history.length === 0 ? `
-          <p class="py-6 text-center text-muted-foreground italic">${t('attendance.noHistory')}</p>
-        ` : `
-          <div class="divide-y divide-border border border-border rounded-lg max-h-72 overflow-y-auto">
-            ${history.map(h => {
-              const rate = h.total > 0 ? Math.round(((h.present + h.late) / h.total) * 100) : 0;
-              return `
-                <div class="p-3 flex items-center justify-between hover:bg-muted/40 transition-colors">
-                  <div>
-                    <span class="font-mono font-bold text-foreground text-sm">${formatDisplayDate(h.date)}</span>
-                    <p class="text-[11px] text-muted-foreground mt-0.5">
-                      ${h.present} Present • ${h.absent} Absent • ${h.late} Late
-                    </p>
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary">${rate}% Attended</span>
-                    <button class="btn-load-history-date px-2.5 py-1 rounded bg-muted hover:bg-card border border-border text-foreground text-xs" data-date="${h.date}">
-                      Open
-                    </button>
-                  </div>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        `}
-      </div>
-    `;
-
-    const footer = `
-      <button class="btn-close-hist px-4 py-2 rounded-lg bg-card border border-border text-xs font-medium hover:bg-muted">
-        Close
-      </button>
-    `;
-
-    const modal = Modal.open({
-      title: t('attendance.historyModalTitle'),
-      content,
-      footer,
-      maxWidth: 'max-w-md'
-    });
-
-    modal.element.querySelector('.btn-close-hist')?.addEventListener('click', () => modal.close());
-
-    modal.element.querySelectorAll('.btn-load-history-date').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const date = btn.getAttribute('data-date');
-        this.state.selectedDate = date;
-        const inputDate = document.getElementById('input-att-date');
-        if (inputDate) inputDate.value = date;
-        modal.close();
-        await this.loadSheet();
-      });
+    // Export Excel Button
+    document.getElementById('btn-export-att-excel')?.addEventListener('click', () => {
+      this.exportExcel();
     });
   }
 };
