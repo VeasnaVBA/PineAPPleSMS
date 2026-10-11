@@ -199,34 +199,34 @@ export const SchoolsPage = {
                       </td>
 
                       <!-- 3. ឈ្មោះសាលា -->
-                      <td class="px-4 py-3">
-                        <div class="font-semibold text-foreground ${isKm ? 'font-khmer' : ''}">
+                      <td class="px-4 py-3 text-center">
+                        <div class="font-semibold text-foreground text-center ${isKm ? 'font-khmer' : ''}">
                           ${school.name}
                         </div>
                         ${school.nameEn ? `
-                          <div class="text-[11px] text-muted-foreground font-normal">
+                          <div class="text-[11px] text-muted-foreground font-normal text-center">
                             ${school.nameEn}
                           </div>
                         ` : ''}
                       </td>
 
                       <!-- 4. អាសយដ្ឋានសាលា -->
-                      <td class="px-3 py-3 text-muted-foreground text-xs leading-relaxed ${isKm ? 'font-khmer' : ''}">
+                      <td class="px-3 py-3 text-center text-muted-foreground text-xs leading-relaxed ${isKm ? 'font-khmer' : ''}">
                         ${school.address || '—'}
                       </td>
 
                       <!-- 5. នាយក -->
-                      <td class="px-3 py-3 text-foreground font-medium text-xs ${isKm ? 'font-khmer' : ''}">
+                      <td class="px-3 py-3 text-center text-foreground font-medium text-xs ${isKm ? 'font-khmer' : ''}">
                         ${school.director || '—'}
                       </td>
 
                       <!-- 6. លេខទូរសព្ទ -->
-                      <td class="px-3 py-3 font-mono text-xs text-foreground">
+                      <td class="px-3 py-3 text-center font-mono text-xs text-foreground">
                         ${school.phone || '—'}
                       </td>
 
                       <!-- 7. ផ្សេងៗ -->
-                      <td class="px-3 py-3 text-muted-foreground text-xs leading-relaxed max-w-xs truncate ${isKm ? 'font-khmer' : ''}" title="${school.notes || ''}">
+                      <td class="px-3 py-3 text-center text-muted-foreground text-xs leading-relaxed max-w-xs truncate ${isKm ? 'font-khmer' : ''}" title="${school.notes || ''}">
                         ${school.notes || '—'}
                       </td>
 
