@@ -90,3 +90,9 @@ class I18nManager {
 
 export const i18n = new I18nManager();
 export const t = (key, params) => i18n.t(key, params);
+
+if (typeof window !== 'undefined') {
+  window.i18n = i18n;
+  window.t = t;
+}
+

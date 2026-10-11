@@ -12,6 +12,7 @@ import {
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
+import { i18n, t } from '../i18n/i18n.js';
 import { toast } from '../components/toast.js';
 import { getIcon } from '../components/icons.js';
 
