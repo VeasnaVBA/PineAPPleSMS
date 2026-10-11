@@ -294,32 +294,6 @@ export const ScoresPage = {
             <button id="btn-grade-scale-guide" type="button" class="score-toolbar-item h-9 px-2.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-bold font-mono shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'កម្រិតនិទ្ទេស A-F' : 'Grading Scale'}">
               A-F
             </button>
-
-            <!-- Data Actions Dropdown -->
-            <div class="relative">
-              <button id="btn-data-menu" type="button" class="score-toolbar-item h-9 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1 shadow-2xs transition-colors cursor-pointer">
-                <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'ទិន្នន័យ' : 'Data'}</span>
-                <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-              </button>
-              <div id="dropdown-data-menu" class="hidden absolute left-0 top-full mt-1 w-48 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg z-50 py-1 text-xs font-khmer">
-                <button id="action-export-scores-excel" type="button" class="w-full text-left px-3 py-2 hover:bg-muted flex items-center gap-2 cursor-pointer border-b border-border/40">
-                  ${getIcon('download', 'w-3.5 h-3.5 text-emerald-600')}
-                  <span>${isKm ? 'នាំចេញ Excel (មានទម្រង់)' : 'Export Formatted Excel'}</span>
-                </button>
-                <button id="action-open-result-2row" type="button" class="w-full text-left px-3 py-2 hover:bg-muted flex items-center gap-2 cursor-pointer border-b border-border/40">
-                  ${getIcon('table', 'w-3.5 h-3.5 text-primary')}
-                  <span>${isKm ? 'តារាងលទ្ធផល (២ជួរ)' : '2 Row Table'}</span>
-                </button>
-                <button id="action-recalculate-all" type="button" class="w-full text-left px-3 py-2 hover:bg-muted flex items-center gap-2 cursor-pointer">
-                  ${getIcon('refresh', 'w-3.5 h-3.5 text-primary')}
-                  <span>${isKm ? 'គណនាពិន្ទុឡើងវិញ' : 'Recalculate All'}</span>
-                </button>
-                <button id="action-clear-all-scores" type="button" class="w-full text-left px-3 py-2 hover:bg-destructive/10 text-destructive flex items-center gap-2 cursor-pointer">
-                  ${getIcon('trash', 'w-3.5 h-3.5')}
-                  <span>${isKm ? 'លុបពិន្ទុក្នុងតារាងទាំងអស់' : 'Clear All Scores'}</span>
-                </button>
-              </div>
-            </div>
           </div>
 
           <!-- Student Search Input -->
