@@ -95,9 +95,9 @@ export const AttendanceService = {
   },
 
   /**
-   * Get monthly attendance grid sheet for a specific class, academicYear, and month ID (e.g. 'October').
+   * Get monthly attendance grid sheet for a specific class, academicYear, month ID (e.g. 'October'), and calendar year (e.g. 2026).
    */
-  async getMonthlyAttendanceSheet({ classId, academicYear, month }) {
+  async getMonthlyAttendanceSheet({ classId, academicYear, month, year }) {
     if (authService.isTeacher()) {
       const teacherClassId = authService.getAssignedClassId();
       if (teacherClassId) {
@@ -107,7 +107,10 @@ export const AttendanceService = {
 
     const monthObj = ATTENDANCE_MONTHS.find(m => m.id === month || String(m.monthNum) === String(month));
     const monthNum = monthObj ? monthObj.monthNum : 10;
-    const yearNum = resolveCalendarYearForMonth(academicYear, monthNum);
+    const parsedYear = parseInt(year, 10);
+    const yearNum = (!isNaN(parsedYear) && parsedYear >= 2000 && parsedYear <= 2100)
+      ? parsedYear
+      : resolveCalendarYearForMonth(academicYear, monthNum);
     const daysInMonth = getDaysInMonth(yearNum, monthNum);
     const ymPrefix = `${yearNum}-${String(monthNum).padStart(2, '0')}-`;
 

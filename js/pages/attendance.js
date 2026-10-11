@@ -21,11 +21,25 @@ export const AttendancePage = {
     classes: [],
     selectedClassId: '',
     selectedMonth: '',
+    selectedYear: '',
     activeYear: '2024–2025',
     searchQuery: '',
     sheet: null,
     autoSaveTimer: null,
     isSaving: false
+  },
+
+  getAvailableYears() {
+    const currentYear = new Date().getFullYear();
+    const yearsSet = new Set();
+    for (let y = currentYear - 3; y <= currentYear + 4; y++) {
+      yearsSet.add(String(y));
+    }
+    const matches = String(this.state.activeYear || '').match(/\d{4}/g);
+    if (matches) {
+      matches.forEach(m => yearsSet.add(m));
+    }
+    return Array.from(yearsSet).sort((a, b) => Number(a) - Number(b));
   },
 
   async render(container) {
@@ -53,9 +67,10 @@ export const AttendancePage = {
   renderLayout() {
     const classes = this.state.classes;
     const months = ATTENDANCE_MONTHS;
+    const years = this.getAvailableYears();
 
     this.container.innerHTML = `
-      <div class="space-y-4 animate-fade-in pb-12">
+      <div class="space-y-4 animate-fade-in pb-12 select-none w-full max-w-full overflow-hidden">
         <!-- Page Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -92,7 +107,7 @@ export const AttendancePage = {
           </div>
         </div>
 
-        <!-- Filter & Month Controls -->
+        <!-- Filter, Month & Year Controls -->
         <div class="p-3.5 rounded-xl border border-border bg-card shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
           <div class="flex items-center gap-2.5 flex-wrap">
             <!-- Class Selector -->
@@ -125,8 +140,8 @@ export const AttendancePage = {
 
             <!-- Month Selector -->
             <div class="flex items-center gap-2">
-              <span class="text-xs text-muted-foreground font-medium font-khmer whitespace-nowrap">ខែសិក្សា:</span>
-              <select id="select-att-month" class="h-9 min-w-[165px] px-3 py-1.5 pr-8 rounded-md border border-input bg-background text-xs font-semibold text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs font-khmer">
+              <span class="text-xs text-muted-foreground font-medium font-khmer whitespace-nowrap">ខែ:</span>
+              <select id="select-att-month" class="h-9 min-w-[155px] px-3 py-1.5 pr-8 rounded-md border border-input bg-background text-xs font-semibold text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs font-khmer">
                 <option value="" ${!this.state.selectedMonth ? 'selected' : ''}>— ជ្រើសរើសខែ —</option>
                 ${months.map(m => `
                   <option value="${m.id}" ${this.state.selectedMonth === m.id ? 'selected' : ''}>ខែ${m.nameKm} (${m.nameEn})</option>
@@ -134,10 +149,15 @@ export const AttendancePage = {
               </select>
             </div>
 
-            <!-- Academic Year Badge -->
-            <div class="h-9 px-3 rounded-md border border-border bg-muted/40 text-xs font-medium text-muted-foreground inline-flex items-center gap-1.5">
-              ${getIcon('calendar', 'w-3.5 h-3.5 text-primary')}
-              <span>ឆ្នាំសិក្សា: <strong class="text-foreground font-mono">${this.state.activeYear}</strong></span>
+            <!-- Year Selector -->
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-muted-foreground font-medium font-khmer whitespace-nowrap">ឆ្នាំ:</span>
+              <select id="select-att-year" class="h-9 min-w-[135px] px-3 py-1.5 pr-8 rounded-md border border-input bg-background text-xs font-semibold text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs font-khmer">
+                <option value="" ${!this.state.selectedYear ? 'selected' : ''}>— ជ្រើសរើសឆ្នាំ —</option>
+                ${years.map(y => `
+                  <option value="${y}" ${String(this.state.selectedYear) === String(y) ? 'selected' : ''}>ឆ្នាំ ${y}</option>
+                `).join('')}
+              </select>
             </div>
           </div>
 
@@ -181,20 +201,20 @@ export const AttendancePage = {
 
         <!-- Monthly Attendance Grid Container -->
         <div class="rounded-xl border border-border bg-card shadow-xs overflow-hidden relative w-full max-w-full">
-          <!-- Empty state shown before user chooses a month -->
-          <div id="att-empty-month-state" class="py-20 px-4 text-center ${this.state.selectedMonth ? 'hidden' : ''}">
+          <!-- Empty state shown before user chooses both Month and Year -->
+          <div id="att-empty-month-state" class="py-20 px-4 text-center ${(this.state.selectedMonth && this.state.selectedYear) ? 'hidden' : ''}">
             <div class="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3 shadow-2xs">
               ${getIcon('calendar', 'w-6 h-6')}
             </div>
-            <h3 class="text-sm font-bold text-foreground font-khmer mb-1">
-              សូមជ្រើសរើសខែសិក្សាជាមុនសិន
+            <h3 id="att-empty-title" class="text-sm font-bold text-foreground font-khmer mb-1">
+              សូមជ្រើសរើសខែ និងឆ្នាំជាមុនសិន
             </h3>
-            <p class="text-xs text-muted-foreground font-khmer max-w-md mx-auto">
-              ជ្រើសរើសខែនៅខាងលើ ដើម្បីបង្ហាញតារាងវត្តមានប្រចាំខែ
+            <p id="att-empty-desc" class="text-xs text-muted-foreground font-khmer max-w-md mx-auto">
+              ជ្រើសរើសខែ និងឆ្នាំនៅខាងលើ ដើម្បីបង្ហាញតារាងវត្តមានប្រចាំខែ
             </p>
           </div>
 
-          <div id="att-table-wrapper" class="score-table-container max-h-[72vh] overflow-auto w-full max-w-full ${!this.state.selectedMonth ? 'hidden' : ''}">
+          <div id="att-table-wrapper" class="score-table-container max-h-[72vh] overflow-auto w-full max-w-full ${!(this.state.selectedMonth && this.state.selectedYear) ? 'hidden' : ''}">
             <table class="score-table no-shadcn text-left text-xs border-separate" id="attendance-grid-table">
               <colgroup id="attendance-table-colgroup"></colgroup>
               <thead id="attendance-table-head"></thead>
@@ -210,14 +230,30 @@ export const AttendancePage = {
 
   async loadSheet() {
     const emptyState = document.getElementById('att-empty-month-state');
+    const emptyTitle = document.getElementById('att-empty-title');
+    const emptyDesc = document.getElementById('att-empty-desc');
     const wrapper = document.getElementById('att-table-wrapper');
-    const hasMonth = Boolean(this.state.selectedClassId && this.state.selectedMonth);
+    const hasMonthAndYear = Boolean(
+      this.state.selectedClassId && this.state.selectedMonth && this.state.selectedYear
+    );
 
-    emptyState?.classList.toggle('hidden', hasMonth);
-    wrapper?.classList.toggle('hidden', !hasMonth);
+    emptyState?.classList.toggle('hidden', hasMonthAndYear);
+    wrapper?.classList.toggle('hidden', !hasMonthAndYear);
 
-    if (!hasMonth) {
+    if (!hasMonthAndYear) {
       this.state.sheet = null;
+      if (emptyTitle && emptyDesc) {
+        if (this.state.selectedMonth && !this.state.selectedYear) {
+          emptyTitle.textContent = 'សូមជ្រើសរើសឆ្នាំជាមុនសិន';
+          emptyDesc.textContent = 'សូមជ្រើសរើសឆ្នាំនៅប្រអប់ខាងលើ ដើម្បីបង្ហាញតារាងវត្តមាន';
+        } else if (!this.state.selectedMonth && this.state.selectedYear) {
+          emptyTitle.textContent = 'សូមជ្រើសរើសខែជាមុនសិន';
+          emptyDesc.textContent = 'សូមជ្រើសរើសខែនៅប្រអប់ខាងលើ ដើម្បីបង្ហាញតារាងវត្តមាន';
+        } else {
+          emptyTitle.textContent = 'សូមជ្រើសរើសខែ និងឆ្នាំជាមុនសិន';
+          emptyDesc.textContent = 'ជ្រើសរើសខែ និងឆ្នាំនៅខាងលើ ដើម្បីបង្ហាញតារាងវត្តមានប្រចាំខែ';
+        }
+      }
       this.updateStats();
       return;
     }
@@ -225,7 +261,8 @@ export const AttendancePage = {
     this.state.sheet = await AttendanceService.getMonthlyAttendanceSheet({
       classId: this.state.selectedClassId,
       academicYear: this.state.activeYear,
-      month: this.state.selectedMonth
+      month: this.state.selectedMonth,
+      year: this.state.selectedYear
     });
 
     this.renderTable();
@@ -253,20 +290,20 @@ export const AttendancePage = {
     const { daysInMonth } = this.state.sheet;
     const rows = this.getFilteredRows();
 
-    // 1. Fixed Column Widths via Colgroup (guarantees exact sticky alignment when scrolling)
+    // 1. Fixed Column Widths via Colgroup (responsive CSS classes match .att-sticky-col-1..4 on desktop & mobile)
     if (colgroup) {
       let dayColsHtml = '';
       for (let d = 1; d <= daysInMonth; d++) {
-        dayColsHtml += `<col style="width: 34px; min-width: 34px; max-width: 34px;">`;
+        dayColsHtml += `<col class="att-col-day">`;
       }
       colgroup.innerHTML = `
-        <col style="width: 42px; min-width: 42px; max-width: 42px;">
-        <col style="width: 86px; min-width: 86px; max-width: 86px;">
-        <col style="width: 146px; min-width: 146px; max-width: 146px;">
-        <col style="width: 52px; min-width: 52px; max-width: 52px;">
-        <col style="width: 52px; min-width: 52px; max-width: 52px;">
-        <col style="width: 58px; min-width: 58px; max-width: 58px;">
-        <col style="width: 52px; min-width: 52px; max-width: 52px;">
+        <col class="att-col-1">
+        <col class="att-col-2">
+        <col class="att-col-3">
+        <col class="att-col-4">
+        <col class="att-col-perm">
+        <col class="att-col-absent">
+        <col class="att-col-total">
         ${dayColsHtml}
       `;
     }
@@ -276,7 +313,7 @@ export const AttendancePage = {
     for (let d = 1; d <= daysInMonth; d++) {
       dayHeadersHtml += `
         <th class="att-scroll-th p-0 text-center font-mono text-[11px] font-bold" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-          <div class="w-[34px] max-w-[34px] h-[42px] mx-auto flex items-center justify-center text-center bg-transparent">${d}</div>
+          <div class="w-full h-[42px] mx-auto flex items-center justify-center text-center bg-transparent">${d}</div>
         </th>
       `;
     }
@@ -290,23 +327,23 @@ export const AttendancePage = {
           <div class="w-full h-[42px] whitespace-nowrap flex items-center justify-center text-center px-1 bg-transparent">អត្តលេខ</div>
         </th>
         <th class="att-sticky-col-3 p-0 text-center font-khmer text-[11px] font-bold" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
-          <div class="w-full h-[42px] whitespace-nowrap flex items-center justify-center text-center px-1.5 bg-transparent">គោត្តនាម និងនាម</div>
+          <div class="w-full h-[42px] whitespace-nowrap flex items-center justify-center text-center px-1 bg-transparent">គោត្តនាម និងនាម</div>
         </th>
         <th class="att-sticky-col-4 p-0 text-center font-khmer text-[11px] font-bold" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
           <div class="w-full h-[42px] whitespace-nowrap flex items-center justify-center text-center px-1 bg-transparent">ភេទ</div>
         </th>
         <th class="att-scroll-th att-col-perm-th p-0 text-center font-khmer text-[11px] font-bold" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-          <div class="w-[52px] max-w-[52px] h-[42px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
+          <div class="w-full h-[42px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
             <span>ច្បាប់</span>
           </div>
         </th>
         <th class="att-scroll-th att-col-absent-th p-0 text-center font-khmer text-[11px] font-bold" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-          <div class="w-[58px] max-w-[58px] h-[42px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
+          <div class="w-full h-[42px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
             <span>ឥតច្បាប់</span>
           </div>
         </th>
         <th class="att-scroll-th att-col-total-th p-0 text-center font-khmer text-[11px] font-bold" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-          <div class="w-[52px] max-w-[52px] h-[42px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
+          <div class="w-full h-[42px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
             <span>សរុប</span>
           </div>
         </th>
@@ -368,15 +405,15 @@ export const AttendancePage = {
           </td>
           <!-- 2. Student ID (អត្តលេខ) -->
           <td class="att-sticky-col-2 p-0 text-center font-mono text-xs font-medium text-foreground" style="z-index: 30 !important; transform: translateZ(0) !important;" title="${row.studentNumber || ''}">
-            <div class="w-full whitespace-nowrap truncate text-center py-1.5 px-1.5 bg-transparent">${row.studentNumber || '—'}</div>
+            <div class="w-full whitespace-nowrap truncate text-center py-1.5 px-1 bg-transparent">${row.studentNumber || '—'}</div>
           </td>
           <!-- 3. Student Khmer Last Name + First Name (គោត្តនាម និងនាម) -->
           <td class="att-sticky-col-3 p-0 text-left font-khmer text-xs font-semibold text-foreground" style="z-index: 30 !important; transform: translateZ(0) !important;" title="${row.khmerFullName}">
-            <div class="w-full whitespace-nowrap truncate text-left py-1.5 px-2 bg-transparent">${row.khmerFullName}</div>
+            <div class="w-full whitespace-nowrap truncate text-left py-1.5 px-1.5 bg-transparent">${row.khmerFullName}</div>
           </td>
           <!-- 4. Gender (ភេទ) -->
           <td class="att-sticky-col-4 p-0 text-center font-khmer text-xs ${genderClass}" style="z-index: 30 !important; transform: translateZ(0) !important;">
-            <div class="w-full whitespace-nowrap text-center py-1.5 px-1 bg-transparent">${genderLabel}</div>
+            <div class="w-full whitespace-nowrap text-center py-1.5 px-0.5 bg-transparent">${genderLabel}</div>
           </td>
           <!-- 5. Permission (ច្បាប់) -->
           <td class="score-cell-td att-col-perm-td">
@@ -556,7 +593,7 @@ export const AttendancePage = {
       if (!silent) {
         const selectedCls = this.state.classes.find(c => c.id === this.state.selectedClassId);
         const monthObj = ATTENDANCE_MONTHS.find(m => m.id === this.state.selectedMonth);
-        toast.success(`បានរក្សាទុកវត្តមាន ${selectedCls?.name || ''} (${monthObj ? 'ខែ' + monthObj.nameKm : ''}) ដោយជោគជ័យ`);
+        toast.success(`បានរក្សាទុកវត្តមាន ${selectedCls?.name || ''} (${monthObj ? 'ខែ' + monthObj.nameKm : ''} ${this.state.selectedYear}) ដោយជោគជ័យ`);
       }
     } catch (err) {
       if (!silent) {
@@ -599,12 +636,12 @@ export const AttendancePage = {
   },
 
   exportExcel() {
-    if (!this.state.sheet || !this.state.selectedMonth) {
-      toast.warning('សូមជ្រើសរើសខែសិក្សាជាមុនសិន មុនពេលនាំចេញ Excel');
+    if (!this.state.sheet || !this.state.selectedMonth || !this.state.selectedYear) {
+      toast.warning('សូមជ្រើសរើសខែ និងឆ្នាំជាមុនសិន មុនពេលនាំចេញ Excel');
       return;
     }
 
-    const { daysInMonth, rows, academicYear } = this.state.sheet;
+    const { daysInMonth, rows, yearNum } = this.state.sheet;
     const selectedCls = this.state.classes.find(c => c.id === this.state.selectedClassId);
     const monthObj = ATTENDANCE_MONTHS.find(m => m.id === this.state.selectedMonth);
     const className = selectedCls?.name || '';
@@ -649,7 +686,7 @@ export const AttendancePage = {
         <table>
           <tr>
             <th colspan="${7 + daysInMonth}" style="font-size:14pt; font-weight:bold; text-align:center; padding:8px;">
-              តារាងវត្តមានសិស្សប្រចាំ${monthLabel} — ថ្នាក់ ${className} (ឆ្នាំសិក្សា ${academicYear})
+              តារាងវត្តមានសិស្សប្រចាំ${monthLabel} ឆ្នាំ ${yearNum} — ថ្នាក់ ${className}
             </th>
           </tr>
           <tr>
@@ -672,7 +709,7 @@ export const AttendancePage = {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Attendance_${className}_${this.state.selectedMonth}_${academicYear}.xls`;
+    a.download = `Attendance_${className}_${this.state.selectedMonth}_${yearNum}.xls`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -695,6 +732,12 @@ export const AttendancePage = {
       await this.loadSheet();
     });
 
+    // Change Year
+    document.getElementById('select-att-year')?.addEventListener('change', async (e) => {
+      this.state.selectedYear = e.target.value;
+      await this.loadSheet();
+    });
+
     // Search Student
     document.getElementById('input-att-search')?.addEventListener('input', (e) => {
       this.state.searchQuery = e.target.value || '';
@@ -705,8 +748,8 @@ export const AttendancePage = {
 
     // Save Attendance Button
     document.getElementById('btn-save-attendance')?.addEventListener('click', async () => {
-      if (!this.state.selectedMonth) {
-        toast.warning('សូមជ្រើសរើសខែសិក្សាជាមុនសិន');
+      if (!this.state.selectedMonth || !this.state.selectedYear) {
+        toast.warning('សូមជ្រើសរើសខែ និងឆ្នាំជាមុនសិន');
         return;
       }
       await this.saveSheet({ silent: false });

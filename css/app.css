@@ -1988,49 +1988,89 @@ a.score-toolbar-item:not(.hidden) {
 /* ==========================================================================
    Attendance Monthly Grid Table - Sticky Columns & Distinct Header Colors
    ========================================================================== */
+col.att-col-1,
 .att-sticky-col-1 {
   position: sticky !important;
   left: 0px !important;
   right: auto !important;
-  width: 42px !important;
-  min-width: 42px !important;
-  max-width: 42px !important;
+  width: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
 }
 
+col.att-col-2,
 .att-sticky-col-2 {
   position: sticky !important;
-  left: 42px !important;
+  left: 40px !important;
   right: auto !important;
-  width: 86px !important;
-  min-width: 86px !important;
-  max-width: 86px !important;
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
 }
 
+col.att-col-3,
 .att-sticky-col-3 {
   position: sticky !important;
-  left: 128px !important;
+  left: 120px !important;
   right: auto !important;
-  width: 146px !important;
-  min-width: 146px !important;
-  max-width: 146px !important;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
 }
 
+col.att-col-4,
 .att-sticky-col-4 {
   position: sticky !important;
-  left: 274px !important;
+  left: 260px !important;
   right: auto !important;
-  width: 52px !important;
-  min-width: 52px !important;
-  max-width: 52px !important;
+  width: 48px !important;
+  min-width: 48px !important;
+  max-width: 48px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
   border-right: 2px solid #94a3b8 !important;
+}
+
+col.att-col-perm { width: 50px !important; min-width: 50px !important; max-width: 50px !important; }
+col.att-col-absent { width: 56px !important; min-width: 56px !important; max-width: 56px !important; }
+col.att-col-total { width: 50px !important; min-width: 50px !important; max-width: 50px !important; }
+col.att-col-day { width: 34px !important; min-width: 34px !important; max-width: 34px !important; }
+
+@media (max-width: 640px) {
+  col.att-col-1,
+  .att-sticky-col-1 {
+    left: 0px !important;
+    width: 30px !important;
+    min-width: 30px !important;
+    max-width: 30px !important;
+  }
+  col.att-col-2,
+  .att-sticky-col-2 {
+    left: 30px !important;
+    width: 58px !important;
+    min-width: 58px !important;
+    max-width: 58px !important;
+  }
+  col.att-col-3,
+  .att-sticky-col-3 {
+    left: 88px !important;
+    width: 104px !important;
+    min-width: 104px !important;
+    max-width: 104px !important;
+  }
+  col.att-col-4,
+  .att-sticky-col-4 {
+    left: 192px !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+  }
 }
 
 .dark .att-sticky-col-4 {
