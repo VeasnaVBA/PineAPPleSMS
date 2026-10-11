@@ -175,16 +175,16 @@ export const SubjectsPage = {
             <table class="w-full text-left border-collapse text-xs sm:text-sm ${fontClass}">
               <thead class="bg-muted/50 text-muted-foreground select-none border-b border-border">
                 <tr>
-                  <th scope="col" class="w-16 min-w-[64px] px-2 py-3 text-center font-semibold text-foreground border-r border-border/60">
+                  <th scope="col" class="w-16 min-w-[64px] px-2 py-3 text-center font-semibold text-foreground border-r border-border/60" style="text-align: center !important;">
                     ${isKm ? 'ល.រ' : 'No.'}
                   </th>
-                  <th scope="col" class="w-28 px-3.5 py-3 font-semibold text-foreground border-r border-border/60 whitespace-nowrap ${fontClass}">
+                  <th scope="col" class="w-28 px-3.5 py-3 text-center font-semibold text-foreground border-r border-border/60 whitespace-nowrap ${fontClass}" style="text-align: center !important;">
                     ${t('subjects.code') || 'កូដមុខវិជ្ជា'}
                   </th>
-                  <th scope="col" class="px-4 py-3 font-semibold text-foreground border-r border-border/60 min-w-[180px] ${fontClass}">
+                  <th scope="col" class="px-4 py-3 text-center font-semibold text-foreground border-r border-border/60 min-w-[180px] ${fontClass}" style="text-align: center !important;">
                     ${isKm ? 'ឈ្មោះមុខវិជ្ជា' : 'Subject Name'}
                   </th>
-                  <th scope="col" class="w-32 min-w-[130px] px-3 py-3 text-center font-semibold text-foreground border-r border-border/60 whitespace-nowrap ${fontClass}">
+                  <th scope="col" class="w-32 min-w-[130px] px-3 py-3 text-center font-semibold text-foreground border-r border-border/60 whitespace-nowrap ${fontClass}" style="text-align: center !important;">
                     ${isKm ? 'បូកសរុបពិន្ទុ' : 'Sum of Courses'}
                   </th>
 
@@ -209,6 +209,7 @@ export const SubjectsPage = {
                     return `
                       <th scope="col" 
                           data-grade="${g}"
+                          style="text-align: center !important;"
                           title="${isTeacher ? (isColActive ? (isKm ? `ថ្នាក់រៀនរបស់អ្នក កម្រិត ${activeGrade}` : `Your assigned classroom (${activeGrade})`) : (isKm ? 'ថ្នាក់ផ្សេងទៀតត្រូវបានចាក់សោ' : 'Locked for teacher account')) : (isKm ? `ចុចដើម្បីផ្ដោតលើកម្រិតថ្នាក់ ${g}` : `Click to focus on ${g}`)}"
                           class="${canClick ? 'btn-select-grade' : ''} ${headerClasses}">
                         <div class="flex flex-col items-center justify-center leading-tight">
@@ -219,10 +220,10 @@ export const SubjectsPage = {
                     `;
                   }).join('')}
 
-                  <th scope="col" class="w-24 px-3 py-3 text-center font-semibold text-foreground border-r border-border/60 whitespace-nowrap ${fontClass}">
+                  <th scope="col" class="w-24 px-3 py-3 text-center font-semibold text-foreground border-r border-border/60 whitespace-nowrap ${fontClass}" style="text-align: center !important;">
                     ${isKm ? 'ម៉ោង/សប្តាហ៍' : 'Hours/wk'}
                   </th>
-                  <th scope="col" class="w-28 min-w-[100px] px-2 py-3 text-center font-semibold text-foreground whitespace-nowrap ${fontClass}">
+                  <th scope="col" class="w-28 min-w-[100px] px-2 py-3 text-center font-semibold text-foreground whitespace-nowrap ${fontClass}" style="text-align: center !important;">
                     ${t('common.actions') || 'សកម្មភាព'}
                   </th>
                 </tr>

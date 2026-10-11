@@ -800,6 +800,16 @@ table:not(.no-shadcn) th {
   background-color: hsl(var(--muted) / 0.5);
 }
 
+table:not(.no-shadcn) th.text-center,
+table th.text-center {
+  text-align: center !important;
+}
+
+table:not(.no-shadcn) th.text-right,
+table th.text-right {
+  text-align: right !important;
+}
+
 table:not(.no-shadcn) td,
 table tbody tr > td,
 table tbody tr > th {
@@ -1397,8 +1407,7 @@ table.score-table td {
 
 /* Table Header - Single Sticky Top Row */
 .score-table thead tr th,
-table.score-table thead tr th,
-thead tr th {
+table.score-table thead tr th {
   position: sticky !important;
   top: 0px !important;
   vertical-align: middle !important;
