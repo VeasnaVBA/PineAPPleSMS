@@ -119,7 +119,7 @@ export const ScoresPage = {
     groupedSubjects: [],
     periods: EVALUATION_PERIODS,
     selectedClassId: '',
-    selectedPeriod: 'October',
+    selectedPeriod: '',
     activeYear: '2024–2025',
     coefficients: {},
     rows: [],
@@ -146,6 +146,8 @@ export const ScoresPage = {
     this._isRendering = true;
     try {
       this.container = container;
+      this.state.selectedPeriod = '';
+      this.state.rows = [];
       this.state.classes = await ClassService.getAll();
       this.state.activeYear = await SettingsService.getActiveAcademicYear();
       this.state.coefficients = await ScoreService.getMonthlyCoefficients();
@@ -249,6 +251,7 @@ export const ScoresPage = {
             <!-- Month / Period Selector Pill -->
             <div class="relative">
               <select id="select-score-period" class="score-toolbar-item h-9 px-3 pr-8 rounded-lg border border-input bg-card text-xs font-bold text-foreground focus:ring-1 focus:ring-primary shadow-2xs cursor-pointer">
+                <option value="" ${!this.state.selectedPeriod ? 'selected' : ''}>${isKm ? '— ជ្រើសរើសខែ —' : '— Select Month —'}</option>
                 <optgroup label="${isKm ? 'ខែសិក្សា' : 'Months'}">
                   ${months.map(m => `
                     <option value="${m.id}" ${this.state.selectedPeriod === m.id ? 'selected' : ''}>
@@ -272,7 +275,7 @@ export const ScoresPage = {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
               </svg>
               <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'មេគុណ' : 'Coefficient'}</span>
-              <span id="current-month-coeff-badge" class="ml-0.5 px-1.5 py-0.2 rounded font-mono font-bold text-[10px] bg-primary/10 text-primary border border-primary/20" title="${isKm ? 'មេគុណខែនេះ' : 'Current month coefficient'}">${this.getCurrentPeriodCoefficient()}</span>
+              <span id="current-month-coeff-badge" class="ml-0.5 px-1.5 py-0.2 rounded font-mono font-bold text-[10px] bg-primary/10 text-primary border border-primary/20" title="${isKm ? 'មេគុណខែនេះ' : 'Current month coefficient'}">${this.state.selectedPeriod ? this.getCurrentPeriodCoefficient() : '—'}</span>
             </button>
 
             <!-- Export Formatted Excel Button -->
@@ -289,8 +292,8 @@ export const ScoresPage = {
               <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'ទាញយកគំរូ' : 'Template'}</span>
             </button>
 
-            <!-- Upload Scores Button (Hidden in Semester and Annual periods) -->
-            <button id="btn-upload-scores" type="button" class="score-toolbar-item h-9 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer ${(this.isSemesterPeriod() || this.isAnnualPeriod()) ? 'hidden' : ''}" title="${isKm ? 'បញ្ចូលពិន្ទុពីឯកសារ Excel' : 'Upload from Excel'}">
+            <!-- Upload Scores Button (Hidden when no month or in Semester and Annual periods) -->
+            <button id="btn-upload-scores" type="button" class="score-toolbar-item h-9 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer ${(!this.state.selectedPeriod || this.isSemesterPeriod() || this.isAnnualPeriod()) ? 'hidden' : ''}" title="${isKm ? 'បញ្ចូលពិន្ទុពីឯកសារ Excel' : 'Upload from Excel'}">
               <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"/></svg>
               <span>Upload</span>
             </button>
@@ -299,7 +302,7 @@ export const ScoresPage = {
             <!-- Subject Extra Column Display Mode Toggle Button (None -> Rank -> Grade -> Both -> None) -->
             <button id="btn-toggle-subject-extra-col" 
                     type="button" 
-                    class="score-toolbar-item h-9 px-3 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shadow-2xs transition-colors cursor-pointer select-none font-khmer shrink-0 ${(this.isSemesterPeriod() || this.isAnnualPeriod()) ? 'hidden' : ''}" 
+                    class="score-toolbar-item h-9 px-3 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shadow-2xs transition-colors cursor-pointer select-none font-khmer shrink-0 ${(!this.state.selectedPeriod || this.isSemesterPeriod() || this.isAnnualPeriod()) ? 'hidden' : ''}" 
                     title="${this.getSubjectExtraColBtnTitle()}">
               ${this.getSubjectExtraColBtnHtml()}
             </button>
@@ -351,7 +354,20 @@ export const ScoresPage = {
 
         <!-- Master Score Table Container -->
         <div class="rounded-xl border border-border bg-card shadow-xs overflow-hidden print:border-none print:shadow-none relative w-full max-w-full">
-          <div class="score-table-container max-h-[72vh] overflow-auto w-full max-w-full">
+          <!-- Empty state shown before user chooses a month/period -->
+          <div id="score-empty-period-state" class="py-20 px-4 text-center ${this.state.selectedPeriod ? 'hidden' : ''}">
+            <div class="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3 shadow-2xs">
+              ${getIcon('calendar', 'w-6 h-6')}
+            </div>
+            <h3 class="text-sm font-bold text-foreground ${isKm ? 'font-khmer' : ''} mb-1">
+              ${isKm ? 'សូមជ្រើសរើសខែ ឬឆមាសជាមុនសិន' : 'Please select a month or period first'}
+            </h3>
+            <p class="text-xs text-muted-foreground ${isKm ? 'font-khmer' : ''} max-w-md mx-auto">
+              ${isKm ? 'សូមជ្រើសរើសខែសិក្សា ឬឆមាសនៅក្នុងប្រអប់ខាងលើ ដើម្បីបង្ហាញតារាងពិន្ទុសិស្ស' : 'Choose a month or semester from the dropdown above to display the score table'}
+            </p>
+          </div>
+
+          <div id="master-score-table-wrapper" class="score-table-container max-h-[72vh] overflow-auto w-full max-w-full ${!this.state.selectedPeriod ? 'hidden' : ''}">
             <table class="score-table no-shadcn text-left text-xs border-separate" id="master-score-table">
               <colgroup id="score-table-colgroup"></colgroup>
               <thead>
@@ -401,10 +417,9 @@ export const ScoresPage = {
   },
 
   updateCoefficientBadge() {
-    const coeff = this.getCurrentPeriodCoefficient();
     const badge = document.getElementById('current-month-coeff-badge');
     if (badge) {
-      badge.textContent = coeff;
+      badge.textContent = this.state.selectedPeriod ? this.getCurrentPeriodCoefficient() : '—';
     }
   },
 
@@ -442,7 +457,7 @@ export const ScoresPage = {
   updateSubjectExtraColBtn() {
     const btn = document.getElementById('btn-toggle-subject-extra-col');
     if (!btn) return;
-    if (this.isSemesterPeriod() || this.isAnnualPeriod()) {
+    if (!this.state.selectedPeriod || this.isSemesterPeriod() || this.isAnnualPeriod()) {
       btn.classList.add('hidden');
       return;
     }
@@ -549,9 +564,20 @@ export const ScoresPage = {
     this.updateCoefficientBadge();
     this.updateSubjectExtraColBtn();
 
+    const hasPeriod = Boolean(this.state.selectedPeriod);
     const isSemester = this.isSemesterPeriod();
     const isAnnual = this.isAnnualPeriod();
-    document.getElementById('btn-upload-scores')?.classList.toggle('hidden', isSemester || isAnnual);
+
+    document.getElementById('score-empty-period-state')?.classList.toggle('hidden', hasPeriod);
+    document.getElementById('master-score-table-wrapper')?.classList.toggle('hidden', !hasPeriod);
+    document.getElementById('btn-upload-scores')?.classList.toggle('hidden', !hasPeriod || isSemester || isAnnual);
+
+    if (!hasPeriod) {
+      this.state.rows = [];
+      this.updateSummaryStats();
+      return;
+    }
+
     if (isSemester) {
       this.loadSemesterMonths();
       await this.prefetchSemesterMonthlyAverages();
@@ -1825,6 +1851,7 @@ export const ScoresPage = {
    * Auto-save scores to IndexedDB & trigger silent Drive sync
    */
   triggerDebouncedAutoSave() {
+    if (!this.state.selectedPeriod) return;
     clearTimeout(this.state.saveDebounceTimer);
     const statusText = document.getElementById('sync-status-text');
     if (statusText) {
@@ -1832,6 +1859,7 @@ export const ScoresPage = {
     }
 
     this.state.saveDebounceTimer = setTimeout(async () => {
+      if (!this.state.selectedPeriod) return;
       try {
         await ScoreService.saveMasterScoreSheet({
           classId: this.state.selectedClassId,
@@ -1923,6 +1951,7 @@ export const ScoresPage = {
       if (this.state.saveDebounceTimer) {
         clearTimeout(this.state.saveDebounceTimer);
         this.state.saveDebounceTimer = null;
+        if (!this.state.selectedPeriod) return;
         try {
           await ScoreService.saveMasterScoreSheet({
             classId: this.state.selectedClassId,
@@ -1984,6 +2013,10 @@ export const ScoresPage = {
 
     // Save Scores Button
     document.getElementById('btn-save-scores')?.addEventListener('click', async () => {
+      if (!this.state.selectedPeriod) {
+        toast.info(i18n.getLocale() === 'km' ? 'សូមជ្រើសរើសខែជាមុនសិន' : 'Please select a month first');
+        return;
+      }
       if (this.state.rows.length === 0) return;
       const saveBtn = document.getElementById('btn-save-scores');
       if (saveBtn) {
@@ -2054,6 +2087,10 @@ export const ScoresPage = {
 
     // Action: Recalculate All
     document.getElementById('action-recalculate-all')?.addEventListener('click', () => {
+      if (!this.state.selectedPeriod) {
+        toast.info(i18n.getLocale() === 'km' ? 'សូមជ្រើសរើសខែជាមុនសិន' : 'Please select a month first');
+        return;
+      }
       this.state.rows.forEach(r => this.recalculateRowData(r));
       ScoreService.rankStudents(this.state.rows);
       this.updateRanksInDOM();
@@ -2065,6 +2102,10 @@ export const ScoresPage = {
     // Action: Clear All Scores
     document.getElementById('action-clear-all-scores')?.addEventListener('click', () => {
       const isKm = i18n.getLocale() === 'km';
+      if (!this.state.selectedPeriod) {
+        toast.info(isKm ? 'សូមជ្រើសរើសខែជាមុនសិន' : 'Please select a month first');
+        return;
+      }
       if (!confirm(isKm ? 'តើអ្នកប្រាកដជាចង់លុបពិន្ទុទាំងអស់ក្នុងខែនេះមែនទេ?' : 'Are you sure you want to clear all scores for this month?')) return;
       this.state.rows.forEach(r => {
         Object.keys(r.subjectScores).forEach(subId => {
@@ -2151,6 +2192,10 @@ export const ScoresPage = {
    */
   async exportScoresToExcel() {
     const isKm = i18n.getLocale() === 'km';
+    if (!this.state.selectedPeriod) {
+      toast.info(isKm ? 'សូមជ្រើសរើសខែជាមុនសិន' : 'Please select a month first');
+      return;
+    }
     const ExcelJS = window.ExcelJS || globalThis.ExcelJS;
     if (!ExcelJS) {
       toast.error(isKm ? 'មិនអាចហៅប្រើបណ្ណាល័យ Excel បានទេ' : 'ExcelJS library is not loaded');
@@ -2555,6 +2600,10 @@ export const ScoresPage = {
    */
   async downloadExcelTemplate() {
     const isKm = i18n.getLocale() === 'km';
+    if (!this.state.selectedPeriod) {
+      toast.info(isKm ? 'សូមជ្រើសរើសខែជាមុនសិន' : 'Please select a month first');
+      return;
+    }
     const ExcelJS = window.ExcelJS || globalThis.ExcelJS;
     if (!ExcelJS && !window.XLSX) {
       toast.error('Excel library is not loaded');
