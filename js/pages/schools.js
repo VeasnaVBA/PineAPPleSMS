@@ -155,21 +155,21 @@ export const SchoolsPage = {
               <thead>
                 <tr class="border-b border-border bg-muted/40 text-muted-foreground font-medium select-none ${isKm ? 'font-khmer' : ''}">
                   <!-- 1. ល.រ (Row No.) -->
-                  <th class="px-3 py-3 w-12 text-center">${t('schools.colNo')}</th>
+                  <th class="px-3 py-3 w-12 text-center whitespace-nowrap" style="text-align: center !important;">${t('schools.colNo')}</th>
                   <!-- 2. កូដសាលា (School Code) -->
-                  <th class="px-3 py-3 w-28">${t('schools.colCode')}</th>
+                  <th class="px-3 py-3 w-28 text-center whitespace-nowrap" style="text-align: center !important;">${t('schools.colCode')}</th>
                   <!-- 3. ឈ្មោះសាលា (School Name) -->
-                  <th class="px-4 py-3 min-w-[200px]">${t('schools.colName')}</th>
+                  <th class="px-4 py-3 min-w-[200px] text-center whitespace-nowrap" style="text-align: center !important;">${t('schools.colName')}</th>
                   <!-- 4. អាសយដ្ឋានសាលា (School Address) -->
-                  <th class="px-3 py-3 min-w-[160px]">${t('schools.colAddress')}</th>
+                  <th class="px-3 py-3 min-w-[160px] text-center whitespace-nowrap" style="text-align: center !important;">${t('schools.colAddress')}</th>
                   <!-- 5. នាយក (Director Name) -->
-                  <th class="px-3 py-3 min-w-[140px]">${t('schools.colDirector')}</th>
+                  <th class="px-3 py-3 min-w-[140px] text-center whitespace-nowrap" style="text-align: center !important;">${t('schools.colDirector')}</th>
                   <!-- 6. លេខទូរសព្ទ (Phone Number) -->
-                  <th class="px-3 py-3 min-w-[120px] font-mono">${t('schools.colPhone')}</th>
+                  <th class="px-3 py-3 min-w-[120px] text-center whitespace-nowrap ${isKm ? 'font-khmer' : 'font-mono'}" style="text-align: center !important;">${t('schools.colPhone')}</th>
                   <!-- 7. ផ្សេងៗ (Notes / Remarks) -->
-                  <th class="px-3 py-3 min-w-[140px]">${t('schools.colNotes')}</th>
+                  <th class="px-3 py-3 min-w-[140px] text-center whitespace-nowrap" style="text-align: center !important;">${t('schools.colNotes')}</th>
                   <!-- Actions Column (Show, Update, Delete) -->
-                  <th class="w-[50px] px-2 py-3 text-center">${t('schools.actions')}</th>
+                  <th class="w-[50px] px-2 py-3 text-center whitespace-nowrap" style="text-align: center !important;">${t('schools.actions')}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-border">
@@ -192,7 +192,7 @@ export const SchoolsPage = {
                       </td>
 
                       <!-- 2. កូដសាលា -->
-                      <td class="px-3 py-3">
+                      <td class="px-3 py-3 text-center">
                         <span class="inline-flex items-center px-2 py-0.5 rounded font-mono text-xs font-semibold bg-muted text-foreground border border-border shadow-2xs">
                           ${school.code || '—'}
                         </span>
