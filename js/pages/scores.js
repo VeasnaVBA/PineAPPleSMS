@@ -214,10 +214,6 @@ export const ScoresPage = {
               ${getIcon('check', 'w-3.5 h-3.5')}
               <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'រក្សាទុក' : 'Save'}</span>
             </button>
-            <button id="btn-print-scores" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium shadow-2xs transition-colors cursor-pointer">
-              ${getIcon('download', 'w-3.5 h-3.5')}
-              <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'បោះពុម្ព' : 'Print'}</span>
-            </button>
           </div>
         </div>
 
@@ -2044,11 +2040,6 @@ export const ScoresPage = {
     document.getElementById('action-open-result-2row')?.addEventListener('click', () => {
       document.getElementById('dropdown-data-menu')?.classList.add('hidden');
       this.openResultTable2RowModal();
-    });
-
-    // Print button
-    document.getElementById('btn-print-scores')?.addEventListener('click', () => {
-      window.print();
     });
 
     // Floating Multi-Delete Action Bar Buttons
