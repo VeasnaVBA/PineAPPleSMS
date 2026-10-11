@@ -17,6 +17,7 @@ import { toast } from '../components/toast.js';
 import { getIcon } from '../components/icons.js';
 
 const DAY_NAMES_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAY_NAMES_KM = ['អាទិត្យ', 'ចន្ទ', 'អង្គារ', 'ពុធ', 'ព្រហ', 'សុក្រ', 'សៅរ៍'];
 
 export const AttendancePage = {
   state: {
@@ -339,16 +340,18 @@ export const AttendancePage = {
     }
 
     // 2. Build Day Header Columns (1..daysInMonth) with z-index: 10 so they scroll cleanly under sticky left columns
+    const isKm = i18n.getLocale() === 'km';
+    const dayNames = isKm ? DAY_NAMES_KM : DAY_NAMES_EN;
     let dayHeadersHtml = '';
     for (let d = 1; d <= daysInMonth; d++) {
       const dayOfWeekIdx = new Date(yearNum, monthNum - 1, d).getDay();
-      const dayName = DAY_NAMES_EN[dayOfWeekIdx];
+      const dayName = dayNames[dayOfWeekIdx];
       const isSunday = dayOfWeekIdx === 0;
       dayHeadersHtml += `
         <th class="att-scroll-th p-0 text-center font-mono" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
           <div class="w-full h-[42px] mx-auto flex flex-col items-center justify-center text-center bg-transparent" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 42px; line-height: 1.1; gap: 2px;">
-            <span class="font-bold ${isSunday ? 'text-rose-600 dark:text-rose-400' : ''}" style="font-size: 11px; font-weight: 700; line-height: 1; display: block;">${d}</span>
-            <span class="${isSunday ? 'text-rose-500 dark:text-rose-400' : 'text-muted-foreground'}" style="font-size: 9px; font-weight: 600; line-height: 1; display: block;">${dayName}</span>
+            <span class="font-bold font-mono ${isSunday ? 'text-rose-600 dark:text-rose-400' : ''}" style="font-size: 11px; font-weight: 700; line-height: 1; display: block;">${d}</span>
+            <span class="${isKm ? 'font-khmer' : 'font-mono'} ${isSunday ? 'text-rose-500 dark:text-rose-400' : 'text-muted-foreground'}" style="font-size: 9px; font-weight: 600; line-height: 1.1; display: block; white-space: nowrap;">${dayName}</span>
           </div>
         </th>
       `;
@@ -407,7 +410,7 @@ export const AttendancePage = {
 
       let dayCellsHtml = '';
       for (let d = 1; d <= daysInMonth; d++) {
-        const dayName = DAY_NAMES_EN[new Date(yearNum, monthNum - 1, d).getDay()];
+        const dayName = dayNames[new Date(yearNum, monthNum - 1, d).getDay()];
         const cellObj = row.days[d] || { status: 'Present', mark: '' };
         const markVal = cellObj.mark || '';
         const statusCellClass = cellObj.status === 'Excused'
@@ -684,12 +687,14 @@ export const AttendancePage = {
     const className = selectedCls?.name || '';
     const monthLabel = monthObj ? `ខែ${monthObj.nameKm}` : this.state.selectedMonth;
 
+    const isKm = i18n.getLocale() === 'km';
+    const dayNames = isKm ? DAY_NAMES_KM : DAY_NAMES_EN;
     let dayHeaderCells = '';
     for (let d = 1; d <= daysInMonth; d++) {
       const dayOfWeekIdx = new Date(yearNum, monthNum - 1, d).getDay();
-      const dayName = DAY_NAMES_EN[dayOfWeekIdx];
+      const dayName = dayNames[dayOfWeekIdx];
       const dayColor = dayOfWeekIdx === 0 ? 'color:#e11d48;' : '';
-      dayHeaderCells += `<th style="border:1px solid #94a3b8; background:#f1f5f9; text-align:center; width:32px; ${dayColor}">${d}<br><span style="font-size:8pt; font-weight:normal;">${dayName}</span></th>`;
+      dayHeaderCells += `<th style="border:1px solid #94a3b8; background:#f1f5f9; text-align:center; width:36px; ${dayColor}">${d}<br><span style="font-size:8pt; font-weight:normal;">${dayName}</span></th>`;
     }
 
     const bodyRowsHtml = rows.map((r, i) => {

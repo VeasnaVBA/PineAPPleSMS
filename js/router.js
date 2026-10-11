@@ -7,7 +7,7 @@ import { DashboardPage } from './pages/dashboard.js';
 import { StudentsPage } from './pages/students.js';
 import { TeachersPage } from './pages/teachers.js';
 import { ClassesPage } from './pages/classes.js';
-import { AttendancePage } from './pages/attendance.js?v=2.8.8';
+import { AttendancePage } from './pages/attendance.js?v=2.8.9';
 import { ScoresPage } from './pages/scores.js';
 import { ReportsPage } from './pages/reports.js';
 import { SettingsPage } from './pages/settings.js';

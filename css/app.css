@@ -2040,7 +2040,7 @@ col.att-col-4,
 col.att-col-perm { width: 50px !important; min-width: 50px !important; max-width: 50px !important; }
 col.att-col-absent { width: 56px !important; min-width: 56px !important; max-width: 56px !important; }
 col.att-col-total { width: 50px !important; min-width: 50px !important; max-width: 50px !important; }
-col.att-col-day { width: 34px !important; min-width: 34px !important; max-width: 34px !important; }
+col.att-col-day { width: 38px !important; min-width: 38px !important; max-width: 38px !important; }
 
 @media (max-width: 640px) {
   col.att-col-1,
