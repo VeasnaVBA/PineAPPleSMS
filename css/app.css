@@ -877,8 +877,7 @@ table thead th:last-child.sticky {
 table tbody td.sticky.right-0,
 table tbody td[class*="sticky"][class*="right-0"],
 table tbody td.sticky-action-col,
-table tbody td.sticky,
-table tbody td[class*="sticky"] {
+table tbody td:last-child.sticky {
   position: sticky !important;
   right: 0 !important;
   z-index: 10 !important;
@@ -918,8 +917,7 @@ table tbody td[class*="sticky"] {
 .dark table tbody td.sticky.right-0,
 .dark table tbody td[class*="sticky"][class*="right-0"],
 .dark table tbody td.sticky-action-col,
-.dark table tbody td.sticky,
-.dark table tbody td[class*="sticky"] {
+.dark table tbody td:last-child.sticky {
   position: sticky !important;
   right: 0 !important;
   z-index: 10 !important;
@@ -1993,6 +1991,7 @@ a.score-toolbar-item:not(.hidden) {
 .att-sticky-col-1 {
   position: sticky !important;
   left: 0px !important;
+  right: auto !important;
   width: 42px !important;
   min-width: 42px !important;
   max-width: 42px !important;
@@ -2003,29 +2002,32 @@ a.score-toolbar-item:not(.hidden) {
 .att-sticky-col-2 {
   position: sticky !important;
   left: 42px !important;
-  width: 90px !important;
-  min-width: 90px !important;
-  max-width: 90px !important;
+  right: auto !important;
+  width: 86px !important;
+  min-width: 86px !important;
+  max-width: 86px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
 }
 
 .att-sticky-col-3 {
   position: sticky !important;
-  left: 132px !important;
-  width: 165px !important;
-  min-width: 165px !important;
-  max-width: 165px !important;
+  left: 128px !important;
+  right: auto !important;
+  width: 146px !important;
+  min-width: 146px !important;
+  max-width: 146px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
 }
 
 .att-sticky-col-4 {
   position: sticky !important;
-  left: 297px !important;
-  width: 58px !important;
-  min-width: 58px !important;
-  max-width: 58px !important;
+  left: 274px !important;
+  right: auto !important;
+  width: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
   border-right: 2px solid #94a3b8 !important;
@@ -2041,6 +2043,7 @@ thead th.att-sticky-col-3,
 thead th.att-sticky-col-4 {
   position: sticky !important;
   top: 0px !important;
+  right: auto !important;
   z-index: 50 !important;
   transform: translateZ(0) !important;
   background-color: #f1f5f9 !important;
@@ -2055,11 +2058,21 @@ thead th.att-sticky-col-4 {
   color: #f8fafc !important;
 }
 
+thead th.att-sticky-col-1 > div,
+thead th.att-sticky-col-2 > div,
+thead th.att-sticky-col-3 > div,
+thead th.att-sticky-col-4 > div {
+  background-color: transparent !important;
+  background: transparent !important;
+  color: inherit !important;
+}
+
 tbody td.att-sticky-col-1,
 tbody td.att-sticky-col-2,
 tbody td.att-sticky-col-3,
 tbody td.att-sticky-col-4 {
   position: sticky !important;
+  right: auto !important;
   z-index: 30 !important;
   transform: translateZ(0) !important;
   isolation: isolate !important;
@@ -2071,6 +2084,13 @@ tbody td.att-sticky-col-4 {
 .dark tbody td.att-sticky-col-3,
 .dark tbody td.att-sticky-col-4 {
   background-color: #0f172a !important;
+}
+
+tbody td.att-sticky-col-1 > div,
+tbody td.att-sticky-col-2 > div,
+tbody td.att-sticky-col-3 > div,
+tbody td.att-sticky-col-4 > div {
+  background-color: transparent !important;
 }
 
 tbody tr:hover td.att-sticky-col-1,
@@ -2095,7 +2115,19 @@ tbody tr:focus-within td.att-sticky-col-4 {
   background-color: #1e293b !important;
 }
 
-/* Attendance Summary Header Colors */
+/* Scrolling Header Cells (Always stay below top-left sticky headers z-index: 50) */
+table.score-table thead tr th.att-scroll-th {
+  position: sticky !important;
+  top: 0px !important;
+  z-index: 10 !important;
+  isolation: isolate !important;
+  padding: 0 !important;
+  vertical-align: middle !important;
+  text-align: center !important;
+  box-sizing: border-box !important;
+}
+
+/* Attendance Summary Header Colors (Opaque so content never bleeds through) */
 table.score-table thead tr th.att-col-perm-th,
 table.score-table thead tr th.att-col-perm-th span {
   color: #0369a1 !important; /* Sky-700 */
@@ -2105,7 +2137,7 @@ table.score-table thead tr th.att-col-perm-th span {
 .dark table.score-table thead tr th.att-col-perm-th,
 .dark table.score-table thead tr th.att-col-perm-th span {
   color: #7dd3fc !important; /* Sky-300 */
-  background-color: rgba(12, 74, 110, 0.45) !important;
+  background-color: #0c4a6e !important;
 }
 
 table.score-table thead tr th.att-col-absent-th,
@@ -2117,7 +2149,7 @@ table.score-table thead tr th.att-col-absent-th span {
 .dark table.score-table thead tr th.att-col-absent-th,
 .dark table.score-table thead tr th.att-col-absent-th span {
   color: #fda4af !important; /* Rose-300 */
-  background-color: rgba(136, 19, 55, 0.45) !important;
+  background-color: #881337 !important;
 }
 
 table.score-table thead tr th.att-col-total-th,
@@ -2130,15 +2162,61 @@ table.score-table thead tr th.att-col-total-th span {
 .dark table.score-table thead tr th.att-col-total-th,
 .dark table.score-table thead tr th.att-col-total-th span {
   color: #c4b5fd !important; /* Violet-300 */
-  background-color: rgba(76, 29, 149, 0.45) !important;
+  background-color: #4c1d95 !important;
   border-right: 2px solid #475569 !important;
+}
+
+/* Opaque Body Cells for Attendance Summary & Day Cells */
+td.att-col-perm-td {
+  background-color: #f0f9ff !important;
+}
+.dark td.att-col-perm-td {
+  background-color: #082f49 !important;
+}
+
+td.att-col-absent-td {
+  background-color: #fff1f2 !important;
+}
+.dark td.att-col-absent-td {
+  background-color: #4c0519 !important;
 }
 
 td.att-col-total-td {
+  background-color: #f5f3ff !important;
   border-right: 2px solid #94a3b8 !important;
 }
-
 .dark td.att-col-total-td {
+  background-color: #2e1065 !important;
   border-right: 2px solid #475569 !important;
 }
+
+td.att-day-td {
+  background-color: #ffffff !important;
+}
+.dark td.att-day-td {
+  background-color: #0f172a !important;
+}
+
+td.att-day-td.is-excused {
+  background-color: #e0f2fe !important;
+  color: #0369a1 !important;
+  font-weight: 700 !important;
+}
+.dark td.att-day-td.is-excused {
+  background-color: #0c4a6e !important;
+  color: #7dd3fc !important;
+  font-weight: 700 !important;
+}
+
+td.att-day-td.is-absent {
+  background-color: #ffe4e6 !important;
+  color: #be123c !important;
+  font-weight: 700 !important;
+}
+.dark td.att-day-td.is-absent {
+  background-color: #881337 !important;
+  color: #fda4af !important;
+  font-weight: 700 !important;
+}
+
 

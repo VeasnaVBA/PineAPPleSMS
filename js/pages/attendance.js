@@ -180,11 +180,27 @@ export const AttendancePage = {
         </div>
 
         <!-- Monthly Attendance Grid Container -->
-        <div class="score-table-container rounded-xl border border-border bg-card shadow-sm" id="att-table-wrapper">
-          <table class="score-table" id="attendance-grid-table">
-            <thead id="attendance-table-head"></thead>
-            <tbody id="attendance-table-body"></tbody>
-          </table>
+        <div class="rounded-xl border border-border bg-card shadow-xs overflow-hidden relative w-full max-w-full">
+          <!-- Empty state shown before user chooses a month -->
+          <div id="att-empty-month-state" class="py-20 px-4 text-center ${this.state.selectedMonth ? 'hidden' : ''}">
+            <div class="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3 shadow-2xs">
+              ${getIcon('calendar', 'w-6 h-6')}
+            </div>
+            <h3 class="text-sm font-bold text-foreground font-khmer mb-1">
+              សូមជ្រើសរើសខែសិក្សាជាមុនសិន
+            </h3>
+            <p class="text-xs text-muted-foreground font-khmer max-w-md mx-auto">
+              ជ្រើសរើសខែនៅខាងលើ ដើម្បីបង្ហាញតារាងវត្តមានប្រចាំខែ
+            </p>
+          </div>
+
+          <div id="att-table-wrapper" class="score-table-container max-h-[72vh] overflow-auto w-full max-w-full ${!this.state.selectedMonth ? 'hidden' : ''}">
+            <table class="score-table no-shadcn text-left text-xs border-separate" id="attendance-grid-table">
+              <colgroup id="attendance-table-colgroup"></colgroup>
+              <thead id="attendance-table-head"></thead>
+              <tbody id="attendance-table-body" class="divide-y divide-border/40"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     `;
@@ -193,40 +209,15 @@ export const AttendancePage = {
   },
 
   async loadSheet() {
-    const thead = document.getElementById('attendance-table-head');
-    const tbody = document.getElementById('attendance-table-body');
-    if (!thead || !tbody) return;
+    const emptyState = document.getElementById('att-empty-month-state');
+    const wrapper = document.getElementById('att-table-wrapper');
+    const hasMonth = Boolean(this.state.selectedClassId && this.state.selectedMonth);
 
-    if (!this.state.selectedClassId) {
-      this.state.sheet = null;
-      thead.innerHTML = '';
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="10" class="py-16 text-center text-muted-foreground font-khmer">
-            សូមជ្រើសរើសថ្នាក់រៀនជាមុនសិន
-          </td>
-        </tr>
-      `;
-      this.updateStats();
-      return;
-    }
+    emptyState?.classList.toggle('hidden', hasMonth);
+    wrapper?.classList.toggle('hidden', !hasMonth);
 
-    if (!this.state.selectedMonth) {
+    if (!hasMonth) {
       this.state.sheet = null;
-      thead.innerHTML = '';
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="10" class="py-16 text-center text-muted-foreground">
-            <div class="flex flex-col items-center justify-center gap-2">
-              <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                ${getIcon('calendar', 'w-5 h-5')}
-              </div>
-              <p class="text-sm font-semibold text-foreground font-khmer">សូមជ្រើសរើសខែសិក្សាជាមុនសិន</p>
-              <p class="text-xs text-muted-foreground font-khmer">ជ្រើសរើសខែនៅខាងលើ ដើម្បីបង្ហាញតារាងវត្តមានប្រចាំខែ</p>
-            </div>
-          </td>
-        </tr>
-      `;
       this.updateStats();
       return;
     }
@@ -254,6 +245,7 @@ export const AttendancePage = {
   },
 
   renderTable() {
+    const colgroup = document.getElementById('attendance-table-colgroup');
     const thead = document.getElementById('attendance-table-head');
     const tbody = document.getElementById('attendance-table-body');
     if (!thead || !tbody || !this.state.sheet) return;
@@ -261,38 +253,62 @@ export const AttendancePage = {
     const { daysInMonth } = this.state.sheet;
     const rows = this.getFilteredRows();
 
-    // Build Day Header Columns (1..daysInMonth)
+    // 1. Fixed Column Widths via Colgroup (guarantees exact sticky alignment when scrolling)
+    if (colgroup) {
+      let dayColsHtml = '';
+      for (let d = 1; d <= daysInMonth; d++) {
+        dayColsHtml += `<col style="width: 34px; min-width: 34px; max-width: 34px;">`;
+      }
+      colgroup.innerHTML = `
+        <col style="width: 42px; min-width: 42px; max-width: 42px;">
+        <col style="width: 86px; min-width: 86px; max-width: 86px;">
+        <col style="width: 146px; min-width: 146px; max-width: 146px;">
+        <col style="width: 52px; min-width: 52px; max-width: 52px;">
+        <col style="width: 52px; min-width: 52px; max-width: 52px;">
+        <col style="width: 58px; min-width: 58px; max-width: 58px;">
+        <col style="width: 52px; min-width: 52px; max-width: 52px;">
+        ${dayColsHtml}
+      `;
+    }
+
+    // 2. Build Day Header Columns (1..daysInMonth) with z-index: 10 so they scroll cleanly under sticky left columns
     let dayHeadersHtml = '';
     for (let d = 1; d <= daysInMonth; d++) {
       dayHeadersHtml += `
-        <th class="text-center font-mono text-[11px] font-bold" style="width: 34px; min-width: 34px; max-width: 34px; height: 42px;">
-          <div class="flex items-center justify-center h-full w-full">${d}</div>
+        <th class="att-scroll-th p-0 text-center font-mono text-[11px] font-bold" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+          <div class="w-[34px] max-w-[34px] h-[42px] mx-auto flex items-center justify-center text-center bg-transparent">${d}</div>
         </th>
       `;
     }
 
     thead.innerHTML = `
-      <tr style="height: 42px;">
-        <th class="att-sticky-col-1 text-center font-khmer text-[11px] font-bold">
-          <div class="flex items-center justify-center h-full px-1">ល.រ</div>
+      <tr class="border-b border-border">
+        <th class="att-sticky-col-1 p-0 text-center font-khmer text-[11px] font-bold" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
+          <div class="w-full h-[42px] whitespace-nowrap flex items-center justify-center text-center bg-transparent">ល.រ</div>
         </th>
-        <th class="att-sticky-col-2 text-center font-khmer text-[11px] font-bold">
-          <div class="flex items-center justify-center h-full px-1.5">អត្តលេខ</div>
+        <th class="att-sticky-col-2 p-0 text-center font-khmer text-[11px] font-bold" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
+          <div class="w-full h-[42px] whitespace-nowrap flex items-center justify-center text-center px-1 bg-transparent">អត្តលេខ</div>
         </th>
-        <th class="att-sticky-col-3 text-center font-khmer text-[11px] font-bold">
-          <div class="flex items-center justify-center h-full px-2">គោត្តនាម និងនាម</div>
+        <th class="att-sticky-col-3 p-0 text-center font-khmer text-[11px] font-bold" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
+          <div class="w-full h-[42px] whitespace-nowrap flex items-center justify-center text-center px-1.5 bg-transparent">គោត្តនាម និងនាម</div>
         </th>
-        <th class="att-sticky-col-4 text-center font-khmer text-[11px] font-bold">
-          <div class="flex items-center justify-center h-full px-1">ភេទ</div>
+        <th class="att-sticky-col-4 p-0 text-center font-khmer text-[11px] font-bold" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
+          <div class="w-full h-[42px] whitespace-nowrap flex items-center justify-center text-center px-1 bg-transparent">ភេទ</div>
         </th>
-        <th class="att-col-perm-th text-center font-khmer text-[11px] font-bold" style="width: 54px; min-width: 54px; max-width: 54px;">
-          <div class="flex items-center justify-center h-full px-1">ច្បាប់</div>
+        <th class="att-scroll-th att-col-perm-th p-0 text-center font-khmer text-[11px] font-bold" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+          <div class="w-[52px] max-w-[52px] h-[42px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
+            <span>ច្បាប់</span>
+          </div>
         </th>
-        <th class="att-col-absent-th text-center font-khmer text-[11px] font-bold" style="width: 62px; min-width: 62px; max-width: 62px;">
-          <div class="flex items-center justify-center h-full px-1">ឥតច្បាប់</div>
+        <th class="att-scroll-th att-col-absent-th p-0 text-center font-khmer text-[11px] font-bold" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+          <div class="w-[58px] max-w-[58px] h-[42px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
+            <span>ឥតច្បាប់</span>
+          </div>
         </th>
-        <th class="att-col-total-th text-center font-khmer text-[11px] font-bold" style="width: 54px; min-width: 54px; max-width: 54px;">
-          <div class="flex items-center justify-center h-full px-1">សរុប</div>
+        <th class="att-scroll-th att-col-total-th p-0 text-center font-khmer text-[11px] font-bold" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+          <div class="w-[52px] max-w-[52px] h-[42px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
+            <span>សរុប</span>
+          </div>
         </th>
         ${dayHeadersHtml}
       </tr>
@@ -313,21 +329,21 @@ export const AttendancePage = {
       const isFemale = row.gender === 'Female' || row.gender === 'ស្រី' || row.gender === 'F';
       const genderLabel = isFemale ? 'ស្រី' : 'ប្រុស';
       const genderClass = isFemale
-        ? 'text-pink-600 dark:text-pink-400 font-semibold'
-        : 'text-sky-700 dark:text-sky-400 font-medium';
+        ? 'text-rose-600 dark:text-rose-400 font-bold'
+        : 'text-sky-600 dark:text-sky-400 font-bold';
 
       let dayCellsHtml = '';
       for (let d = 1; d <= daysInMonth; d++) {
         const cellObj = row.days[d] || { status: 'Present', mark: '' };
         const markVal = cellObj.mark || '';
-        const statusColorClass = cellObj.status === 'Excused'
-          ? 'text-sky-700 dark:text-sky-300 bg-sky-500/10 font-bold'
+        const statusCellClass = cellObj.status === 'Excused'
+          ? 'is-excused'
           : cellObj.status === 'Absent'
-            ? 'text-rose-600 dark:text-rose-400 bg-rose-500/10 font-bold'
-            : 'text-foreground';
+            ? 'is-absent'
+            : '';
 
         dayCellsHtml += `
-          <td class="score-cell-td ${statusColorClass}" style="width: 34px; min-width: 34px; max-width: 34px;">
+          <td class="score-cell-td att-day-td ${statusCellClass}">
             <input
               type="text"
               maxlength="3"
@@ -345,25 +361,25 @@ export const AttendancePage = {
       }
 
       return `
-        <tr data-student-row="${row.studentId}">
+        <tr class="hover:bg-muted/15 transition-colors group" data-student-row="${row.studentId}">
           <!-- 1. No (ល.រ) -->
-          <td class="att-sticky-col-1 text-center font-mono text-xs text-muted-foreground" style="padding: 0 4px !important; height: 32px;">
-            ${rowIdx + 1}
+          <td class="att-sticky-col-1 p-0 text-center font-mono text-xs font-medium text-muted-foreground" style="z-index: 30 !important; transform: translateZ(0) !important;">
+            <div class="w-full whitespace-nowrap text-center py-1.5 bg-transparent">${rowIdx + 1}</div>
           </td>
           <!-- 2. Student ID (អត្តលេខ) -->
-          <td class="att-sticky-col-2 text-center font-mono text-xs font-medium text-foreground" style="padding: 0 6px !important; height: 32px;">
-            <div class="truncate">${row.studentNumber || '—'}</div>
+          <td class="att-sticky-col-2 p-0 text-center font-mono text-xs font-medium text-foreground" style="z-index: 30 !important; transform: translateZ(0) !important;" title="${row.studentNumber || ''}">
+            <div class="w-full whitespace-nowrap truncate text-center py-1.5 px-1.5 bg-transparent">${row.studentNumber || '—'}</div>
           </td>
           <!-- 3. Student Khmer Last Name + First Name (គោត្តនាម និងនាម) -->
-          <td class="att-sticky-col-3 text-left font-khmer text-xs font-semibold text-foreground" style="padding: 0 8px !important; height: 32px;">
-            <div class="truncate" title="${row.khmerFullName}">${row.khmerFullName}</div>
+          <td class="att-sticky-col-3 p-0 text-left font-khmer text-xs font-semibold text-foreground" style="z-index: 30 !important; transform: translateZ(0) !important;" title="${row.khmerFullName}">
+            <div class="w-full whitespace-nowrap truncate text-left py-1.5 px-2 bg-transparent">${row.khmerFullName}</div>
           </td>
           <!-- 4. Gender (ភេទ) -->
-          <td class="att-sticky-col-4 text-center font-khmer text-xs ${genderClass}" style="padding: 0 4px !important; height: 32px;">
-            ${genderLabel}
+          <td class="att-sticky-col-4 p-0 text-center font-khmer text-xs ${genderClass}" style="z-index: 30 !important; transform: translateZ(0) !important;">
+            <div class="w-full whitespace-nowrap text-center py-1.5 px-1 bg-transparent">${genderLabel}</div>
           </td>
           <!-- 5. Permission (ច្បាប់) -->
-          <td class="score-cell-td bg-sky-500/5" style="width: 54px; min-width: 54px; max-width: 54px;">
+          <td class="score-cell-td att-col-perm-td">
             <input
               type="text"
               inputmode="numeric"
@@ -376,7 +392,7 @@ export const AttendancePage = {
             />
           </td>
           <!-- 6. Absent (ឥតច្បាប់) -->
-          <td class="score-cell-td bg-rose-500/5" style="width: 62px; min-width: 62px; max-width: 62px;">
+          <td class="score-cell-td att-col-absent-td">
             <input
               type="text"
               inputmode="numeric"
@@ -390,9 +406,8 @@ export const AttendancePage = {
           </td>
           <!-- 7. Total (សរុប) -->
           <td
-            class="score-cell-td att-col-total-td bg-violet-500/5 font-mono text-xs font-bold text-violet-700 dark:text-violet-300"
+            class="score-cell-td att-col-total-td font-mono text-xs font-bold text-violet-700 dark:text-violet-300"
             data-total-cell="${row.studentId}"
-            style="width: 54px; min-width: 54px; max-width: 54px;"
           >
             ${row.total || 0}
           </td>
@@ -459,17 +474,11 @@ export const AttendancePage = {
         // Update cell visual style
         const td = inp.closest('td');
         if (td) {
-          td.classList.remove(
-            'text-sky-700', 'dark:text-sky-300', 'bg-sky-500/10',
-            'text-rose-600', 'dark:text-rose-400', 'bg-rose-500/10',
-            'text-foreground', 'font-bold'
-          );
+          td.classList.remove('is-excused', 'is-absent');
           if (status === 'Excused') {
-            td.classList.add('text-sky-700', 'dark:text-sky-300', 'bg-sky-500/10', 'font-bold');
+            td.classList.add('is-excused');
           } else if (status === 'Absent') {
-            td.classList.add('text-rose-600', 'dark:text-rose-400', 'bg-rose-500/10', 'font-bold');
-          } else {
-            td.classList.add('text-foreground');
+            td.classList.add('is-absent');
           }
         }
 
