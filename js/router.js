@@ -7,7 +7,7 @@ import { DashboardPage } from './pages/dashboard.js';
 import { StudentsPage } from './pages/students.js';
 import { TeachersPage } from './pages/teachers.js';
 import { ClassesPage } from './pages/classes.js';
-import { AttendancePage } from './pages/attendance.js?v=2.8.7';
+import { AttendancePage } from './pages/attendance.js?v=2.8.8';
 import { ScoresPage } from './pages/scores.js';
 import { ReportsPage } from './pages/reports.js';
 import { SettingsPage } from './pages/settings.js';
@@ -57,8 +57,13 @@ export class Router {
     window.addEventListener('app:refresh-data', (e) => {
       const source = e.detail?.source || '';
 
-      // 1. Never reload if active page is scores - scores page manages its own live grid
-      if (this.currentRoute === 'scores') {
+      // 1. Never reload if active page is scores or attendance - both pages manage their own live grid
+      if (this.currentRoute === 'scores' || this.currentRoute === 'attendance') {
+        return;
+      }
+
+      // Ignore background startup admin sync if no visual settings changed and not on users page
+      if (e.detail?.adminSync && !e.detail?.settingsUpdated && this.currentRoute !== 'users') {
         return;
       }
 

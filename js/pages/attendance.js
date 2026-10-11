@@ -64,6 +64,34 @@ export const AttendancePage = {
 
     this.renderLayout();
     await this.loadSheet();
+
+    if (!this._cloudRefreshBound) {
+      this._cloudRefreshBound = true;
+      window.addEventListener('app:refresh-data', async (e) => {
+        // Only react to full cloud sync completions while on the attendance page
+        if (!e.detail?.counts || !document.getElementById('attendance-grid-table')) return;
+        const freshClasses = await ClassService.getAll();
+        const prevIds = (this.state.classes || []).map(c => c.id).join(',');
+        const nextIds = (freshClasses || []).map(c => c.id).join(',');
+        this.state.classes = freshClasses;
+        if (!this.state.selectedClassId && freshClasses.length > 0) {
+          this.state.selectedClassId = authService.isTeacher()
+            ? (authService.getAssignedClassId() || freshClasses[0].id)
+            : freshClasses[0].id;
+        }
+        if (prevIds !== nextIds) {
+          const selectCls = document.getElementById('select-att-class');
+          if (selectCls) {
+            selectCls.innerHTML = freshClasses.length === 0
+              ? `<option value="">${t('classes.emptyList')}</option>`
+              : freshClasses.map(c => `<option value="${c.id}" ${this.state.selectedClassId === c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+          }
+        }
+        if (this.state.selectedClassId && this.state.selectedMonth && this.state.selectedYear) {
+          await this.loadSheet();
+        }
+      });
+    }
   },
 
   renderLayout() {

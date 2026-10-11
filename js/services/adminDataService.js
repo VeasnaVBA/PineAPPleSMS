@@ -296,35 +296,52 @@ export const AdminDataService = {
     let usersCount = 0;
     let settingsUpdated = 0;
 
-    // 1. Apply Appearance / App Settings
+    // 1. Apply Appearance / App Settings (only when values actually differ from current state)
     if (settings && typeof settings === 'object') {
       if (settings.theme && (settings.theme === 'light' || settings.theme === 'dark' || settings.theme === 'system')) {
-        themeService.setTheme(settings.theme);
-        settingsUpdated++;
+        if (themeService.getTheme() !== settings.theme) {
+          themeService.setTheme(settings.theme);
+          settingsUpdated++;
+        }
       }
       if (settings.primaryColor !== undefined) {
-        themeService.setPrimaryColor(settings.primaryColor || null);
-        settingsUpdated++;
+        const nextPrimary = settings.primaryColor || null;
+        if (themeService.getPrimaryColor() !== nextPrimary) {
+          themeService.setPrimaryColor(nextPrimary);
+          settingsUpdated++;
+        }
       }
       if (settings.fontSize) {
-        fontService.setFontSize(settings.fontSize);
-        settingsUpdated++;
+        if (fontService.getFontSize() !== settings.fontSize) {
+          fontService.setFontSize(settings.fontSize);
+          settingsUpdated++;
+        }
       }
       if (settings.fontEn) {
-        fontService.setEnglishFont(settings.fontEn);
-        settingsUpdated++;
+        if (fontService.getEnglishFont() !== settings.fontEn) {
+          fontService.setEnglishFont(settings.fontEn);
+          settingsUpdated++;
+        }
       }
       if (settings.fontKm) {
-        fontService.setKhmerFont(settings.fontKm);
-        settingsUpdated++;
+        if (fontService.getKhmerFont() !== settings.fontKm) {
+          fontService.setKhmerFont(settings.fontKm);
+          settingsUpdated++;
+        }
       }
       if (settings.locale && (settings.locale === 'km' || settings.locale === 'en')) {
-        i18n.setLocale(settings.locale);
-        settingsUpdated++;
+        if (i18n.getLocale() !== settings.locale) {
+          i18n.setLocale(settings.locale);
+          settingsUpdated++;
+        }
       }
       if (settings.activeAcademicYear) {
         try {
-          await SettingsService.setActiveAcademicYear(settings.activeAcademicYear);
+          const currentActiveYear = await SettingsService.getActiveAcademicYear();
+          if (currentActiveYear !== settings.activeAcademicYear) {
+            await SettingsService.setActiveAcademicYear(settings.activeAcademicYear);
+            settingsUpdated++;
+          }
         } catch (_) {}
       }
       if (settings.scriptUrl && settings.scriptUrl.startsWith('http')) {
