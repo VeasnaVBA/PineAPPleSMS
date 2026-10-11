@@ -286,19 +286,6 @@ export const ScoresPage = {
               <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'នាំចេញ Excel' : 'Export Excel'}</span>
             </button>
 
-            <!-- Download Template Button -->
-            <button id="btn-download-template" type="button" class="score-toolbar-item h-9 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'ទាញយកឯកសារ Excel គំរូ' : 'Download Excel Template'}">
-              <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'ទាញយកគំរូ' : 'Template'}</span>
-            </button>
-
-            <!-- Upload Scores Button (Hidden when no month or in Semester and Annual periods) -->
-            <button id="btn-upload-scores" type="button" class="score-toolbar-item h-9 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer ${(!this.state.selectedPeriod || this.isSemesterPeriod() || this.isAnnualPeriod()) ? 'hidden' : ''}" title="${isKm ? 'បញ្ចូលពិន្ទុពីឯកសារ Excel' : 'Upload from Excel'}">
-              <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"/></svg>
-              <span>Upload</span>
-            </button>
-            <input type="file" id="input-file-upload-excel" accept=".xlsx,.xls,.csv" class="hidden" />
-
             <!-- Subject Extra Column Display Mode Toggle Button (None -> Rank -> Grade -> Both -> None) -->
             <button id="btn-toggle-subject-extra-col" 
                     type="button" 
@@ -570,7 +557,6 @@ export const ScoresPage = {
 
     document.getElementById('score-empty-period-state')?.classList.toggle('hidden', hasPeriod);
     document.getElementById('master-score-table-wrapper')?.classList.toggle('hidden', !hasPeriod);
-    document.getElementById('btn-upload-scores')?.classList.toggle('hidden', !hasPeriod || isSemester || isAnnual);
 
     if (!hasPeriod) {
       this.state.rows = [];
@@ -2132,24 +2118,6 @@ export const ScoresPage = {
     document.getElementById('action-export-scores-excel')?.addEventListener('click', () => {
       document.getElementById('dropdown-data-menu')?.classList.add('hidden');
       this.exportScoresToExcel();
-    });
-
-    // Download Excel Template Button
-    document.getElementById('btn-download-template')?.addEventListener('click', () => {
-      this.downloadExcelTemplate();
-    });
-
-    // Upload Scores Button
-    const uploadInput = document.getElementById('input-file-upload-excel');
-    document.getElementById('btn-upload-scores')?.addEventListener('click', () => {
-      uploadInput?.click();
-    });
-    uploadInput?.addEventListener('change', (e) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        this.importScoresFromExcel(file);
-      }
-      uploadInput.value = '';
     });
 
     // A-F Grading Guide Button

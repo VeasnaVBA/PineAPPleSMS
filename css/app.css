@@ -1871,8 +1871,7 @@ td.col-grade-cell {
 #select-score-class,
 #select-score-period,
 #btn-coefficient-settings,
-#btn-download-template,
-#btn-upload-scores,
+#btn-export-scores-excel,
 #btn-toggle-subject-extra-col,
 #btn-grade-scale-guide,
 #btn-data-menu,
@@ -1897,13 +1896,12 @@ select#select-score-period {
   max-height: 36px !important;
 }
 
-button.score-toolbar-item,
-button#btn-coefficient-settings,
-button#btn-download-template,
-button#btn-upload-scores,
-button#btn-toggle-subject-extra-col,
-button#btn-grade-scale-guide,
-button#btn-data-menu {
+button.score-toolbar-item:not(.hidden),
+button#btn-coefficient-settings:not(.hidden),
+button#btn-export-scores-excel:not(.hidden),
+button#btn-toggle-subject-extra-col:not(.hidden),
+button#btn-grade-scale-guide:not(.hidden),
+button#btn-data-menu:not(.hidden) {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1913,9 +1911,9 @@ button#btn-data-menu {
   line-height: normal !important;
 }
 
-div.score-toolbar-item,
-div.score-assigned-class-badge,
-a.score-toolbar-item {
+div.score-toolbar-item:not(.hidden),
+div.score-assigned-class-badge:not(.hidden),
+a.score-toolbar-item:not(.hidden) {
   display: inline-flex !important;
   align-items: center !important;
   height: 36px !important;
