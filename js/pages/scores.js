@@ -275,6 +275,14 @@ export const ScoresPage = {
               <span id="current-month-coeff-badge" class="ml-0.5 px-1.5 py-0.2 rounded font-mono font-bold text-[10px] bg-primary/10 text-primary border border-primary/20" title="${isKm ? 'មេគុណខែនេះ' : 'Current month coefficient'}">${this.getCurrentPeriodCoefficient()}</span>
             </button>
 
+            <!-- Export Formatted Excel Button -->
+            <button id="btn-export-scores-excel" type="button" class="score-toolbar-item h-9 px-3 rounded-lg border border-emerald-600/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'ទាញយកតារាងពិន្ទុជាឯកសារ Excel ដែលមានទម្រង់ស្អាត' : 'Export formatted scores to Excel'}">
+              <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'នាំចេញ Excel' : 'Export Excel'}</span>
+            </button>
+
             <!-- Download Template Button -->
             <button id="btn-download-template" type="button" class="score-toolbar-item h-9 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'ទាញយកឯកសារ Excel គំរូ' : 'Download Excel Template'}">
               <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
@@ -308,6 +316,10 @@ export const ScoresPage = {
                 <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
               </button>
               <div id="dropdown-data-menu" class="hidden absolute left-0 top-full mt-1 w-48 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg z-50 py-1 text-xs font-khmer">
+                <button id="action-export-scores-excel" type="button" class="w-full text-left px-3 py-2 hover:bg-muted flex items-center gap-2 cursor-pointer border-b border-border/40">
+                  ${getIcon('download', 'w-3.5 h-3.5 text-emerald-600')}
+                  <span>${isKm ? 'នាំចេញ Excel (មានទម្រង់)' : 'Export Formatted Excel'}</span>
+                </button>
                 <button id="action-open-result-2row" type="button" class="w-full text-left px-3 py-2 hover:bg-muted flex items-center gap-2 cursor-pointer border-b border-border/40">
                   ${getIcon('table', 'w-3.5 h-3.5 text-primary')}
                   <span>${isKm ? 'តារាងលទ្ធផល (២ជួរ)' : '2 Row Table'}</span>
@@ -2072,6 +2084,15 @@ export const ScoresPage = {
       toast.success(isKm ? 'បានសម្អាតពិន្ទុទាំងអស់' : 'Cleared all scores');
     });
 
+    // Export Formatted Excel Button & Data Menu Action
+    document.getElementById('btn-export-scores-excel')?.addEventListener('click', () => {
+      this.exportScoresToExcel();
+    });
+    document.getElementById('action-export-scores-excel')?.addEventListener('click', () => {
+      document.getElementById('dropdown-data-menu')?.classList.add('hidden');
+      this.exportScoresToExcel();
+    });
+
     // Download Excel Template Button
     document.getElementById('btn-download-template')?.addEventListener('click', () => {
       this.downloadExcelTemplate();
@@ -2096,12 +2117,446 @@ export const ScoresPage = {
     });
   },
 
+  getExcelGradeStyle(grade) {
+    switch (grade) {
+      case 'A': return { fill: 'FFD1FAE5', text: 'FF065F46' }; // Emerald
+      case 'B': return { fill: 'FFDBEAFE', text: 'FF1E40AF' }; // Blue
+      case 'C': return { fill: 'FFE0E7FF', text: 'FF3730A3' }; // Indigo
+      case 'D': return { fill: 'FFFEF3C7', text: 'FF92400E' }; // Amber
+      case 'E': return { fill: 'FFFFEDD5', text: 'FF9A3412' }; // Orange
+      case 'F': return { fill: 'FFFFE4E6', text: 'FF9F1239' }; // Rose
+      default:  return { fill: 'FFF8FAFC', text: 'FF64748B' }; // Slate
+    }
+  },
+
+  async saveExcelWorkbook(workbook, filename) {
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 200);
+  },
+
   /**
-   * Download Excel Template populated with current class roster
+   * Export full formatted Score Sheet to Excel (.xlsx) preserving UI table layout & styling
    */
-  downloadExcelTemplate() {
+  async exportScoresToExcel() {
     const isKm = i18n.getLocale() === 'km';
-    if (!window.XLSX) {
+    const ExcelJS = window.ExcelJS || globalThis.ExcelJS;
+    if (!ExcelJS) {
+      toast.error(isKm ? 'មិនអាចហៅប្រើបណ្ណាល័យ Excel បានទេ' : 'ExcelJS library is not loaded');
+      return;
+    }
+
+    try {
+      const cls = this.state.classes.find(c => c.id === this.state.selectedClassId);
+      const className = cls?.name || 'Class';
+      const period = this.state.selectedPeriod;
+      const periodName = this.getMonthName(period) || period;
+      const academicYear = this.state.activeYear || '';
+      const coeff = this.getCurrentPeriodCoefficient();
+      const isSemester = this.isSemesterPeriod();
+      const isAnnual = this.isAnnualPeriod();
+      const mode = this.state.subjectExtraCol || 'none';
+      const showRank = !isSemester && !isAnnual && (mode === 'rank' || mode === 'both');
+      const showGrade = !isSemester && !isAnnual && (mode === 'grade' || mode === 'both');
+
+      // Filter rows if search query is active
+      let rows = this.state.rows || [];
+      const query = (this.state.searchQuery || '').trim().toLowerCase();
+      if (query) {
+        rows = rows.filter(r =>
+          (r.studentNumber && r.studentNumber.toLowerCase().includes(query)) ||
+          (r.khmerFullName && r.khmerFullName.toLowerCase().includes(query)) ||
+          (r.lastNameKh && r.lastNameKh.toLowerCase().includes(query)) ||
+          (r.firstNameKh && r.firstNameKh.toLowerCase().includes(query)) ||
+          (r.englishName && r.englishName.toLowerCase().includes(query))
+        );
+      }
+
+      // Build column metadata matching the exact UI table structure
+      const colMeta = [
+        { key: 'no', header: isKm ? 'ល.រ' : 'No.', width: 6, type: 'no' },
+        { key: 'surname', header: isKm ? 'គោត្តនាម' : 'Surname', width: 15, type: 'surname' },
+        { key: 'givenName', header: isKm ? 'នាម' : 'Name', width: 15, type: 'givenName' },
+        { key: 'gender', header: isKm ? 'ភេទ' : 'Sex', width: 9, type: 'gender' }
+      ];
+
+      if (isSemester) {
+        for (let i = 0; i < 6; i++) {
+          const mId = (this.state.semesterMonths || [])[i];
+          const mName = this.getMonthName(mId);
+          const label = mName ? mName : (isKm ? `ខែទី${toKhmerNumerals(i + 1)}` : `Month ${i + 1}`);
+          colMeta.push({
+            key: `month_${i}`,
+            header: label,
+            width: 9,
+            type: 'sem_month',
+            monthIdx: i,
+            vertical: true
+          });
+        }
+      } else if (isAnnual) {
+        colMeta.push(
+          {
+            key: 'sem1',
+            header: isKm ? 'មធ្យមភាគ\nប្រចាំឆមាសទី១' : 'Semester 1\nAverage',
+            width: 15,
+            type: 'annual_sem1',
+            vertical: false
+          },
+          {
+            key: 'sem2',
+            header: isKm ? 'មធ្យមភាគ\nប្រចាំឆមាសទី២' : 'Semester 2\nAverage',
+            width: 15,
+            type: 'annual_sem2',
+            vertical: false
+          }
+        );
+      } else {
+        (this.state.subjects || []).forEach(sub => {
+          const isCalc = SubjectService.isCalculatedSubject(sub);
+          colMeta.push({
+            key: `sub_${sub.id}`,
+            header: sub.name,
+            width: 7.5,
+            type: 'subject',
+            subject: sub,
+            isCalc,
+            vertical: true
+          });
+          if (showRank) {
+            colMeta.push({
+              key: `sub_rank_${sub.id}`,
+              header: isKm ? 'ចំណាត់ថ្នាក់' : 'Rank',
+              width: 6.5,
+              type: 'subject_rank',
+              subject: sub,
+              vertical: true
+            });
+          }
+          if (showGrade) {
+            colMeta.push({
+              key: `sub_grade_${sub.id}`,
+              header: isKm ? 'និទ្ទេស' : 'Grade',
+              width: 6.5,
+              type: 'subject_grade',
+              subject: sub,
+              vertical: true
+            });
+          }
+        });
+      }
+
+      colMeta.push(
+        { key: 'total', header: isKm ? 'ពិន្ទុសរុប' : 'Total', width: 11, type: 'total' },
+        { key: 'average', header: isKm ? 'មធ្យមភាគ' : 'Avg', width: 11, type: 'average' },
+        { key: 'rank', header: isKm ? 'ចំណាត់ថ្នាក់' : 'Rank', width: 11, type: 'rank' },
+        { key: 'grade', header: isKm ? 'និទ្ទេស' : 'Grade', width: 9, type: 'grade' }
+      );
+
+      const totalCols = colMeta.length;
+
+      // Count gender stats
+      let femaleCount = 0;
+      let maleCount = 0;
+      rows.forEach(r => {
+        if (r.gender === 'Female' || r.gender === 'ស្រី') femaleCount++;
+        else maleCount++;
+      });
+
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'PineAPPleSMS';
+      workbook.created = new Date();
+      workbook.modified = new Date();
+
+      const safeSheetName = (isKm ? `ពិន្ទុ_${className}_${periodName}` : `Scores_${className}_${period}`)
+        .replace(/[\\/?*[\]:]/g, '_')
+        .slice(0, 31);
+
+      const ws = workbook.addWorksheet(safeSheetName, {
+        pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
+        views: [{ state: 'frozen', xSplit: 4, ySplit: 3, showGridLines: true }]
+      });
+
+      ws.columns = colMeta.map(c => ({ key: c.key, width: c.width }));
+
+      // Row 1: Title Banner
+      const titleText = isKm
+        ? `តារាងពិន្ទុ${isAnnual ? 'ប្រចាំឆ្នាំ' : (isSemester ? periodName : 'ប្រចាំខែ ' + periodName)} - ថ្នាក់ទី ${className} (${academicYear})`
+        : `Score Sheet (${periodName}) - Class ${className} (${academicYear})`;
+      const titleRow = ws.addRow([titleText]);
+      titleRow.height = 28;
+      ws.mergeCells(1, 1, 1, totalCols);
+      const titleCell = titleRow.getCell(1);
+      titleCell.font = { name: 'Khmer OS Muol Light', size: 12, bold: true, color: { argb: 'FF0F172A' } };
+      titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+      titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+      // Row 2: Summary Info Bar
+      const statsText = isKm
+        ? `សិស្សសរុប៖ ${rows.length} នាក់   |   ស្រី៖ ${femaleCount} នាក់   |   ប្រុស៖ ${maleCount} នាក់   |   មេគុណ៖ ${coeff}`
+        : `Total Students: ${rows.length}   |   Female: ${femaleCount}   |   Male: ${maleCount}   |   Coefficient: ${coeff}`;
+      const statsRow = ws.addRow([statsText]);
+      statsRow.height = 22;
+      ws.mergeCells(2, 1, 2, totalCols);
+      const statsCell = statsRow.getCell(1);
+      statsCell.font = { name: 'Khmer OS Siemreap', size: 10, bold: true, color: { argb: 'FF475569' } };
+      statsCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+      statsCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+      // Row 3: Table Column Headers
+      const headerRow = ws.addRow(colMeta.map(c => c.header));
+      headerRow.height = isAnnual ? 42 : 90;
+
+      colMeta.forEach((c, idx) => {
+        const cell = headerRow.getCell(idx + 1);
+        let bgArgb = 'FFF1F5F9';
+        let fgArgb = 'FF1E293B';
+        let fontSize = 10.5;
+
+        if (c.type === 'sem_month') {
+          bgArgb = 'FFFEF3C7'; // Amber-100
+          fgArgb = 'FF78350F'; // Amber-900
+        } else if (c.type === 'annual_sem1') {
+          bgArgb = 'FFE0F2FE'; // Sky-100
+          fgArgb = 'FF0C4A6E'; // Sky-900
+        } else if (c.type === 'annual_sem2') {
+          bgArgb = 'FFE0E7FF'; // Indigo-100
+          fgArgb = 'FF1E1B4B'; // Indigo-950
+        } else if (c.type === 'subject') {
+          bgArgb = c.isCalc ? 'FFFFE4E6' : 'FFF1F5F9'; // Rose-100 for composite sum subjects
+          fgArgb = c.isCalc ? 'FF881337' : 'FF1E293B';
+          fontSize = 10;
+        } else if (c.type === 'subject_rank') {
+          bgArgb = 'FFFEF3C7';
+          fgArgb = 'FF92400E';
+          fontSize = 9.5;
+        } else if (c.type === 'subject_grade') {
+          bgArgb = 'FFE0F2FE';
+          fgArgb = 'FF075985';
+          fontSize = 9.5;
+        } else if (c.type === 'average') {
+          fgArgb = 'FF1D4ED8'; // Primary Blue
+        }
+
+        cell.font = {
+          name: 'Khmer OS Siemreap',
+          size: fontSize,
+          bold: true,
+          color: { argb: fgArgb }
+        };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: bgArgb }
+        };
+        cell.alignment = {
+          vertical: 'middle',
+          horizontal: (c.type === 'surname' || c.type === 'givenName') ? 'left' : 'center',
+          wrapText: !c.vertical,
+          textRotation: c.vertical ? 90 : 0
+        };
+        cell.border = {
+          top: { style: 'medium', color: { argb: 'FF94A3B8' } },
+          bottom: { style: 'medium', color: { argb: 'FF94A3B8' } },
+          left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+          right: c.type === 'gender'
+            ? { style: 'medium', color: { argb: 'FF94A3B8' } }
+            : { style: 'thin', color: { argb: 'FFCBD5E1' } }
+        };
+      });
+
+      // Row 4+: Student Data Rows
+      rows.forEach((r, rIdx) => {
+        let surname = (r.lastNameKh || '').trim();
+        let givenName = (r.firstNameKh || '').trim();
+        if (!surname && !givenName && r.khmerFullName) {
+          const parts = r.khmerFullName.trim().split(/\s+/);
+          surname = parts[0] || '';
+          givenName = parts.slice(1).join(' ') || '';
+        }
+
+        const isFemale = r.gender === 'Female' || r.gender === 'ស្រី';
+        const isMale = r.gender === 'Male' || r.gender === 'ប្រុស';
+        const genderText = isFemale ? 'ស្រី' : (isMale ? 'ប្រុស' : (r.gender || '—'));
+
+        const rowValues = colMeta.map(c => {
+          switch (c.type) {
+            case 'no': return rIdx + 1;
+            case 'surname': return surname || '—';
+            case 'givenName': return givenName || '—';
+            case 'gender': return genderText;
+            case 'sem_month': {
+              const mv = r.monthScores ? r.monthScores[c.monthIdx] : null;
+              return (mv !== null && mv !== undefined && mv !== '') ? Number(Number(mv).toFixed(2)) : '—';
+            }
+            case 'annual_sem1': {
+              const s1 = r.annualScores?.sem1;
+              return (s1 !== null && s1 !== undefined && s1 !== '') ? Number(Number(s1).toFixed(2)) : '—';
+            }
+            case 'annual_sem2': {
+              const s2 = r.annualScores?.sem2;
+              return (s2 !== null && s2 !== undefined && s2 !== '') ? Number(Number(s2).toFixed(2)) : '—';
+            }
+            case 'subject': {
+              const sv = r.subjectScores ? r.subjectScores[c.subject.id] : null;
+              return (sv !== null && sv !== undefined && sv !== '') ? Number(sv) : '';
+            }
+            case 'subject_rank': {
+              const sr = r.subjectRanks ? r.subjectRanks[c.subject.id] : null;
+              return (sr !== null && sr !== undefined && sr !== '') ? Number(sr) : '—';
+            }
+            case 'subject_grade': {
+              const sg = r.subjectGrades ? r.subjectGrades[c.subject.id] : null;
+              return sg || '—';
+            }
+            case 'total': {
+              const tot = Number(r.total) || 0;
+              return (isSemester || isAnnual) ? Number(tot.toFixed(2)) : tot;
+            }
+            case 'average': {
+              return Number((Number(r.average) || 0).toFixed(2));
+            }
+            case 'rank': {
+              return r.rank || 1;
+            }
+            case 'grade': {
+              return r.grade || 'F';
+            }
+            default: return '';
+          }
+        });
+
+        const excelRow = ws.addRow(rowValues);
+        excelRow.height = 23;
+        const isEven = rIdx % 2 === 1;
+
+        colMeta.forEach((c, idx) => {
+          const cell = excelRow.getCell(idx + 1);
+          const val = rowValues[idx];
+
+          let bgArgb = isEven ? 'FFF8FAFC' : 'FFFFFFFF';
+          let fgArgb = 'FF0F172A';
+          let isBold = false;
+          let alignH = 'center';
+          let numFmt = undefined;
+
+          if (c.type === 'no') {
+            fgArgb = 'FF64748B';
+          } else if (c.type === 'surname' || c.type === 'givenName') {
+            alignH = 'left';
+            isBold = true;
+          } else if (c.type === 'gender') {
+            isBold = true;
+            fgArgb = isFemale ? 'FFE11D48' : (isMale ? 'FF0284C7' : 'FF64748B');
+          } else if (c.type === 'sem_month') {
+            bgArgb = 'FFFFFBEB';
+            fgArgb = typeof val === 'number' ? 'FF78350F' : 'FF94A3B8';
+            isBold = typeof val === 'number';
+            if (typeof val === 'number') numFmt = '0.00';
+          } else if (c.type === 'annual_sem1') {
+            bgArgb = 'FFF0F9FF';
+            fgArgb = typeof val === 'number' ? 'FF0C4A6E' : 'FF94A3B8';
+            isBold = typeof val === 'number';
+            if (typeof val === 'number') numFmt = '0.00';
+          } else if (c.type === 'annual_sem2') {
+            bgArgb = 'FFEEF2FF';
+            fgArgb = typeof val === 'number' ? 'FF1E1B4B' : 'FF94A3B8';
+            isBold = typeof val === 'number';
+            if (typeof val === 'number') numFmt = '0.00';
+          } else if (c.type === 'subject') {
+            if (c.isCalc) {
+              bgArgb = 'FFFFF1F2';
+              fgArgb = 'FFBE123C';
+              isBold = true;
+            }
+          } else if (c.type === 'subject_rank') {
+            bgArgb = 'FFFFFBEB';
+            fgArgb = 'FF92400E';
+            isBold = true;
+          } else if (c.type === 'subject_grade') {
+            const gStyle = this.getExcelGradeStyle(val);
+            bgArgb = gStyle.fill;
+            fgArgb = gStyle.text;
+            isBold = true;
+          } else if (c.type === 'total') {
+            bgArgb = 'FFF1F5F9';
+            isBold = true;
+            numFmt = (isSemester || isAnnual) ? '0.00' : '0.##';
+          } else if (c.type === 'average') {
+            bgArgb = 'FFF1F5F9';
+            fgArgb = 'FF1D4ED8';
+            isBold = true;
+            numFmt = '0.00';
+          } else if (c.type === 'rank') {
+            isBold = true;
+            if (Number(val) <= 3) fgArgb = 'FFB45309';
+          } else if (c.type === 'grade') {
+            const gStyle = this.getExcelGradeStyle(val);
+            bgArgb = gStyle.fill;
+            fgArgb = gStyle.text;
+            isBold = true;
+          }
+
+          cell.font = {
+            name: 'Khmer OS Siemreap',
+            size: 10.5,
+            bold: isBold,
+            color: { argb: fgArgb }
+          };
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: bgArgb }
+          };
+          cell.alignment = {
+            vertical: 'middle',
+            horizontal: alignH
+          };
+          if (numFmt && typeof val === 'number') {
+            cell.numFmt = numFmt;
+          }
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+            bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+            left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+            right: c.type === 'gender'
+              ? { style: 'medium', color: { argb: 'FF94A3B8' } }
+              : { style: 'thin', color: { argb: 'FFCBD5E1' } }
+          };
+        });
+      });
+
+      const filename = `Scores_${className}_${period}_${academicYear}.xlsx`.replace(/\s+/g, '_');
+      await this.saveExcelWorkbook(workbook, filename);
+
+      toast.success(
+        isKm ? `បាននាំចេញតារាងពិន្ទុថ្នាក់ ${className} ជា Excel រួចរាល់!` : `Exported formatted Excel for ${className}!`,
+        isKm ? 'ជោគជ័យ' : 'Success'
+      );
+    } catch (err) {
+      console.error('Export Excel error:', err);
+      toast.error((isKm ? 'បរាជ័យក្នុងការនាំចេញ Excel៖ ' : 'Failed to export Excel: ') + err.message);
+    }
+  },
+
+  /**
+   * Download Excel Template populated with current class roster (Formatted with ExcelJS)
+   */
+  async downloadExcelTemplate() {
+    const isKm = i18n.getLocale() === 'km';
+    const ExcelJS = window.ExcelJS || globalThis.ExcelJS;
+    if (!ExcelJS && !window.XLSX) {
       toast.error('Excel library is not loaded');
       return;
     }
@@ -2136,8 +2591,7 @@ export const ScoresPage = {
       });
     }
 
-    const data = [headers];
-
+    const rowsData = [];
     this.state.rows.forEach((r, idx) => {
       let surname = (r.lastNameKh || '').trim();
       let givenName = (r.firstNameKh || '').trim();
@@ -2147,40 +2601,124 @@ export const ScoresPage = {
         givenName = parts.slice(1).join(' ') || '';
       }
 
+      const isFemale = r.gender === 'Female' || r.gender === 'ស្រី';
+      const isMale = r.gender === 'Male' || r.gender === 'ប្រុស';
+      const genderText = isFemale ? 'ស្រី' : (isMale ? 'ប្រុស' : (r.gender || 'Male'));
+
       const row = [
         idx + 1,
         r.studentNumber || '',
         surname,
         givenName,
-        r.gender || 'Male'
+        genderText
       ];
 
       if (this.isSemesterPeriod()) {
         for (let i = 0; i < 6; i++) {
           const val = r.monthScores ? r.monthScores[i] : '';
-          row.push((val !== null && val !== undefined && val !== '') ? Number(val).toFixed(2) : '');
+          row.push((val !== null && val !== undefined && val !== '') ? Number(Number(val).toFixed(2)) : '');
         }
       } else if (this.isAnnualPeriod()) {
         const s1 = r.annualScores?.sem1;
         const s2 = r.annualScores?.sem2;
         row.push(
-          (s1 !== null && s1 !== undefined && s1 !== '') ? Number(s1).toFixed(2) : '',
-          (s2 !== null && s2 !== undefined && s2 !== '') ? Number(s2).toFixed(2) : ''
+          (s1 !== null && s1 !== undefined && s1 !== '') ? Number(Number(s1).toFixed(2)) : '',
+          (s2 !== null && s2 !== undefined && s2 !== '') ? Number(Number(s2).toFixed(2)) : ''
         );
       } else {
         this.state.subjects.forEach(s => {
           const score = r.subjectScores[s.id];
-          row.push(score !== null && score !== undefined ? score : '');
+          row.push(score !== null && score !== undefined ? Number(score) : '');
         });
       }
 
-      data.push(row);
+      rowsData.push({ row, isFemale, isMale });
     });
 
-    const ws = window.XLSX.utils.aoa_to_sheet(data);
-    const wb = window.XLSX.utils.book_new();
-    window.XLSX.utils.book_append_sheet(wb, ws, 'Scores');
-    window.XLSX.writeFile(wb, `Score_Template_${className}_${period}.xlsx`);
+    if (ExcelJS) {
+      const workbook = new ExcelJS.Workbook();
+      const ws = workbook.addWorksheet('Scores', {
+        views: [{ state: 'frozen', xSplit: 5, ySplit: 1, showGridLines: true }]
+      });
+
+      const headerRow = ws.addRow(headers);
+      headerRow.height = this.isAnnualPeriod() ? 36 : 78;
+      headerRow.eachCell((cell, colNumber) => {
+        const isScoreCol = colNumber > 5;
+        cell.font = {
+          name: 'Khmer OS Siemreap',
+          size: 10.5,
+          bold: true,
+          color: { argb: 'FF1E293B' }
+        };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: isScoreCol ? 'FFE0F2FE' : 'FFF1F5F9' }
+        };
+        cell.alignment = {
+          vertical: 'middle',
+          horizontal: (colNumber === 3 || colNumber === 4) ? 'left' : 'center',
+          wrapText: true,
+          textRotation: (isScoreCol && !this.isAnnualPeriod()) ? 90 : 0
+        };
+        cell.border = {
+          top: { style: 'medium', color: { argb: 'FF94A3B8' } },
+          bottom: { style: 'medium', color: { argb: 'FF94A3B8' } },
+          left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+          right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+        };
+      });
+
+      rowsData.forEach(({ row, isFemale, isMale }, idx) => {
+        const r = ws.addRow(row);
+        r.height = 22;
+        const isEven = idx % 2 === 1;
+        r.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+          cell.font = {
+            name: 'Khmer OS Siemreap',
+            size: 10.5,
+            bold: colNumber >= 3 && colNumber <= 5,
+            color: {
+              argb: colNumber === 5
+                ? (isFemale ? 'FFE11D48' : (isMale ? 'FF0284C7' : 'FF0F172A'))
+                : 'FF0F172A'
+            }
+          };
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: isEven ? 'FFF8FAFC' : 'FFFFFFFF' }
+          };
+          cell.alignment = {
+            vertical: 'middle',
+            horizontal: (colNumber === 3 || colNumber === 4) ? 'left' : 'center'
+          };
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+            bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+            left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+            right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+          };
+        });
+      });
+
+      ws.columns.forEach((col, i) => {
+        if (i === 0) col.width = 6;
+        else if (i === 1) col.width = 12;
+        else if (i === 2 || i === 3) col.width = 15;
+        else if (i === 4) col.width = 9;
+        else col.width = this.isAnnualPeriod() ? 18 : 9;
+      });
+
+      await this.saveExcelWorkbook(workbook, `Score_Template_${className}_${period}.xlsx`);
+    } else {
+      const data = [headers, ...rowsData.map(d => d.row)];
+      const ws = window.XLSX.utils.aoa_to_sheet(data);
+      const wb = window.XLSX.utils.book_new();
+      window.XLSX.utils.book_append_sheet(wb, ws, 'Scores');
+      window.XLSX.writeFile(wb, `Score_Template_${className}_${period}.xlsx`);
+    }
 
     toast.success(
       isKm ? `បានទាញយកឯកសារ Excel គំរូថ្នាក់ ${className}!` : `Downloaded template for ${className}!`,
@@ -3085,34 +3623,125 @@ export const ScoresPage = {
         const btnExcel = viewer?.overlay?.querySelector('#rv-btn-result-export-excel');
         if (btnExcel) {
           btnExcel.onclick = async () => {
+            const ExcelJS = window.ExcelJS || globalThis.ExcelJS;
             const exportHeaders = ['ល.រ', 'អត្តលេខ', 'គោត្តនាម និងនាម', 'ភេទ', 'មធ្យមភាគ', 'ចំណាត់ថ្នាក់', 'និទ្ទេស', 'ច្បាប់', 'ឥតច្បាប់', 'អវត្តមានសរុប'];
-            const exportData = activeRows.map((r, idx) => {
-              const att = attMap.get(r.studentId) || { excused: 0, unexcused: 0, total: 0 };
-              return [
-                idx + 1,
-                r.studentNumber || r.studentId || '',
-                r.khmerFullName || `${r.lastNameKh || ''} ${r.firstNameKh || ''}`.trim() || '',
-                (r.gender === 'Female' || r.gender === 'ស្រី') ? 'ស្រី' : 'ប្រុស',
-                Number(r.average || 0).toFixed(2),
-                r.rank || (idx + 1),
-                r.grade || '',
-                att.excused || 0,
-                att.unexcused || 0,
-                att.total || 0
-              ];
-            });
 
-            const ws = XLSX.utils.aoa_to_sheet([
-              [`តារាងលទ្ធផលប្រចាំខែ ${periodDisplayName}`],
-              [`សាលារៀន: ${schoolName} / ${schoolProvince}`],
-              [`ថ្នាក់ទី: ${currentClassName} | ឆ្នាំសិក្សា: ${selectedYear}`],
-              [],
-              exportHeaders,
-              ...exportData
-            ]);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, isKm ? 'តារាងលទ្ធផល' : 'Result Table');
-            XLSX.writeFile(wb, `Result_Table_${currentClassName}_${selectedPeriod}.xlsx`);
+            if (ExcelJS) {
+              const wb = new ExcelJS.Workbook();
+              const ws = wb.addWorksheet(isKm ? 'តារាងលទ្ធផល' : 'Result Table', {
+                pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
+                views: [{ state: 'frozen', xSplit: 0, ySplit: 4, showGridLines: true }]
+              });
+
+              const r1 = ws.addRow([`តារាងលទ្ធផលប្រចាំខែ ${periodDisplayName}`]);
+              r1.height = 26;
+              ws.mergeCells(1, 1, 1, exportHeaders.length);
+              r1.getCell(1).font = { name: 'Khmer OS Muol Light', size: 12, bold: true, color: { argb: 'FF0F172A' } };
+              r1.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+              const r2 = ws.addRow([`សាលារៀន: ${schoolName} / ${schoolProvince}   |   ថ្នាក់ទី: ${currentClassName}   |   ឆ្នាំសិក្សា: ${selectedYear}`]);
+              r2.height = 22;
+              ws.mergeCells(2, 1, 2, exportHeaders.length);
+              r2.getCell(1).font = { name: 'Khmer OS Siemreap', size: 10.5, bold: true, color: { argb: 'FF475569' } };
+              r2.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+              ws.addRow([]);
+
+              const hRow = ws.addRow(exportHeaders);
+              hRow.height = 30;
+              hRow.eachCell((cell) => {
+                cell.font = { name: 'Khmer OS Siemreap', size: 11, bold: true, color: { argb: 'FF1E293B' } };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+                cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                cell.border = {
+                  top: { style: 'medium', color: { argb: 'FF94A3B8' } },
+                  bottom: { style: 'medium', color: { argb: 'FF94A3B8' } },
+                  left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                  right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+                };
+              });
+
+              activeRows.forEach((r, idx) => {
+                const att = attMap.get(r.studentId) || { excused: 0, unexcused: 0, total: 0 };
+                const isFemale = r.gender === 'Female' || r.gender === 'ស្រី';
+                const rowVals = [
+                  idx + 1,
+                  r.studentNumber || r.studentId || '',
+                  r.khmerFullName || `${r.lastNameKh || ''} ${r.firstNameKh || ''}`.trim() || '',
+                  isFemale ? 'ស្រី' : 'ប្រុស',
+                  Number((Number(r.average) || 0).toFixed(2)),
+                  r.rank || (idx + 1),
+                  r.grade || 'F',
+                  att.excused || 0,
+                  att.unexcused || 0,
+                  att.total || 0
+                ];
+                const dRow = ws.addRow(rowVals);
+                dRow.height = 23;
+                const isEven = idx % 2 === 1;
+                dRow.eachCell({ includeEmpty: true }, (cell, colNum) => {
+                  let bgArgb = isEven ? 'FFF8FAFC' : 'FFFFFFFF';
+                  let fgArgb = 'FF0F172A';
+                  let isBold = colNum === 3 || colNum === 4 || colNum === 5 || colNum === 6 || colNum === 7;
+
+                  if (colNum === 4) {
+                    fgArgb = isFemale ? 'FFE11D48' : 'FF0284C7';
+                  } else if (colNum === 5) {
+                    fgArgb = 'FF1D4ED8';
+                    cell.numFmt = '0.00';
+                  } else if (colNum === 7) {
+                    const gStyle = this.getExcelGradeStyle(rowVals[6]);
+                    bgArgb = gStyle.fill;
+                    fgArgb = gStyle.text;
+                  }
+
+                  cell.font = { name: 'Khmer OS Siemreap', size: 10.5, bold: isBold, color: { argb: fgArgb } };
+                  cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgArgb } };
+                  cell.alignment = { vertical: 'middle', horizontal: colNum === 3 ? 'left' : 'center' };
+                  cell.border = {
+                    top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                    bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                    left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                    right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+                  };
+                });
+              });
+
+              const colWidths = [7, 13, 24, 9, 12, 12, 10, 10, 10, 13];
+              ws.columns.forEach((col, i) => {
+                col.width = colWidths[i] || 12;
+              });
+
+              await this.saveExcelWorkbook(wb, `Result_Table_${currentClassName}_${selectedPeriod}.xlsx`);
+            } else {
+              const exportData = activeRows.map((r, idx) => {
+                const att = attMap.get(r.studentId) || { excused: 0, unexcused: 0, total: 0 };
+                return [
+                  idx + 1,
+                  r.studentNumber || r.studentId || '',
+                  r.khmerFullName || `${r.lastNameKh || ''} ${r.firstNameKh || ''}`.trim() || '',
+                  (r.gender === 'Female' || r.gender === 'ស្រី') ? 'ស្រី' : 'ប្រុស',
+                  Number(r.average || 0).toFixed(2),
+                  r.rank || (idx + 1),
+                  r.grade || '',
+                  att.excused || 0,
+                  att.unexcused || 0,
+                  att.total || 0
+                ];
+              });
+
+              const ws = XLSX.utils.aoa_to_sheet([
+                [`តារាងលទ្ធផលប្រចាំខែ ${periodDisplayName}`],
+                [`សាលារៀន: ${schoolName} / ${schoolProvince}`],
+                [`ថ្នាក់ទី: ${currentClassName} | ឆ្នាំសិក្សា: ${selectedYear}`],
+                [],
+                exportHeaders,
+                ...exportData
+              ]);
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, isKm ? 'តារាងលទ្ធផល' : 'Result Table');
+              XLSX.writeFile(wb, `Result_Table_${currentClassName}_${selectedPeriod}.xlsx`);
+            }
             toast.success(isKm ? 'បានទាញយក Excel ដោយជោគជ័យ' : 'Excel exported successfully');
           };
         }
