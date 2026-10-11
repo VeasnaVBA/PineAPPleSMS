@@ -16,6 +16,8 @@ import { i18n, t } from '../i18n/i18n.js';
 import { toast } from '../components/toast.js';
 import { getIcon } from '../components/icons.js';
 
+const DAY_NAMES_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
 export const AttendancePage = {
   state: {
     classes: [],
@@ -287,7 +289,7 @@ export const AttendancePage = {
     const tbody = document.getElementById('attendance-table-body');
     if (!thead || !tbody || !this.state.sheet) return;
 
-    const { daysInMonth } = this.state.sheet;
+    const { daysInMonth, yearNum, monthNum } = this.state.sheet;
     const rows = this.getFilteredRows();
 
     // 1. Fixed Column Widths via Colgroup (responsive CSS classes match .att-sticky-col-1..4 on desktop & mobile)
@@ -311,9 +313,15 @@ export const AttendancePage = {
     // 2. Build Day Header Columns (1..daysInMonth) with z-index: 10 so they scroll cleanly under sticky left columns
     let dayHeadersHtml = '';
     for (let d = 1; d <= daysInMonth; d++) {
+      const dayOfWeekIdx = new Date(yearNum, monthNum - 1, d).getDay();
+      const dayName = DAY_NAMES_EN[dayOfWeekIdx];
+      const isSunday = dayOfWeekIdx === 0;
       dayHeadersHtml += `
-        <th class="att-scroll-th p-0 text-center font-mono text-[11px] font-bold" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-          <div class="w-full h-[42px] mx-auto flex items-center justify-center text-center bg-transparent">${d}</div>
+        <th class="att-scroll-th p-0 text-center font-mono" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+          <div class="w-full h-[42px] mx-auto flex flex-col items-center justify-center text-center bg-transparent" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 42px; line-height: 1.1; gap: 2px;">
+            <span class="font-bold ${isSunday ? 'text-rose-600 dark:text-rose-400' : ''}" style="font-size: 11px; font-weight: 700; line-height: 1; display: block;">${d}</span>
+            <span class="${isSunday ? 'text-rose-500 dark:text-rose-400' : 'text-muted-foreground'}" style="font-size: 9px; font-weight: 600; line-height: 1; display: block;">${dayName}</span>
+          </div>
         </th>
       `;
     }
@@ -371,6 +379,7 @@ export const AttendancePage = {
 
       let dayCellsHtml = '';
       for (let d = 1; d <= daysInMonth; d++) {
+        const dayName = DAY_NAMES_EN[new Date(yearNum, monthNum - 1, d).getDay()];
         const cellObj = row.days[d] || { status: 'Present', mark: '' };
         const markVal = cellObj.mark || '';
         const statusCellClass = cellObj.status === 'Excused'
@@ -390,7 +399,7 @@ export const AttendancePage = {
               data-row-idx="${rowIdx}"
               data-col-idx="${d + 2}"
               placeholder=""
-              title="ថ្ងៃទី ${d} (វាយ ច/P = ច្បាប់, អ/A = ឥតច្បាប់)"
+              title="ថ្ងៃទី ${d} (${dayName}) (វាយ ច/P = ច្បាប់, អ/A = ឥតច្បាប់)"
               class="score-cell-input att-day-input font-khmer"
             />
           </td>
@@ -641,7 +650,7 @@ export const AttendancePage = {
       return;
     }
 
-    const { daysInMonth, rows, yearNum } = this.state.sheet;
+    const { daysInMonth, rows, yearNum, monthNum } = this.state.sheet;
     const selectedCls = this.state.classes.find(c => c.id === this.state.selectedClassId);
     const monthObj = ATTENDANCE_MONTHS.find(m => m.id === this.state.selectedMonth);
     const className = selectedCls?.name || '';
@@ -649,7 +658,10 @@ export const AttendancePage = {
 
     let dayHeaderCells = '';
     for (let d = 1; d <= daysInMonth; d++) {
-      dayHeaderCells += `<th style="border:1px solid #94a3b8; background:#f1f5f9; text-align:center; width:28px;">${d}</th>`;
+      const dayOfWeekIdx = new Date(yearNum, monthNum - 1, d).getDay();
+      const dayName = DAY_NAMES_EN[dayOfWeekIdx];
+      const dayColor = dayOfWeekIdx === 0 ? 'color:#e11d48;' : '';
+      dayHeaderCells += `<th style="border:1px solid #94a3b8; background:#f1f5f9; text-align:center; width:32px; ${dayColor}">${d}<br><span style="font-size:8pt; font-weight:normal;">${dayName}</span></th>`;
     }
 
     const bodyRowsHtml = rows.map((r, i) => {
