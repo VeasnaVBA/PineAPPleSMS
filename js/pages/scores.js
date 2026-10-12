@@ -4947,30 +4947,16 @@ export const ScoresPage = {
               <!-- Principal (Left) & Class Teacher (Right) Signature Blocks -->
               <div class="grid grid-cols-2 gap-8 text-center" style="padding: 0 18px;">
                 <!-- Bottom-Left: Principal -->
-                <div class="flex flex-col items-center justify-between" style="min-height: 92px;">
-                  <div>
-                    <p class="font-khmer-muol" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 10px !important; color: #0f296b !important; line-height: 1.8 !important;">បានឃើញ និងឯកភាព</p>
-                    <p class="font-khmer-muol" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 10px !important; color: #0f296b !important; line-height: 1.8 !important;">នាយកសាលា</p>
-                  </div>
-                  <div style="height: 38px;"></div>
-                  <div id="honor-roll-principal-name"
-                       contenteditable="true"
-                       spellcheck="false"
-                       class="font-khmer-muol outline-none focus:ring-1 focus:ring-primary/40 rounded px-2 cursor-text"
-                       style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 10px !important; color: #0f296b !important; line-height: 1.8 !important;">${escapeHtml(principalName)}</div>
+                <div class="flex flex-col items-center">
+                  <p class="font-khmer-muol" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 10px !important; color: #0f296b !important; line-height: 1.8 !important;">បានឃើញ និងឯកភាព</p>
+                  <p class="font-khmer-muol" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 10px !important; color: #0f296b !important; line-height: 1.8 !important;">នាយកសាលា</p>
+                  <div style="height: 52px;"></div>
                 </div>
 
                 <!-- Bottom-Right: Class Teacher -->
-                <div class="flex flex-col items-center justify-between" style="min-height: 92px;">
-                  <div>
-                    <p class="font-khmer-muol" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 10px !important; color: #0f296b !important; line-height: 1.8 !important;">គ្រូបន្ទុកថ្នាក់</p>
-                  </div>
-                  <div style="height: 48px;"></div>
-                  <div id="honor-roll-teacher-name"
-                       contenteditable="true"
-                       spellcheck="false"
-                       class="font-khmer-muol outline-none focus:ring-1 focus:ring-primary/40 rounded px-2 cursor-text"
-                       style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 10px !important; color: #0f296b !important; line-height: 1.8 !important;">${escapeHtml(teacherName)}</div>
+                <div class="flex flex-col items-center">
+                  <p class="font-khmer-muol" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 10px !important; color: #0f296b !important; line-height: 1.8 !important;">គ្រូបន្ទុកថ្នាក់</p>
+                  <div style="height: 52px;"></div>
                 </div>
               </div>
             </div>
@@ -5028,16 +5014,6 @@ export const ScoresPage = {
           } catch (err) {
             toast.error(isKm ? 'មិនអាចបញ្ចូលរូបថតបានទេ' : 'Failed to load photo');
           }
-        });
-
-        // Persist Principal name and Teacher name
-        contentContainer.querySelector('#honor-roll-principal-name')?.addEventListener('blur', (e) => {
-          principalName = (e.target.textContent || '').trim();
-          try { localStorage.setItem('honor_roll_principal_name', principalName); } catch (_) {}
-        });
-        contentContainer.querySelector('#honor-roll-teacher-name')?.addEventListener('blur', (e) => {
-          teacherName = (e.target.textContent || '').trim();
-          try { localStorage.setItem('honor_roll_teacher_name', teacherName); } catch (_) {}
         });
       }
     });
