@@ -4176,8 +4176,6 @@ export const ScoresPage = {
 
     let schoolEnglishName = localStorage.getItem('honor_roll_school_en') || 'SAI School';
     let schoolLogoDataUrl = localStorage.getItem('honor_roll_school_logo') || '';
-    let principalName = localStorage.getItem('honor_roll_principal_name') || 'ឡុង ឡេង';
-    let teacherName = localStorage.getItem('honor_roll_teacher_name') || (currentUser?.fullName || currentUser?.name || 'ចេង ស្បឿ');
 
     let selectedClassId = this.state.selectedClassId || (isTeacher ? (teacherClassId || classes[0]?.id) : (classes[0]?.id || ''));
     let selectedYear = this.state.activeYear || (typeof academicYears[0] === 'string' ? academicYears[0] : (academicYears[0]?.name || '2025–2026'));
