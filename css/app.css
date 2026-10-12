@@ -2168,42 +2168,66 @@ table.score-table thead tr th.att-scroll-th {
 }
 
 /* Attendance Summary Header Colors (Opaque so content never bleeds through) */
-table.score-table thead tr th.att-col-perm-th,
-table.score-table thead tr th.att-col-perm-th span {
+table.score-table thead tr th.att-col-perm-th {
   color: #0369a1 !important; /* Sky-700 */
   background-color: #e0f2fe !important;
 }
+table.score-table thead tr th.att-col-perm-th span {
+  color: #0369a1 !important;
+  background-color: transparent !important;
+  border: none !important;
+}
 
-.dark table.score-table thead tr th.att-col-perm-th,
-.dark table.score-table thead tr th.att-col-perm-th span {
+.dark table.score-table thead tr th.att-col-perm-th {
   color: #7dd3fc !important; /* Sky-300 */
   background-color: #0c4a6e !important;
 }
+.dark table.score-table thead tr th.att-col-perm-th span {
+  color: #7dd3fc !important;
+  background-color: transparent !important;
+  border: none !important;
+}
 
-table.score-table thead tr th.att-col-absent-th,
-table.score-table thead tr th.att-col-absent-th span {
+table.score-table thead tr th.att-col-absent-th {
   color: #be123c !important; /* Rose-700 */
   background-color: #ffe4e6 !important;
 }
+table.score-table thead tr th.att-col-absent-th span {
+  color: #be123c !important;
+  background-color: transparent !important;
+  border: none !important;
+}
 
-.dark table.score-table thead tr th.att-col-absent-th,
-.dark table.score-table thead tr th.att-col-absent-th span {
+.dark table.score-table thead tr th.att-col-absent-th {
   color: #fda4af !important; /* Rose-300 */
   background-color: #881337 !important;
 }
+.dark table.score-table thead tr th.att-col-absent-th span {
+  color: #fda4af !important;
+  background-color: transparent !important;
+  border: none !important;
+}
 
-table.score-table thead tr th.att-col-total-th,
-table.score-table thead tr th.att-col-total-th span {
+table.score-table thead tr th.att-col-total-th {
   color: #6d28d9 !important; /* Violet-700 */
   background-color: #ede9fe !important;
   border-right: 2px solid #94a3b8 !important;
 }
+table.score-table thead tr th.att-col-total-th span {
+  color: #6d28d9 !important;
+  background-color: transparent !important;
+  border: none !important;
+}
 
-.dark table.score-table thead tr th.att-col-total-th,
-.dark table.score-table thead tr th.att-col-total-th span {
+.dark table.score-table thead tr th.att-col-total-th {
   color: #c4b5fd !important; /* Violet-300 */
   background-color: #4c1d95 !important;
   border-right: 2px solid #475569 !important;
+}
+.dark table.score-table thead tr th.att-col-total-th span {
+  color: #c4b5fd !important;
+  background-color: transparent !important;
+  border: none !important;
 }
 
 /* Opaque Body Cells for Attendance Summary & Day Cells */
