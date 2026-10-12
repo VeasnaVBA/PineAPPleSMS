@@ -1,7 +1,7 @@
 /**
  * Subject Management Service
- * Manages school curriculum subjects, max scores per grade level (G7-G12), and weekly credit hours.
- * Includes Grade Detection from Classroom Names (e.g. 7A -> G7) and MoEYS Standard Grading Scale (A-F).
+ * Manages school curriculum subjects, max scores per grade level (G1-G12), and weekly credit hours.
+ * Includes Grade Detection from Classroom Names (e.g. 1A -> G1, 7A -> G7) and MoEYS Standard Grading Scale (A-F).
  * Persists data in the isolated user workspace IndexedDB (`subjects` store).
  */
 
@@ -9,7 +9,7 @@ import { db } from '../database/db.js';
 import { SettingsService } from './settingsService.js';
 import { syncStateManager } from './syncStateManager.js';
 
-export const GRADES = ['G7', 'G8', 'G9', 'G10', 'G11', 'G12'];
+export const GRADES = ['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7', 'G8', 'G9', 'G10', 'G11', 'G12'];
 
 export const DEFAULT_SUBJECTS = [
   {
@@ -19,7 +19,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Dictation',
     creditHours: 2,
     maxScore: 40,
-    scoreByGrade: { G7: 40, G8: 40, G9: 40, G10: 0, G11: 0, G12: 0 },
+    scoreByGrade: { G1: 0, G2: 0, G3: 0, G4: 0, G5: 0, G6: 0, G7: 40, G8: 40, G9: 40, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -29,7 +29,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Essay Writing',
     creditHours: 2,
     maxScore: 60,
-    scoreByGrade: { G7: 60, G8: 60, G9: 60, G10: 0, G11: 0, G12: 0 },
+    scoreByGrade: { G1: 0, G2: 0, G3: 0, G4: 0, G5: 0, G6: 0, G7: 60, G8: 60, G9: 60, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -39,7 +39,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Khmer Literature',
     creditHours: 4,
     maxScore: 100,
-    scoreByGrade: { G7: 100, G8: 100, G9: 100, G10: 0, G11: 0, G12: 0 },
+    scoreByGrade: { G1: 0, G2: 0, G3: 0, G4: 0, G5: 0, G6: 0, G7: 100, G8: 100, G9: 100, G10: 0, G11: 0, G12: 0 },
     sumOfCourses: 'SUB-101, SUB-102',
     notes: 'មុខវិជ្ជាស្នូល (សរសេរតាមអាន + តែងសេចក្តី)'
   },
@@ -50,7 +50,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Mathematics',
     creditHours: 6,
     maxScore: 100,
-    scoreByGrade: { G7: 100, G8: 100, G9: 100, G10: 0, G11: 0, G12: 0 },
+    scoreByGrade: { G1: 0, G2: 0, G3: 0, G4: 0, G5: 0, G6: 0, G7: 100, G8: 100, G9: 100, G10: 0, G11: 0, G12: 0 },
     notes: 'មុខវិជ្ជាស្នូល'
   },
   {
@@ -60,7 +60,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Physics',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 35, G10: 0, G11: 0, G12: 0 },
+    scoreByGrade: { G1: 0, G2: 0, G3: 0, G4: 0, G5: 0, G6: 0, G7: 50, G8: 50, G9: 35, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -70,7 +70,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Chemistry',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 25, G10: 0, G11: 0, G12: 0 },
+    scoreByGrade: { G1: 0, G2: 0, G3: 0, G4: 0, G5: 0, G6: 0, G7: 50, G8: 50, G9: 25, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -80,7 +80,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Biology',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 35, G10: 0, G11: 0, G12: 0 },
+    scoreByGrade: { G1: 0, G2: 0, G3: 0, G4: 0, G5: 0, G6: 0, G7: 50, G8: 50, G9: 35, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -90,7 +90,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'History',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 33, G10: 0, G11: 0, G12: 0 },
+    scoreByGrade: { G1: 0, G2: 0, G3: 0, G4: 0, G5: 0, G6: 0, G7: 50, G8: 50, G9: 33, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -100,7 +100,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Information Technology',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
+    scoreByGrade: { G1: 0, G2: 0, G3: 0, G4: 0, G5: 0, G6: 0, G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -110,7 +110,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Moral & Civics',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 35, G10: 0, G11: 0, G12: 0 },
+    scoreByGrade: { G1: 0, G2: 0, G3: 0, G4: 0, G5: 0, G6: 0, G7: 50, G8: 50, G9: 35, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -120,7 +120,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Earth Science',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 25, G10: 0, G11: 0, G12: 0 },
+    scoreByGrade: { G1: 0, G2: 0, G3: 0, G4: 0, G5: 0, G6: 0, G7: 50, G8: 50, G9: 25, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -130,7 +130,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Geography',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 32, G10: 0, G11: 0, G12: 0 },
+    scoreByGrade: { G1: 0, G2: 0, G3: 0, G4: 0, G5: 0, G6: 0, G7: 50, G8: 50, G9: 32, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -140,7 +140,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Home Economics',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
+    scoreByGrade: { G1: 0, G2: 0, G3: 0, G4: 0, G5: 0, G6: 0, G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -150,7 +150,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Physical Education',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
+    scoreByGrade: { G1: 0, G2: 0, G3: 0, G4: 0, G5: 0, G6: 0, G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -160,7 +160,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Life Skills',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
+    scoreByGrade: { G1: 0, G2: 0, G3: 0, G4: 0, G5: 0, G6: 0, G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -170,7 +170,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Economics',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
+    scoreByGrade: { G1: 0, G2: 0, G3: 0, G4: 0, G5: 0, G6: 0, G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -180,7 +180,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Arts & Music',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
+    scoreByGrade: { G1: 0, G2: 0, G3: 0, G4: 0, G5: 0, G6: 0, G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -190,7 +190,7 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Agriculture',
     creditHours: 2,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
+    scoreByGrade: { G1: 0, G2: 0, G3: 0, G4: 0, G5: 0, G6: 0, G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     notes: ''
   },
   {
@@ -200,15 +200,15 @@ export const DEFAULT_SUBJECTS = [
     nameEn: 'Foreign Language',
     creditHours: 4,
     maxScore: 50,
-    scoreByGrade: { G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
+    scoreByGrade: { G1: 0, G2: 0, G3: 0, G4: 0, G5: 0, G6: 0, G7: 50, G8: 50, G9: 50, G10: 0, G11: 0, G12: 0 },
     notes: ''
   }
 ].map((s, idx) => ({ ...s, order: idx }));
 
 export const SubjectService = {
   /**
-   * Extract Grade code (G7 - G12) from Classroom Name or Grade string
-   * Examples: '7A' -> 'G7', '8-1' -> 'G8', 'ថ្នាក់ទី ៩ក' -> 'G9', '12A1' -> 'G12'
+   * Extract Grade code (G1 - G12) from Classroom Name or Grade string
+   * Examples: '1A' -> 'G1', '6B' -> 'G6', '7A' -> 'G7', '8-1' -> 'G8', 'ថ្នាក់ទី ៩ក' -> 'G9', '12A1' -> 'G12'
    */
   extractGradeFromClassName(className) {
     if (!className) return 'G7';
@@ -218,12 +218,12 @@ export const SubjectService = {
     const khmerNumMap = { '០': '0', '១': '1', '២': '2', '៣': '3', '៤': '4', '៥': '5', '៦': '6', '៧': '7', '៨': '8', '៩': '9' };
     const normalized = str.replace(/[០-៩]/g, d => khmerNumMap[d] || d);
 
-    // Direct check G7-G12
-    const gMatch = normalized.match(/G\s*(1[0-2]|[7-9])/i);
+    // Direct check G1-G12
+    const gMatch = normalized.match(/G\s*(1[0-2]|[1-9])/i);
     if (gMatch) return `G${gMatch[1]}`;
 
-    // Match leading or isolated numbers 7, 8, 9, 10, 11, 12
-    const numMatch = normalized.match(/(?:grade|ថ្នាក់ទី|ថ្នាក់)?\s*(1[0-2]|[7-9])/i);
+    // Match leading or isolated numbers 1..12
+    const numMatch = normalized.match(/(?:grade|ថ្នាក់ទី|ថ្នាក់)?\s*(1[0-2]|[1-9])/i);
     if (numMatch) return `G${numMatch[1]}`;
 
     return 'G7';
@@ -304,12 +304,13 @@ export const SubjectService = {
   normalizeScoreByGrade(data, defaultScore = 100) {
     const res = {};
     const fallback = Number(defaultScore) > 0 ? Number(defaultScore) : 100;
+    const hasExistingGrades = data && typeof data === 'object' && Object.keys(data).length > 0;
     GRADES.forEach(g => {
       if (data && data[g] !== undefined && data[g] !== null && data[g] !== '') {
         const val = Number(data[g]);
-        res[g] = !isNaN(val) && val >= 0 ? val : fallback;
+        res[g] = !isNaN(val) && val >= 0 ? val : (hasExistingGrades ? 0 : fallback);
       } else {
-        res[g] = fallback;
+        res[g] = hasExistingGrades ? 0 : fallback;
       }
     });
     return res;

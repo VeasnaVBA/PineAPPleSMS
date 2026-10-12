@@ -45,7 +45,7 @@ export const km = {
   },
   courses: {
     title: "គ្រប់គ្រងមុខវិជ្ជា",
-    subtitle: "កំណត់មុខវិជ្ជា ពិន្ទុអតិបរមាតាមកម្រិតថ្នាក់ (G7-G12) និងកម្រិតចំណាត់ថ្នាក់ A-F",
+    subtitle: "កំណត់មុខវិជ្ជា ពិន្ទុអតិបរមាតាមកម្រិតថ្នាក់ (G1-G12) និងកម្រិតចំណាត់ថ្នាក់ A-F",
     addCourse: "មុខវិជ្ជាថ្មី",
     editCourse: "កែប្រែមុខវិជ្ជា",
     courseId: "លេខកូដមុខវិជ្ជា",
@@ -60,7 +60,7 @@ export const km = {
     actions: "ការកំណត់",
     searchPlaceholder: "ស្វែងរកមុខវិជ្ជា...",
     previewGrade: "បង្ហាញកម្រិត",
-    allGrades: "គ្រប់កម្រិត (G7-G12)",
+    allGrades: "គ្រប់កម្រិត (G1-G12)",
     grade: "ថ្នាក់ទី",
     fullScore: "ពិន្ទុពេញ",
     deleteConfirmTitle: "បញ្ជាក់ការលុបមុខវិជ្ជា",

@@ -124,7 +124,7 @@ export const SubjectsPage = {
               ${t('subjects.title') || 'គ្រប់គ្រងមុខវិជ្ជា'}
             </h1>
             <p class="text-xs sm:text-sm text-muted-foreground mt-1 ${fontClass}">
-              ${t('subjects.subtitle') || 'បញ្ជីមុខវិជ្ជាកម្មវិធីសិក្សាជាតិ ពិន្ទុតាមកម្រិតថ្នាក់ (G7-G12) និងចំនួនម៉ោងបង្រៀន'}
+              ${t('subjects.subtitle') || 'បញ្ជីមុខវិជ្ជាកម្មវិធីសិក្សាជាតិ ពិន្ទុតាមកម្រិតថ្នាក់ (G1-G12) និងចំនួនម៉ោងបង្រៀន'}
             </p>
           </div>
           
@@ -188,7 +188,7 @@ export const SubjectsPage = {
                     ${isKm ? 'បូកសរុបពិន្ទុ' : 'Sum of Courses'}
                   </th>
 
-                  <!-- Grade Columns G7 to G12 -->
+                  <!-- Grade Columns G1 to G12 -->
                   ${GRADES.map(g => {
                     const isColActive = g === activeGrade;
                     const canClick = !isTeacher;
@@ -232,7 +232,7 @@ export const SubjectsPage = {
               <tbody class="divide-y divide-border/60 ${fontClass}">
                 ${filtered.length === 0 ? `
                   <tr>
-                    <td colspan="12" class="text-center py-12 text-muted-foreground ${fontClass}">
+                    <td colspan="${GRADES.length + 6}" class="text-center py-12 text-muted-foreground ${fontClass}">
                       <div class="flex flex-col items-center justify-center gap-2">
                         ${getIcon('inbox', 'w-8 h-8 text-muted-foreground/50')}
                         <span>${t('subjects.noData') || 'មិនទាន់មានមុខវិជ្ជាណាមួយនៅឡើយទេ'}</span>
@@ -289,7 +289,7 @@ export const SubjectsPage = {
                         `}
                       </td>
 
-                      <!-- Grade Scores G7 - G12 with Active Column Highlighting -->
+                      <!-- Grade Scores G1 - G12 with Active Column Highlighting -->
                       ${GRADES.map(g => {
                         const scoreVal = scores[g] !== undefined ? scores[g] : (item.maxScore || 0);
                         const isZero = Number(scoreVal) === 0;
@@ -358,7 +358,7 @@ export const SubjectsPage = {
                     <!-- Per-Subject Expandable Grading Formula Scale Row -->
                     ${isExpanded ? `
                       <tr class="bg-muted/10 border-b border-border/70 animate-fade-in">
-                        <td colspan="12" class="py-2.5 px-3 sm:px-6">
+                        <td colspan="${GRADES.length + 6}" class="py-2.5 px-3 sm:px-6">
                           <div class="flex flex-col md:flex-row md:items-center justify-between gap-2.5 p-2.5 sm:px-4 sm:py-2 rounded-lg bg-card/90 border border-border shadow-2xs">
                             
                             <!-- Left: Grade Level & Full Score -->
@@ -676,6 +676,12 @@ export const SubjectsPage = {
 
     const defaultCode = isEdit ? existingSubject.code : await SubjectService.generateCode();
     const scores = existingSubject?.scoreByGrade || {
+      G1: existingSubject?.maxScore || 0,
+      G2: existingSubject?.maxScore || 0,
+      G3: existingSubject?.maxScore || 0,
+      G4: existingSubject?.maxScore || 0,
+      G5: existingSubject?.maxScore || 0,
+      G6: existingSubject?.maxScore || 0,
       G7: existingSubject?.maxScore || 0,
       G8: existingSubject?.maxScore || 0,
       G9: existingSubject?.maxScore || 0,
@@ -749,66 +755,18 @@ export const SubjectsPage = {
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            <!-- Col 1: G7 and G10 -->
-            <div class="flex items-center gap-2">
-              <span class="w-8 text-xs font-mono font-bold text-muted-foreground">G7</span>
-              <input type="number"
-                     id="modal-grade-G7"
-                     min="0"
-                     max="500"
-                     value="${scores.G7 !== undefined ? scores.G7 : 0}"
-                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-2xs" />
-            </div>
-            <!-- Col 2: G8 and G11 -->
-            <div class="flex items-center gap-2">
-              <span class="w-8 text-xs font-mono font-bold text-muted-foreground">G8</span>
-              <input type="number"
-                     id="modal-grade-G8"
-                     min="0"
-                     max="500"
-                     value="${scores.G8 !== undefined ? scores.G8 : 0}"
-                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-2xs" />
-            </div>
-            <!-- Col 3: G9 and G12 -->
-            <div class="flex items-center gap-2">
-              <span class="w-8 text-xs font-mono font-bold text-muted-foreground">G9</span>
-              <input type="number"
-                     id="modal-grade-G9"
-                     min="0"
-                     max="500"
-                     value="${scores.G9 !== undefined ? scores.G9 : 0}"
-                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-2xs" />
-            </div>
-
-            <!-- Row 2 of scores: G10, G11, G12 -->
-            <div class="flex items-center gap-2">
-              <span class="w-8 text-xs font-mono font-bold text-muted-foreground">G10</span>
-              <input type="number"
-                     id="modal-grade-G10"
-                     min="0"
-                     max="500"
-                     value="${scores.G10 !== undefined ? scores.G10 : 0}"
-                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-2xs" />
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="w-8 text-xs font-mono font-bold text-muted-foreground">G11</span>
-              <input type="number"
-                     id="modal-grade-G11"
-                     min="0"
-                     max="500"
-                     value="${scores.G11 !== undefined ? scores.G11 : 0}"
-                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-2xs" />
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="w-8 text-xs font-mono font-bold text-muted-foreground">G12</span>
-              <input type="number"
-                     id="modal-grade-G12"
-                     min="0"
-                     max="500"
-                     value="${scores.G12 !== undefined ? scores.G12 : 0}"
-                     class="flex-1 px-3 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-2xs" />
-            </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+            ${GRADES.map(g => `
+              <div class="flex items-center gap-2">
+                <span class="w-8 text-xs font-mono font-bold text-muted-foreground">${g}</span>
+                <input type="number"
+                       id="modal-grade-${g}"
+                       min="0"
+                       max="500"
+                       value="${scores[g] !== undefined ? scores[g] : 0}"
+                       class="flex-1 min-w-0 px-2.5 py-1.5 text-xs sm:text-sm font-mono rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-2xs" />
+              </div>
+            `).join('')}
           </div>
         </div>
 
