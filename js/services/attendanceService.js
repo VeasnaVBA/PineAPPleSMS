@@ -221,6 +221,193 @@ export const AttendanceService = {
   },
 
   /**
+   * Get attendance report data for 1 or multiple months (Single Month or Month + Month).
+   * @param {Object} params
+   * @param {string} params.classId
+   * @param {string} params.academicYear
+   * @param {string|number} params.year - Default calendar year (e.g. 2026)
+   * @param {Array<string|{month: string, year?: string|number}>} params.months - Selected month IDs in order
+   */
+  async getMultiMonthAttendanceReport({ classId, academicYear, year, months = [] }) {
+    if (authService.isTeacher()) {
+      const teacherClassId = authService.getAssignedClassId();
+      if (teacherClassId) {
+        classId = teacherClassId;
+      }
+    }
+
+    const normalizedMonths = (Array.isArray(months) && months.length > 0 ? months : ['October'])
+      .map((item, idx) => {
+        const monthId = typeof item === 'object' && item !== null ? item.month : item;
+        const itemYear = typeof item === 'object' && item !== null && item.year ? item.year : year;
+        const monthObj = ATTENDANCE_MONTHS.find(
+          m => m.id === monthId || String(m.monthNum) === String(monthId)
+        ) || ATTENDANCE_MONTHS[0];
+        const monthNum = monthObj.monthNum;
+        const parsedY = parseInt(itemYear, 10);
+        const yearNum = (!isNaN(parsedY) && parsedY >= 2000 && parsedY <= 2100)
+          ? parsedY
+          : resolveCalendarYearForMonth(academicYear, monthNum);
+        const daysInMonth = getDaysInMonth(yearNum, monthNum);
+        const ymPrefix = `${yearNum}-${String(monthNum).padStart(2, '0')}-`;
+        return {
+          slotKey: `${idx}_${monthObj.id}_${yearNum}`,
+          monthId: monthObj.id,
+          monthNameKm: monthObj.nameKm,
+          monthNameEn: monthObj.nameEn,
+          monthNum,
+          yearNum,
+          daysInMonth,
+          ymPrefix
+        };
+      });
+
+    const enrolled = await ClassService.getEnrolledStudents(classId);
+    const activeStudents = (enrolled || []).filter(isStudentActive);
+
+    activeStudents.sort((a, b) => {
+      const nameA = (a.khmerName || `${a.lastNameKh || ''} ${a.firstNameKh || ''}`).trim();
+      const nameB = (b.khmerName || `${b.lastNameKh || ''} ${b.firstNameKh || ''}`).trim();
+      return nameA.localeCompare(nameB, 'km');
+    });
+
+    const allAtt = await db.getAll('attendance');
+    const classAtt = (allAtt || []).filter(
+      r => String(r.classId).trim() === String(classId).trim() && Boolean(r.date)
+    );
+
+    const monthTotals = normalizedMonths.map(m => ({
+      slotKey: m.slotKey,
+      monthId: m.monthId,
+      monthNameKm: m.monthNameKm,
+      monthNameEn: m.monthNameEn,
+      monthNum: m.monthNum,
+      yearNum: m.yearNum,
+      permission: 0,
+      absent: 0,
+      total: 0
+    }));
+
+    const grandTotals = {
+      permission: 0,
+      absent: 0,
+      total: 0
+    };
+
+    const rows = activeStudents.map(stu => {
+      const surname = (stu.lastNameKh || '').trim();
+      const givenName = (stu.firstNameKh || '').trim();
+      const khmerFullName = (surname || givenName)
+        ? `${surname} ${givenName}`.trim()
+        : (stu.khmerName || stu.englishName || '—');
+
+      const stuRecs = classAtt.filter(r => r.studentId === stu.id);
+
+      let totalPermission = 0;
+      let totalAbsent = 0;
+
+      const monthly = normalizedMonths.map((m, mIdx) => {
+        const monthRecs = stuRecs.filter(r => {
+          if (String(r.date).startsWith(m.ymPrefix)) return true;
+          const d = new Date(r.date);
+          return !isNaN(d.getTime()) && (d.getMonth() + 1 === m.monthNum) && (d.getFullYear() === m.yearNum);
+        });
+
+        const days = {};
+        let manualExcused = 0;
+        let manualAbsent = 0;
+
+        for (const rec of monthRecs) {
+          const st = String(rec.status || '').trim();
+          const isExc = st === 'Excused' || st === 'មានច្បាប់';
+          const isAbs = st === 'Absent' || st === 'ឥតច្បាប់';
+          if (!isExc && !isAbs) continue;
+
+          if (rec.isManualSummary) {
+            if (isExc) manualExcused++;
+            else if (isAbs) manualAbsent++;
+            continue;
+          }
+
+          const dateParts = String(rec.date || '').split('-');
+          const dayNum = dateParts.length === 3 ? parseInt(dateParts[2], 10) : new Date(rec.date).getDate();
+          if (dayNum >= 1 && dayNum <= m.daysInMonth) {
+            days[dayNum] = isExc ? 'Excused' : 'Absent';
+          }
+        }
+
+        let dayExc = 0;
+        let dayAbs = 0;
+        for (let d = 1; d <= m.daysInMonth; d++) {
+          if (days[d] === 'Excused') dayExc++;
+          else if (days[d] === 'Absent') dayAbs++;
+        }
+
+        const permission = dayExc + manualExcused;
+        const absent = dayAbs + manualAbsent;
+        const total = permission + absent;
+
+        totalPermission += permission;
+        totalAbsent += absent;
+
+        monthTotals[mIdx].permission += permission;
+        monthTotals[mIdx].absent += absent;
+        monthTotals[mIdx].total += total;
+
+        return {
+          slotKey: m.slotKey,
+          monthId: m.monthId,
+          monthNameKm: m.monthNameKm,
+          monthNameEn: m.monthNameEn,
+          monthNum: m.monthNum,
+          yearNum: m.yearNum,
+          permission,
+          absent,
+          total
+        };
+      });
+
+      const grandTotal = totalPermission + totalAbsent;
+      grandTotals.permission += totalPermission;
+      grandTotals.absent += totalAbsent;
+      grandTotals.total += grandTotal;
+
+      return {
+        studentId: stu.id,
+        studentNumber: stu.studentId || stu.code || '',
+        khmerFullName,
+        lastNameKh: surname,
+        firstNameKh: givenName,
+        englishName: stu.englishName || '',
+        gender: stu.gender || 'Male',
+        monthly,
+        totalPermission,
+        totalAbsent,
+        grandTotal
+      };
+    });
+
+    const totalStudents = rows.length;
+    const femaleStudents = rows.filter(
+      r => r.gender === 'Female' || r.gender === 'ស្រី' || r.gender === 'F'
+    ).length;
+
+    return {
+      classId,
+      academicYear,
+      year: year || normalizedMonths[0]?.yearNum,
+      months: normalizedMonths,
+      rows,
+      summary: {
+        totalStudents,
+        femaleStudents,
+        monthTotals,
+        grandTotals
+      }
+    };
+  },
+
+  /**
    * Save monthly attendance sheet to IndexedDB 'attendance' store.
    */
   async saveMonthlyAttendanceSheet({ classId, academicYear, month, yearNum, monthNum, daysInMonth, rows }) {

@@ -11,12 +11,18 @@ import {
 } from '../services/attendanceService.js';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
+import { SchoolService } from '../services/schoolService.js';
 import { authService } from '../services/authService.js';
 import { i18n, t } from '../i18n/i18n.js';
 import { toast } from '../components/toast.js';
 import { getIcon } from '../components/icons.js';
 import { Modal } from '../components/modal.js';
-import { getMonthKhmerCalendarMap } from '../utils/khmerLunarCalendar.js';
+import { ReportViewer } from '../components/reportViewer.js';
+import {
+  getMonthKhmerCalendarMap,
+  getKhmerLunarDayInfo,
+  toKhmerNumeral
+} from '../utils/khmerLunarCalendar.js';
 
 const DAY_NAMES_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const DAY_NAMES_KM = ['អាទិត្យ', 'ចន្ទ', 'អង្គារ', 'ពុធ', 'ព្រហ', 'សុក្រ', 'សៅរ៍'];
@@ -129,6 +135,12 @@ export const AttendancePage = {
             <button id="btn-clear-att-menu" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-xs font-medium text-rose-700 dark:text-rose-300 transition-colors cursor-pointer font-khmer">
               ${getIcon('trash', 'w-4 h-4')}
               <span>សម្អាត</span>
+              ${getIcon('chevronDown', 'w-3.5 h-3.5')}
+            </button>
+
+            <button id="btn-att-report" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-xs font-semibold text-indigo-700 dark:text-indigo-300 transition-colors cursor-pointer font-khmer">
+              ${getIcon('fileText', 'w-4 h-4')}
+              <span>របាយការណ៍វត្តមាន</span>
               ${getIcon('chevronDown', 'w-3.5 h-3.5')}
             </button>
 
@@ -1059,6 +1071,683 @@ export const AttendancePage = {
     URL.revokeObjectURL(url);
   },
 
+  openReportMenuPopover(triggerBtn) {
+    const existing = document.getElementById('att-report-menu-popover');
+    if (existing) {
+      existing.remove();
+      return;
+    }
+
+    const rect = triggerBtn.getBoundingClientRect();
+    const popover = document.createElement('div');
+    popover.id = 'att-report-menu-popover';
+    popover.className = 'fixed z-[9999] w-72 rounded-xl border border-border bg-card shadow-xl p-1.5 animate-fade-in font-khmer select-none';
+
+    const topPos = Math.min(rect.bottom + 6, window.innerHeight - 150);
+    const leftPos = Math.max(8, Math.min(rect.right - 288, window.innerWidth - 296));
+    popover.style.top = `${topPos}px`;
+    popover.style.left = `${leftPos}px`;
+
+    popover.innerHTML = `
+      <button type="button" id="btn-opt-report-single" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-left text-xs font-medium text-foreground hover:bg-muted transition-colors cursor-pointer">
+        <span class="flex items-center gap-2">
+          ${getIcon('calendar', 'w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0')}
+          <span>របាយការណ៍វត្តមានប្រចាំខែនីមួយៗ</span>
+        </span>
+        <span class="px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold shrink-0">១ ខែ</span>
+      </button>
+      <div class="my-1 border-t border-border/60"></div>
+      <button type="button" id="btn-opt-report-multi" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-left text-xs font-medium text-foreground hover:bg-muted transition-colors cursor-pointer">
+        <span class="flex items-center gap-2">
+          ${getIcon('plus', 'w-4 h-4 text-violet-600 dark:text-violet-400 shrink-0')}
+          <span>របាយការណ៍បូកសរុប (ខែ + ខែ)</span>
+        </span>
+        <span class="px-1.5 py-0.5 rounded bg-violet-500/15 text-violet-700 dark:text-violet-300 text-[10px] font-bold shrink-0">ខែ + ខែ</span>
+      </button>
+    `;
+
+    document.body.appendChild(popover);
+
+    const closePopover = (e) => {
+      if (!popover.contains(e.target) && !triggerBtn.contains(e.target)) {
+        popover.remove();
+        document.removeEventListener('mousedown', closePopover);
+      }
+    };
+    setTimeout(() => {
+      document.addEventListener('mousedown', closePopover);
+    }, 0);
+
+    popover.querySelector('#btn-opt-report-single')?.addEventListener('click', () => {
+      popover.remove();
+      document.removeEventListener('mousedown', closePopover);
+      this.openAttendanceReportViewer('single');
+    });
+
+    popover.querySelector('#btn-opt-report-multi')?.addEventListener('click', () => {
+      popover.remove();
+      document.removeEventListener('mousedown', closePopover);
+      this.openAttendanceReportViewer('multi');
+    });
+  },
+
+  async openAttendanceReportViewer(initialMode = 'single') {
+    const isTeacher = authService.isTeacher();
+    const teacherClassId = authService.getAssignedClassId();
+    const currentUser = authService.getCurrentUser();
+
+    let classes = this.state.classes || [];
+    if (classes.length === 0) {
+      try {
+        classes = await ClassService.getAll();
+      } catch (_) {}
+    }
+
+    let allSchools = [];
+    try {
+      allSchools = await SchoolService.getAllSchools();
+    } catch (_) {}
+    if (!allSchools || allSchools.length === 0) {
+      allSchools = [
+        { name: 'សាលាបឋមសិក្សា វត្តបូព៌', province: 'សៀមរាប' }
+      ];
+    }
+
+    const schoolName = currentUser?.school || allSchools[0]?.name || 'សាលាបឋមសិក្សា វត្តបូព៌';
+    const availableYears = this.getAvailableYears();
+    const defaultMonthId = this.state.selectedMonth || ATTENDANCE_MONTHS[new Date().getMonth()]?.id || 'January';
+    const defaultMonthIdx = Math.max(0, ATTENDANCE_MONTHS.findIndex(m => m.id === defaultMonthId));
+    const secondMonthId = ATTENDANCE_MONTHS[(defaultMonthIdx + 1) % ATTENDANCE_MONTHS.length]?.id || 'February';
+
+    let reportMode = initialMode === 'multi' ? 'multi' : 'single';
+    let selectedClassId = this.state.selectedClassId || (isTeacher ? (teacherClassId || classes[0]?.id) : (classes[0]?.id || ''));
+    let selectedYear = String(this.state.selectedYear || new Date().getFullYear());
+    let singleMonth = defaultMonthId;
+    let multiMonths = [defaultMonthId, secondMonthId];
+    let latestReportData = null;
+
+    const escapeHtml = (str) => String(str ?? '').replace(/[&<>"']/g, m => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[m]);
+
+    const today = new Date();
+    const todayInfo = getKhmerLunarDayInfo(today.getFullYear(), today.getMonth() + 1, today.getDate());
+    const khmerSolarMonths = ['មករា', 'កុម្ភៈ', 'មីនា', 'មេសា', 'ឧសភា', 'មិថុនា', 'កក្កដា', 'សីហា', 'កញ្ញា', 'តុលា', 'វិច្ឆិកា', 'ធ្នូ'];
+    const solarDateStr = `ថ្ងៃទី${toKhmerNumeral(String(today.getDate()).padStart(2, '0'))} ខែ${khmerSolarMonths[today.getMonth()]} ឆ្នាំ${toKhmerNumeral(today.getFullYear())}`;
+
+    await ReportViewer.open({
+      reportKey: 'attendance_monthly_report',
+      title: 'របាយការណ៍វត្តមានសិស្ស',
+      alwaysFresh: true,
+      defaultOrientation: reportMode === 'multi' ? 'landscape' : 'portrait',
+      defaultPaperSize: 'A4',
+      defaultMargins: { top: 10, bottom: 10, left: 10, right: 10 },
+      defaultFontFamily: 'Khmer OS Siemreap',
+      defaultFontSize: 9.5,
+      renderHeaderControls: (controlsContainer, viewer) => {
+        const renderToolbar = () => {
+          const classOptionsHtml = isTeacher && teacherClassId
+            ? `<option value="${selectedClassId}">${escapeHtml(classes.find(c => String(c.id).trim() === String(selectedClassId).trim())?.name || selectedClassId)}</option>`
+            : classes.map(c => `<option value="${c.id}" ${c.id === selectedClassId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('');
+
+          const yearOptionsHtml = availableYears.map(y => `
+            <option value="${y}" ${String(selectedYear) === String(y) ? 'selected' : ''}>ឆ្នាំ ${y}</option>
+          `).join('');
+
+          const singleMonthSelectHtml = `
+            <div class="flex items-center gap-1.5 text-xs font-khmer">
+              <span class="text-muted-foreground whitespace-nowrap">ខែ:</span>
+              <select id="rv-att-single-month" class="h-8 py-0 px-2.5 rounded-md border border-input bg-card text-xs font-semibold text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary shadow-xs cursor-pointer font-khmer">
+                ${ATTENDANCE_MONTHS.map(m => `
+                  <option value="${m.id}" ${m.id === singleMonth ? 'selected' : ''}>ខែ${m.nameKm} (${m.nameEn})</option>
+                `).join('')}
+              </select>
+            </div>
+          `;
+
+          const multiMonthSlotsHtml = multiMonths.map((mId, slotIdx) => `
+            <div class="inline-flex items-center gap-1">
+              ${slotIdx > 0 ? `<span class="text-xs font-bold text-violet-600 dark:text-violet-400 px-0.5">+</span>` : ''}
+              <div class="inline-flex items-center rounded-md border border-violet-500/40 bg-violet-500/10 overflow-hidden">
+                <select data-month-slot="${slotIdx}" class="rv-att-multi-slot h-8 py-0 pl-2 pr-6 bg-transparent text-xs font-semibold text-foreground focus:outline-none cursor-pointer font-khmer">
+                  ${ATTENDANCE_MONTHS.map(m => `
+                    <option value="${m.id}" ${m.id === mId ? 'selected' : ''}>ខែ${m.nameKm}</option>
+                  `).join('')}
+                </select>
+                ${multiMonths.length > 2 ? `
+                  <button type="button" data-remove-slot="${slotIdx}" title="ដកខែនេះចេញ" class="px-1.5 h-8 text-rose-600 hover:bg-rose-500/20 text-xs font-bold cursor-pointer">×</button>
+                ` : ''}
+              </div>
+            </div>
+          `).join('');
+
+          const multiMonthControlsHtml = `
+            <div class="flex items-center gap-1.5 flex-wrap font-khmer">
+              <div class="flex items-center gap-1 flex-wrap">
+                ${multiMonthSlotsHtml}
+              </div>
+              <button type="button" id="rv-btn-add-month-slot" title="បន្ថែមខែមួយទៀត (+ ខែ)" class="h-8 px-2.5 rounded-md border border-dashed border-violet-500/50 bg-violet-500/10 hover:bg-violet-500/20 text-violet-700 dark:text-violet-300 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors">
+                ${getIcon('plus', 'w-3.5 h-3.5')}
+                <span>បន្ថែមខែ</span>
+              </button>
+              <div class="relative" id="rv-quick-months-wrap">
+                <button type="button" id="rv-btn-quick-months" class="h-8 px-2.5 rounded-md border border-input bg-card hover:bg-muted text-xs font-medium text-foreground inline-flex items-center gap-1 cursor-pointer">
+                  <span>ជ្រើសរើសរហ័ស</span>
+                  ${getIcon('chevronDown', 'w-3.5 h-3.5')}
+                </button>
+                <div id="rv-popover-quick-months" class="hidden absolute left-0 top-9 z-[90] w-72 p-3 rounded-xl border border-border bg-card shadow-xl space-y-2.5 font-khmer">
+                  <div class="text-xs font-bold text-foreground border-b border-border/60 pb-1.5">ជ្រើសរើសខែសម្រាប់បូកសរុប (ខែ + ខែ)</div>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <button type="button" data-preset="sem1" class="px-2 py-1 rounded bg-sky-500/15 hover:bg-sky-500/25 text-sky-700 dark:text-sky-300 text-[11px] font-semibold cursor-pointer">ឆមាសទី១ (វិច្ឆិកា–កុម្ភៈ)</button>
+                    <button type="button" data-preset="sem2" class="px-2 py-1 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300 text-[11px] font-semibold cursor-pointer">ឆមាសទី២ (មីនា–មិថុនា)</button>
+                    <button type="button" data-preset="all" class="px-2 py-1 rounded bg-violet-500/15 hover:bg-violet-500/25 text-violet-700 dark:text-violet-300 text-[11px] font-semibold cursor-pointer">គ្រប់ខែទាំង ១២</button>
+                  </div>
+                  <div class="grid grid-cols-3 gap-1.5 pt-1">
+                    ${ATTENDANCE_MONTHS.map(m => {
+                      const checked = multiMonths.includes(m.id);
+                      return `
+                        <label class="flex items-center gap-1.5 px-2 py-1 rounded border ${checked ? 'border-violet-500 bg-violet-500/10 text-violet-700 dark:text-violet-300 font-semibold' : 'border-border bg-background text-foreground'} text-[11px] cursor-pointer">
+                          <input type="checkbox" value="${m.id}" class="rv-chk-month accent-violet-600" ${checked ? 'checked' : ''} />
+                          <span>ខែ${m.nameKm}</span>
+                        </label>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+
+          controlsContainer.className = 'flex items-center gap-2 sm:gap-2.5 flex-wrap font-khmer';
+          controlsContainer.innerHTML = `
+            <!-- Report Mode Toggle: Single Month vs Month + Month -->
+            <div class="inline-flex items-center p-0.5 rounded-lg border border-border bg-muted/60 text-xs font-khmer">
+              <button type="button" id="rv-mode-single" class="px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer ${reportMode === 'single' ? 'bg-primary text-primary-foreground shadow-2xs' : 'text-muted-foreground hover:text-foreground'}">
+                ប្រចាំខែនីមួយៗ
+              </button>
+              <button type="button" id="rv-mode-multi" class="px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer ${reportMode === 'multi' ? 'bg-violet-600 text-white shadow-2xs' : 'text-muted-foreground hover:text-foreground'}">
+                ខែ + ខែ
+              </button>
+            </div>
+
+            <!-- Class Selector -->
+            <div class="flex items-center gap-1.5 text-xs font-khmer">
+              <span class="text-muted-foreground whitespace-nowrap">ថ្នាក់:</span>
+              <select id="rv-att-class" class="h-8 py-0 px-2.5 rounded-md border border-input bg-card text-xs font-semibold text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary shadow-xs cursor-pointer">
+                ${classOptionsHtml}
+              </select>
+            </div>
+
+            <!-- Year Selector -->
+            <div class="flex items-center gap-1.5 text-xs font-khmer">
+              <span class="text-muted-foreground whitespace-nowrap">ឆ្នាំ:</span>
+              <select id="rv-att-year" class="h-8 py-0 px-2.5 rounded-md border border-input bg-card text-xs font-semibold text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary shadow-xs cursor-pointer font-khmer">
+                ${yearOptionsHtml}
+              </select>
+            </div>
+
+            <!-- Month or Month + Month Selector -->
+            ${reportMode === 'single' ? singleMonthSelectHtml : multiMonthControlsHtml}
+
+            <!-- Export Report Excel -->
+            <button type="button" id="rv-btn-att-report-excel" class="h-8 px-3 rounded-md border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer font-khmer">
+              ${getIcon('download', 'w-3.5 h-3.5')}
+              <span>នាំចេញ Excel</span>
+            </button>
+          `;
+
+          // Bind Mode Toggle
+          controlsContainer.querySelector('#rv-mode-single')?.addEventListener('click', async () => {
+            if (reportMode === 'single') return;
+            reportMode = 'single';
+            renderToolbar();
+            if (viewer) await viewer.refreshContent(false);
+          });
+
+          controlsContainer.querySelector('#rv-mode-multi')?.addEventListener('click', async () => {
+            if (reportMode === 'multi') return;
+            reportMode = 'multi';
+            if (!Array.isArray(multiMonths) || multiMonths.length < 2) {
+              const idx = Math.max(0, ATTENDANCE_MONTHS.findIndex(m => m.id === singleMonth));
+              const nextId = ATTENDANCE_MONTHS[(idx + 1) % ATTENDANCE_MONTHS.length]?.id || 'February';
+              multiMonths = [singleMonth, nextId];
+            }
+            renderToolbar();
+            if (viewer) await viewer.refreshContent(false);
+          });
+
+          // Bind Class
+          controlsContainer.querySelector('#rv-att-class')?.addEventListener('change', async (e) => {
+            selectedClassId = e.target.value;
+            if (viewer) await viewer.refreshContent(false);
+          });
+
+          // Bind Year
+          controlsContainer.querySelector('#rv-att-year')?.addEventListener('change', async (e) => {
+            selectedYear = e.target.value;
+            if (viewer) await viewer.refreshContent(false);
+          });
+
+          // Bind Single Month
+          controlsContainer.querySelector('#rv-att-single-month')?.addEventListener('change', async (e) => {
+            singleMonth = e.target.value;
+            if (viewer) await viewer.refreshContent(false);
+          });
+
+          // Bind Multi Month Slots
+          controlsContainer.querySelectorAll('.rv-att-multi-slot').forEach(sel => {
+            sel.addEventListener('change', async (e) => {
+              const slotIdx = parseInt(sel.getAttribute('data-month-slot'), 10);
+              if (!isNaN(slotIdx) && multiMonths[slotIdx] !== undefined) {
+                multiMonths[slotIdx] = e.target.value;
+                renderToolbar();
+                if (viewer) await viewer.refreshContent(false);
+              }
+            });
+          });
+
+          // Bind Remove Month Slot
+          controlsContainer.querySelectorAll('[data-remove-slot]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const slotIdx = parseInt(btn.getAttribute('data-remove-slot'), 10);
+              if (multiMonths.length > 2 && !isNaN(slotIdx)) {
+                multiMonths.splice(slotIdx, 1);
+                renderToolbar();
+                if (viewer) await viewer.refreshContent(false);
+              }
+            });
+          });
+
+          // Bind Add Month Slot (+ បន្ថែមខែ)
+          controlsContainer.querySelector('#rv-btn-add-month-slot')?.addEventListener('click', async () => {
+            const unusedMonth = ATTENDANCE_MONTHS.find(m => !multiMonths.includes(m.id))
+              || ATTENDANCE_MONTHS[multiMonths.length % ATTENDANCE_MONTHS.length];
+            if (unusedMonth) {
+              multiMonths.push(unusedMonth.id);
+              renderToolbar();
+              if (viewer) await viewer.refreshContent(false);
+            }
+          });
+
+          // Bind Quick Months Popover
+          const quickBtn = controlsContainer.querySelector('#rv-btn-quick-months');
+          const quickPopover = controlsContainer.querySelector('#rv-popover-quick-months');
+          quickBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            quickPopover?.classList.toggle('hidden');
+          });
+
+          controlsContainer.querySelectorAll('[data-preset]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const preset = btn.getAttribute('data-preset');
+              if (preset === 'sem1') {
+                multiMonths = ['November', 'December', 'January', 'February'];
+              } else if (preset === 'sem2') {
+                multiMonths = ['March', 'April', 'May', 'June'];
+              } else if (preset === 'all') {
+                multiMonths = ATTENDANCE_MONTHS.map(m => m.id);
+              }
+              renderToolbar();
+              if (viewer) await viewer.refreshContent(false);
+            });
+          });
+
+          controlsContainer.querySelectorAll('.rv-chk-month').forEach(chk => {
+            chk.addEventListener('change', async () => {
+              const checkedIds = Array.from(controlsContainer.querySelectorAll('.rv-chk-month:checked'))
+                .map(el => el.value);
+              if (checkedIds.length < 2) {
+                toast.warning('សូមជ្រើសរើសយ៉ាងតិច ២ ខែ សម្រាប់របាយការណ៍ ខែ + ខែ');
+                chk.checked = true;
+                return;
+              }
+              multiMonths = checkedIds;
+              renderToolbar();
+              const pop = controlsContainer.querySelector('#rv-popover-quick-months');
+              pop?.classList.remove('hidden');
+              if (viewer) await viewer.refreshContent(false);
+            });
+          });
+
+          // Bind Excel Export
+          controlsContainer.querySelector('#rv-btn-att-report-excel')?.addEventListener('click', () => {
+            if (!latestReportData) return;
+            const clsObj = classes.find(c => String(c.id).trim() === String(selectedClassId).trim());
+            this.exportAttendanceReportExcel(latestReportData, {
+              reportMode,
+              className: clsObj?.name || '',
+              schoolName,
+              selectedYear,
+              academicYear: this.state.activeYear
+            });
+          });
+        };
+
+        renderToolbar();
+      },
+      renderContent: async (contentContainer) => {
+        contentContainer.innerHTML = `
+          <div class="py-12 flex items-center justify-center gap-2 text-muted-foreground text-xs font-khmer">
+            <div class="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+            <span>កំពុងរៀបចំរបាយការណ៍វត្តមាន...</span>
+          </div>
+        `;
+
+        const monthsToQuery = reportMode === 'single' ? [singleMonth] : multiMonths;
+        const reportData = await AttendanceService.getMultiMonthAttendanceReport({
+          classId: selectedClassId,
+          academicYear: this.state.activeYear,
+          year: selectedYear,
+          months: monthsToQuery
+        });
+        latestReportData = reportData;
+
+        const clsObj = classes.find(c => String(c.id).trim() === String(selectedClassId).trim());
+        const className = clsObj?.name || '—';
+        const { months, rows, summary } = reportData;
+
+        const isSingle = reportMode === 'single' || months.length === 1;
+        const monthsTitleKm = months.map(m => `ខែ${m.monthNameKm}`).join(' + ');
+        const reportTitleKm = isSingle
+          ? `របាយការណ៍វត្តមានសិស្សប្រចាំ${monthsTitleKm} ឆ្នាំ ${selectedYear}`
+          : `របាយការណ៍បូកសរុបវត្តមានសិស្សប្រចាំ${monthsTitleKm} ឆ្នាំ ${selectedYear}`;
+
+        // Build Table Header
+        const monthGroupHeadersHtml = months.map(m => `
+          <th colspan="3" class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #e0f2fe !important; color: #0f172a !important; padding: 4px 2px !important; vertical-align: middle !important;">
+            ខែ${escapeHtml(m.monthNameKm)}
+          </th>
+        `).join('');
+
+        const totalGroupHeaderHtml = !isSingle ? `
+          <th colspan="3" class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #ede9fe !important; color: #4c1d95 !important; padding: 4px 2px !important; vertical-align: middle !important;">
+            សរុបរួម (${months.map(m => m.monthNameKm).join(' + ')})
+          </th>
+        ` : `
+          <th rowspan="2" class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #f1f5f9 !important; color: #0f172a !important; padding: 4px 4px !important; vertical-align: middle !important; width: 14%;">
+            ផ្សេងៗ
+          </th>
+        `;
+
+        const subHeadersPerMonthHtml = months.map(() => `
+          <th class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #f0f9ff !important; color: #0369a1 !important; padding: 3px 2px !important; vertical-align: middle !important;">ច្បាប់</th>
+          <th class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #fff1f2 !important; color: #be123c !important; padding: 3px 2px !important; vertical-align: middle !important;">ឥតច្បាប់</th>
+          <th class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #f5f3ff !important; color: #6d28d9 !important; padding: 3px 2px !important; vertical-align: middle !important;">សរុប</th>
+        `).join('');
+
+        const subHeadersGrandTotalHtml = !isSingle ? `
+          <th class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #e0f2fe !important; color: #0369a1 !important; padding: 3px 2px !important; vertical-align: middle !important;">ច្បាប់</th>
+          <th class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #ffe4e6 !important; color: #be123c !important; padding: 3px 2px !important; vertical-align: middle !important;">ឥតច្បាប់</th>
+          <th class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #ede9fe !important; color: #5b21b6 !important; padding: 3px 2px !important; vertical-align: middle !important;">សរុប</th>
+        ` : '';
+
+        const totalColumnsCount = 4 + (months.length * 3) + (isSingle ? 1 : 3);
+
+        const bodyRowsHtml = rows.length === 0 ? `
+          <tr>
+            <td colspan="${totalColumnsCount}" class="text-center font-khmer py-6 text-muted-foreground" style="border: 1px solid #000000 !important; padding: 10px !important;">
+              មិនមានទិន្នន័យសិស្សក្នុងថ្នាក់នេះទេ
+            </td>
+          </tr>
+        ` : rows.map((r, idx) => {
+          const isFemale = r.gender === 'Female' || r.gender === 'ស្រី' || r.gender === 'F';
+          const genderLabel = isFemale ? 'ស្រី' : 'ប្រុស';
+
+          const perMonthCellsHtml = r.monthly.map(m => `
+            <td class="text-center font-mono" style="border: 1px solid #000000 !important; padding: 3px 2px !important; color: #0369a1; font-weight: ${m.permission > 0 ? '700' : '400'};">${m.permission}</td>
+            <td class="text-center font-mono" style="border: 1px solid #000000 !important; padding: 3px 2px !important; color: #be123c; font-weight: ${m.absent > 0 ? '700' : '400'};">${m.absent}</td>
+            <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; padding: 3px 2px !important; color: #6d28d9;">${m.total}</td>
+          `).join('');
+
+          const endCellsHtml = !isSingle ? `
+            <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #f8fafc !important; padding: 3px 2px !important; color: #0369a1;">${r.totalPermission}</td>
+            <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #f8fafc !important; padding: 3px 2px !important; color: #be123c;">${r.totalAbsent}</td>
+            <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #f5f3ff !important; padding: 3px 2px !important; color: #5b21b6;">${r.grandTotal}</td>
+          ` : `
+            <td class="text-center font-khmer" style="border: 1px solid #000000 !important; padding: 3px 4px !important;"></td>
+          `;
+
+          return `
+            <tr>
+              <td class="text-center font-mono" style="border: 1px solid #000000 !important; padding: 3px 2px !important;">${idx + 1}</td>
+              <td class="text-center font-mono" style="border: 1px solid #000000 !important; padding: 3px 3px !important;">${escapeHtml(r.studentNumber || '—')}</td>
+              <td class="text-left font-khmer font-semibold" style="border: 1px solid #000000 !important; padding: 3px 5px !important; white-space: nowrap;">${escapeHtml(r.khmerFullName)}</td>
+              <td class="text-center font-khmer" style="border: 1px solid #000000 !important; padding: 3px 2px !important; font-weight: 600; color: ${isFemale ? '#be123c' : '#0369a1'};">${genderLabel}</td>
+              ${perMonthCellsHtml}
+              ${endCellsHtml}
+            </tr>
+          `;
+        }).join('');
+
+        // Footer Summary Row (សរុបរួម)
+        const footerMonthTotalsHtml = summary.monthTotals.map(mt => `
+          <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #f0f9ff !important; padding: 4px 2px !important; color: #0369a1;">${mt.permission}</td>
+          <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #fff1f2 !important; padding: 4px 2px !important; color: #be123c;">${mt.absent}</td>
+          <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #f5f3ff !important; padding: 4px 2px !important; color: #6d28d9;">${mt.total}</td>
+        `).join('');
+
+        const footerGrandTotalHtml = !isSingle ? `
+          <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #e0f2fe !important; padding: 4px 2px !important; color: #0369a1;">${summary.grandTotals.permission}</td>
+          <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #ffe4e6 !important; padding: 4px 2px !important; color: #be123c;">${summary.grandTotals.absent}</td>
+          <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #ede9fe !important; padding: 4px 2px !important; color: #4c1d95;">${summary.grandTotals.total}</td>
+        ` : `
+          <td style="border: 1px solid #000000 !important; background-color: #f1f5f9 !important;"></td>
+        `;
+
+        const tableFontSize = months.length >= 4 ? '8px' : months.length >= 2 ? '9px' : '10px';
+
+        contentContainer.innerHTML = `
+          <div class="moeys-report-document max-w-full mx-auto space-y-2.5" style="font-family: 'Khmer OS Siemreap', 'Kantumruy Pro', sans-serif; font-size: ${tableFontSize}; color: #000000; width: 100%; box-sizing: border-box;">
+            <!-- Top Official MoEYS Header -->
+            <div class="flex items-start justify-between font-khmer leading-tight" style="font-size: 10.5px;">
+              <div class="text-left space-y-0.5 pt-2">
+                <p style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive; font-size: 10.5px; line-height: 1.8;">${escapeHtml(schoolName)}</p>
+                <p class="font-khmer font-semibold">ថ្នាក់ទី៖ ${escapeHtml(className)}</p>
+              </div>
+              <div class="text-center space-y-0.5">
+                <p style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive; font-size: 10.5px; line-height: 1.8;">ព្រះរាជាណាចក្រកម្ពុជា</p>
+                <p style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive; font-size: 10.5px; line-height: 1.8;">ជាតិ សាសនា ព្រះមហាក្សត្រ</p>
+                <div class="text-center font-serif" style="font-size: 9px;">~ ~ ~ 🙞 🙞 🙞 ~ ~ ~</div>
+              </div>
+            </div>
+
+            <!-- Title & Summary Meta -->
+            <div class="text-center space-y-1 pt-1 pb-1 font-khmer">
+              <h2 contenteditable="true" spellcheck="false" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive; font-size: 12.5px; line-height: 1.9; font-weight: normal;">
+                ${escapeHtml(reportTitleKm)}
+              </h2>
+              <div class="flex items-center justify-center flex-wrap gap-x-5 gap-y-1 text-[10px] font-khmer">
+                <span>ឆ្នាំសិក្សា៖ <b>${escapeHtml(this.state.activeYear)}</b></span>
+                <span>សិស្សសរុប៖ <b>${summary.totalStudents} នាក់</b> (ស្រី <b>${summary.femaleStudents} នាក់</b>)</span>
+                <span>ច្បាប់សរុប៖ <b style="color:#0369a1;">${summary.grandTotals.permission} ដង</b></span>
+                <span>ឥតច្បាប់សរុប៖ <b style="color:#be123c;">${summary.grandTotals.absent} ដង</b></span>
+                <span>អវត្តមានសរុប៖ <b style="color:#5b21b6;">${summary.grandTotals.total} ដង</b></span>
+              </div>
+            </div>
+
+            <!-- Main Attendance Report Table -->
+            <div class="w-full overflow-x-auto">
+              <table class="moeys-table border-collapse w-full" style="width: 100% !important; border-collapse: collapse !important; border: 1px solid #000000 !important; font-family: 'Khmer OS Siemreap', 'Kantumruy Pro', sans-serif; font-size: ${tableFontSize};">
+                <thead>
+                  <tr>
+                    <th rowspan="2" class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #f1f5f9 !important; padding: 4px 2px !important; vertical-align: middle !important; width: 34px;">ល.រ</th>
+                    <th rowspan="2" class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #f1f5f9 !important; padding: 4px 3px !important; vertical-align: middle !important; width: 68px;">អត្តលេខ</th>
+                    <th rowspan="2" class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #f1f5f9 !important; padding: 4px 5px !important; vertical-align: middle !important;">គោត្តនាម និងនាម</th>
+                    <th rowspan="2" class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #f1f5f9 !important; padding: 4px 2px !important; vertical-align: middle !important; width: 42px;">ភេទ</th>
+                    ${monthGroupHeadersHtml}
+                    ${totalGroupHeaderHtml}
+                  </tr>
+                  <tr>
+                    ${subHeadersPerMonthHtml}
+                    ${subHeadersGrandTotalHtml}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${bodyRowsHtml}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="4" class="text-right font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #f1f5f9 !important; padding: 4px 6px !important;">
+                      សរុបរួម (${summary.totalStudents} នាក់ / ស្រី ${summary.femaleStudents} នាក់)៖
+                    </td>
+                    ${footerMonthTotalsHtml}
+                    ${footerGrandTotalHtml}
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <!-- Signatures Footer -->
+            <div class="mt-4 pt-2 grid grid-cols-2 gap-8 font-khmer text-[10px] text-center">
+              <div class="flex flex-col items-center justify-between min-h-[85px]">
+                <div class="space-y-1">
+                  <p>បានឃើញ និងឯកភាព</p>
+                  <p style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive; line-height: 1.8;">នាយកសាលា</p>
+                </div>
+                <div class="h-10 w-36 mx-auto"></div>
+              </div>
+              <div class="flex flex-col items-center justify-between min-h-[85px]">
+                <div class="space-y-0.5">
+                  <p contenteditable="true" spellcheck="false">${escapeHtml(todayInfo.lunarFull)}</p>
+                  <p contenteditable="true" spellcheck="false">${escapeHtml(schoolName)}, ${escapeHtml(solarDateStr)}</p>
+                  <p class="font-bold pt-1">គ្រូបន្ទុកថ្នាក់</p>
+                </div>
+                <div class="h-10 w-36 mx-auto"></div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    });
+  },
+
+  exportAttendanceReportExcel(reportData, { reportMode, className, schoolName, selectedYear, academicYear }) {
+    const { months, rows, summary } = reportData;
+    const isSingle = reportMode === 'single' || months.length === 1;
+    const monthsTitleKm = months.map(m => `ខែ${m.monthNameKm}`).join(' + ');
+    const titleText = isSingle
+      ? `របាយការណ៍វត្តមានសិស្សប្រចាំ${monthsTitleKm} ឆ្នាំ ${selectedYear} — ថ្នាក់ ${className}`
+      : `របាយការណ៍បូកសរុបវត្តមានសិស្សប្រចាំ${monthsTitleKm} ឆ្នាំ ${selectedYear} — ថ្នាក់ ${className}`;
+
+    const totalCols = 4 + (months.length * 3) + (isSingle ? 1 : 3);
+
+    const monthHeaderCells = months.map(m => `
+      <th colspan="3" style="border:1px solid #64748b; background:#e0f2fe; color:#0f172a; text-align:center;">ខែ${m.monthNameKm}</th>
+    `).join('');
+
+    const endGroupHeader = !isSingle
+      ? `<th colspan="3" style="border:1px solid #64748b; background:#ede9fe; color:#4c1d95; text-align:center;">សរុបរួម (${months.map(m => m.monthNameKm).join(' + ')})</th>`
+      : `<th rowspan="2" style="border:1px solid #64748b; background:#f1f5f9; text-align:center;">ផ្សេងៗ</th>`;
+
+    const subHeaderCells = months.map(() => `
+      <th style="border:1px solid #64748b; background:#f0f9ff; color:#0369a1; text-align:center;">ច្បាប់</th>
+      <th style="border:1px solid #64748b; background:#fff1f2; color:#be123c; text-align:center;">ឥតច្បាប់</th>
+      <th style="border:1px solid #64748b; background:#f5f3ff; color:#6d28d9; text-align:center;">សរុប</th>
+    `).join('') + (!isSingle ? `
+      <th style="border:1px solid #64748b; background:#e0f2fe; color:#0369a1; text-align:center;">ច្បាប់</th>
+      <th style="border:1px solid #64748b; background:#ffe4e6; color:#be123c; text-align:center;">ឥតច្បាប់</th>
+      <th style="border:1px solid #64748b; background:#ede9fe; color:#4c1d95; text-align:center;">សរុប</th>
+    ` : '');
+
+    const bodyRowsHtml = rows.map((r, i) => {
+      const isFemale = r.gender === 'Female' || r.gender === 'ស្រី' || r.gender === 'F';
+      const monthCells = r.monthly.map(m => `
+        <td style="border:1px solid #cbd5e1; text-align:center; color:#0369a1; font-weight:bold;">${m.permission}</td>
+        <td style="border:1px solid #cbd5e1; text-align:center; color:#be123c; font-weight:bold;">${m.absent}</td>
+        <td style="border:1px solid #cbd5e1; text-align:center; color:#6d28d9; font-weight:bold;">${m.total}</td>
+      `).join('');
+      const endCells = !isSingle ? `
+        <td style="border:1px solid #cbd5e1; background:#f8fafc; text-align:center; color:#0369a1; font-weight:bold;">${r.totalPermission}</td>
+        <td style="border:1px solid #cbd5e1; background:#f8fafc; text-align:center; color:#be123c; font-weight:bold;">${r.totalAbsent}</td>
+        <td style="border:1px solid #cbd5e1; background:#f5f3ff; text-align:center; color:#4c1d95; font-weight:bold;">${r.grandTotal}</td>
+      ` : `<td style="border:1px solid #cbd5e1;"></td>`;
+
+      return `
+        <tr>
+          <td style="border:1px solid #cbd5e1; text-align:center;">${i + 1}</td>
+          <td style="border:1px solid #cbd5e1; text-align:center; mso-number-format:'\\@';">${r.studentNumber || ''}</td>
+          <td style="border:1px solid #cbd5e1; text-align:left;">${r.khmerFullName || ''}</td>
+          <td style="border:1px solid #cbd5e1; text-align:center;">${isFemale ? 'ស្រី' : 'ប្រុស'}</td>
+          ${monthCells}
+          ${endCells}
+        </tr>
+      `;
+    }).join('');
+
+    const footerMonthCells = summary.monthTotals.map(mt => `
+      <td style="border:1px solid #64748b; background:#f0f9ff; text-align:center; font-weight:bold; color:#0369a1;">${mt.permission}</td>
+      <td style="border:1px solid #64748b; background:#fff1f2; text-align:center; font-weight:bold; color:#be123c;">${mt.absent}</td>
+      <td style="border:1px solid #64748b; background:#f5f3ff; text-align:center; font-weight:bold; color:#6d28d9;">${mt.total}</td>
+    `).join('');
+
+    const footerEndCells = !isSingle ? `
+      <td style="border:1px solid #64748b; background:#e0f2fe; text-align:center; font-weight:bold; color:#0369a1;">${summary.grandTotals.permission}</td>
+      <td style="border:1px solid #64748b; background:#ffe4e6; text-align:center; font-weight:bold; color:#be123c;">${summary.grandTotals.absent}</td>
+      <td style="border:1px solid #64748b; background:#ede9fe; text-align:center; font-weight:bold; color:#4c1d95;">${summary.grandTotals.total}</td>
+    ` : `<td style="border:1px solid #64748b; background:#f1f5f9;"></td>`;
+
+    const html = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          table { border-collapse: collapse; font-family: 'Kantumruy Pro', 'Khmer OS Siemreap', sans-serif; font-size: 11pt; }
+          th, td { padding: 4px 6px; }
+        </style>
+      </head>
+      <body>
+        <table>
+          <tr>
+            <th colspan="${totalCols}" style="font-size:13pt; font-weight:bold; text-align:center; padding:8px;">
+              ${titleText}
+            </th>
+          </tr>
+          <tr>
+            <th colspan="${totalCols}" style="font-size:10pt; text-align:center; padding:4px;">
+              សាលារៀន៖ ${schoolName} | ឆ្នាំសិក្សា៖ ${academicYear} | សិស្សសរុប៖ ${summary.totalStudents} នាក់ (ស្រី ${summary.femaleStudents} នាក់)
+            </th>
+          </tr>
+          <tr>
+            <th rowspan="2" style="border:1px solid #64748b; background:#f1f5f9; text-align:center;">ល.រ</th>
+            <th rowspan="2" style="border:1px solid #64748b; background:#f1f5f9; text-align:center;">អត្តលេខ</th>
+            <th rowspan="2" style="border:1px solid #64748b; background:#f1f5f9; text-align:center;">គោត្តនាម និងនាម</th>
+            <th rowspan="2" style="border:1px solid #64748b; background:#f1f5f9; text-align:center;">ភេទ</th>
+            ${monthHeaderCells}
+            ${endGroupHeader}
+          </tr>
+          <tr>
+            ${subHeaderCells}
+          </tr>
+          ${bodyRowsHtml}
+          <tr>
+            <td colspan="4" style="border:1px solid #64748b; background:#f1f5f9; text-align:right; font-weight:bold;">
+              សរុបរួម (${summary.totalStudents} នាក់ / ស្រី ${summary.femaleStudents} នាក់)៖
+            </td>
+            ${footerMonthCells}
+            ${footerEndCells}
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const fileSuffix = isSingle ? months[0].monthId : months.map(m => m.monthId.slice(0, 3)).join('_plus_');
+    const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Attendance_Report_${className}_${fileSuffix}_${selectedYear}.xls`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('បានទាញយករបាយការណ៍វត្តមានជា Excel ដោយជោគជ័យ');
+  },
+
   bindStaticEvents() {
     // Change Class
     document.getElementById('select-att-class')?.addEventListener('change', async (e) => {
@@ -1093,6 +1782,12 @@ export const AttendancePage = {
     const clearBtn = document.getElementById('btn-clear-att-menu');
     clearBtn?.addEventListener('click', () => {
       this.openClearMenuPopover(clearBtn);
+    });
+
+    // Attendance Report Menu Button (2 options: Single Month / Month + Month)
+    const reportBtn = document.getElementById('btn-att-report');
+    reportBtn?.addEventListener('click', () => {
+      this.openReportMenuPopover(reportBtn);
     });
 
     // Save Attendance Button
