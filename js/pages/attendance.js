@@ -428,7 +428,7 @@ export const AttendancePage = {
               data-student-id="${row.studentId}"
               data-day="${d}"
               data-row-idx="${rowIdx}"
-              data-col-idx="${d + 2}"
+              data-col-idx="${d}"
               placeholder=""
               title="ថ្ងៃទី ${d} (${dayName}) (វាយ ច/P = ច្បាប់, អ/A = ឥតច្បាប់)"
               class="score-cell-input att-day-input font-khmer"
@@ -455,35 +455,23 @@ export const AttendancePage = {
           <td class="att-sticky-col-4 p-0 text-center font-khmer text-xs ${genderClass}" style="z-index: 30 !important; transform: translateZ(0) !important;">
             <div class="w-full whitespace-nowrap text-center py-1.5 px-0.5 bg-transparent">${genderLabel}</div>
           </td>
-          <!-- 5. Permission (ច្បាប់) -->
-          <td class="score-cell-td att-col-perm-td">
-            <input
-              type="text"
-              inputmode="numeric"
-              value="${row.permission || 0}"
-              data-student-id="${row.studentId}"
-              data-summary-field="permission"
-              data-row-idx="${rowIdx}"
-              data-col-idx="1"
-              class="score-cell-input att-summary-input font-mono font-bold text-sky-700 dark:text-sky-300"
-            />
-          </td>
-          <!-- 6. Absent (ឥតច្បាប់) -->
-          <td class="score-cell-td att-col-absent-td">
-            <input
-              type="text"
-              inputmode="numeric"
-              value="${row.absent || 0}"
-              data-student-id="${row.studentId}"
-              data-summary-field="absent"
-              data-row-idx="${rowIdx}"
-              data-col-idx="2"
-              class="score-cell-input att-summary-input font-mono font-bold text-rose-600 dark:text-rose-400"
-            />
-          </td>
-          <!-- 7. Total (សរុប) -->
+          <!-- 5. Permission (ច្បាប់) - Read-only auto-calculated -->
           <td
-            class="score-cell-td att-col-total-td font-mono text-xs font-bold text-violet-700 dark:text-violet-300"
+            class="score-cell-td att-col-perm-td font-mono text-xs font-bold text-sky-700 dark:text-sky-300 select-none"
+            data-perm-cell="${row.studentId}"
+          >
+            ${row.permission || 0}
+          </td>
+          <!-- 6. Absent (ឥតច្បាប់) - Read-only auto-calculated -->
+          <td
+            class="score-cell-td att-col-absent-td font-mono text-xs font-bold text-rose-600 dark:text-rose-400 select-none"
+            data-absent-cell="${row.studentId}"
+          >
+            ${row.absent || 0}
+          </td>
+          <!-- 7. Total (សរុប) - Read-only auto-calculated -->
+          <td
+            class="score-cell-td att-col-total-td font-mono text-xs font-bold text-violet-700 dark:text-violet-300 select-none"
             data-total-cell="${row.studentId}"
           >
             ${row.total || 0}
@@ -571,37 +559,14 @@ export const AttendancePage = {
         row.absent = absCount;
         row.total = permCount + absCount;
 
-        // Update summary cells in DOM
+        // Update read-only summary cells in DOM
         const tr = inp.closest('tr');
         if (tr) {
-          const permInput = tr.querySelector('input[data-summary-field="permission"]');
-          const absInput = tr.querySelector('input[data-summary-field="absent"]');
+          const permTd = tr.querySelector(`[data-perm-cell="${studentId}"]`);
+          const absTd = tr.querySelector(`[data-absent-cell="${studentId}"]`);
           const totalTd = tr.querySelector(`[data-total-cell="${studentId}"]`);
-          if (permInput) permInput.value = row.permission;
-          if (absInput) absInput.value = row.absent;
-          if (totalTd) totalTd.textContent = row.total;
-        }
-
-        this.updateStats();
-        this.scheduleAutoSave();
-      });
-    });
-
-    // Summary cell (ច្បាប់ / ឥតច្បាប់) direct input handler
-    tbody.querySelectorAll('input.att-summary-input').forEach(inp => {
-      inp.addEventListener('input', () => {
-        const studentId = inp.getAttribute('data-student-id');
-        const field = inp.getAttribute('data-summary-field');
-        const row = this.state.sheet.rows.find(r => r.studentId === studentId);
-        if (!row) return;
-
-        const cleanNum = Math.max(0, parseInt(String(inp.value).replace(/[^\d]/g, ''), 10) || 0);
-        row[field] = cleanNum;
-        row.total = (parseInt(row.permission, 10) || 0) + (parseInt(row.absent, 10) || 0);
-
-        const tr = inp.closest('tr');
-        if (tr) {
-          const totalTd = tr.querySelector(`[data-total-cell="${studentId}"]`);
+          if (permTd) permTd.textContent = row.permission;
+          if (absTd) absTd.textContent = row.absent;
           if (totalTd) totalTd.textContent = row.total;
         }
 
