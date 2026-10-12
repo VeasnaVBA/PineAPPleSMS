@@ -3220,6 +3220,29 @@ export const ScoresPage = {
     let selectedPeriod = this.state.selectedPeriod || 'October';
     let selectedReportDate = new Date();
     let currentClassName = '';
+    let headerBgColor = localStorage.getItem('score_result_2row_header_bg') || '#0045ff';
+
+    const getContrastTextColor = (hexColor) => {
+      if (!hexColor || hexColor === 'transparent') return '#000000';
+      const clean = String(hexColor).replace('#', '').trim();
+      if (clean.length === 3) {
+        const r = parseInt(clean[0] + clean[0], 16);
+        const g = parseInt(clean[1] + clean[1], 16);
+        const b = parseInt(clean[2] + clean[2], 16);
+        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+        return yiq >= 155 ? '#000000' : '#ffffff';
+      }
+      if (clean.length >= 6) {
+        const r = parseInt(clean.slice(0, 2), 16);
+        const g = parseInt(clean.slice(2, 4), 16);
+        const b = parseInt(clean.slice(4, 6), 16);
+        if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+          const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+          return yiq >= 155 ? '#000000' : '#ffffff';
+        }
+      }
+      return '#ffffff';
+    };
 
     const periods = ScoreService.getEvaluationPeriods();
     const months = periods.filter(p => p.group === 'month');
@@ -3381,6 +3404,56 @@ export const ScoresPage = {
             </div>
           </div>
 
+          <!-- Header Color Tool Popover -->
+          <div class="relative flex items-center font-khmer" id="rv-result-header-color-container">
+            <button type="button"
+                    id="rv-result-btn-header-color"
+                    class="h-8 py-0 leading-[30px] px-2.5 rounded-md border border-input bg-card hover:bg-muted text-xs font-medium text-foreground transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer select-none box-border"
+                    title="${isKm ? 'ប្តូរពណ៌ក្បាលតារាង' : 'Change Table Header Color'}">
+              <span id="rv-result-header-color-dot" class="w-3.5 h-3.5 rounded-full border border-black/20 flex-shrink-0" style="background-color: ${escapeHtml(headerBgColor)};"></span>
+              <span class="whitespace-nowrap">${isKm ? 'ពណ៌ក្បាលតារាង' : 'Header Color'}</span>
+              ${getIcon('chevronDown', 'w-3.5 h-3.5 text-muted-foreground flex-shrink-0 transition-transform duration-150 rv-result-header-color-chevron')}
+            </button>
+
+            <div id="rv-result-popover-header-color"
+                 class="hidden absolute right-0 top-[calc(100%+4px)] z-[80] w-64 p-3 bg-card text-card-foreground border border-border rounded-xl shadow-xl space-y-2.5 font-khmer select-none animate-slide-down box-border">
+              <div class="flex items-center justify-between border-b border-border/50 pb-1.5">
+                <span class="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                  ${getIcon('paintBucket', 'w-3.5 h-3.5 text-primary')}
+                  <span>${isKm ? 'ពណ៌ក្បាលតារាង' : 'Table Header Color'}</span>
+                </span>
+                <button type="button"
+                        id="rv-result-btn-header-color-reset"
+                        class="px-2 py-0.5 rounded text-[11px] font-medium bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                  ${isKm ? 'ដើមវិញ' : 'Reset'}
+                </button>
+              </div>
+
+              <div class="space-y-1">
+                <div class="text-[10px] text-muted-foreground font-medium">${isKm ? 'ជ្រើសរើសពណ៌ (Presets):' : 'Color Presets:'}</div>
+                <div class="grid grid-cols-4 gap-1.5">
+                  <button type="button" class="rv-result-header-color-swatch h-7 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[10px] font-bold text-white cursor-pointer" style="background-color: #0045ff;" data-color="#0045ff" title="Royal Blue">Blue</button>
+                  <button type="button" class="rv-result-header-color-swatch h-7 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[10px] font-bold text-white cursor-pointer" style="background-color: #0284c7;" data-color="#0284c7" title="Sky Blue">Sky</button>
+                  <button type="button" class="rv-result-header-color-swatch h-7 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[10px] font-bold text-white cursor-pointer" style="background-color: #059669;" data-color="#059669" title="Emerald">Green</button>
+                  <button type="button" class="rv-result-header-color-swatch h-7 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[10px] font-bold text-white cursor-pointer" style="background-color: #0f766e;" data-color="#0f766e" title="Teal">Teal</button>
+                  <button type="button" class="rv-result-header-color-swatch h-7 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[10px] font-bold text-white cursor-pointer" style="background-color: #7c3aed;" data-color="#7c3aed" title="Purple">Purple</button>
+                  <button type="button" class="rv-result-header-color-swatch h-7 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[10px] font-bold text-white cursor-pointer" style="background-color: #e11d48;" data-color="#e11d48" title="Rose">Rose</button>
+                  <button type="button" class="rv-result-header-color-swatch h-7 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[10px] font-bold text-white cursor-pointer" style="background-color: #d97706;" data-color="#d97706" title="Amber">Amber</button>
+                  <button type="button" class="rv-result-header-color-swatch h-7 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[10px] font-bold text-white cursor-pointer" style="background-color: #1e293b;" data-color="#1e293b" title="Dark Slate">Dark</button>
+                  <button type="button" class="rv-result-header-color-swatch h-7 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[10px] font-bold text-slate-800 cursor-pointer" style="background-color: #dbeafe;" data-color="#dbeafe" title="Soft Blue">Soft Blue</button>
+                  <button type="button" class="rv-result-header-color-swatch h-7 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[10px] font-bold text-slate-800 cursor-pointer" style="background-color: #dcfce7;" data-color="#dcfce7" title="Soft Green">Soft Grn</button>
+                  <button type="button" class="rv-result-header-color-swatch h-7 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[10px] font-bold text-slate-800 cursor-pointer" style="background-color: #e2e8f0;" data-color="#e2e8f0" title="Light Gray">Gray</button>
+                  <button type="button" class="rv-result-header-color-swatch h-7 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[10px] font-bold text-slate-800 cursor-pointer" style="background-color: #ffffff;" data-color="#ffffff" title="White">White</button>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between gap-2 pt-1.5 border-t border-border/60">
+                <span class="text-xs text-muted-foreground">${isKm ? 'ពណ៌ផ្ទាល់ខ្លួន:' : 'Custom Color:'}</span>
+                <input type="color" id="rv-result-input-header-color" value="${escapeHtml(headerBgColor)}" class="w-8 h-7 rounded border border-border p-0.5 cursor-pointer bg-transparent" />
+              </div>
+            </div>
+          </div>
+
           <!-- Export Excel Button -->
           <button type="button" 
                   id="rv-btn-result-export-excel" 
@@ -3537,6 +3610,80 @@ export const ScoresPage = {
           toast.success(isKm ? 'បានកំណត់កាលបរិច្ឆេទដោយជោគជ័យ' : 'Date applied successfully');
         });
 
+        // Header Color Popover & Live Application
+        const headerColorBtn = controlsContainer.querySelector('#rv-result-btn-header-color');
+        const headerColorMenu = controlsContainer.querySelector('#rv-result-popover-header-color');
+        const headerColorChevron = controlsContainer.querySelector('.rv-result-header-color-chevron');
+        const headerColorDot = controlsContainer.querySelector('#rv-result-header-color-dot');
+        const headerColorInput = controlsContainer.querySelector('#rv-result-input-header-color');
+        const headerColorResetBtn = controlsContainer.querySelector('#rv-result-btn-header-color-reset');
+
+        const applyHeaderColorToReport = (newColor) => {
+          if (!newColor) return;
+          headerBgColor = newColor;
+          try {
+            localStorage.setItem('score_result_2row_header_bg', headerBgColor);
+          } catch (_) {}
+          if (viewer) {
+            viewer.savedHeaderBgColor = headerBgColor;
+          }
+          if (headerColorDot) headerColorDot.style.backgroundColor = headerBgColor;
+          if (headerColorInput) headerColorInput.value = headerBgColor;
+
+          const fgColor = getContrastTextColor(headerBgColor);
+          const tables = viewer?.overlay?.querySelectorAll('#score-result-left-table, #score-result-right-table') || [];
+          tables.forEach(tbl => {
+            tbl.querySelectorAll('thead tr').forEach(tr => {
+              tr.style.setProperty('background-color', headerBgColor, 'important');
+              tr.style.setProperty('color', fgColor, 'important');
+            });
+            tbl.querySelectorAll('thead th').forEach(th => {
+              if (th.dataset.subHeader === 'true') return;
+              th.style.setProperty('background-color', headerBgColor, 'important');
+              th.style.setProperty('color', fgColor, 'important');
+              th.style.setProperty('-webkit-print-color-adjust', 'exact', 'important');
+              th.style.setProperty('print-color-adjust', 'exact', 'important');
+            });
+          });
+          viewer?.saveStateForUndo?.();
+          viewer?.autoSaveIfEnabled?.();
+        };
+
+        headerColorBtn?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isHidden = headerColorMenu?.classList.contains('hidden');
+          if (isHidden) {
+            headerColorMenu?.classList.remove('hidden');
+            headerColorChevron?.classList.add('rotate-180');
+            yearMenu?.classList.add('hidden');
+            yearChevron?.classList.remove('rotate-180');
+            dateMenu?.classList.add('hidden');
+            dateChevron?.classList.remove('rotate-180');
+          } else {
+            headerColorMenu?.classList.add('hidden');
+            headerColorChevron?.classList.remove('rotate-180');
+          }
+        });
+
+        controlsContainer.querySelectorAll('.rv-result-header-color-swatch').forEach(sw => {
+          sw.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const c = sw.dataset.color;
+            if (c) applyHeaderColorToReport(c);
+          });
+        });
+
+        headerColorInput?.addEventListener('input', (e) => {
+          applyHeaderColorToReport(e.target.value);
+        });
+
+        headerColorResetBtn?.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          applyHeaderColorToReport('#0045ff');
+        });
+
         // Click outside dismiss
         document.addEventListener('click', (e) => {
           if (!controlsContainer.contains(e.target)) {
@@ -3544,6 +3691,8 @@ export const ScoresPage = {
             yearChevron?.classList.remove('rotate-180');
             dateMenu?.classList.add('hidden');
             dateChevron?.classList.remove('rotate-180');
+            headerColorMenu?.classList.add('hidden');
+            headerColorChevron?.classList.remove('rotate-180');
           }
         });
       },
@@ -3648,9 +3797,24 @@ export const ScoresPage = {
 
               const hRow = ws.addRow(exportHeaders);
               hRow.height = 30;
-              hRow.eachCell((cell) => {
-                cell.font = { name: 'Khmer OS Siemreap', size: 11, bold: true, color: { argb: 'FF1E293B' } };
-                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+              const curHeaderHex = (localStorage.getItem('score_result_2row_header_bg') || headerBgColor || '#0045ff').replace('#', '').toUpperCase();
+              const curHeaderBgArgb = curHeaderHex.length === 6 ? `FF${curHeaderHex}` : 'FF0045FF';
+              const curHeaderFgArgb = getContrastTextColor(`#${curHeaderHex}`) === '#000000' ? 'FF0F172A' : 'FFFFFFFF';
+              hRow.eachCell((cell, colNum) => {
+                let cellBgArgb = curHeaderBgArgb;
+                let cellFgArgb = curHeaderFgArgb;
+                if (colNum === 8) {
+                  cellBgArgb = 'FF0284C7';
+                  cellFgArgb = 'FFFFFFFF';
+                } else if (colNum === 9) {
+                  cellBgArgb = 'FFE11D48';
+                  cellFgArgb = 'FFFFFFFF';
+                } else if (colNum === 10) {
+                  cellBgArgb = 'FF7C3AED';
+                  cellFgArgb = 'FFFFFFFF';
+                }
+                cell.font = { name: 'Khmer OS Siemreap', size: 11, bold: true, color: { argb: cellFgArgb } };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cellBgArgb } };
                 cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
                 cell.border = {
                   top: { style: 'medium', color: { argb: 'FF94A3B8' } },
@@ -3800,22 +3964,25 @@ export const ScoresPage = {
 
         const rightRowsHtml = rightStudents.map((r, idx) => buildRow(r, halfCount + idx)).join('');
 
-        // 10. Two-Level Table Header Matching User Specification (Compact Height)
+        // 10. Two-Level Table Header Matching User Specification (Compact Height & Customizable Header Color)
+        const activeHeaderBg = localStorage.getItem('score_result_2row_header_bg') || viewer?.savedHeaderBgColor || headerBgColor || '#0045ff';
+        headerBgColor = activeHeaderBg;
+        const activeHeaderFg = getContrastTextColor(activeHeaderBg);
         const theadHtml = `
-          <tr style="height: 13px !important; background-color: #0045ff !important; color: #ffffff !important; font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important; font-weight: bold !important; font-size: 7.5px !important; line-height: 1.05 !important;">
-            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">ល.រ</th>
-            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 7.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">អត្តលេខ</th>
-            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 23% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">គោត្តនាម និងនាម</th>
-            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 5.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">ភេទ</th>
-            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 12% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">មធ្យមភាគ</th>
-            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 6.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;" title="${isKm ? 'ចំណាត់ថ្នាក់' : 'Rank'}">ចំ.</th>
-            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 9.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">និទ្ទេស</th>
-            <th colspan="3" class="text-center whitespace-nowrap" style="height: 13px !important; width: 31% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">អវត្តមាន</th>
+          <tr style="height: 13px !important; background-color: ${activeHeaderBg} !important; color: ${activeHeaderFg} !important; font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important; font-weight: bold !important; font-size: 7.5px !important; line-height: 1.05 !important;">
+            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 5% !important; background-color: ${activeHeaderBg} !important; color: ${activeHeaderFg} !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">ល.រ</th>
+            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 7.5% !important; background-color: ${activeHeaderBg} !important; color: ${activeHeaderFg} !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">អត្តលេខ</th>
+            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 23% !important; background-color: ${activeHeaderBg} !important; color: ${activeHeaderFg} !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">គោត្តនាម និងនាម</th>
+            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 5.5% !important; background-color: ${activeHeaderBg} !important; color: ${activeHeaderFg} !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">ភេទ</th>
+            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 12% !important; background-color: ${activeHeaderBg} !important; color: ${activeHeaderFg} !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">មធ្យមភាគ</th>
+            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 6.5% !important; background-color: ${activeHeaderBg} !important; color: ${activeHeaderFg} !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;" title="${isKm ? 'ចំណាត់ថ្នាក់' : 'Rank'}">ចំ.</th>
+            <th rowspan="2" class="text-center whitespace-nowrap" style="height: 25px !important; width: 9.5% !important; background-color: ${activeHeaderBg} !important; color: ${activeHeaderFg} !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">និទ្ទេស</th>
+            <th colspan="3" class="text-center whitespace-nowrap" style="height: 13px !important; width: 31% !important; background-color: ${activeHeaderBg} !important; color: ${activeHeaderFg} !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">អវត្តមាន</th>
           </tr>
-          <tr style="height: 12px !important; background-color: #0045ff !important; color: #ffffff !important; font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important; font-weight: bold !important; font-size: 7px !important; line-height: 1.0 !important;">
-            <th class="text-center whitespace-nowrap" style="height: 12px !important; width: 10.5% !important; background-color: #0284c7 !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 0.5px 0.5px !important; line-height: 1.0 !important; vertical-align: middle !important;">ច្បាប់</th>
-            <th class="text-center whitespace-nowrap" style="height: 12px !important; width: 10.5% !important; background-color: #e11d48 !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 0.5px 0.5px !important; line-height: 1.0 !important; vertical-align: middle !important;">ឥតច្បាប់</th>
-            <th class="text-center whitespace-nowrap" style="height: 12px !important; width: 10% !important; background-color: #7c3aed !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 0.5px 0.5px !important; line-height: 1.0 !important; vertical-align: middle !important;">សរុប</th>
+          <tr style="height: 12px !important; background-color: ${activeHeaderBg} !important; color: ${activeHeaderFg} !important; font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important; font-weight: bold !important; font-size: 7px !important; line-height: 1.0 !important;">
+            <th data-sub-header="true" class="text-center whitespace-nowrap" style="height: 12px !important; width: 10.5% !important; background-color: #0284c7 !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 0.5px 0.5px !important; line-height: 1.0 !important; vertical-align: middle !important;">ច្បាប់</th>
+            <th data-sub-header="true" class="text-center whitespace-nowrap" style="height: 12px !important; width: 10.5% !important; background-color: #e11d48 !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 0.5px 0.5px !important; line-height: 1.0 !important; vertical-align: middle !important;">ឥតច្បាប់</th>
+            <th data-sub-header="true" class="text-center whitespace-nowrap" style="height: 12px !important; width: 10% !important; background-color: #7c3aed !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 0.5px 0.5px !important; line-height: 1.0 !important; vertical-align: middle !important;">សរុប</th>
           </tr>
         `;
 

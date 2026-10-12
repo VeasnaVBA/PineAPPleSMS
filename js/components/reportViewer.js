@@ -105,6 +105,7 @@ export class ReportViewer {
     this.currentRowPadding = 8;
     this.currentColumnWidth = 'auto';
     this.savedColumnWidths = {};
+    this.savedHeaderBgColor = null;
     this.customFilterValues = options.defaultFilterValues ? { ...options.defaultFilterValues } : {};
     this.undoStack = [];
     this.redoStack = [];
@@ -144,6 +145,9 @@ export class ReportViewer {
         }
         if (saved.currentColumnWidth != null) {
           this.currentColumnWidth = saved.currentColumnWidth;
+        }
+        if (saved.savedHeaderBgColor) {
+          this.savedHeaderBgColor = saved.savedHeaderBgColor;
         }
         if (saved.customFilterValues && typeof saved.customFilterValues === 'object') {
           this.customFilterValues = { ...saved.customFilterValues };
@@ -351,7 +355,10 @@ export class ReportViewer {
         .report-viewer-header #rv-extra-header-controls #rv-popover-province-menu,
         .report-viewer-header #rv-extra-header-controls #rv-popover-year-menu,
         .report-viewer-header #rv-extra-header-controls #rv-popover-date-menu,
-        .report-viewer-header #rv-extra-header-controls #rv-scoresheet-popover-date-menu {
+        .report-viewer-header #rv-extra-header-controls #rv-scoresheet-popover-date-menu,
+        .report-viewer-header #rv-extra-header-controls #rv-popover-result-year-menu,
+        .report-viewer-header #rv-extra-header-controls #rv-result-popover-date-menu,
+        .report-viewer-header #rv-extra-header-controls #rv-result-popover-header-color {
           height: auto !important;
           min-height: 0 !important;
           max-height: none !important;
@@ -360,22 +367,37 @@ export class ReportViewer {
         .report-viewer-header #rv-extra-header-controls #rv-popover-province-menu:not(.hidden),
         .report-viewer-header #rv-extra-header-controls #rv-popover-year-menu:not(.hidden),
         .report-viewer-header #rv-extra-header-controls #rv-popover-date-menu:not(.hidden),
-        .report-viewer-header #rv-extra-header-controls #rv-scoresheet-popover-date-menu:not(.hidden) {
+        .report-viewer-header #rv-extra-header-controls #rv-scoresheet-popover-date-menu:not(.hidden),
+        .report-viewer-header #rv-extra-header-controls #rv-popover-result-year-menu:not(.hidden),
+        .report-viewer-header #rv-extra-header-controls #rv-result-popover-date-menu:not(.hidden),
+        .report-viewer-header #rv-extra-header-controls #rv-result-popover-header-color:not(.hidden) {
           display: block !important;
         }
         .report-viewer-header #rv-extra-header-controls #rv-popover-province-menu *,
         .report-viewer-header #rv-extra-header-controls #rv-popover-year-menu *,
         .report-viewer-header #rv-extra-header-controls #rv-popover-date-menu *,
-        .report-viewer-header #rv-extra-header-controls #rv-scoresheet-popover-date-menu * {
+        .report-viewer-header #rv-extra-header-controls #rv-scoresheet-popover-date-menu *,
+        .report-viewer-header #rv-extra-header-controls #rv-popover-result-year-menu *,
+        .report-viewer-header #rv-extra-header-controls #rv-result-popover-date-menu *,
+        .report-viewer-header #rv-extra-header-controls #rv-result-popover-header-color * {
           line-height: normal !important;
         }
         .report-viewer-header #rv-extra-header-controls #rv-popover-date-menu button,
-        .report-viewer-header #rv-extra-header-controls #rv-scoresheet-popover-date-menu button {
+        .report-viewer-header #rv-extra-header-controls #rv-scoresheet-popover-date-menu button,
+        .report-viewer-header #rv-extra-header-controls #rv-result-popover-date-menu button,
+        .report-viewer-header #rv-extra-header-controls #rv-result-popover-header-color button {
           height: auto !important;
           min-height: 0 !important;
           max-height: none !important;
           padding-top: 4px !important;
           padding-bottom: 4px !important;
+        }
+        .report-viewer-header #rv-extra-header-controls #rv-result-popover-header-color input[type="color"] {
+          height: 28px !important;
+          min-height: 28px !important;
+          max-height: 28px !important;
+          width: 32px !important;
+          padding: 2px !important;
         }
         .report-viewer-header #rv-extra-header-controls input#rv-input-new-province,
         .report-viewer-header #rv-extra-header-controls input#rv-input-new-year,
@@ -542,14 +564,14 @@ export class ReportViewer {
             <button type="button" 
                     id="rv-btn-shading-toggle" 
                     class="rv-format-btn h-8 px-2 rounded-md border border-input bg-card hover:bg-muted text-foreground flex items-center gap-1 transition-colors cursor-pointer shadow-xs" 
-                    title="${t('reportViewer.cellShading') || 'Table Cell / Row Shading'}">
+                    title="${t('reportViewer.cellShading') || 'Table Cell / Row / Header Shading'}">
               ${getIcon('paintBucket', 'w-3.5 h-3.5 text-primary')}
               <span class="text-[11px] font-medium hidden sm:inline font-khmer">${t('reportViewer.cellShading') || 'ពណ៌ផ្ទៃតារាង'}</span>
             </button>
 
             <!-- Shading Popover -->
             <div id="rv-popover-shading" 
-                 class="hidden absolute top-9.5 left-0 z-50 w-64 p-3 bg-card text-card-foreground border border-border rounded-xl shadow-xl space-y-2.5 font-khmer select-none">
+                 class="hidden absolute top-9.5 left-0 z-50 w-72 p-3 bg-card text-card-foreground border border-border rounded-xl shadow-xl space-y-2.5 font-khmer select-none">
               <div class="flex items-center justify-between text-xs font-bold border-b border-border pb-1.5">
                 <span class="flex items-center gap-1.5 text-foreground">
                   ${getIcon('paintBucket', 'w-3.5 h-3.5 text-primary')}
@@ -558,28 +580,46 @@ export class ReportViewer {
                 <span id="rv-selected-cell-info" class="text-[10px] text-muted-foreground font-mono"></span>
               </div>
 
-              <!-- Scope Selector (Cell vs Row) -->
-              <div class="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg text-[11px]">
-                <button type="button" id="rv-shading-target-cell" class="flex-1 py-1 rounded-md text-center font-medium transition-colors bg-card shadow-xs text-foreground cursor-pointer">
+              <!-- Scope Selector (Cell vs Row vs Header) -->
+              <div class="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg text-[10.5px]">
+                <button type="button" id="rv-shading-target-cell" class="flex-1 py-1 px-1 rounded-md text-center font-medium transition-colors bg-card shadow-xs text-foreground cursor-pointer">
                   ${t('reportViewer.targetCell') || 'ក្រឡា (Cell)'}
                 </button>
-                <button type="button" id="rv-shading-target-row" class="flex-1 py-1 rounded-md text-center font-medium transition-colors text-muted-foreground hover:text-foreground cursor-pointer">
+                <button type="button" id="rv-shading-target-row" class="flex-1 py-1 px-1 rounded-md text-center font-medium transition-colors text-muted-foreground hover:text-foreground cursor-pointer">
                   ${t('reportViewer.targetRow') || 'ជួរដេក (Row)'}
+                </button>
+                <button type="button" id="rv-shading-target-header" class="flex-1 py-1 px-1 rounded-md text-center font-medium transition-colors text-muted-foreground hover:text-foreground cursor-pointer">
+                  ក្បាលតារាង (Header)
                 </button>
               </div>
 
-              <!-- Quick Shade Presets -->
+              <!-- Quick Header Presets -->
               <div class="space-y-1">
-                <div class="text-[10px] text-muted-foreground font-medium">ពណ៌លឿន (Presets):</div>
+                <div class="text-[10px] text-muted-foreground font-medium">ពណ៌ក្បាលតារាង (Header Colors):</div>
                 <div class="grid grid-cols-4 gap-1.5">
-                  <button type="button" class="rv-shade-preset-btn h-7 rounded border border-border flex items-center justify-center bg-white hover:ring-2 hover:ring-primary text-[10px] cursor-pointer" data-color="#ffffff" title="White">#fff</button>
-                  <button type="button" class="rv-shade-preset-btn h-7 rounded border border-border flex items-center justify-center bg-zinc-100 hover:ring-2 hover:ring-primary text-[10px] text-zinc-700 cursor-pointer" data-color="#f4f4f5" title="Light Gray">Gray</button>
-                  <button type="button" class="rv-shade-preset-btn h-7 rounded border border-border flex items-center justify-center bg-blue-100 hover:ring-2 hover:ring-primary text-[10px] text-blue-700 cursor-pointer" data-color="#dbeafe" title="Soft Blue">Blue</button>
-                  <button type="button" class="rv-shade-preset-btn h-7 rounded border border-border flex items-center justify-center bg-emerald-100 hover:ring-2 hover:ring-primary text-[10px] text-emerald-700 cursor-pointer" data-color="#dcfce7" title="Soft Green">Green</button>
-                  <button type="button" class="rv-shade-preset-btn h-7 rounded border border-border flex items-center justify-center bg-amber-100 hover:ring-2 hover:ring-primary text-[10px] text-amber-700 cursor-pointer" data-color="#fef3c7" title="Soft Amber">Amber</button>
-                  <button type="button" class="rv-shade-preset-btn h-7 rounded border border-border flex items-center justify-center bg-rose-100 hover:ring-2 hover:ring-primary text-[10px] text-rose-700 cursor-pointer" data-color="#ffe4e6" title="Soft Rose">Rose</button>
-                  <button type="button" class="rv-shade-preset-btn h-7 rounded border border-border flex items-center justify-center bg-purple-100 hover:ring-2 hover:ring-primary text-[10px] text-purple-700 cursor-pointer" data-color="#f3e8ff" title="Soft Purple">Purple</button>
-                  <button type="button" class="rv-shade-preset-btn h-7 rounded border border-border flex items-center justify-center bg-transparent hover:ring-2 hover:ring-primary text-[10px] text-muted-foreground cursor-pointer" data-color="transparent" title="Transparent / Reset">✕</button>
+                  <button type="button" class="rv-shade-preset-btn h-6 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[9.5px] font-bold text-white cursor-pointer" style="background-color: #0045ff;" data-color="#0045ff" data-header-preset="true" title="Royal Blue">#0045ff</button>
+                  <button type="button" class="rv-shade-preset-btn h-6 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[9.5px] font-bold text-white cursor-pointer" style="background-color: #0284c7;" data-color="#0284c7" data-header-preset="true" title="Sky Blue">Sky</button>
+                  <button type="button" class="rv-shade-preset-btn h-6 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[9.5px] font-bold text-white cursor-pointer" style="background-color: #059669;" data-color="#059669" data-header-preset="true" title="Emerald">Emerald</button>
+                  <button type="button" class="rv-shade-preset-btn h-6 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[9.5px] font-bold text-white cursor-pointer" style="background-color: #7c3aed;" data-color="#7c3aed" data-header-preset="true" title="Purple">Purple</button>
+                  <button type="button" class="rv-shade-preset-btn h-6 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[9.5px] font-bold text-white cursor-pointer" style="background-color: #e11d48;" data-color="#e11d48" data-header-preset="true" title="Rose">Rose</button>
+                  <button type="button" class="rv-shade-preset-btn h-6 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[9.5px] font-bold text-white cursor-pointer" style="background-color: #d97706;" data-color="#d97706" data-header-preset="true" title="Amber">Amber</button>
+                  <button type="button" class="rv-shade-preset-btn h-6 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[9.5px] font-bold text-white cursor-pointer" style="background-color: #0f766e;" data-color="#0f766e" data-header-preset="true" title="Teal">Teal</button>
+                  <button type="button" class="rv-shade-preset-btn h-6 rounded border border-border flex items-center justify-center hover:ring-2 hover:ring-primary text-[9.5px] font-bold text-white cursor-pointer" style="background-color: #1e293b;" data-color="#1e293b" data-header-preset="true" title="Dark Slate">Dark</button>
+                </div>
+              </div>
+
+              <!-- Quick Soft Shade Presets -->
+              <div class="space-y-1">
+                <div class="text-[10px] text-muted-foreground font-medium">ពណ៌ស្រាល (Soft Presets):</div>
+                <div class="grid grid-cols-4 gap-1.5">
+                  <button type="button" class="rv-shade-preset-btn h-6 rounded border border-border flex items-center justify-center bg-white hover:ring-2 hover:ring-primary text-[10px] cursor-pointer" data-color="#ffffff" title="White">#fff</button>
+                  <button type="button" class="rv-shade-preset-btn h-6 rounded border border-border flex items-center justify-center bg-zinc-100 hover:ring-2 hover:ring-primary text-[10px] text-zinc-700 cursor-pointer" data-color="#f4f4f5" title="Light Gray">Gray</button>
+                  <button type="button" class="rv-shade-preset-btn h-6 rounded border border-border flex items-center justify-center bg-blue-100 hover:ring-2 hover:ring-primary text-[10px] text-blue-700 cursor-pointer" data-color="#dbeafe" title="Soft Blue">Blue</button>
+                  <button type="button" class="rv-shade-preset-btn h-6 rounded border border-border flex items-center justify-center bg-emerald-100 hover:ring-2 hover:ring-primary text-[10px] text-emerald-700 cursor-pointer" data-color="#dcfce7" title="Soft Green">Green</button>
+                  <button type="button" class="rv-shade-preset-btn h-6 rounded border border-border flex items-center justify-center bg-amber-100 hover:ring-2 hover:ring-primary text-[10px] text-amber-700 cursor-pointer" data-color="#fef3c7" title="Soft Amber">Amber</button>
+                  <button type="button" class="rv-shade-preset-btn h-6 rounded border border-border flex items-center justify-center bg-rose-100 hover:ring-2 hover:ring-primary text-[10px] text-rose-700 cursor-pointer" data-color="#ffe4e6" title="Soft Rose">Rose</button>
+                  <button type="button" class="rv-shade-preset-btn h-6 rounded border border-border flex items-center justify-center bg-purple-100 hover:ring-2 hover:ring-primary text-[10px] text-purple-700 cursor-pointer" data-color="#f3e8ff" title="Soft Purple">Purple</button>
+                  <button type="button" class="rv-shade-preset-btn h-6 rounded border border-border flex items-center justify-center bg-transparent hover:ring-2 hover:ring-primary text-[10px] text-muted-foreground cursor-pointer" data-color="transparent" title="Transparent / Reset">✕</button>
                 </div>
               </div>
 
@@ -587,7 +627,7 @@ export class ReportViewer {
               <div class="flex items-center justify-between gap-2 pt-1 border-t border-border">
                 <span class="text-xs text-muted-foreground">${t('reportViewer.customColor') || 'ពណ៌ផ្ទាល់ខ្លួន'}:</span>
                 <div class="flex items-center gap-1.5">
-                  <input type="color" id="rv-cell-color-picker" value="#f4f4f5" class="w-7 h-7 rounded border border-border p-0.5 cursor-pointer bg-transparent" />
+                  <input type="color" id="rv-cell-color-picker" value="#0045ff" class="w-7 h-7 rounded border border-border p-0.5 cursor-pointer bg-transparent" />
                   <button type="button" id="rv-btn-clear-shading" class="px-2 py-1 text-[11px] rounded bg-muted hover:bg-muted/80 text-muted-foreground cursor-pointer">
                     ${t('reportViewer.colorTransparent') || 'គ្មានពណ៌'}
                   </button>
@@ -2042,12 +2082,93 @@ export class ReportViewer {
   }
 
   /**
-   * 1. TABLE CELL / ROW SHADING TOOL
-   * Apply background color shading strictly to selected table cell, row, or multi-selected cells
+   * Compute readable text color (#ffffff or #0f172a) for a given hex background color
+   * @param {string} hexColor
+   * @returns {string}
+   */
+  getContrastTextColor(hexColor) {
+    if (!hexColor || hexColor === 'transparent') return '#0f172a';
+    const clean = String(hexColor).replace('#', '').trim();
+    if (clean.length === 3) {
+      const r = parseInt(clean[0] + clean[0], 16);
+      const g = parseInt(clean[1] + clean[1], 16);
+      const b = parseInt(clean[2] + clean[2], 16);
+      const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+      return yiq >= 155 ? '#0f172a' : '#ffffff';
+    }
+    if (clean.length >= 6) {
+      const r = parseInt(clean.slice(0, 2), 16);
+      const g = parseInt(clean.slice(2, 4), 16);
+      const b = parseInt(clean.slice(4, 6), 16);
+      if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+        return yiq >= 155 ? '#0f172a' : '#ffffff';
+      }
+    }
+    return '#ffffff';
+  }
+
+  /**
+   * 1. TABLE CELL / ROW / HEADER SHADING TOOL
+   * Apply background color shading strictly to selected table cell, row, table header, or multi-selected cells
    * @param {string} color
    */
   applyShading(color) {
     this.saveStateForUndo();
+
+    // If Header scope is selected, apply across all table headers in the report immediately
+    if (this.shadingTargetMode === 'header') {
+      const tables = this.scalerElement ? this.scalerElement.querySelectorAll('table') : [];
+      if (tables.length === 0) {
+        const isKm = i18n.getLocale() === 'km';
+        toast.info(isKm ? 'គ្មានតារាងនៅក្នុងរបាយការណ៍នេះទេ' : 'No table found in this report');
+        return;
+      }
+      this.savedHeaderBgColor = color === 'transparent' ? null : color;
+      const textColor = this.getContrastTextColor(color);
+      tables.forEach(table => {
+        const headerRows = table.querySelectorAll('thead tr');
+        headerRows.forEach(tr => {
+          if (color === 'transparent') {
+            tr.style.removeProperty('background-color');
+            tr.style.removeProperty('color');
+          } else {
+            tr.style.setProperty('background-color', color, 'important');
+            tr.style.setProperty('color', textColor, 'important');
+          }
+        });
+        const headerCells = table.querySelectorAll('thead th, thead td');
+        headerCells.forEach(th => {
+          if (th.dataset.subHeader === 'true' && color !== 'transparent') {
+            return;
+          }
+          if (color === 'transparent') {
+            th.style.removeProperty('background-color');
+            th.style.removeProperty('color');
+          } else {
+            th.style.setProperty('background-color', color, 'important');
+            th.style.setProperty('color', textColor, 'important');
+            th.style.setProperty('-webkit-print-color-adjust', 'exact', 'important');
+            th.style.setProperty('print-color-adjust', 'exact', 'important');
+          }
+        });
+      });
+      if (this.options.reportKey === 'score_result_table_2row') {
+        try {
+          if (color === 'transparent') {
+            localStorage.removeItem('score_result_2row_header_bg');
+          } else {
+            localStorage.setItem('score_result_2row_header_bg', color);
+          }
+          const dot = this.overlay?.querySelector('#rv-result-header-color-dot');
+          if (dot) dot.style.backgroundColor = color === 'transparent' ? '#0045ff' : color;
+          const picker = this.overlay?.querySelector('#rv-result-input-header-color');
+          if (picker && color !== 'transparent') picker.value = color;
+        } catch (_) {}
+      }
+      this.autoSaveIfEnabled();
+      return;
+    }
 
     // If multiple elements are selected via Ctrl/Cmd/Shift+click
     if (this.multiSelectedElements.size > 0) {
@@ -2084,17 +2205,20 @@ export class ReportViewer {
 
     if (!this.currentTableCell && !this.currentTableRow) {
       const isKm = i18n.getLocale() === 'km';
-      toast.info(isKm ? 'សូមចុចលើក្រឡា ឬជួរដេកនៃតារាងជាមុនសិន' : 'Please click on a table cell or row first');
+      toast.info(isKm ? 'សូមចុចលើក្រឡា ជួរដេក ឬជ្រើសរើស "ក្បាលតារាង (Header)" ជាមុនសិន' : 'Please click on a table cell, row, or select Header mode first');
       return;
     }
 
     if (this.shadingTargetMode === 'row' && this.currentTableRow) {
       const cells = this.currentTableRow.querySelectorAll('td, th');
+      const isHeaderRow = Boolean(this.currentTableRow.closest('thead'));
+      const textColor = isHeaderRow && color !== 'transparent' ? this.getContrastTextColor(color) : null;
       cells.forEach(c => {
         if (color === 'transparent') {
           c.style.removeProperty('background-color');
         } else {
           c.style.setProperty('background-color', color, 'important');
+          if (textColor) c.style.setProperty('color', textColor, 'important');
           c.style.setProperty('-webkit-print-color-adjust', 'exact', 'important');
           c.style.setProperty('print-color-adjust', 'exact', 'important');
         }
@@ -2104,6 +2228,9 @@ export class ReportViewer {
         this.currentTableCell.style.removeProperty('background-color');
       } else {
         this.currentTableCell.style.setProperty('background-color', color, 'important');
+        if (this.currentTableCell.tagName === 'TH' || this.currentTableCell.closest('thead')) {
+          this.currentTableCell.style.setProperty('color', this.getContrastTextColor(color), 'important');
+        }
         this.currentTableCell.style.setProperty('-webkit-print-color-adjust', 'exact', 'important');
         this.currentTableCell.style.setProperty('print-color-adjust', 'exact', 'important');
       }
@@ -2113,7 +2240,7 @@ export class ReportViewer {
   }
 
   /**
-   * Apply all saved table styles (row padding, column widths) across all tables in all sheets
+   * Apply all saved table styles (row padding, column widths, header color) across all tables in all sheets
    */
   applySavedTableFormatting() {
     if (!this.scalerElement) return;
@@ -2124,6 +2251,8 @@ export class ReportViewer {
     this.currentRowPadding = pad;
 
     const hasColWidths = this.savedColumnWidths && typeof this.savedColumnWidths === 'object' && Object.keys(this.savedColumnWidths).length > 0;
+    const headerBg = this.savedHeaderBgColor;
+    const headerFg = headerBg ? this.getContrastTextColor(headerBg) : null;
 
     tables.forEach(table => {
       // 1. Apply Row Padding
@@ -2131,6 +2260,21 @@ export class ReportViewer {
         c.style.setProperty('padding-top', `${pad}px`, 'important');
         c.style.setProperty('padding-bottom', `${pad}px`, 'important');
       });
+
+      // 1b. Apply Saved Header Background Color if set
+      if (headerBg) {
+        table.querySelectorAll('thead tr').forEach(tr => {
+          tr.style.setProperty('background-color', headerBg, 'important');
+          if (headerFg) tr.style.setProperty('color', headerFg, 'important');
+        });
+        table.querySelectorAll('thead th, thead td').forEach(th => {
+          if (th.dataset.subHeader === 'true') return;
+          th.style.setProperty('background-color', headerBg, 'important');
+          if (headerFg) th.style.setProperty('color', headerFg, 'important');
+          th.style.setProperty('-webkit-print-color-adjust', 'exact', 'important');
+          th.style.setProperty('print-color-adjust', 'exact', 'important');
+        });
+      }
 
       // 2. Apply Column Widths
       if (hasColWidths) {
@@ -3579,6 +3723,7 @@ export class ReportViewer {
         savedTextBoxes,
         currentRowPadding: this.currentRowPadding,
         savedColumnWidths: this.savedColumnWidths,
+        savedHeaderBgColor: this.savedHeaderBgColor,
         customFilterValues: this.customFilterValues,
         updatedAt: new Date().toISOString()
       };
@@ -3619,6 +3764,7 @@ export class ReportViewer {
       this.savedTextBoxes = [];
       this.currentRowPadding = 8;
       this.savedColumnWidths = {};
+      this.savedHeaderBgColor = null;
       this.customFilterValues = {};
       if (this.paperElement) {
         this.paperElement.querySelectorAll('.rv-resizable-image').forEach(w => w.remove());
@@ -4045,26 +4191,38 @@ export class ReportViewer {
       togglePopoverShading();
     });
 
-    // Shading scope toggle (cell vs row)
+    // Shading scope toggle (cell vs row vs header)
     const targetCellBtn = this.overlay.querySelector('#rv-shading-target-cell');
     const targetRowBtn = this.overlay.querySelector('#rv-shading-target-row');
-    targetCellBtn?.addEventListener('click', () => {
-      this.shadingTargetMode = 'cell';
-      targetCellBtn.className = 'flex-1 py-1 rounded-md text-center font-medium transition-colors bg-card shadow-xs text-foreground cursor-pointer';
-      targetRowBtn.className = 'flex-1 py-1 rounded-md text-center font-medium transition-colors text-muted-foreground hover:text-foreground cursor-pointer';
-    });
-    targetRowBtn?.addEventListener('click', () => {
-      this.shadingTargetMode = 'row';
-      targetRowBtn.className = 'flex-1 py-1 rounded-md text-center font-medium transition-colors bg-card shadow-xs text-foreground cursor-pointer';
-      targetCellBtn.className = 'flex-1 py-1 rounded-md text-center font-medium transition-colors text-muted-foreground hover:text-foreground cursor-pointer';
-    });
+    const targetHeaderBtn = this.overlay.querySelector('#rv-shading-target-header');
+    const setShadingTargetUI = (mode) => {
+      this.shadingTargetMode = mode;
+      const activeCls = 'flex-1 py-1 px-1 rounded-md text-center font-medium transition-colors bg-card shadow-xs text-foreground cursor-pointer';
+      const inactiveCls = 'flex-1 py-1 px-1 rounded-md text-center font-medium transition-colors text-muted-foreground hover:text-foreground cursor-pointer';
+      if (targetCellBtn) targetCellBtn.className = mode === 'cell' ? activeCls : inactiveCls;
+      if (targetRowBtn) targetRowBtn.className = mode === 'row' ? activeCls : inactiveCls;
+      if (targetHeaderBtn) targetHeaderBtn.className = mode === 'header' ? activeCls : inactiveCls;
+      const infoEl = this.overlay.querySelector('#rv-selected-cell-info');
+      if (infoEl && mode === 'header') {
+        infoEl.textContent = 'ក្បាលតារាង (All Headers)';
+      } else {
+        this.updateCellInfoUI();
+      }
+    };
+    targetCellBtn?.addEventListener('click', () => setShadingTargetUI('cell'));
+    targetRowBtn?.addEventListener('click', () => setShadingTargetUI('row'));
+    targetHeaderBtn?.addEventListener('click', () => setShadingTargetUI('header'));
 
     // Preset shade colors
     this.overlay.querySelectorAll('.rv-shade-preset-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         const color = btn.dataset.color;
-        if (color) this.applyShading(color);
+        if (!color) return;
+        if (btn.dataset.headerPreset === 'true' && (!this.currentTableCell || this.currentTableCell.tagName === 'TH' || this.currentTableCell.closest('thead')) && this.multiSelectedElements.size === 0) {
+          setShadingTargetUI('header');
+        }
+        this.applyShading(color);
       });
     });
 

@@ -1474,15 +1474,15 @@ export const AttendancePage = {
         `;
 
         const subHeadersPerMonthHtml = months.map(() => `
-          <th class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #f0f9ff !important; color: #0369a1 !important; padding: 3px 2px !important; vertical-align: middle !important;">ច្បាប់</th>
-          <th class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #fff1f2 !important; color: #be123c !important; padding: 3px 2px !important; vertical-align: middle !important;">ឥតច្បាប់</th>
-          <th class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #f5f3ff !important; color: #6d28d9 !important; padding: 3px 2px !important; vertical-align: middle !important;">សរុប</th>
+          <th data-sub-header="true" class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #f0f9ff !important; color: #0369a1 !important; padding: 3px 2px !important; vertical-align: middle !important;">ច្បាប់</th>
+          <th data-sub-header="true" class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #fff1f2 !important; color: #be123c !important; padding: 3px 2px !important; vertical-align: middle !important;">ឥតច្បាប់</th>
+          <th data-sub-header="true" class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #f5f3ff !important; color: #6d28d9 !important; padding: 3px 2px !important; vertical-align: middle !important;">សរុប</th>
         `).join('');
 
         const subHeadersGrandTotalHtml = !isSingle ? `
-          <th class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #e0f2fe !important; color: #0369a1 !important; padding: 3px 2px !important; vertical-align: middle !important;">ច្បាប់</th>
-          <th class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #ffe4e6 !important; color: #be123c !important; padding: 3px 2px !important; vertical-align: middle !important;">ឥតច្បាប់</th>
-          <th class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #ede9fe !important; color: #5b21b6 !important; padding: 3px 2px !important; vertical-align: middle !important;">សរុប</th>
+          <th data-sub-header="true" class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #e0f2fe !important; color: #0369a1 !important; padding: 3px 2px !important; vertical-align: middle !important;">ច្បាប់</th>
+          <th data-sub-header="true" class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #ffe4e6 !important; color: #be123c !important; padding: 3px 2px !important; vertical-align: middle !important;">ឥតច្បាប់</th>
+          <th data-sub-header="true" class="text-center font-khmer font-bold" style="border: 1px solid #000000 !important; background-color: #ede9fe !important; color: #5b21b6 !important; padding: 3px 2px !important; vertical-align: middle !important;">សរុប</th>
         ` : '';
 
         const totalColumnsCount = 4 + (months.length * 3) + (isSingle ? 1 : 3);
