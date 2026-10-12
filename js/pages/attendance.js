@@ -1498,15 +1498,15 @@ export const AttendancePage = {
           const genderLabel = isFemale ? 'ស្រី' : 'ប្រុស';
 
           const perMonthCellsHtml = r.monthly.map(m => `
-            <td class="text-center font-mono" style="border: 1px solid #000000 !important; padding: 3px 2px !important; color: #0369a1; font-weight: ${m.permission > 0 ? '700' : '400'};">${m.permission}</td>
-            <td class="text-center font-mono" style="border: 1px solid #000000 !important; padding: 3px 2px !important; color: #be123c; font-weight: ${m.absent > 0 ? '700' : '400'};">${m.absent}</td>
-            <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; padding: 3px 2px !important; color: #6d28d9;">${m.total}</td>
+            <td class="text-center font-mono" style="border: 1px solid #000000 !important; padding: 3px 2px !important; color: #0369a1; font-weight: ${(m.permission ?? 0) > 0 ? '700' : '400'};">${m.permission ?? 0}</td>
+            <td class="text-center font-mono" style="border: 1px solid #000000 !important; padding: 3px 2px !important; color: #be123c; font-weight: ${(m.absent ?? 0) > 0 ? '700' : '400'};">${m.absent ?? 0}</td>
+            <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; padding: 3px 2px !important; color: #6d28d9;">${m.total ?? 0}</td>
           `).join('');
 
           const endCellsHtml = !isSingle ? `
-            <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #f8fafc !important; padding: 3px 2px !important; color: #0369a1;">${r.totalPermission}</td>
-            <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #f8fafc !important; padding: 3px 2px !important; color: #be123c;">${r.totalAbsent}</td>
-            <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #f5f3ff !important; padding: 3px 2px !important; color: #5b21b6;">${r.grandTotal}</td>
+            <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #f8fafc !important; padding: 3px 2px !important; color: #0369a1;">${r.totalPermission ?? 0}</td>
+            <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #f8fafc !important; padding: 3px 2px !important; color: #be123c;">${r.totalAbsent ?? 0}</td>
+            <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #f5f3ff !important; padding: 3px 2px !important; color: #5b21b6;">${r.grandTotal ?? 0}</td>
           ` : `
             <td class="text-center font-khmer" style="border: 1px solid #000000 !important; padding: 3px 4px !important;"></td>
           `;
@@ -1525,15 +1525,15 @@ export const AttendancePage = {
 
         // Footer Summary Row (សរុបរួម)
         const footerMonthTotalsHtml = summary.monthTotals.map(mt => `
-          <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #f0f9ff !important; padding: 4px 2px !important; color: #0369a1;">${mt.permission}</td>
-          <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #fff1f2 !important; padding: 4px 2px !important; color: #be123c;">${mt.absent}</td>
-          <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #f5f3ff !important; padding: 4px 2px !important; color: #6d28d9;">${mt.total}</td>
+          <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #f0f9ff !important; padding: 4px 2px !important; color: #0369a1;">${mt.permission ?? 0}</td>
+          <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #fff1f2 !important; padding: 4px 2px !important; color: #be123c;">${mt.absent ?? 0}</td>
+          <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #f5f3ff !important; padding: 4px 2px !important; color: #6d28d9;">${mt.total ?? 0}</td>
         `).join('');
 
         const footerGrandTotalHtml = !isSingle ? `
-          <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #e0f2fe !important; padding: 4px 2px !important; color: #0369a1;">${summary.grandTotals.permission}</td>
-          <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #ffe4e6 !important; padding: 4px 2px !important; color: #be123c;">${summary.grandTotals.absent}</td>
-          <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #ede9fe !important; padding: 4px 2px !important; color: #4c1d95;">${summary.grandTotals.total}</td>
+          <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #e0f2fe !important; padding: 4px 2px !important; color: #0369a1;">${summary.grandTotals?.permission ?? 0}</td>
+          <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #ffe4e6 !important; padding: 4px 2px !important; color: #be123c;">${summary.grandTotals?.absent ?? 0}</td>
+          <td class="text-center font-mono font-bold" style="border: 1px solid #000000 !important; background-color: #ede9fe !important; padding: 4px 2px !important; color: #4c1d95;">${summary.grandTotals?.total ?? 0}</td>
         ` : `
           <td style="border: 1px solid #000000 !important; background-color: #f1f5f9 !important;"></td>
         `;
@@ -1656,14 +1656,14 @@ export const AttendancePage = {
     const bodyRowsHtml = rows.map((r, i) => {
       const isFemale = r.gender === 'Female' || r.gender === 'ស្រី' || r.gender === 'F';
       const monthCells = r.monthly.map(m => `
-        <td style="border:1px solid #cbd5e1; text-align:center; color:#0369a1; font-weight:bold;">${m.permission}</td>
-        <td style="border:1px solid #cbd5e1; text-align:center; color:#be123c; font-weight:bold;">${m.absent}</td>
-        <td style="border:1px solid #cbd5e1; text-align:center; color:#6d28d9; font-weight:bold;">${m.total}</td>
+        <td style="border:1px solid #cbd5e1; text-align:center; color:#0369a1; font-weight:bold;">${m.permission ?? 0}</td>
+        <td style="border:1px solid #cbd5e1; text-align:center; color:#be123c; font-weight:bold;">${m.absent ?? 0}</td>
+        <td style="border:1px solid #cbd5e1; text-align:center; color:#6d28d9; font-weight:bold;">${m.total ?? 0}</td>
       `).join('');
       const endCells = !isSingle ? `
-        <td style="border:1px solid #cbd5e1; background:#f8fafc; text-align:center; color:#0369a1; font-weight:bold;">${r.totalPermission}</td>
-        <td style="border:1px solid #cbd5e1; background:#f8fafc; text-align:center; color:#be123c; font-weight:bold;">${r.totalAbsent}</td>
-        <td style="border:1px solid #cbd5e1; background:#f5f3ff; text-align:center; color:#4c1d95; font-weight:bold;">${r.grandTotal}</td>
+        <td style="border:1px solid #cbd5e1; background:#f8fafc; text-align:center; color:#0369a1; font-weight:bold;">${r.totalPermission ?? 0}</td>
+        <td style="border:1px solid #cbd5e1; background:#f8fafc; text-align:center; color:#be123c; font-weight:bold;">${r.totalAbsent ?? 0}</td>
+        <td style="border:1px solid #cbd5e1; background:#f5f3ff; text-align:center; color:#4c1d95; font-weight:bold;">${r.grandTotal ?? 0}</td>
       ` : `<td style="border:1px solid #cbd5e1;"></td>`;
 
       return `
@@ -1679,15 +1679,15 @@ export const AttendancePage = {
     }).join('');
 
     const footerMonthCells = summary.monthTotals.map(mt => `
-      <td style="border:1px solid #64748b; background:#f0f9ff; text-align:center; font-weight:bold; color:#0369a1;">${mt.permission}</td>
-      <td style="border:1px solid #64748b; background:#fff1f2; text-align:center; font-weight:bold; color:#be123c;">${mt.absent}</td>
-      <td style="border:1px solid #64748b; background:#f5f3ff; text-align:center; font-weight:bold; color:#6d28d9;">${mt.total}</td>
+      <td style="border:1px solid #64748b; background:#f0f9ff; text-align:center; font-weight:bold; color:#0369a1;">${mt.permission ?? 0}</td>
+      <td style="border:1px solid #64748b; background:#fff1f2; text-align:center; font-weight:bold; color:#be123c;">${mt.absent ?? 0}</td>
+      <td style="border:1px solid #64748b; background:#f5f3ff; text-align:center; font-weight:bold; color:#6d28d9;">${mt.total ?? 0}</td>
     `).join('');
 
     const footerEndCells = !isSingle ? `
-      <td style="border:1px solid #64748b; background:#e0f2fe; text-align:center; font-weight:bold; color:#0369a1;">${summary.grandTotals.permission}</td>
-      <td style="border:1px solid #64748b; background:#ffe4e6; text-align:center; font-weight:bold; color:#be123c;">${summary.grandTotals.absent}</td>
-      <td style="border:1px solid #64748b; background:#ede9fe; text-align:center; font-weight:bold; color:#4c1d95;">${summary.grandTotals.total}</td>
+      <td style="border:1px solid #64748b; background:#e0f2fe; text-align:center; font-weight:bold; color:#0369a1;">${summary.grandTotals?.permission ?? 0}</td>
+      <td style="border:1px solid #64748b; background:#ffe4e6; text-align:center; font-weight:bold; color:#be123c;">${summary.grandTotals?.absent ?? 0}</td>
+      <td style="border:1px solid #64748b; background:#ede9fe; text-align:center; font-weight:bold; color:#4c1d95;">${summary.grandTotals?.total ?? 0}</td>
     ` : `<td style="border:1px solid #64748b; background:#f1f5f9;"></td>`;
 
     const html = `

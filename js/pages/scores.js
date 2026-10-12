@@ -3940,9 +3940,9 @@ export const ScoresPage = {
           const rankText = (r.rank !== undefined && r.rank !== null && r.rank !== '') ? r.rank : (idx + 1);
           const gradeText = r.grade || '—';
           const att = attMap.get(r.studentId) || { excused: 0, unexcused: 0, total: 0 };
-          const excusedText = att.excused > 0 ? att.excused : '';
-          const unexcusedText = att.unexcused > 0 ? att.unexcused : '';
-          const totalAbsText = att.total > 0 ? att.total : '';
+          const excusedText = Number(att.excused || 0);
+          const unexcusedText = Number(att.unexcused || 0);
+          const totalAbsText = Number(att.total || 0);
 
           return `
             <tr class="score-sheet-row hover:bg-muted/30 border-b border-border/50 text-[8px]" data-student-id="${r.studentId}">
