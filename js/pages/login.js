@@ -125,10 +125,14 @@ export class LoginPage {
               </button>
             </div>
 
-            <!-- Forgot Password Link -->
-            <div class="pt-0.5 pb-1 text-left">
+            <!-- Forgot Password & Cloud Sync Row -->
+            <div class="pt-0.5 pb-1 flex items-center justify-between">
               <button type="button" id="link-forgot-password" class="text-xs transition-colors cursor-pointer inline-block bg-transparent border-none p-0 ${forgotPassClass}">
                 ${isKm ? 'ភ្លេចពាក្យសម្ងាត់?' : 'Forgot password?'}
+              </button>
+              <button type="button" id="btn-login-cloud-sync" class="inline-flex items-center gap-1 transition-colors cursor-pointer text-[11px] bg-transparent border-none p-0 ${demoSyncClass}">
+                <span class="btn-login-sync-icon flex items-center">${getIcon('cloudDownload', 'w-3 h-3')}</span>
+                <span id="btn-login-cloud-sync-text">${isKm ? 'Sync គណនី' : 'Sync Sheet'}</span>
               </button>
             </div>
 
@@ -152,31 +156,6 @@ export class LoginPage {
             <button type="button" id="btn-request-access" class="hover:underline cursor-pointer font-medium ml-1 bg-transparent border-none p-0 ${requestAccessClass}">
               ${isKm ? 'ស្នើសុំសិទ្ធិចូល' : 'Request access'}
             </button>
-          </div>
-
-          <!-- Quick Demo Accounts Bar -->
-          <div class="mt-6 pt-4 border-t ${dividerClass}">
-            <div class="flex items-center justify-between text-[11px] ${demoLabelClass} mb-2">
-              <span>${isKm ? 'គណនីគំរូរហ័ស:' : 'Demo quick fill:'}</span>
-              <button type="button" id="btn-login-cloud-sync" class="inline-flex items-center gap-1 transition-colors cursor-pointer text-[11px] bg-transparent border-none p-0 ${demoSyncClass}">
-                <span class="btn-login-sync-icon flex items-center">${getIcon('cloudDownload', 'w-3 h-3')}</span>
-                <span id="btn-login-cloud-sync-text">${isKm ? 'Sync គណនី' : 'Sync Sheet'}</span>
-              </button>
-            </div>
-            <div class="grid grid-cols-3 gap-1.5">
-              <button type="button" data-demo="admin" data-demo-pass="admin123" 
-                      class="px-2 py-1.5 rounded-md text-[11px] font-medium transition-all text-center border cursor-pointer ${demoChipClass}">
-                Admin
-              </button>
-              <button type="button" data-demo="director1" data-demo-pass="director123" 
-                      class="px-2 py-1.5 rounded-md text-[11px] font-medium transition-all text-center border cursor-pointer ${demoChipClass}">
-                Director
-              </button>
-              <button type="button" data-demo="teacher1" data-demo-pass="teacher123" 
-                      class="px-2 py-1.5 rounded-md text-[11px] font-medium transition-all text-center border cursor-pointer ${demoChipClass}">
-                Teacher
-              </button>
-            </div>
           </div>
         </div>
 
@@ -242,22 +221,6 @@ export class LoginPage {
     this.container.querySelectorAll('.footer-link').forEach(btn => {
       btn.addEventListener('click', (e) => {
         toast.info(`${e.target.textContent} • SmartSchool SMS`);
-      });
-    });
-
-    // Demo Account Quick Fill Click
-    this.container.querySelectorAll('button[data-demo]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const userInput = document.getElementById('login-username');
-        const passInput = document.getElementById('login-password');
-        const userVal = btn.getAttribute('data-demo') || 'admin';
-        const passVal = btn.getAttribute('data-demo-pass') || 'admin123';
-
-        if (userInput) userInput.value = userVal;
-        if (passInput) passInput.value = passVal;
-
-        // Auto submit for fast login
-        this.handleLogin();
       });
     });
 
