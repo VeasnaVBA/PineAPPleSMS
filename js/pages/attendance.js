@@ -16,6 +16,7 @@ import { i18n, t } from '../i18n/i18n.js';
 import { toast } from '../components/toast.js';
 import { getIcon } from '../components/icons.js';
 import { Modal } from '../components/modal.js';
+import { getMonthKhmerCalendarMap } from '../utils/khmerLunarCalendar.js';
 
 const DAY_NAMES_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const DAY_NAMES_KM = ['អាទិត្យ', 'ចន្ទ', 'អង្គារ', 'ពុធ', 'ព្រហ', 'សុក្រ', 'សៅរ៍'];
@@ -30,6 +31,7 @@ export const AttendancePage = {
     searchQuery: '',
     selectedDayCol: null,
     sheet: null,
+    khmerCal: null,
     autoSaveTimer: null,
     isSaving: false
   },
@@ -234,6 +236,9 @@ export const AttendancePage = {
           </div>
         </div>
 
+        <!-- Khmer Lunar Calendar & Holidays Banner (shown when Month & Year are selected) -->
+        <div id="att-khmer-holidays-banner" class="hidden p-3 rounded-xl border border-border bg-card shadow-2xs font-khmer"></div>
+
         <!-- Monthly Attendance Grid Container -->
         <div class="rounded-xl border border-border bg-card shadow-xs overflow-hidden relative w-full max-w-full">
           <!-- Empty state shown before user chooses both Month and Year -->
@@ -268,15 +273,18 @@ export const AttendancePage = {
     const emptyTitle = document.getElementById('att-empty-title');
     const emptyDesc = document.getElementById('att-empty-desc');
     const wrapper = document.getElementById('att-table-wrapper');
+    const holidayBanner = document.getElementById('att-khmer-holidays-banner');
     const hasMonthAndYear = Boolean(
       this.state.selectedClassId && this.state.selectedMonth && this.state.selectedYear
     );
 
     emptyState?.classList.toggle('hidden', hasMonthAndYear);
     wrapper?.classList.toggle('hidden', !hasMonthAndYear);
+    holidayBanner?.classList.toggle('hidden', !hasMonthAndYear);
 
     if (!hasMonthAndYear) {
       this.state.sheet = null;
+      this.state.khmerCal = null;
       this.state.selectedDayCol = null;
       if (emptyTitle && emptyDesc) {
         if (this.state.selectedMonth && !this.state.selectedYear) {
@@ -301,12 +309,75 @@ export const AttendancePage = {
       year: this.state.selectedYear
     });
 
+    this.state.khmerCal = getMonthKhmerCalendarMap(
+      this.state.sheet.yearNum,
+      this.state.sheet.monthNum,
+      this.state.sheet.daysInMonth
+    );
+
     if (this.state.selectedDayCol && this.state.selectedDayCol > this.state.sheet.daysInMonth) {
       this.state.selectedDayCol = null;
     }
 
+    this.renderKhmerHolidaysBanner();
     this.renderTable();
     this.updateStats();
+  },
+
+  renderKhmerHolidaysBanner() {
+    const banner = document.getElementById('att-khmer-holidays-banner');
+    if (!banner || !this.state.khmerCal || !this.state.sheet) return;
+
+    const { holidaysList, lunarYearHeaderKm } = this.state.khmerCal;
+    const holidaysPillsHtml = holidaysList.length === 0
+      ? `<span class="text-xs text-muted-foreground">មិនមានថ្ងៃបុណ្យ ឬថ្ងៃឈប់សម្រាកផ្លូវការក្នុងខែនេះទេ</span>`
+      : holidaysList.map(h => `
+          <button
+            type="button"
+            data-holiday-day="${h.day}"
+            title="ចុចដើម្បីទៅកាន់ជួរឈរថ្ងៃទី ${h.day} (${h.lunarMedium})"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 dark:text-rose-300 text-xs font-medium transition-colors cursor-pointer"
+          >
+            <span class="px-1.5 py-0.5 rounded bg-rose-600 text-white font-mono text-[10px] font-bold">ថ្ងៃទី ${h.day}</span>
+            <span class="font-semibold">${h.holidayTitleKm}</span>
+            <span class="text-[10px] text-rose-600/80 dark:text-rose-300/80">(${h.lunarMedium})</span>
+          </button>
+        `).join('');
+
+    banner.innerHTML = `
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 mb-2 border-b border-border/60">
+        <div class="flex items-center gap-2 text-xs font-semibold text-amber-700 dark:text-amber-400">
+          <span>☸ ចន្ទគតិខ្មែរ៖</span>
+          <span>${lunarYearHeaderKm}</span>
+        </div>
+        <div class="flex items-center gap-3 text-[11px] text-muted-foreground">
+          <span class="inline-flex items-center gap-1">
+            <span class="w-2.5 h-2.5 rounded-xs bg-rose-500/25 border border-rose-500 inline-block"></span>
+            <span>ថ្ងៃបុណ្យជាតិ/ចន្ទគតិ</span>
+          </span>
+          <span class="inline-flex items-center gap-1">
+            <span class="text-amber-600 dark:text-amber-400 font-bold">☸</span>
+            <span>ថ្ងៃសីល</span>
+          </span>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs font-semibold text-foreground shrink-0">ថ្ងៃឈប់សម្រាក និងបុណ្យជាតិ៖</span>
+        ${holidaysPillsHtml}
+      </div>
+    `;
+
+    banner.querySelectorAll('[data-holiday-day]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const day = parseInt(btn.getAttribute('data-holiday-day'), 10);
+        if (!day) return;
+        this.setSelectedDayCol(day);
+        const th = document.querySelector(`th.att-day-th[data-day-col="${day}"]`);
+        if (th) {
+          th.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+      });
+    });
   },
 
   getFilteredRows() {
@@ -328,6 +399,7 @@ export const AttendancePage = {
     if (!thead || !tbody || !this.state.sheet) return;
 
     const { daysInMonth, yearNum, monthNum } = this.state.sheet;
+    const khmerCal = this.state.khmerCal || getMonthKhmerCalendarMap(yearNum, monthNum, daysInMonth);
     const rows = this.getFilteredRows();
 
     // 1. Fixed Column Widths via Colgroup (responsive CSS classes match .att-sticky-col-1..4 on desktop & mobile)
@@ -348,7 +420,7 @@ export const AttendancePage = {
       `;
     }
 
-    // 2. Build Day Header Columns (1..daysInMonth) with z-index: 10 so they scroll cleanly under sticky left columns
+    // 2. Build Day Header Columns (1..daysInMonth) with Khmer Lunar Date & Holiday Indicator
     const isKm = i18n.getLocale() === 'km';
     const dayNames = isKm ? DAY_NAMES_KM : DAY_NAMES_EN;
     let dayHeadersHtml = '';
@@ -357,11 +429,27 @@ export const AttendancePage = {
       const dayName = dayNames[dayOfWeekIdx];
       const isSunday = dayOfWeekIdx === 0;
       const isSelectedCol = this.state.selectedDayCol === d;
+      const dayInfo = khmerCal.daysMap[d];
+      const isHoliday = Boolean(dayInfo?.isHoliday);
+      const isHolyDay = Boolean(dayInfo?.isHolyDay);
+      const lunarShort = dayInfo ? dayInfo.lunarShort : '';
+      const headerTooltip = dayInfo
+        ? `ថ្ងៃទី ${d} (${dayInfo.lunarFull})${isHoliday ? `\n🎉 ថ្ងៃបុណ្យ៖ ${dayInfo.holidayTitleKm}` : ''}${isHolyDay ? '\n☸ ថ្ងៃសីល' : ''}`
+        : `ថ្ងៃទី ${d}`;
+
       dayHeadersHtml += `
-        <th data-day-col="${d}" title="ចុចដើម្បីជ្រើសរើសជួរឈរថ្ងៃទី ${d}" class="att-scroll-th att-day-th ${isSelectedCol ? 'is-selected-col' : ''} p-0 text-center font-mono" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-          <div class="w-full h-[42px] mx-auto flex flex-col items-center justify-center text-center bg-transparent" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 42px; line-height: 1.1; gap: 2px;">
-            <span class="font-bold font-mono ${isSunday ? 'text-rose-600 dark:text-rose-400' : ''}" style="font-size: 11px; font-weight: 700; line-height: 1; display: block;">${d}</span>
-            <span class="${isKm ? 'font-khmer' : 'font-mono'} ${isSunday ? 'text-rose-500 dark:text-rose-400' : 'text-muted-foreground'}" style="font-size: 9px; font-weight: 600; line-height: 1.1; display: block; white-space: nowrap;">${dayName}</span>
+        <th
+          data-day-col="${d}"
+          title="${headerTooltip}"
+          class="att-scroll-th att-day-th ${isHoliday ? 'is-holiday-col' : ''} ${isSelectedCol ? 'is-selected-col' : ''} p-0 text-center font-mono"
+          style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;"
+        >
+          <div class="w-full h-[52px] mx-auto flex flex-col items-center justify-center text-center bg-transparent" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 52px; line-height: 1.05; gap: 1px;">
+            <span class="font-bold font-mono ${(isSunday || isHoliday) ? 'text-rose-600 dark:text-rose-400' : ''}" style="font-size: 11px; font-weight: 700; line-height: 1; display: block;">
+              ${d}${isHolyDay ? '<span class="text-amber-600 dark:text-amber-400 ml-0.5" style="font-size:8px;">☸</span>' : ''}
+            </span>
+            <span class="${isKm ? 'font-khmer' : 'font-mono'} ${(isSunday || isHoliday) ? 'text-rose-600 dark:text-rose-400' : 'text-muted-foreground'}" style="font-size: 9px; font-weight: 600; line-height: 1.05; display: block; white-space: nowrap;">${dayName}</span>
+            <span class="font-khmer ${isHoliday ? 'text-rose-700 dark:text-rose-300 font-bold' : 'text-amber-700/90 dark:text-amber-400/90'}" style="font-size: 8.5px; line-height: 1; display: block; white-space: nowrap;">${lunarShort}</span>
           </div>
         </th>
       `;
@@ -370,29 +458,29 @@ export const AttendancePage = {
     thead.innerHTML = `
       <tr class="border-b border-border">
         <th class="att-sticky-col-1 p-0 text-center font-khmer text-[11px] font-bold" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
-          <div class="w-full h-[42px] whitespace-nowrap flex items-center justify-center text-center bg-transparent">ល.រ</div>
+          <div class="w-full h-[52px] whitespace-nowrap flex items-center justify-center text-center bg-transparent">ល.រ</div>
         </th>
         <th class="att-sticky-col-2 p-0 text-center font-khmer text-[11px] font-bold" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
-          <div class="w-full h-[42px] whitespace-nowrap flex items-center justify-center text-center px-1 bg-transparent">អត្តលេខ</div>
+          <div class="w-full h-[52px] whitespace-nowrap flex items-center justify-center text-center px-1 bg-transparent">អត្តលេខ</div>
         </th>
         <th class="att-sticky-col-3 p-0 text-center font-khmer text-[11px] font-bold" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
-          <div class="w-full h-[42px] whitespace-nowrap flex items-center justify-center text-center px-1 bg-transparent">គោត្តនាម និងនាម</div>
+          <div class="w-full h-[52px] whitespace-nowrap flex items-center justify-center text-center px-1 bg-transparent">គោត្តនាម និងនាម</div>
         </th>
         <th class="att-sticky-col-4 p-0 text-center font-khmer text-[11px] font-bold" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
-          <div class="w-full h-[42px] whitespace-nowrap flex items-center justify-center text-center px-1 bg-transparent">ភេទ</div>
+          <div class="w-full h-[52px] whitespace-nowrap flex items-center justify-center text-center px-1 bg-transparent">ភេទ</div>
         </th>
         <th class="att-scroll-th att-col-perm-th p-0 text-center font-khmer text-[11px] font-bold" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-          <div class="w-full h-[42px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
+          <div class="w-full h-[52px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
             <span>ច្បាប់</span>
           </div>
         </th>
         <th class="att-scroll-th att-col-absent-th p-0 text-center font-khmer text-[11px] font-bold" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-          <div class="w-full h-[42px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
+          <div class="w-full h-[52px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
             <span>ឥតច្បាប់</span>
           </div>
         </th>
         <th class="att-scroll-th att-col-total-th p-0 text-center font-khmer text-[11px] font-bold" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-          <div class="w-full h-[42px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
+          <div class="w-full h-[52px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
             <span>សរុប</span>
           </div>
         </th>
@@ -421,6 +509,8 @@ export const AttendancePage = {
       let dayCellsHtml = '';
       for (let d = 1; d <= daysInMonth; d++) {
         const dayName = dayNames[new Date(yearNum, monthNum - 1, d).getDay()];
+        const dayInfo = khmerCal.daysMap[d];
+        const isHoliday = Boolean(dayInfo?.isHoliday);
         const cellObj = row.days[d] || { status: 'Present', mark: '' };
         const markVal = cellObj.status === 'Excused'
           ? 'P'
@@ -432,15 +522,18 @@ export const AttendancePage = {
           : cellObj.status === 'Absent'
             ? 'is-absent'
             : '';
+        const holidayInfoText = dayInfo
+          ? ` — ${dayInfo.lunarMedium}${isHoliday ? ` (${dayInfo.holidayTitleKm})` : ''}`
+          : '';
 
         dayCellsHtml += `
-          <td class="score-cell-td att-day-td ${statusCellClass}">
+          <td class="score-cell-td att-day-td ${isHoliday ? 'is-holiday-day' : ''} ${statusCellClass}">
             <select
               data-student-id="${row.studentId}"
               data-day="${d}"
               data-row-idx="${rowIdx}"
               data-col-idx="${d}"
-              title="ថ្ងៃទី ${d} (${dayName}) (P = ច្បាប់, A = ឥតច្បាប់, ទទេ = វត្តមាន)"
+              title="ថ្ងៃទី ${d} (${dayName}${holidayInfoText}) (P = ច្បាប់, A = ឥតច្បាប់, ទទេ = វត្តមាន)"
               class="score-cell-input att-day-select no-shadcn font-mono font-bold"
             >
               <option value="" ${markVal === '' ? 'selected' : ''}></option>
@@ -703,6 +796,7 @@ export const AttendancePage = {
   promptClearSelectedColumn() {
     if (!this.state.sheet) return;
     const { daysInMonth, yearNum, monthNum } = this.state.sheet;
+    const khmerCal = this.state.khmerCal || getMonthKhmerCalendarMap(yearNum, monthNum, daysInMonth);
     const isKm = i18n.getLocale() === 'km';
     const dayNames = isKm ? DAY_NAMES_KM : DAY_NAMES_EN;
     const defaultDay = this.state.selectedDayCol || 1;
@@ -710,7 +804,11 @@ export const AttendancePage = {
     let optionsHtml = '';
     for (let d = 1; d <= daysInMonth; d++) {
       const dayName = dayNames[new Date(yearNum, monthNum - 1, d).getDay()];
-      optionsHtml += `<option value="${d}" ${d === defaultDay ? 'selected' : ''}>ថ្ងៃទី ${d} (${dayName})</option>`;
+      const dayInfo = khmerCal.daysMap[d];
+      const lunarExtra = dayInfo
+        ? ` — ${dayInfo.lunarMedium}${dayInfo.isHoliday ? ` (${dayInfo.holidayTitleKm})` : ''}`
+        : '';
+      optionsHtml += `<option value="${d}" ${d === defaultDay ? 'selected' : ''}>ថ្ងៃទី ${d} (${dayName}${lunarExtra})</option>`;
     }
 
     const modal = Modal.open({
@@ -874,6 +972,7 @@ export const AttendancePage = {
     }
 
     const { daysInMonth, rows, yearNum, monthNum } = this.state.sheet;
+    const khmerCal = this.state.khmerCal || getMonthKhmerCalendarMap(yearNum, monthNum, daysInMonth);
     const selectedCls = this.state.classes.find(c => c.id === this.state.selectedClassId);
     const monthObj = ATTENDANCE_MONTHS.find(m => m.id === this.state.selectedMonth);
     const className = selectedCls?.name || '';
@@ -885,8 +984,13 @@ export const AttendancePage = {
     for (let d = 1; d <= daysInMonth; d++) {
       const dayOfWeekIdx = new Date(yearNum, monthNum - 1, d).getDay();
       const dayName = dayNames[dayOfWeekIdx];
-      const dayColor = dayOfWeekIdx === 0 ? 'color:#e11d48;' : '';
-      dayHeaderCells += `<th style="border:1px solid #94a3b8; background:#f1f5f9; text-align:center; width:36px; ${dayColor}">${d}<br><span style="font-size:8pt; font-weight:normal;">${dayName}</span></th>`;
+      const dayInfo = khmerCal.daysMap[d];
+      const isHoliday = Boolean(dayInfo?.isHoliday);
+      const isSunday = dayOfWeekIdx === 0;
+      const dayColor = (isSunday || isHoliday) ? 'color:#e11d48;' : '';
+      const bgStyle = isHoliday ? 'background:#ffe4e6;' : 'background:#f1f5f9;';
+      const lunarShort = dayInfo ? `<br><span style="font-size:7.5pt; color:#b45309;">${dayInfo.lunarShort}</span>` : '';
+      dayHeaderCells += `<th style="border:1px solid #94a3b8; ${bgStyle} text-align:center; width:36px; ${dayColor}">${d}<br><span style="font-size:8pt; font-weight:normal;">${dayName}</span>${lunarShort}</th>`;
     }
 
     const bodyRowsHtml = rows.map((r, i) => {
@@ -894,7 +998,9 @@ export const AttendancePage = {
       let dayCells = '';
       for (let d = 1; d <= daysInMonth; d++) {
         const mk = r.days[d]?.mark || '';
-        dayCells += `<td style="border:1px solid #cbd5e1; text-align:center;">${mk}</td>`;
+        const isHoliday = Boolean(khmerCal.daysMap[d]?.isHoliday);
+        const cellBg = isHoliday && !mk ? 'background:#fff1f2;' : '';
+        dayCells += `<td style="border:1px solid #cbd5e1; text-align:center; ${cellBg}">${mk}</td>`;
       }
       return `
         <tr>
@@ -923,7 +1029,7 @@ export const AttendancePage = {
         <table>
           <tr>
             <th colspan="${7 + daysInMonth}" style="font-size:14pt; font-weight:bold; text-align:center; padding:8px;">
-              តារាងវត្តមានសិស្សប្រចាំ${monthLabel} ឆ្នាំ ${yearNum} — ថ្នាក់ ${className}
+              តារាងវត្តមានសិស្សប្រចាំ${monthLabel} ឆ្នាំ ${yearNum} (${khmerCal.lunarYearHeaderKm}) — ថ្នាក់ ${className}
             </th>
           </tr>
           <tr>
