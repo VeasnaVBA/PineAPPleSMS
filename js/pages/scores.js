@@ -206,6 +206,12 @@ export const ScoresPage = {
 
           <!-- Top Action Buttons -->
           <div class="flex items-center gap-2 flex-wrap justify-end">
+            <button id="btn-honor-roll-top5" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-semibold shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'តារាងកិត្តិយស (សិស្សពូកែទាំង ៥ ប្រចាំខែ)' : 'Top 5 Monthly Honor Roll'}">
+              <svg class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+              </svg>
+              <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'តារាងកិត្តិយស' : 'Honor Roll'}</span>
+            </button>
             <button id="btn-result-2row-table" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium shadow-2xs transition-colors cursor-pointer" title="${isKm ? 'តារាងលទ្ធផល ២ ជួរ' : '2 Row Table'}">
               ${getIcon('table', 'w-3.5 h-3.5 text-primary')}
               <span class="${isKm ? 'font-khmer' : ''}">${isKm ? 'តារាងលទ្ធផល' : '2 Row Table'}</span>
@@ -2005,6 +2011,11 @@ export const ScoresPage = {
           saveBtn.innerHTML = `${getIcon('check', 'w-3.5 h-3.5')} <span>${i18n.getLocale() === 'km' ? 'រក្សាទុក' : 'Save'}</span>`;
         }
       }
+    });
+
+    // Top 5 Honor Roll Modal button
+    document.getElementById('btn-honor-roll-top5')?.addEventListener('click', () => {
+      this.openHonorRollTop5Modal();
     });
 
     // 2-Row Result Table Modal buttons
@@ -4108,6 +4119,985 @@ export const ScoresPage = {
             </div>
           </div>
         `;
+      }
+    });
+  },
+
+  /**
+   * Open Top 5 Monthly Honor Roll (តារាងកិត្តិយស) in ReportViewer
+   * Matches traditional Cambodian school Honor Roll poster/certificate design:
+   * - Ornate red corner flourishes & border frame
+   * - School crest + Khmer & English school names (top-left) and Royal Motto (top-right)
+   * - Curved 3D-outlined "តារាងកិត្តិយស" title + Month, Academic Year, and Class subtitles
+   * - 3-tier pyramid of Top 5 ranked students (1 top-center, 2 mid-left, 3 mid-right, 5 bottom-left, 4 bottom-right)
+   * - Sky-blue portrait frames (click-to-upload student photo) + ornate blue/gold Khmer name plaques
+   * - Khmer Lunar + Solar dates & Principal / Class Teacher signature blocks
+   */
+  async openHonorRollTop5Modal() {
+    const isKm = i18n.getLocale() === 'km';
+    const isTeacher = authService.isTeacher();
+    const teacherClassId = authService.getAssignedClassId();
+    const currentUser = authService.getCurrentUser();
+
+    let classes = [];
+    try {
+      classes = await ClassService.getAll();
+    } catch (_) {}
+    if (!classes || classes.length === 0) {
+      classes = this.state?.classes || [];
+    }
+
+    let academicYears = [];
+    try {
+      academicYears = await SettingsService.getAcademicYears() || [];
+    } catch (_) {}
+    if (!academicYears || academicYears.length === 0) {
+      academicYears = [{ id: 'ay-1', name: '2025–2026' }, { id: 'ay-2', name: '2024–2025' }];
+    }
+
+    let allSchools = [];
+    let schoolName = '';
+    let schoolProvince = 'ភ្នំពេញ';
+
+    try {
+      allSchools = await SchoolService.getAllSchools();
+    } catch (_) {}
+    if (!allSchools || allSchools.length === 0) {
+      allSchools = [
+        { name: isKm ? 'សាលាបឋមសិក្សា វត្តបូព៌' : 'Wat Bo Primary School', province: 'សៀមរាប' },
+        { name: isKm ? 'អនុវិទ្យាល័យ ហ៊ុន សែន ស្វាយធំ' : 'Hun Sen Svay Thom Secondary School', province: 'សៀមរាប' }
+      ];
+    }
+
+    const defaultSchoolName = currentUser?.school || (allSchools[0]?.name) || (isKm ? 'សាលារៀន អេស អេ អាយ' : 'SAI School');
+    const matchedSchool = allSchools.find(s => s.name === defaultSchoolName);
+    schoolName = defaultSchoolName;
+    schoolProvince = matchedSchool?.province || currentUser?.province || 'ភ្នំពេញ';
+
+    let schoolEnglishName = localStorage.getItem('honor_roll_school_en') || 'SAI School';
+    let schoolLogoDataUrl = localStorage.getItem('honor_roll_school_logo') || '';
+    let principalName = localStorage.getItem('honor_roll_principal_name') || 'ឡុង ឡេង';
+    let teacherName = localStorage.getItem('honor_roll_teacher_name') || (currentUser?.fullName || currentUser?.name || 'ចេង ស្បឿ');
+
+    let selectedClassId = this.state.selectedClassId || (isTeacher ? (teacherClassId || classes[0]?.id) : (classes[0]?.id || ''));
+    let selectedYear = this.state.activeYear || (typeof academicYears[0] === 'string' ? academicYears[0] : (academicYears[0]?.name || '2025–2026'));
+    let selectedPeriod = this.state.selectedPeriod || 'November';
+    let selectedReportDate = new Date();
+    let currentClassName = '';
+
+    const periods = ScoreService.getEvaluationPeriods();
+    const months = periods.filter(p => p.group === 'month');
+    const exams = periods.filter(p => p.group === 'exam');
+
+    const escapeHtml = (str) => String(str ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+
+    const getPeriodDisplayName = (pId) => {
+      const pObj = periods.find(p => p.id === pId);
+      if (pObj) return isKm ? pObj.nameKm : pObj.nameEn;
+      return pId;
+    };
+
+    const getHonorRollPeriodSubtitle = (pId) => {
+      const pName = getPeriodDisplayName(pId) || 'វិច្ឆិកា';
+      if (!isKm) return `For ${pName}`;
+      if (pId === 'Annual') return 'ប្រចាំឆ្នាំ';
+      if (pId === 'Semester 1' || pId === 'Semester 2') return `ប្រចាំ${pName}`;
+      if (pId === 'Semester 1 Exam' || pId === 'Semester 2 Exam' || pId === 'First Test') return `ប្រចាំ${pName}`;
+      return `ប្រចាំខែ ${pName}`;
+    };
+
+    // Helper to compress/resize uploaded image to a clean data URL
+    const readAndResizeImage = (file, maxW = 420, maxH = 520) => new Promise((resolve, reject) => {
+      if (!file) return reject(new Error('No file selected'));
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let w = img.width;
+          let h = img.height;
+          if (w > maxW || h > maxH) {
+            const ratio = Math.min(maxW / w, maxH / h);
+            w = Math.round(w * ratio);
+            h = Math.round(h * ratio);
+          }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const mime = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+          resolve(canvas.toDataURL(mime, 0.9));
+        };
+        img.onerror = reject;
+        img.src = ev.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    // Default School Emblem SVG (scalloped maroon/gold/teal crest matching Cambodian school emblem)
+    const getDefaultSchoolCrestSvg = (size = 64) => `
+      <svg viewBox="0 0 120 120" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" style="display: block; margin: 0 auto;">
+        <defs>
+          <radialGradient id="hrCrestGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="78%" stop-color="#f8fafc"/>
+            <stop offset="100%" stop-color="#e2e8f0"/>
+          </radialGradient>
+        </defs>
+        <!-- Outer Scalloped Burgundy Border -->
+        <path d="M60,4 C66,4 70,9 76,8 C82,7 87,13 92,14 C97,15 100,22 105,25 C110,28 110,35 113,40 C116,45 114,52 116,58 C116,64 113,70 113,76 C113,82 108,87 106,92 C104,97 97,100 93,104 C89,108 82,109 77,112 C72,115 65,114 60,116 C55,114 48,115 43,112 C38,109 31,108 27,104 C23,100 16,97 14,92 C12,87 7,82 7,76 C7,70 4,64 4,58 C6,52 4,45 7,40 C10,35 10,28 15,25 C20,22 23,15 28,14 C33,13 38,7 44,8 C50,9 54,4 60,4 Z" fill="#7a1c1c" stroke="#581111" stroke-width="1.5"/>
+        <!-- Inner White Circle & Gold Ring -->
+        <circle cx="60" cy="60" r="46" fill="url(#hrCrestGrad)" stroke="#d4af37" stroke-width="2.2"/>
+        <circle cx="60" cy="60" r="37" fill="none" stroke="#7a1c1c" stroke-width="1" stroke-dasharray="2,2"/>
+        <!-- Center Temple / Globe / Open Book Emblem -->
+        <path d="M60,26 L75,38 L45,38 Z" fill="#0d7a52"/>
+        <rect x="49" y="38" width="22" height="15" rx="1.5" fill="none" stroke="#0d7a52" stroke-width="2"/>
+        <circle cx="60" cy="45.5" r="5.5" fill="none" stroke="#0d7a52" stroke-width="1.4"/>
+        <!-- Open Book Rays -->
+        <path d="M40,62 Q60,55 60,66 Q60,55 80,62 L77,69 Q60,62 60,71 Q60,62 43,69 Z" fill="#7a1c1c"/>
+        <!-- Supportive Hands / Wreath -->
+        <path d="M35,64 C35,78 47,86 60,88 C73,86 85,78 85,64" fill="none" stroke="#b91c1c" stroke-width="3" stroke-linecap="round"/>
+        <text x="60" y="99" text-anchor="middle" font-family="Georgia, serif" font-size="9.5" font-weight="bold" fill="#7a1c1c">SAI</text>
+      </svg>
+    `;
+
+    // Student Uniform Avatar SVG when a student doesn't have an uploaded photo yet
+    const getStudentUniformSvg = (gender) => {
+      const isFemale = gender === 'Female' || gender === 'ស្រី';
+      if (isFemale) {
+        return `
+          <svg viewBox="0 0 120 140" width="100%" height="100%" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+            <rect width="120" height="140" fill="#0095ff"/>
+            <!-- Shoulders & White School Blouse -->
+            <path d="M16,140 C16,108 34,98 60,98 C86,98 104,108 104,140 Z" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.2"/>
+            <!-- Sailor / Lotus Collar & Criss-Cross Tie -->
+            <path d="M34,102 L60,124 L86,102 L78,97 L60,114 L42,97 Z" fill="#1e3a8a" opacity="0.85"/>
+            <path d="M53,115 L67,115 L64,136 L56,136 Z" fill="#991b1b"/>
+            <!-- Neck -->
+            <rect x="51" y="80" width="18" height="20" rx="6" fill="#f3c6a5"/>
+            <!-- Hair Behind -->
+            <path d="M33,55 C30,74 34,92 40,98 L80,98 C86,92 90,74 87,55 Z" fill="#1e293b"/>
+            <!-- Ears -->
+            <circle cx="36" cy="60" r="5" fill="#eab692"/>
+            <circle cx="84" cy="60" r="5" fill="#eab692"/>
+            <!-- Face -->
+            <ellipse cx="60" cy="58" rx="23" ry="26" fill="#f7cfa0"/>
+            <!-- Hair Top -->
+            <path d="M37,52 C37,32 48,26 60,26 C72,26 83,32 83,52 C77,40 68,36 60,36 C52,36 43,40 37,52 Z" fill="#1e293b"/>
+            <!-- Eyes & Smile -->
+            <circle cx="51" cy="57" r="2.3" fill="#1e293b"/>
+            <circle cx="69" cy="57" r="2.3" fill="#1e293b"/>
+            <path d="M46,51 Q51,48 55,51" fill="none" stroke="#1e293b" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M65,51 Q69,48 74,51" fill="none" stroke="#1e293b" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M54,70 Q60,74 66,70" fill="none" stroke="#b45309" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        `;
+      }
+      return `
+        <svg viewBox="0 0 120 140" width="100%" height="100%" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+          <rect width="120" height="140" fill="#0095ff"/>
+          <!-- Shoulders & White School Shirt -->
+          <path d="M14,140 C14,106 33,96 60,96 C87,96 106,106 106,140 Z" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.2"/>
+          <!-- Shirt Collar & School Tie/Lanyard -->
+          <path d="M44,95 L60,118 L76,95" fill="none" stroke="#1e3a8a" stroke-width="2.2"/>
+          <path d="M43,94 L56,112 L48,118 L38,100 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+          <path d="M77,94 L64,112 L72,118 L82,100 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+          <path d="M56,112 L64,112 L66,140 L54,140 Z" fill="#7f1d1d"/>
+          <!-- Neck -->
+          <rect x="50" y="79" width="20" height="20" rx="6" fill="#f3c6a5"/>
+          <!-- Ears -->
+          <circle cx="35" cy="59" r="5.5" fill="#eab692"/>
+          <circle cx="85" cy="59" r="5.5" fill="#eab692"/>
+          <!-- Face -->
+          <ellipse cx="60" cy="57" rx="24" ry="27" fill="#f7cfa0"/>
+          <!-- Boy Short Neat Hair -->
+          <path d="M35,51 C34,30 46,24 60,24 C74,24 86,30 85,51 C81,39 72,34 60,35 C48,34 39,39 35,51 Z" fill="#1e293b"/>
+          <!-- Eyes & Smile -->
+          <circle cx="50.5" cy="56.5" r="2.4" fill="#1e293b"/>
+          <circle cx="69.5" cy="56.5" r="2.4" fill="#1e293b"/>
+          <path d="M45,50 Q50.5,47.5 55,50" fill="none" stroke="#1e293b" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M65,50 Q69.5,47.5 75,50" fill="none" stroke="#1e293b" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M54,70 Q60,73.5 66,70" fill="none" stroke="#b45309" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      `;
+    };
+
+    // Traditional Khmer Red Ornate Corner Flourish SVG (ក្បាច់ជ្រុងក្រហម)
+    const getRedCornerOrnamentSvg = (position) => {
+      let transform = '';
+      if (position === 'tr') transform = 'scale(-1, 1)';
+      else if (position === 'bl') transform = 'scale(1, -1)';
+      else if (position === 'br') transform = 'scale(-1, -1)';
+      return `
+        <svg viewBox="0 0 110 110" width="76" height="76" xmlns="http://www.w3.org/2000/svg" style="transform: ${transform}; display: block; pointer-events: none;">
+          <g fill="#dc1e28">
+            <!-- Outer Corner Spine -->
+            <path d="M0,0 L110,0 L102,5.5 L5.5,5.5 L5.5,102 L0,110 Z"/>
+            <!-- Corner Medallion & Traditional Khmer Kanok Flourishes -->
+            <path d="M5,5 C24,5 38,12 46,24 C34,20 22,22 16,32 C28,28 42,33 48,46 C35,41 24,44 19,54 C28,50 38,54 42,64 C30,60 20,64 15,74 C22,71 29,74 31,82 C21,79 13,84 8,96 L5,96 Z"/>
+            <path d="M5,5 C5,24 12,38 24,46 C20,34 22,22 32,16 C28,28 33,42 46,48 C41,35 44,24 54,19 C50,28 54,38 64,42 C60,30 64,20 74,15 C71,22 74,29 82,31 C79,21 84,13 96,8 L96,5 Z"/>
+            <!-- Inner Accent Dots & Scroll -->
+            <circle cx="34" cy="34" r="3.2" fill="#ffffff"/>
+            <circle cx="21" cy="21" r="2.5" fill="#ffffff"/>
+            <circle cx="48" cy="20" r="2" fill="#dc1e28"/>
+            <circle cx="20" cy="48" r="2" fill="#dc1e28"/>
+          </g>
+        </svg>
+      `;
+    };
+
+    // Ornate Blue & Gold Name Plaque SVG + Label (ស្លាកឈ្មោះសិស្សពូកែ)
+    const renderStudentHonorCard = (stu, rankNum, slotIdx) => {
+      const rankKh = toKhmerNumerals(rankNum);
+      const fullName = stu?.khmerFullName || stu?.englishName || 'ឈ្មោះសិស្ស';
+      const studentId = stu?.studentId || '';
+      const savedCustomPhoto = studentId
+        ? (localStorage.getItem(`honor_roll_photo_${studentId}`) || stu?.photo || '')
+        : (localStorage.getItem(`honor_roll_slot_photo_${slotIdx}`) || '');
+
+      return `
+        <div class="honor-roll-student-card flex flex-col items-center select-none" data-slot-index="${slotIdx}" data-student-id="${escapeHtml(studentId)}" style="position: relative; width: 178px;">
+          <!-- Portrait Frame with Sky-Blue Backdrop -->
+          <div class="honor-roll-photo-frame group relative"
+               data-slot-index="${slotIdx}"
+               data-student-id="${escapeHtml(studentId)}"
+               title="${isKm ? 'ចុចដើម្បីជ្រើសរើស ឬប្តូររូបថតសិស្ស' : 'Click to upload student photo'}"
+               style="width: 100px; height: 118px; background: linear-gradient(180deg, #0088ff 0%, #00a2ff 100%); border: 2px solid #ffffff; outline: 1px solid #cbd5e1; box-shadow: 0 3px 8px rgba(15, 23, 42, 0.16); overflow: hidden; cursor: pointer; position: relative; z-index: 1;">
+            ${savedCustomPhoto
+              ? `<img src="${savedCustomPhoto}" alt="${escapeHtml(fullName)}" class="honor-roll-student-img" style="width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block;" />`
+              : `<div class="honor-roll-student-placeholder" style="width: 100%; height: 100%;">${getStudentUniformSvg(stu?.gender)}</div>`
+            }
+            <!-- Hover Upload Overlay (Hidden in print) -->
+            <div class="print:hidden opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                 style="position: absolute; inset: 0; background: rgba(15, 23, 42, 0.45); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ffffff; font-size: 9px; text-align: center; padding: 4px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 2px;">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+              <span>${isKm ? 'ប្តូររូបថត' : 'Photo'}</span>
+            </div>
+          </div>
+
+          <!-- Ornate Blue & Gold Khmer Name Plaque -->
+          <div class="honor-roll-name-plaque" style="position: relative; z-index: 2; margin-top: -5px; width: 176px; height: 32px; display: flex; align-items: center; justify-content: center;">
+            <svg viewBox="0 0 220 40" width="176" height="32" xmlns="http://www.w3.org/2000/svg" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.22));">
+              <defs>
+                <linearGradient id="hrPlaqueBlue_${slotIdx}" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#0f5ec9"/>
+                  <stop offset="50%" stop-color="#0a459e"/>
+                  <stop offset="100%" stop-color="#062966"/>
+                </linearGradient>
+                <linearGradient id="hrPlaqueGold_${slotIdx}" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#d4af37"/>
+                  <stop offset="50%" stop-color="#f3e5ab"/>
+                  <stop offset="100%" stop-color="#aa7c11"/>
+                </linearGradient>
+              </defs>
+              <!-- Outer Gold Hexagonal Bevel -->
+              <polygon points="16,2 204,2 218,20 204,38 16,38 2,20" fill="url(#hrPlaqueGold_${slotIdx})" stroke="#6b4c08" stroke-width="1"/>
+              <!-- Inner Royal Blue Plaque -->
+              <polygon points="19,5 201,5 213,20 201,35 19,35 7,20" fill="url(#hrPlaqueBlue_${slotIdx})" stroke="#38bdf8" stroke-width="0.6" stroke-opacity="0.5"/>
+              <!-- Left & Right Gold Filigree Wing Ornaments -->
+              <path d="M10,20 L18,11 L23,20 L18,29 Z" fill="url(#hrPlaqueGold_${slotIdx})" opacity="0.9"/>
+              <path d="M210,20 L202,11 L197,20 L202,29 Z" fill="url(#hrPlaqueGold_${slotIdx})" opacity="0.9"/>
+              <circle cx="17" cy="20" r="2.2" fill="#062966"/>
+              <circle cx="203" cy="20" r="2.2" fill="#062966"/>
+            </svg>
+            <div contenteditable="true"
+                 spellcheck="false"
+                 class="honor-roll-student-name font-khmer-muol outline-none focus:ring-1 focus:ring-amber-300 rounded px-1 cursor-text text-center truncate"
+                 style="position: relative; z-index: 3; max-width: 146px; font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', 'Khmer OS Siemreap', sans-serif !important; font-size: 10.5px !important; line-height: 1.5 !important; color: #ffffff !important; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 2px #041e42 !important; white-space: nowrap;">${rankKh} ${escapeHtml(fullName)}</div>
+          </div>
+        </div>
+      `;
+    };
+
+    await ReportViewer.open({
+      reportKey: 'score_honor_roll_top5',
+      title: isKm ? 'តារាងកិត្តិយស (Top 5)' : 'Top 5 Monthly Honor Roll',
+      alwaysFresh: true,
+      defaultOrientation: 'portrait',
+      defaultPaperSize: 'A4',
+      defaultMargins: { top: 6, bottom: 6, left: 6, right: 6 },
+      defaultFontFamily: 'Khmer OS Siemreap',
+      defaultFontSize: 10,
+      renderHeaderControls: (controlsContainer, viewer) => {
+        const schoolOptsHtml = (allSchools || []).map(s => {
+          const isSel = s.name === schoolName;
+          return `<option value="${escapeHtml(s.name)}" ${isSel ? 'selected' : ''}>${escapeHtml(s.name)}</option>`;
+        }).join('');
+
+        const classOptionsHtml = isTeacher && teacherClassId
+          ? `<option value="${selectedClassId}">${escapeHtml(classes.find(c => String(c.id).trim() === String(selectedClassId).trim())?.name || selectedClassId)}</option>`
+          : classes.map(c => `<option value="${c.id}" ${c.id === selectedClassId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('');
+
+        controlsContainer.className = 'flex items-center gap-2 sm:gap-3 flex-wrap font-khmer';
+        controlsContainer.innerHTML = `
+          <!-- School Filter -->
+          <div class="flex items-center gap-1.5 text-xs font-khmer">
+            <span class="text-muted-foreground whitespace-nowrap">${isKm ? 'សាលារៀន:' : 'School:'}</span>
+            <select id="rv-honor-filter-school" class="h-8 py-0 leading-[30px] px-2.5 rounded-md border border-input bg-card text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary shadow-xs truncate max-w-[150px] sm:max-w-[180px] cursor-pointer box-border">
+              ${schoolOptsHtml || `<option value="${escapeHtml(schoolName)}">${escapeHtml(schoolName || 'សាលារៀន')}</option>`}
+            </select>
+          </div>
+
+          <!-- Class Filter -->
+          <div class="flex items-center gap-1.5 text-xs font-khmer">
+            <span class="text-muted-foreground whitespace-nowrap">${isKm ? 'ថ្នាក់រៀន:' : 'Class:'}</span>
+            <select id="rv-honor-filter-class" class="h-8 py-0 leading-[30px] px-2.5 rounded-md border border-input bg-card text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary shadow-xs truncate cursor-pointer box-border">
+              ${classOptionsHtml}
+            </select>
+          </div>
+
+          <!-- Academic Year Trigger & Popover -->
+          <div class="flex items-center gap-1.5 text-xs font-khmer">
+            <span class="text-muted-foreground whitespace-nowrap">${isKm ? 'ឆ្នាំសិក្សា:' : 'Year:'}</span>
+            <div id="rv-honor-year-group" class="relative">
+              <button type="button"
+                      id="rv-btn-result-year-trigger"
+                      class="h-8 py-0 leading-[30px] px-2.5 rounded-md border border-input bg-card hover:bg-muted text-xs font-medium text-foreground transition-colors flex items-center justify-between gap-1.5 shadow-xs cursor-pointer min-w-[110px] max-w-[160px] box-border"
+                      title="${isKm ? 'ជ្រើសរើស ឬបន្ថែមឆ្នាំសិក្សា' : 'Select Academic Year'}">
+                <span id="rv-result-year-text" class="truncate">${selectedYear}</span>
+                ${getIcon('chevronDown', 'w-3.5 h-3.5 text-muted-foreground flex-shrink-0 transition-transform duration-150 rv-result-year-chevron')}
+              </button>
+              <div id="rv-popover-result-year-menu" class="hidden absolute top-9 left-0 z-50 w-72 p-2.5 bg-card text-card-foreground border border-border rounded-xl shadow-xl space-y-2 font-khmer select-none box-border animate-slide-down">
+                <div class="flex items-center gap-1.5 border-b border-border pb-1.5 w-full box-border">
+                  <input type="text" id="rv-input-result-new-year" placeholder="${isKm ? 'បញ្ចូលឆ្នាំថ្មី... (2025–2026)' : 'New year (2025–2026)...'}" class="flex-1 min-w-0 h-8 px-2.5 bg-background border border-input rounded text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary box-border" />
+                  <button type="button" id="rv-btn-result-add-year" class="h-8 px-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold flex items-center gap-1 shadow-xs transition-colors flex-shrink-0 cursor-pointer whitespace-nowrap">${getIcon('plus', 'w-3.5 h-3.5')}<span>${isKm ? 'បន្ថែម' : 'Add'}</span></button>
+                </div>
+                <div class="max-h-48 overflow-y-auto divide-y divide-border/20 rounded-md border border-border/40 bg-background/50 p-0.5 space-y-0.5" id="rv-result-year-list"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Evaluation Period Selector -->
+          <div class="flex items-center gap-1.5 text-xs font-khmer">
+            <span class="text-muted-foreground whitespace-nowrap">${isKm ? 'ប្រចាំខែ:' : 'Month:'}</span>
+            <select id="rv-honor-filter-period" class="h-8 py-0 leading-[30px] px-2 rounded-md border border-input bg-card text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary shadow-xs cursor-pointer box-border" title="${isKm ? 'ជ្រើសរើសខែ ដើម្បីទាញយកសិស្សពូកែទាំង ៥' : 'Select month for Top 5'}">
+              <optgroup label="${isKm ? 'ខែសិក្សា' : 'Months'}">
+                ${months.map(m => `<option value="${m.id}" ${m.id === selectedPeriod ? 'selected' : ''}>${isKm ? m.nameKm : m.nameEn}</option>`).join('')}
+              </optgroup>
+              <optgroup label="${isKm ? 'ការប្រឡង និងឆមាស' : 'Exams'}">
+                ${exams.map(e => `<option value="${e.id}" ${e.id === selectedPeriod ? 'selected' : ''}>${isKm ? e.nameKm : e.nameEn}</option>`).join('')}
+              </optgroup>
+            </select>
+          </div>
+
+          <!-- Date Picker Popover -->
+          <div class="flex items-center gap-1.5 text-xs font-khmer">
+            <span class="text-muted-foreground whitespace-nowrap">${isKm ? 'កាលបរិច្ឆេទ:' : 'Date:'}</span>
+            <div id="rv-result-date-container" class="relative">
+              <button type="button"
+                      id="rv-result-btn-date-trigger"
+                      class="h-8 py-0 leading-[30px] px-2.5 rounded-md border border-input bg-card hover:bg-muted text-xs font-medium text-foreground transition-colors flex items-center justify-between gap-1.5 shadow-xs cursor-pointer min-w-[125px] max-w-[170px] box-border"
+                      title="${isKm ? 'ជ្រើសរើសកាលបរិច្ឆេទ (ចន្ទគតិ & សុរិយគតិ)' : 'Select Date'}">
+                <span class="flex items-center gap-1.5 truncate">
+                  ${getIcon('calendar', 'w-3.5 h-3.5 text-primary flex-shrink-0')}
+                  <span id="rv-result-date-trigger-text" class="truncate">${formatDisplayDate(selectedReportDate.toISOString().split('T')[0])}</span>
+                </span>
+                ${getIcon('chevronDown', 'w-3.5 h-3.5 text-muted-foreground flex-shrink-0 transition-transform duration-150 rv-result-date-chevron')}
+              </button>
+
+              <div id="rv-result-popover-date-menu"
+                   class="hidden absolute right-0 top-[calc(100%+4px)] z-[80] w-80 p-3 bg-card text-card-foreground border border-border rounded-xl shadow-xl space-y-3 font-khmer select-none animate-slide-down box-border">
+                <div class="flex items-center justify-between border-b border-border/50 pb-2">
+                  <span class="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                    ${getIcon('calendar', 'w-4 h-4 text-primary')}
+                    <span>${isKm ? 'ជ្រើសរើសកាលបរិច្ឆេទ' : 'Select Date'}</span>
+                  </span>
+                  <button type="button"
+                          id="rv-result-btn-date-today"
+                          class="px-2 py-0.5 rounded text-[11px] font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer">
+                    ${isKm ? 'ថ្ងៃនេះ' : 'Today'}
+                  </button>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="text-[11px] text-muted-foreground">${isKm ? 'កាលបរិច្ឆេទសុរិយគតិ:' : 'Solar Date:'}</label>
+                  <input type="date"
+                         id="rv-result-input-report-date"
+                         value="${selectedReportDate.toISOString().split('T')[0]}"
+                         class="w-full h-8 px-2.5 rounded-md border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary box-border cursor-pointer" />
+                </div>
+
+                <div class="space-y-2 pt-1">
+                  <div class="p-2.5 rounded-lg border border-primary/20 bg-primary/5 space-y-1">
+                    <div class="flex items-center justify-between text-[11px] text-primary font-semibold">
+                      <span>${isKm ? 'ចន្ទគតិ' : 'Khmer Lunar Date'}</span>
+                      ${getIcon('moon', 'w-3.5 h-3.5')}
+                    </div>
+                    <p id="rv-result-preview-lunar-text" class="text-xs text-foreground font-medium break-words leading-relaxed">
+                      ${formatKhmerLunarDate(selectedReportDate)}
+                    </p>
+                  </div>
+                  <div class="p-2.5 rounded-lg border border-border/60 bg-muted/30 space-y-1">
+                    <div class="flex items-center justify-between text-[11px] text-muted-foreground font-semibold">
+                      <span>${isKm ? 'សុរិយគតិ' : 'Khmer Solar Date'}</span>
+                      ${getIcon('sun', 'w-3.5 h-3.5')}
+                    </div>
+                    <p id="rv-result-preview-solar-text" class="text-xs text-foreground font-medium break-words leading-relaxed">
+                      ${schoolProvince || 'ភ្នំពេញ'} ${formatKhmerSolarDate(selectedReportDate)}
+                    </p>
+                  </div>
+                </div>
+
+                <button type="button"
+                        id="rv-result-btn-date-apply"
+                        class="w-full h-8 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold flex items-center justify-center gap-1 shadow-xs transition-colors cursor-pointer">
+                  ${getIcon('check', 'w-3.5 h-3.5')}
+                  <span>${isKm ? 'យល់ព្រម (Apply)' : 'Apply'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // School select binding
+        const schoolSelect = controlsContainer.querySelector('#rv-honor-filter-school');
+        schoolSelect?.addEventListener('change', async (e) => {
+          schoolName = e.target.value;
+          const matched = allSchools.find(s => s.name === schoolName);
+          if (matched && matched.province) {
+            schoolProvince = matched.province;
+          }
+          if (viewer) await viewer.refreshContent(false);
+        });
+
+        // Class select binding
+        const classSelect = controlsContainer.querySelector('#rv-honor-filter-class');
+        classSelect?.addEventListener('change', async (e) => {
+          selectedClassId = e.target.value;
+          if (viewer) await viewer.refreshContent(false);
+        });
+
+        // Period select binding
+        const periodSelect = controlsContainer.querySelector('#rv-honor-filter-period');
+        periodSelect?.addEventListener('change', async (e) => {
+          selectedPeriod = e.target.value;
+          if (viewer) await viewer.refreshContent(false);
+        });
+
+        // Academic Year Popover
+        const yearTriggerBtn = controlsContainer.querySelector('#rv-btn-result-year-trigger');
+        const yearTriggerText = controlsContainer.querySelector('#rv-result-year-text');
+        const yearChevron = controlsContainer.querySelector('.rv-result-year-chevron');
+        const yearMenu = controlsContainer.querySelector('#rv-popover-result-year-menu');
+        const yearListEl = controlsContainer.querySelector('#rv-result-year-list');
+        const yearInputEl = controlsContainer.querySelector('#rv-input-result-new-year');
+        const yearAddBtn = controlsContainer.querySelector('#rv-btn-result-add-year');
+
+        const renderYearList = () => {
+          if (!yearListEl) return;
+          yearListEl.innerHTML = academicYears.map(y => {
+            const yName = typeof y === 'string' ? y : (y.name || y.id || '');
+            const isSelected = String(selectedYear).trim().toLowerCase() === String(yName).trim().toLowerCase();
+            return `
+              <div class="rv-year-item flex items-center justify-between px-2.5 py-1.5 rounded hover:bg-accent text-xs group cursor-pointer transition-colors ${isSelected ? 'bg-primary/10 text-primary font-semibold' : 'text-foreground'}" data-year="${escapeHtml(yName)}">
+                <span class="truncate flex-1">${escapeHtml(yName)}</span>
+              </div>
+            `;
+          }).join('');
+        };
+        renderYearList();
+
+        yearTriggerBtn?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isHidden = yearMenu?.classList.contains('hidden');
+          if (isHidden) {
+            yearMenu?.classList.remove('hidden');
+            yearChevron?.classList.add('rotate-180');
+          } else {
+            yearMenu?.classList.add('hidden');
+            yearChevron?.classList.remove('rotate-180');
+          }
+        });
+
+        yearListEl?.addEventListener('click', async (e) => {
+          const item = e.target.closest('.rv-year-item');
+          if (item && item.dataset.year) {
+            selectedYear = item.dataset.year;
+            if (yearTriggerText) yearTriggerText.textContent = selectedYear;
+            yearMenu?.classList.add('hidden');
+            yearChevron?.classList.remove('rotate-180');
+            renderYearList();
+            if (viewer) await viewer.refreshContent(false);
+          }
+        });
+
+        yearAddBtn?.addEventListener('click', async () => {
+          const val = (yearInputEl?.value || '').trim();
+          if (!val) return;
+          try {
+            const created = await SettingsService.createAcademicYear({ name: val });
+            academicYears = await SettingsService.getAcademicYears() || [];
+            selectedYear = created?.name || val;
+            if (yearInputEl) yearInputEl.value = '';
+            if (yearTriggerText) yearTriggerText.textContent = selectedYear;
+            renderYearList();
+            yearMenu?.classList.add('hidden');
+            yearChevron?.classList.remove('rotate-180');
+            if (viewer) await viewer.refreshContent(false);
+            toast.success(isKm ? 'បានបន្ថែមឆ្នាំសិក្សាដោយជោគជ័យ' : 'Academic year added');
+          } catch (err) {
+            toast.error(err.message || String(err));
+          }
+        });
+
+        // Date Picker Popover
+        const dateBtn = controlsContainer.querySelector('#rv-result-btn-date-trigger');
+        const dateMenu = controlsContainer.querySelector('#rv-result-popover-date-menu');
+        const dateChevron = controlsContainer.querySelector('.rv-result-date-chevron');
+        const dateInput = controlsContainer.querySelector('#rv-result-input-report-date');
+        const dateText = controlsContainer.querySelector('#rv-result-date-trigger-text');
+        const previewLunar = controlsContainer.querySelector('#rv-result-preview-lunar-text');
+        const previewSolar = controlsContainer.querySelector('#rv-result-preview-solar-text');
+        const todayBtn = controlsContainer.querySelector('#rv-result-btn-date-today');
+        const applyBtn = controlsContainer.querySelector('#rv-result-btn-date-apply');
+
+        const updateDateDisplay = (d) => {
+          if (!d) return;
+          if (dateText) dateText.textContent = formatDisplayDate(d.toISOString().split('T')[0]);
+          if (previewLunar) previewLunar.textContent = formatKhmerLunarDate(d);
+          if (previewSolar) previewSolar.textContent = `${schoolProvince || 'ភ្នំពេញ'} ${formatKhmerSolarDate(d)}`;
+          if (dateInput) dateInput.value = d.toISOString().split('T')[0];
+        };
+
+        dateBtn?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isHidden = dateMenu?.classList.contains('hidden');
+          if (isHidden) {
+            dateMenu?.classList.remove('hidden');
+            dateChevron?.classList.add('rotate-180');
+          } else {
+            dateMenu?.classList.add('hidden');
+            dateChevron?.classList.remove('rotate-180');
+          }
+        });
+
+        dateInput?.addEventListener('change', (e) => {
+          const val = e.target.value;
+          if (val) {
+            selectedReportDate = new Date(val);
+            updateDateDisplay(selectedReportDate);
+          }
+        });
+
+        todayBtn?.addEventListener('click', () => {
+          selectedReportDate = new Date();
+          updateDateDisplay(selectedReportDate);
+        });
+
+        applyBtn?.addEventListener('click', async () => {
+          dateMenu?.classList.add('hidden');
+          dateChevron?.classList.remove('rotate-180');
+          const docLunar = viewer?.overlay?.querySelector('#honor-roll-lunar-date');
+          const docSolar = viewer?.overlay?.querySelector('#honor-roll-solar-date');
+          if (docLunar) docLunar.textContent = formatKhmerLunarDate(selectedReportDate);
+          if (docSolar) docSolar.textContent = `${schoolProvince || 'ភ្នំពេញ'} ${formatKhmerSolarDate(selectedReportDate)}`;
+          viewer?.saveStateForUndo?.();
+          toast.success(isKm ? 'បានកំណត់កាលបរិច្ឆេទដោយជោគជ័យ' : 'Date applied successfully');
+        });
+      },
+      renderContent: async (contentContainer, viewer) => {
+        const clsObj = classes.find(c => String(c.id).trim() === String(selectedClassId).trim()) || classes[0];
+        currentClassName = clsObj?.name || '—';
+
+        const data = await ScoreService.getMasterScoreSheet({
+          classId: selectedClassId,
+          academicYear: selectedYear,
+          period: selectedPeriod
+        });
+        let rows = data.rows || [];
+
+        // If Semester or Annual period is selected, compute averages dynamically
+        const isSemester = ScoreService.isSemesterPeriod(selectedPeriod);
+        const isAnnual = ScoreService.isAnnualPeriod(selectedPeriod);
+
+        if (isSemester) {
+          const semKey = `semester_months_${selectedClassId || 'default'}_${selectedPeriod}_${selectedYear || 'default'}`;
+          let semMonths = selectedPeriod === 'Semester 1'
+            ? ['October', 'November', 'December', 'January', 'February', null]
+            : ['March', 'April', 'May', 'June', 'July', null];
+          try {
+            const raw = localStorage.getItem(semKey);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (Array.isArray(parsed) && parsed.length === 6) semMonths = parsed;
+            }
+          } catch (_) {}
+
+          const monthMaps = {};
+          for (let i = 0; i < 6; i++) {
+            const mId = semMonths[i];
+            if (mId) {
+              monthMaps[i] = await ScoreService.getStudentAveragesForMonth(selectedClassId, selectedYear, mId);
+            }
+          }
+
+          rows.forEach(r => {
+            if (!r.monthScores) r.monthScores = {};
+            for (let i = 0; i < 6; i++) {
+              const mId = semMonths[i];
+              if (mId && monthMaps[i] && monthMaps[i][r.studentId] !== undefined) {
+                r.monthScores[i] = monthMaps[i][r.studentId];
+              }
+            }
+            const firstFive = [];
+            for (let i = 0; i < 5; i++) {
+              const v = r.monthScores[i];
+              if (v !== null && v !== undefined && v !== '' && !isNaN(Number(v))) {
+                firstFive.push(Number(v));
+              }
+            }
+            const avg5 = firstFive.length > 0 ? firstFive.reduce((a, b) => a + b, 0) / firstFive.length : 0;
+            const examScore = (r.monthScores[5] !== null && r.monthScores[5] !== undefined && r.monthScores[5] !== '' && !isNaN(Number(r.monthScores[5])))
+              ? Number(r.monthScores[5])
+              : 0;
+            const hasAny = firstFive.length > 0 || (r.monthScores[5] !== null && r.monthScores[5] !== undefined && r.monthScores[5] !== '');
+            r.total = Math.round((avg5 + examScore) * 100) / 100;
+            r.average = hasAny ? Math.round(((avg5 + examScore) / 2) * 100) / 100 : 0;
+            r.grade = SubjectService.calculateGrade(r.average, 50).grade;
+          });
+          ScoreService.rankStudents(rows);
+        } else if (isAnnual) {
+          rows.forEach(r => {
+            const s1 = Number(r.annualScores?.sem1) || 0;
+            const s2 = Number(r.annualScores?.sem2) || 0;
+            const count = (r.annualScores?.sem1 !== null && r.annualScores?.sem1 !== undefined ? 1 : 0) +
+                          (r.annualScores?.sem2 !== null && r.annualScores?.sem2 !== undefined ? 1 : 0);
+            r.total = Math.round((s1 + s2) * 100) / 100;
+            r.average = count > 0 ? Math.round(((s1 + s2) / 2) * 100) / 100 : 0;
+            r.grade = SubjectService.calculateGrade(r.average, 50).grade;
+          });
+          ScoreService.rankStudents(rows);
+        }
+
+        // Sort by Rank #1 -> #5 ascending (tie-breaking by average desc, then name)
+        const sortedRows = [...rows].sort((a, b) => {
+          const rankA = Number(a.rank) || 9999;
+          const rankB = Number(b.rank) || 9999;
+          if (rankA !== rankB) return rankA - rankB;
+          const avgDiff = (Number(b.average) || 0) - (Number(a.average) || 0);
+          if (Math.abs(avgDiff) > 0.0001) return avgDiff;
+          return (a.khmerFullName || '').localeCompare(b.khmerFullName || '', 'km');
+        });
+
+        // Pick Top 5 students (pad with placeholders if fewer than 5 students exist)
+        const top5 = [];
+        for (let i = 0; i < 5; i++) {
+          if (sortedRows[i]) {
+            top5.push(sortedRows[i]);
+          } else {
+            top5.push({
+              studentId: '',
+              khmerFullName: `សិស្សចំណាត់ថ្នាក់លេខ ${toKhmerNumerals(i + 1)}`,
+              gender: i % 2 === 1 ? 'Female' : 'Male',
+              rank: i + 1,
+              photo: ''
+            });
+          }
+        }
+
+        const periodSubtitleText = getHonorRollPeriodSubtitle(selectedPeriod);
+        const khmerYearText = `ឆ្នាំសិក្សា ${toKhmerNumerals(selectedYear).replace(/[–-]/g, ' - ')}`;
+        const khmerClassText = `ថ្នាក់ទី ${toKhmerNumerals(currentClassName)}`;
+
+        contentContainer.innerHTML = `
+          <style>
+            .honor-roll-outline-navy {
+              font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important;
+              color: #0f296b !important;
+              -webkit-text-stroke: 3.5px #ffffff;
+              paint-order: stroke fill;
+              filter: drop-shadow(0px 0px 1.2px #0f296b) drop-shadow(0px 1.5px 1.5px rgba(15, 41, 107, 0.75));
+              line-height: 1.9 !important;
+            }
+            .honor-roll-outline-teal {
+              font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important;
+              color: #0b6e4f !important;
+              -webkit-text-stroke: 3.2px #ffffff;
+              paint-order: stroke fill;
+              filter: drop-shadow(0px 0px 1.2px #064e3b) drop-shadow(0px 1.5px 1.5px rgba(6, 78, 59, 0.75));
+              line-height: 1.85 !important;
+            }
+          </style>
+
+          <!-- Hidden File Inputs for Click-to-Upload Student Photos & School Logo -->
+          <input type="file" id="honor-roll-photo-file-input" accept="image/*" class="hidden print:hidden" style="display: none !important;" />
+          <input type="file" id="honor-roll-logo-file-input" accept="image/*" class="hidden print:hidden" style="display: none !important;" />
+
+          <div class="moeys-report-document honor-roll-document mx-auto"
+               style="width: 100% !important; min-height: 281mm !important; height: 281mm !important; position: relative !important; box-sizing: border-box !important; background: #ffffff !important; padding: 13mm 14mm 11mm 14mm !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; overflow: hidden !important; font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif;">
+
+            <!-- Red Ornate Border Line & 4 Traditional Khmer Corner Flourishes -->
+            <div style="position: absolute; inset: 4mm; border: 2px solid #dc1e28; pointer-events: none; z-index: 1;"></div>
+            <div style="position: absolute; top: 2.2mm; left: 2.2mm; z-index: 2; pointer-events: none;">${getRedCornerOrnamentSvg('tl')}</div>
+            <div style="position: absolute; top: 2.2mm; right: 2.2mm; z-index: 2; pointer-events: none;">${getRedCornerOrnamentSvg('tr')}</div>
+            <div style="position: absolute; bottom: 2.2mm; left: 2.2mm; z-index: 2; pointer-events: none;">${getRedCornerOrnamentSvg('bl')}</div>
+            <div style="position: absolute; bottom: 2.2mm; right: 2.2mm; z-index: 2; pointer-events: none;">${getRedCornerOrnamentSvg('br')}</div>
+
+            <!-- Subtle Center School Emblem Watermark Behind Student Portraits -->
+            <div id="honor-roll-watermark-box" style="position: absolute; top: 51%; left: 50%; transform: translate(-50%, -48%); width: 390px; height: 390px; opacity: 0.055; pointer-events: none; z-index: 1; display: flex; align-items: center; justify-content: center;">
+              ${schoolLogoDataUrl
+                ? `<img src="${schoolLogoDataUrl}" alt="Watermark" style="width: 360px; height: 360px; object-fit: contain;" />`
+                : getDefaultSchoolCrestSvg(370)
+              }
+            </div>
+
+            <!-- 1. TOP HEADER + ARCHED TITLE BLOCK -->
+            <div style="position: relative; z-index: 5;">
+              <div class="flex items-start justify-between">
+                <!-- Top-Left: School Crest Logo + Khmer & English School Name -->
+                <div class="text-center" style="min-width: 175px; padding-top: 8px;">
+                  <div id="honor-roll-school-logo-trigger"
+                       class="group relative mx-auto cursor-pointer"
+                       title="${isKm ? 'ចុចដើម្បីប្តូររូបសញ្ញាសាលា (Logo)' : 'Click to upload school logo'}"
+                       style="width: 62px; height: 62px; margin-bottom: 4px;">
+                    ${schoolLogoDataUrl
+                      ? `<img id="honor-roll-school-logo-img" src="${schoolLogoDataUrl}" alt="School Logo" style="width: 62px; height: 62px; object-fit: contain; display: block; margin: 0 auto;" />`
+                      : getDefaultSchoolCrestSvg(62)
+                    }
+                  </div>
+                  <div id="honor-roll-school-kh"
+                       contenteditable="true"
+                       spellcheck="false"
+                       class="font-khmer-muol outline-none focus:ring-1 focus:ring-primary/40 rounded px-1 cursor-text"
+                       style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 11px !important; color: #5c1916 !important; line-height: 1.75 !important;">${escapeHtml(schoolName)}</div>
+                  <div id="honor-roll-school-en"
+                       contenteditable="true"
+                       spellcheck="false"
+                       class="outline-none focus:ring-1 focus:ring-primary/40 rounded px-1 cursor-text"
+                       style="font-family: 'Georgia', 'Times New Roman', serif !important; font-size: 12.5px !important; font-weight: 700 !important; color: #0b6e4f !important; line-height: 1.3 !important;">${escapeHtml(schoolEnglishName)}</div>
+                </div>
+
+                <!-- Top-Right: Kingdom of Cambodia Motto -->
+                <div class="text-center" style="min-width: 210px; padding-top: 2px;">
+                  <p class="font-khmer-muol" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 12.5px !important; color: #0f296b !important; line-height: 1.85 !important;">ព្រះរាជាណាចក្រកម្ពុជា</p>
+                  <p class="font-khmer-muol" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 11.5px !important; color: #0f296b !important; line-height: 1.85 !important;">ជាតិ សាសនា ព្រះមហាក្សត្រ</p>
+                  <div style="color: #0f296b !important; font-size: 9px !important; margin-top: 1px;">~ ~ ~ 🙞 🙞 🙞 ~ ~ ~</div>
+                </div>
+              </div>
+
+              <!-- Center Arched "តារាងកិត្តិយស" + Month / Year / Class Subtitles -->
+              <div class="text-center" style="margin-top: -18px;">
+                <!-- Arched SVG Title: តារាងកិត្តិយស -->
+                <div style="display: flex; justify-content: center; margin-bottom: -8px;">
+                  <svg viewBox="0 0 420 76" width="335" height="62" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+                    <defs>
+                      <path id="hrTitleArcPath" d="M 28,64 Q 210,16 392,64" />
+                    </defs>
+                    <!-- Outer Navy Stroke -->
+                    <text font-family="'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif" font-size="28" fill="none" stroke="#0f296b" stroke-width="7.5" stroke-linejoin="round">
+                      <textPath href="#hrTitleArcPath" startOffset="50%" text-anchor="middle">តារាងកិត្តិយស</textPath>
+                    </text>
+                    <!-- Middle Crisp White Outline -->
+                    <text font-family="'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif" font-size="28" fill="none" stroke="#ffffff" stroke-width="4" stroke-linejoin="round">
+                      <textPath href="#hrTitleArcPath" startOffset="50%" text-anchor="middle">តារាងកិត្តិយស</textPath>
+                    </text>
+                    <!-- Inner Royal Navy Fill -->
+                    <text font-family="'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif" font-size="28" fill="#0f296b">
+                      <textPath href="#hrTitleArcPath" startOffset="50%" text-anchor="middle">តារាងកិត្តិយស</textPath>
+                    </text>
+                  </svg>
+                </div>
+
+                <!-- Subtitle 1: ប្រចាំខែ ... -->
+                <div>
+                  <span id="honor-roll-period-label"
+                        contenteditable="true"
+                        spellcheck="false"
+                        class="honor-roll-outline-navy outline-none focus:ring-1 focus:ring-primary/40 rounded px-1.5 cursor-text inline-block"
+                        style="font-size: 14px !important;">${escapeHtml(periodSubtitleText)}</span>
+                </div>
+
+                <!-- Subtitle 2: ឆ្នាំសិក្សា ... -->
+                <div style="margin-top: 1px;">
+                  <span id="honor-roll-year-label"
+                        contenteditable="true"
+                        spellcheck="false"
+                        class="honor-roll-outline-teal outline-none focus:ring-1 focus:ring-primary/40 rounded px-1.5 cursor-text inline-block"
+                        style="font-size: 13.5px !important;">${escapeHtml(khmerYearText)}</span>
+                </div>
+
+                <!-- Subtitle 3: ថ្នាក់ទី ... -->
+                <div style="margin-top: 1px;">
+                  <span id="honor-roll-class-label"
+                        contenteditable="true"
+                        spellcheck="false"
+                        class="honor-roll-outline-teal outline-none focus:ring-1 focus:ring-primary/40 rounded px-1.5 cursor-text inline-block"
+                        style="font-size: 13.5px !important;">${escapeHtml(khmerClassText)}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. TOP 5 STUDENTS PYRAMID / DIAMOND LAYOUT -->
+            <div style="position: relative; z-index: 5; display: flex; flex-direction: column; justify-content: center; gap: 6px; margin-top: 2px; margin-bottom: 4px;">
+              <!-- Row 1 (Top Center): Rank ១ -->
+              <div style="display: flex; justify-content: center; width: 100%;">
+                ${renderStudentHonorCard(top5[0], top5[0]?.rank || 1, 0)}
+              </div>
+
+              <!-- Row 2 (Middle Left & Right): Rank ២ (left) & Rank ៣ (right) -->
+              <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 470px; margin: -12px auto 0 auto;">
+                ${renderStudentHonorCard(top5[1], top5[1]?.rank || 2, 1)}
+                ${renderStudentHonorCard(top5[2], top5[2]?.rank || 3, 2)}
+              </div>
+
+              <!-- Row 3 (Bottom Wide Left & Right): Rank ៥ (left) & Rank ៤ (right) matching reference image -->
+              <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 565px; margin: 4px auto 0 auto;">
+                ${renderStudentHonorCard(top5[4], top5[4]?.rank || 5, 4)}
+                ${renderStudentHonorCard(top5[3], top5[3]?.rank || 4, 3)}
+              </div>
+            </div>
+
+            <!-- 3. FOOTER DATES & SIGNATURES -->
+            <div style="position: relative; z-index: 5; width: 100%; margin-top: 2px;">
+              <!-- Lunar & Solar Date Block (Right Half) -->
+              <div class="text-center" style="width: 60%; margin-left: auto; margin-bottom: 4px;">
+                <p id="honor-roll-lunar-date"
+                   contenteditable="true"
+                   spellcheck="false"
+                   class="font-khmer-muol outline-none focus:ring-1 focus:ring-primary/40 rounded px-1 cursor-text"
+                   style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 9.5px !important; color: #1e293b !important; line-height: 1.8 !important;">${formatKhmerLunarDate(selectedReportDate)}</p>
+                <p id="honor-roll-solar-date"
+                   contenteditable="true"
+                   spellcheck="false"
+                   class="font-khmer-muol outline-none focus:ring-1 focus:ring-primary/40 rounded px-1 cursor-text"
+                   style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 9.5px !important; color: #1e293b !important; line-height: 1.8 !important;">${escapeHtml(schoolProvince || 'ភ្នំពេញ')} ${formatKhmerSolarDate(selectedReportDate)}</p>
+              </div>
+
+              <!-- Principal (Left) & Class Teacher (Right) Signature Blocks -->
+              <div class="grid grid-cols-2 gap-8 text-center" style="padding: 0 18px;">
+                <!-- Bottom-Left: Principal -->
+                <div class="flex flex-col items-center justify-between" style="min-height: 92px;">
+                  <div>
+                    <p class="font-khmer-muol" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 10px !important; color: #0f296b !important; line-height: 1.8 !important;">បានឃើញ និងឯកភាព</p>
+                    <p class="font-khmer-muol" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 10px !important; color: #0f296b !important; line-height: 1.8 !important;">នាយកសាលា</p>
+                  </div>
+                  <div style="height: 38px;"></div>
+                  <div id="honor-roll-principal-name"
+                       contenteditable="true"
+                       spellcheck="false"
+                       class="font-khmer-muol outline-none focus:ring-1 focus:ring-primary/40 rounded px-2 cursor-text"
+                       style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 10px !important; color: #0f296b !important; line-height: 1.8 !important;">${escapeHtml(principalName)}</div>
+                </div>
+
+                <!-- Bottom-Right: Class Teacher -->
+                <div class="flex flex-col items-center justify-between" style="min-height: 92px;">
+                  <div>
+                    <p class="font-khmer-muol" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 10px !important; color: #0f296b !important; line-height: 1.8 !important;">គ្រូបន្ទុកថ្នាក់</p>
+                  </div>
+                  <div style="height: 48px;"></div>
+                  <div id="honor-roll-teacher-name"
+                       contenteditable="true"
+                       spellcheck="false"
+                       class="font-khmer-muol outline-none focus:ring-1 focus:ring-primary/40 rounded px-2 cursor-text"
+                       style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 10px !important; color: #0f296b !important; line-height: 1.8 !important;">${escapeHtml(teacherName)}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Bind Click-to-Upload Student Photo on all 5 Portrait Frames
+        const photoFileInput = contentContainer.querySelector('#honor-roll-photo-file-input');
+        let activePhotoTarget = null;
+
+        contentContainer.querySelectorAll('.honor-roll-photo-frame').forEach(frame => {
+          frame.addEventListener('click', (e) => {
+            e.stopPropagation();
+            activePhotoTarget = frame;
+            if (photoFileInput) {
+              photoFileInput.value = '';
+              photoFileInput.click();
+            }
+          });
+        });
+
+        photoFileInput?.addEventListener('change', async (e) => {
+          const file = e.target.files?.[0];
+          if (!file || !activePhotoTarget) return;
+          try {
+            const dataUrl = await readAndResizeImage(file, 420, 520);
+            const stuId = activePhotoTarget.getAttribute('data-student-id');
+            const slotIdx = activePhotoTarget.getAttribute('data-slot-index');
+
+            // Update DOM portrait immediately
+            const existingImg = activePhotoTarget.querySelector('.honor-roll-student-img');
+            const placeholderEl = activePhotoTarget.querySelector('.honor-roll-student-placeholder');
+            if (existingImg) {
+              existingImg.src = dataUrl;
+            } else if (placeholderEl) {
+              placeholderEl.outerHTML = `<img src="${dataUrl}" alt="Student" class="honor-roll-student-img" style="width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block;" />`;
+            }
+
+            // Persist photo to IndexedDB student record + localStorage
+            if (stuId) {
+              try { localStorage.setItem(`honor_roll_photo_${stuId}`, dataUrl); } catch (_) {}
+              try {
+                const stuRecord = await db.get('students', stuId);
+                if (stuRecord) {
+                  stuRecord.photo = dataUrl;
+                  await db.put('students', stuRecord);
+                }
+              } catch (_) {}
+            } else if (slotIdx !== null) {
+              try { localStorage.setItem(`honor_roll_slot_photo_${slotIdx}`, dataUrl); } catch (_) {}
+            }
+
+            viewer?.saveStateForUndo?.();
+            toast.success(isKm ? 'បានប្តូររូបថតសិស្សដោយជោគជ័យ' : 'Student photo updated');
+          } catch (err) {
+            toast.error(isKm ? 'មិនអាចបញ្ចូលរូបថតបានទេ' : 'Failed to load photo');
+          }
+        });
+
+        // Bind Click-to-Upload School Logo
+        const logoTrigger = contentContainer.querySelector('#honor-roll-school-logo-trigger');
+        const logoFileInput = contentContainer.querySelector('#honor-roll-logo-file-input');
+        logoTrigger?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (logoFileInput) {
+            logoFileInput.value = '';
+            logoFileInput.click();
+          }
+        });
+
+        logoFileInput?.addEventListener('change', async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          try {
+            const dataUrl = await readAndResizeImage(file, 360, 360);
+            schoolLogoDataUrl = dataUrl;
+            try { localStorage.setItem('honor_roll_school_logo', dataUrl); } catch (_) {}
+            if (logoTrigger) {
+              logoTrigger.innerHTML = `<img id="honor-roll-school-logo-img" src="${dataUrl}" alt="School Logo" style="width: 62px; height: 62px; object-fit: contain; display: block; margin: 0 auto;" />`;
+            }
+            const watermarkBox = contentContainer.querySelector('#honor-roll-watermark-box');
+            if (watermarkBox) {
+              watermarkBox.innerHTML = `<img src="${dataUrl}" alt="Watermark" style="width: 360px; height: 360px; object-fit: contain;" />`;
+            }
+            viewer?.saveStateForUndo?.();
+            toast.success(isKm ? 'បានប្តូររូបសញ្ញាសាលាដោយជោគជ័យ' : 'School logo updated');
+          } catch (_) {
+            toast.error(isKm ? 'មិនអាចបញ្ចូលរូបសញ្ញាសាលាបានទេ' : 'Failed to load logo');
+          }
+        });
+
+        // Persist editable school English subtitle, Principal name, and Teacher name
+        contentContainer.querySelector('#honor-roll-school-en')?.addEventListener('blur', (e) => {
+          schoolEnglishName = (e.target.textContent || '').trim();
+          try { localStorage.setItem('honor_roll_school_en', schoolEnglishName); } catch (_) {}
+        });
+        contentContainer.querySelector('#honor-roll-principal-name')?.addEventListener('blur', (e) => {
+          principalName = (e.target.textContent || '').trim();
+          try { localStorage.setItem('honor_roll_principal_name', principalName); } catch (_) {}
+        });
+        contentContainer.querySelector('#honor-roll-teacher-name')?.addEventListener('blur', (e) => {
+          teacherName = (e.target.textContent || '').trim();
+          try { localStorage.setItem('honor_roll_teacher_name', teacherName); } catch (_) {}
+        });
       }
     });
   }

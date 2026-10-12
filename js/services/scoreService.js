@@ -510,6 +510,7 @@ export const ScoreService = {
         khmerFullName: fullNameKh,
         englishName: stu.englishName || '',
         gender: stu.gender || 'Male',
+        photo: stu.photo || '',
         classId,
         className,
         academicYear,
