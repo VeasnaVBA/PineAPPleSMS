@@ -15,6 +15,7 @@ import { authService } from '../services/authService.js';
 import { i18n, t } from '../i18n/i18n.js';
 import { toast } from '../components/toast.js';
 import { getIcon } from '../components/icons.js';
+import { Modal } from '../components/modal.js';
 
 const DAY_NAMES_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const DAY_NAMES_KM = ['អាទិត្យ', 'ចន្ទ', 'អង្គារ', 'ពុធ', 'ព្រហ', 'សុក្រ', 'សៅរ៍'];
@@ -27,6 +28,7 @@ export const AttendancePage = {
     selectedYear: '',
     activeYear: '2024–2025',
     searchQuery: '',
+    selectedDayCol: null,
     sheet: null,
     autoSaveTimer: null,
     isSaving: false
@@ -121,6 +123,12 @@ export const AttendancePage = {
                 <span>= ឥតច្បាប់</span>
               </span>
             </div>
+
+            <button id="btn-clear-att-menu" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-xs font-medium text-rose-700 dark:text-rose-300 transition-colors cursor-pointer font-khmer">
+              ${getIcon('trash', 'w-4 h-4')}
+              <span>សម្អាត</span>
+              ${getIcon('chevronDown', 'w-3.5 h-3.5')}
+            </button>
 
             <button id="btn-export-att-excel" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-border bg-card hover:bg-muted text-xs font-medium text-foreground transition-colors cursor-pointer">
               ${getIcon('download', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
@@ -269,6 +277,7 @@ export const AttendancePage = {
 
     if (!hasMonthAndYear) {
       this.state.sheet = null;
+      this.state.selectedDayCol = null;
       if (emptyTitle && emptyDesc) {
         if (this.state.selectedMonth && !this.state.selectedYear) {
           emptyTitle.textContent = 'សូមជ្រើសរើសឆ្នាំជាមុនសិន';
@@ -291,6 +300,10 @@ export const AttendancePage = {
       month: this.state.selectedMonth,
       year: this.state.selectedYear
     });
+
+    if (this.state.selectedDayCol && this.state.selectedDayCol > this.state.sheet.daysInMonth) {
+      this.state.selectedDayCol = null;
+    }
 
     this.renderTable();
     this.updateStats();
@@ -343,8 +356,9 @@ export const AttendancePage = {
       const dayOfWeekIdx = new Date(yearNum, monthNum - 1, d).getDay();
       const dayName = dayNames[dayOfWeekIdx];
       const isSunday = dayOfWeekIdx === 0;
+      const isSelectedCol = this.state.selectedDayCol === d;
       dayHeadersHtml += `
-        <th class="att-scroll-th p-0 text-center font-mono" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+        <th data-day-col="${d}" title="ចុចដើម្បីជ្រើសរើសជួរឈរថ្ងៃទី ${d}" class="att-scroll-th att-day-th ${isSelectedCol ? 'is-selected-col' : ''} p-0 text-center font-mono" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
           <div class="w-full h-[42px] mx-auto flex flex-col items-center justify-center text-center bg-transparent" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 42px; line-height: 1.1; gap: 2px;">
             <span class="font-bold font-mono ${isSunday ? 'text-rose-600 dark:text-rose-400' : ''}" style="font-size: 11px; font-weight: 700; line-height: 1; display: block;">${d}</span>
             <span class="${isKm ? 'font-khmer' : 'font-mono'} ${isSunday ? 'text-rose-500 dark:text-rose-400' : 'text-muted-foreground'}" style="font-size: 9px; font-weight: 600; line-height: 1.1; display: block; white-space: nowrap;">${dayName}</span>
@@ -485,13 +499,37 @@ export const AttendancePage = {
     this.bindGridEvents();
   },
 
+  setSelectedDayCol(dayNum) {
+    const d = parseInt(dayNum, 10);
+    if (!d || isNaN(d)) return;
+    this.state.selectedDayCol = d;
+    const thead = document.getElementById('attendance-table-head');
+    if (thead) {
+      thead.querySelectorAll('th.att-day-th').forEach(th => {
+        const colDay = parseInt(th.getAttribute('data-day-col'), 10);
+        th.classList.toggle('is-selected-col', colDay === d);
+      });
+    }
+  },
+
   bindGridEvents() {
+    const thead = document.getElementById('attendance-table-head');
     const tbody = document.getElementById('attendance-table-body');
     if (!tbody || !this.state.sheet) return;
+
+    if (thead) {
+      thead.querySelectorAll('th.att-day-th').forEach(th => {
+        th.addEventListener('click', () => {
+          const day = parseInt(th.getAttribute('data-day-col'), 10);
+          this.setSelectedDayCol(day);
+        });
+      });
+    }
 
     const applyCellChange = (sel) => {
       const studentId = sel.getAttribute('data-student-id');
       const day = parseInt(sel.getAttribute('data-day'), 10);
+      this.setSelectedDayCol(day);
       const row = this.state.sheet.rows.find(r => r.studentId === studentId);
       if (!row) return;
 
@@ -537,6 +575,11 @@ export const AttendancePage = {
     };
 
     tbody.querySelectorAll('select.att-day-select').forEach(sel => {
+      sel.addEventListener('focus', () => {
+        const day = parseInt(sel.getAttribute('data-day'), 10);
+        this.setSelectedDayCol(day);
+      });
+
       sel.addEventListener('change', () => {
         applyCellChange(sel);
       });
@@ -588,6 +631,175 @@ export const AttendancePage = {
           nextSelect.focus();
         }
       });
+    });
+  },
+
+  openClearMenuPopover(triggerBtn) {
+    if (!this.state.sheet || !this.state.selectedMonth || !this.state.selectedYear) {
+      toast.warning('សូមជ្រើសរើសខែ និងឆ្នាំជាមុនសិន');
+      return;
+    }
+
+    const existing = document.getElementById('att-clear-menu-popover');
+    if (existing) {
+      existing.remove();
+      return;
+    }
+
+    const rect = triggerBtn.getBoundingClientRect();
+    const popover = document.createElement('div');
+    popover.id = 'att-clear-menu-popover';
+    popover.className = 'fixed z-[9999] w-64 rounded-xl border border-border bg-card shadow-xl p-1.5 animate-fade-in font-khmer select-none';
+
+    const topPos = Math.min(rect.bottom + 6, window.innerHeight - 140);
+    const leftPos = Math.max(8, Math.min(rect.right - 256, window.innerWidth - 264));
+    popover.style.top = `${topPos}px`;
+    popover.style.left = `${leftPos}px`;
+
+    const selectedDayBadge = this.state.selectedDayCol
+      ? `<span class="px-1.5 py-0.5 rounded bg-primary/15 text-primary font-mono text-[10px] font-bold">ថ្ងៃទី ${this.state.selectedDayCol}</span>`
+      : `<span class="text-[10px] text-muted-foreground">ជ្រើសរើសថ្ងៃ</span>`;
+
+    popover.innerHTML = `
+      <button type="button" id="btn-opt-clear-col" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-left text-xs font-medium text-foreground hover:bg-muted transition-colors cursor-pointer">
+        <span class="flex items-center gap-2">
+          ${getIcon('columns', 'w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0')}
+          <span>សម្អាតជួរឈរដែលបានជ្រើសរើស</span>
+        </span>
+        ${selectedDayBadge}
+      </button>
+      <div class="my-1 border-t border-border/60"></div>
+      <button type="button" id="btn-opt-clear-all" class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer">
+        ${getIcon('trash', 'w-4 h-4 shrink-0')}
+        <span>សម្អាតតារាងទាំងមូល</span>
+      </button>
+    `;
+
+    document.body.appendChild(popover);
+
+    const closePopover = (e) => {
+      if (!popover.contains(e.target) && !triggerBtn.contains(e.target)) {
+        popover.remove();
+        document.removeEventListener('mousedown', closePopover);
+      }
+    };
+    setTimeout(() => {
+      document.addEventListener('mousedown', closePopover);
+    }, 0);
+
+    popover.querySelector('#btn-opt-clear-col')?.addEventListener('click', () => {
+      popover.remove();
+      document.removeEventListener('mousedown', closePopover);
+      this.promptClearSelectedColumn();
+    });
+
+    popover.querySelector('#btn-opt-clear-all')?.addEventListener('click', () => {
+      popover.remove();
+      document.removeEventListener('mousedown', closePopover);
+      this.promptClearEntireTable();
+    });
+  },
+
+  promptClearSelectedColumn() {
+    if (!this.state.sheet) return;
+    const { daysInMonth, yearNum, monthNum } = this.state.sheet;
+    const isKm = i18n.getLocale() === 'km';
+    const dayNames = isKm ? DAY_NAMES_KM : DAY_NAMES_EN;
+    const defaultDay = this.state.selectedDayCol || 1;
+
+    let optionsHtml = '';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dayName = dayNames[new Date(yearNum, monthNum - 1, d).getDay()];
+      optionsHtml += `<option value="${d}" ${d === defaultDay ? 'selected' : ''}>ថ្ងៃទី ${d} (${dayName})</option>`;
+    }
+
+    const modal = Modal.open({
+      title: 'សម្អាតជួរឈរដែលបានជ្រើសរើស',
+      maxWidth: 'max-w-md',
+      preventUnsavedClose: false,
+      backdropClose: true,
+      content: `
+        <div class="space-y-3 font-khmer">
+          <p class="text-xs text-muted-foreground leading-relaxed">
+            សូមជ្រើសរើសជួរឈរថ្ងៃដែលអ្នកចង់សម្អាតទិន្នន័យវត្តមាន (P/A) របស់សិស្សទាំងអស់៖
+          </p>
+          <div>
+            <label class="block text-xs font-semibold text-foreground mb-1.5">ជួរឈរថ្ងៃទី៖</label>
+            <select id="modal-select-clear-day" class="w-full h-9 px-3 rounded-md border border-input bg-background text-xs font-semibold text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-khmer">
+              ${optionsHtml}
+            </select>
+          </div>
+        </div>
+      `,
+      footer: `
+        <button type="button" id="btn-cancel-clear-col" class="px-4 py-2 rounded-md border border-input bg-background hover:bg-accent text-xs font-medium font-khmer cursor-pointer">
+          បោះបង់
+        </button>
+        <button type="button" id="btn-confirm-clear-col" class="px-4 py-2 rounded-md bg-rose-600 text-white hover:bg-rose-700 text-xs font-medium font-khmer shadow-sm cursor-pointer">
+          សម្អាតជួរឈរនេះ
+        </button>
+      `
+    });
+
+    modal.element.querySelector('#btn-cancel-clear-col')?.addEventListener('click', () => {
+      modal.forceClose();
+    });
+
+    modal.element.querySelector('#btn-confirm-clear-col')?.addEventListener('click', async () => {
+      const selectEl = modal.element.querySelector('#modal-select-clear-day');
+      const dayToClear = parseInt(selectEl?.value, 10);
+      modal.forceClose();
+      if (!dayToClear || !this.state.sheet) return;
+
+      this.state.selectedDayCol = dayToClear;
+      for (const row of this.state.sheet.rows) {
+        row.days[dayToClear] = { status: 'Present', mark: '' };
+        let permCount = 0;
+        let absCount = 0;
+        for (let d = 1; d <= this.state.sheet.daysInMonth; d++) {
+          const st = row.days[d]?.status;
+          if (st === 'Excused') permCount++;
+          else if (st === 'Absent') absCount++;
+        }
+        row.permission = permCount;
+        row.absent = absCount;
+        row.total = permCount + absCount;
+      }
+
+      this.renderTable();
+      this.updateStats();
+      await this.saveSheet({ silent: true });
+      toast.success(`បានសម្អាតវត្តមានជួរឈរថ្ងៃទី ${dayToClear} រួចរាល់`);
+    });
+  },
+
+  promptClearEntireTable() {
+    if (!this.state.sheet) return;
+    const monthObj = ATTENDANCE_MONTHS.find(m => m.id === this.state.selectedMonth);
+    const monthLabel = monthObj ? `ខែ${monthObj.nameKm}` : this.state.selectedMonth;
+
+    Modal.confirm({
+      title: 'សម្អាតតារាងទាំងមូល',
+      message: `តើអ្នកពិតជាចង់សម្អាតទិន្នន័យវត្តមានទាំងអស់ក្នុងតារាងប្រចាំ${monthLabel} ឆ្នាំ ${this.state.selectedYear} មែនទេ?`,
+      confirmText: 'សម្អាតទាំងអស់',
+      cancelText: 'បោះបង់',
+      destructive: true,
+      onConfirm: async () => {
+        if (!this.state.sheet) return;
+        const { daysInMonth } = this.state.sheet;
+        for (const row of this.state.sheet.rows) {
+          for (let d = 1; d <= daysInMonth; d++) {
+            row.days[d] = { status: 'Present', mark: '' };
+          }
+          row.permission = 0;
+          row.absent = 0;
+          row.total = 0;
+        }
+        this.renderTable();
+        this.updateStats();
+        await this.saveSheet({ silent: true });
+        toast.success(`បានសម្អាតតារាងវត្តមានប្រចាំ${monthLabel} ឆ្នាំ ${this.state.selectedYear} ទាំងមូលរួចរាល់`);
+      }
     });
   },
 
@@ -769,6 +981,12 @@ export const AttendancePage = {
       if (this.state.sheet) {
         this.renderTable();
       }
+    });
+
+    // Clear Attendance Menu Button (2 options: Clear Selected Column / Clear Entire Table)
+    const clearBtn = document.getElementById('btn-clear-att-menu');
+    clearBtn?.addEventListener('click', () => {
+      this.openClearMenuPopover(clearBtn);
     });
 
     // Save Attendance Button
