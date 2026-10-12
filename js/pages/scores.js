@@ -3681,17 +3681,25 @@ export const ScoresPage = {
                 dRow.eachCell({ includeEmpty: true }, (cell, colNum) => {
                   let bgArgb = isEven ? 'FFF8FAFC' : 'FFFFFFFF';
                   let fgArgb = 'FF0F172A';
-                  let isBold = colNum === 3 || colNum === 4 || colNum === 5 || colNum === 6 || colNum === 7;
+                  let isBold = colNum >= 3;
 
                   if (colNum === 4) {
                     fgArgb = isFemale ? 'FFE11D48' : 'FF0284C7';
                   } else if (colNum === 5) {
                     fgArgb = 'FF1D4ED8';
                     cell.numFmt = '0.00';
+                  } else if (colNum === 6) {
+                    fgArgb = 'FFDC2626';
                   } else if (colNum === 7) {
                     const gStyle = this.getExcelGradeStyle(rowVals[6]);
                     bgArgb = gStyle.fill;
                     fgArgb = gStyle.text;
+                  } else if (colNum === 8) {
+                    fgArgb = 'FF0284C7';
+                  } else if (colNum === 9) {
+                    fgArgb = 'FFE11D48';
+                  } else if (colNum === 10) {
+                    fgArgb = 'FF7C3AED';
                   }
 
                   cell.font = { name: 'Khmer OS Siemreap', size: 10.5, bold: isBold, color: { argb: fgArgb } };
@@ -3768,11 +3776,11 @@ export const ScoresPage = {
               <td class="px-1 py-1 text-left font-khmer border border-black truncate" style="border: 1px solid #000000 !important; padding: 2.5px 2px !important; vertical-align: middle !important;" title="${fullName}">${fullName}</td>
               <td class="px-0.5 py-1 text-center font-khmer border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important;">${genderText}</td>
               <td class="px-0.5 py-1 text-center font-mono font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important;">${avgText}</td>
-              <td class="px-0.5 py-1 text-center font-mono font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important;">${rankText}</td>
+              <td class="px-0.5 py-1 text-center font-mono font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important; color: #dc2626 !important;">${rankText}</td>
               <td class="px-0.5 py-1 text-center font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important;">${gradeText}</td>
-              <td class="px-0.5 py-1 text-center font-mono font-medium border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important;">${excusedText}</td>
-              <td class="px-0.5 py-1 text-center font-mono font-medium border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important;">${unexcusedText}</td>
-              <td class="px-0.5 py-1 text-center font-mono font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important;">${totalAbsText}</td>
+              <td class="px-0.5 py-1 text-center font-mono font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important; color: #0284c7 !important;">${excusedText}</td>
+              <td class="px-0.5 py-1 text-center font-mono font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important; color: #e11d48 !important;">${unexcusedText}</td>
+              <td class="px-0.5 py-1 text-center font-mono font-bold border border-black whitespace-nowrap" style="border: 1px solid #000000 !important; padding: 2.5px 1px !important; vertical-align: middle !important; color: #7c3aed !important;">${totalAbsText}</td>
             </tr>
           `;
         };
@@ -3805,9 +3813,9 @@ export const ScoresPage = {
             <th colspan="3" class="text-center whitespace-nowrap" style="height: 13px !important; width: 31% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 1px 0.5px !important; line-height: 1.05 !important; vertical-align: middle !important;">អវត្តមាន</th>
           </tr>
           <tr style="height: 12px !important; background-color: #0045ff !important; color: #ffffff !important; font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif !important; font-weight: bold !important; font-size: 7px !important; line-height: 1.0 !important;">
-            <th class="text-center whitespace-nowrap" style="height: 12px !important; width: 10.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 0.5px 0.5px !important; line-height: 1.0 !important; vertical-align: middle !important;">ច្បាប់</th>
-            <th class="text-center whitespace-nowrap" style="height: 12px !important; width: 10.5% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 0.5px 0.5px !important; line-height: 1.0 !important; vertical-align: middle !important;">ឥតច្បាប់</th>
-            <th class="text-center whitespace-nowrap" style="height: 12px !important; width: 10% !important; background-color: #0045ff !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 0.5px 0.5px !important; line-height: 1.0 !important; vertical-align: middle !important;">សរុប</th>
+            <th class="text-center whitespace-nowrap" style="height: 12px !important; width: 10.5% !important; background-color: #0284c7 !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 0.5px 0.5px !important; line-height: 1.0 !important; vertical-align: middle !important;">ច្បាប់</th>
+            <th class="text-center whitespace-nowrap" style="height: 12px !important; width: 10.5% !important; background-color: #e11d48 !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 0.5px 0.5px !important; line-height: 1.0 !important; vertical-align: middle !important;">ឥតច្បាប់</th>
+            <th class="text-center whitespace-nowrap" style="height: 12px !important; width: 10% !important; background-color: #7c3aed !important; color: #ffffff !important; border: 1px solid #000000 !important; padding: 0.5px 0.5px !important; line-height: 1.0 !important; vertical-align: middle !important;">សរុប</th>
           </tr>
         `;
 
