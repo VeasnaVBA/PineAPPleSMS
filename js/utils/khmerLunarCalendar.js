@@ -682,8 +682,8 @@ export function getKhmerLunarDayInfo(year, month, day) {
   const holidayTitleKm = holidays.map(h => h.nameKm).join(' / ');
   const holidayTitleEn = holidays.map(h => h.nameEn).join(' / ');
 
-  // Short lunar text for compact column headers: e.g. "១៥ក" or "៤រ"
-  const lunarShort = `${khmer.dayKh}${khmer.moonPhaseShort}`;
+  // Short lunar text for column headers: e.g. "១៥កើត" or "៤រោច"
+  const lunarShort = `${khmer.dayKh}${khmer.moonPhaseName}`;
   // Medium lunar text: e.g. "១៥កើត ពិសាខ"
   const lunarMedium = `${khmer.dayKh}${khmer.moonPhaseName} ខែ${khmer.monthName}`;
   // Full traditional Khmer lunar date
