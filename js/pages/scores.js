@@ -4823,9 +4823,8 @@ export const ScoresPage = {
             }
           </style>
 
-          <!-- Hidden File Inputs for Click-to-Upload Student Photos & School Logo -->
+          <!-- Hidden File Input for Click-to-Upload Student Photos -->
           <input type="file" id="honor-roll-photo-file-input" accept="image/*" class="hidden print:hidden" style="display: none !important;" />
-          <input type="file" id="honor-roll-logo-file-input" accept="image/*" class="hidden print:hidden" style="display: none !important;" />
 
           <div class="moeys-report-document honor-roll-document mx-auto"
                style="width: 100% !important; min-height: 281mm !important; height: 281mm !important; position: relative !important; box-sizing: border-box !important; background: #ffffff !important; padding: 13mm 14mm 11mm 14mm !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; overflow: hidden !important; font-family: 'Khmer OS Siemreap', 'Siemreap', sans-serif;">
@@ -4837,38 +4836,16 @@ export const ScoresPage = {
             <div style="position: absolute; bottom: 2.2mm; left: 2.2mm; z-index: 2; pointer-events: none;">${getRedCornerOrnamentSvg('bl')}</div>
             <div style="position: absolute; bottom: 2.2mm; right: 2.2mm; z-index: 2; pointer-events: none;">${getRedCornerOrnamentSvg('br')}</div>
 
-            <!-- Subtle Center School Emblem Watermark Behind Student Portraits -->
-            <div id="honor-roll-watermark-box" style="position: absolute; top: 51%; left: 50%; transform: translate(-50%, -48%); width: 390px; height: 390px; opacity: 0.055; pointer-events: none; z-index: 1; display: flex; align-items: center; justify-content: center;">
-              ${schoolLogoDataUrl
-                ? `<img src="${schoolLogoDataUrl}" alt="Watermark" style="width: 360px; height: 360px; object-fit: contain;" />`
-                : getDefaultSchoolCrestSvg(370)
-              }
-            </div>
-
             <!-- 1. TOP HEADER + ARCHED TITLE BLOCK -->
             <div style="position: relative; z-index: 5;">
               <div class="flex items-start justify-between">
-                <!-- Top-Left: School Crest Logo + Khmer & English School Name -->
-                <div class="text-center" style="min-width: 175px; padding-top: 8px;">
-                  <div id="honor-roll-school-logo-trigger"
-                       class="group relative mx-auto cursor-pointer"
-                       title="${isKm ? 'ចុចដើម្បីប្តូររូបសញ្ញាសាលា (Logo)' : 'Click to upload school logo'}"
-                       style="width: 62px; height: 62px; margin-bottom: 4px;">
-                    ${schoolLogoDataUrl
-                      ? `<img id="honor-roll-school-logo-img" src="${schoolLogoDataUrl}" alt="School Logo" style="width: 62px; height: 62px; object-fit: contain; display: block; margin: 0 auto;" />`
-                      : getDefaultSchoolCrestSvg(62)
-                    }
-                  </div>
+                <!-- Top-Left: Only Khmer School Name -->
+                <div class="text-center" style="min-width: 175px; padding-top: 18px;">
                   <div id="honor-roll-school-kh"
                        contenteditable="true"
                        spellcheck="false"
                        class="font-khmer-muol outline-none focus:ring-1 focus:ring-primary/40 rounded px-1 cursor-text"
-                       style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 11px !important; color: #5c1916 !important; line-height: 1.75 !important;">${escapeHtml(schoolName)}</div>
-                  <div id="honor-roll-school-en"
-                       contenteditable="true"
-                       spellcheck="false"
-                       class="outline-none focus:ring-1 focus:ring-primary/40 rounded px-1 cursor-text"
-                       style="font-family: 'Georgia', 'Times New Roman', serif !important; font-size: 12.5px !important; font-weight: 700 !important; color: #0b6e4f !important; line-height: 1.3 !important;">${escapeHtml(schoolEnglishName)}</div>
+                       style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 11.5px !important; color: #5c1916 !important; line-height: 1.85 !important;">${escapeHtml(schoolName)}</div>
                 </div>
 
                 <!-- Top-Right: Kingdom of Cambodia Motto -->
@@ -4880,7 +4857,7 @@ export const ScoresPage = {
               </div>
 
               <!-- Center Arched "តារាងកិត្តិយស" + Month / Year / Class Subtitles -->
-              <div class="text-center" style="margin-top: -18px;">
+              <div class="text-center" style="margin-top: 2px;">
                 <!-- Arched SVG Title: តារាងកិត្តិយស -->
                 <div style="display: flex; justify-content: center; margin-bottom: -8px;">
                   <svg viewBox="0 0 420 76" width="335" height="62" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
@@ -5053,43 +5030,7 @@ export const ScoresPage = {
           }
         });
 
-        // Bind Click-to-Upload School Logo
-        const logoTrigger = contentContainer.querySelector('#honor-roll-school-logo-trigger');
-        const logoFileInput = contentContainer.querySelector('#honor-roll-logo-file-input');
-        logoTrigger?.addEventListener('click', (e) => {
-          e.stopPropagation();
-          if (logoFileInput) {
-            logoFileInput.value = '';
-            logoFileInput.click();
-          }
-        });
-
-        logoFileInput?.addEventListener('change', async (e) => {
-          const file = e.target.files?.[0];
-          if (!file) return;
-          try {
-            const dataUrl = await readAndResizeImage(file, 360, 360);
-            schoolLogoDataUrl = dataUrl;
-            try { localStorage.setItem('honor_roll_school_logo', dataUrl); } catch (_) {}
-            if (logoTrigger) {
-              logoTrigger.innerHTML = `<img id="honor-roll-school-logo-img" src="${dataUrl}" alt="School Logo" style="width: 62px; height: 62px; object-fit: contain; display: block; margin: 0 auto;" />`;
-            }
-            const watermarkBox = contentContainer.querySelector('#honor-roll-watermark-box');
-            if (watermarkBox) {
-              watermarkBox.innerHTML = `<img src="${dataUrl}" alt="Watermark" style="width: 360px; height: 360px; object-fit: contain;" />`;
-            }
-            viewer?.saveStateForUndo?.();
-            toast.success(isKm ? 'បានប្តូររូបសញ្ញាសាលាដោយជោគជ័យ' : 'School logo updated');
-          } catch (_) {
-            toast.error(isKm ? 'មិនអាចបញ្ចូលរូបសញ្ញាសាលាបានទេ' : 'Failed to load logo');
-          }
-        });
-
-        // Persist editable school English subtitle, Principal name, and Teacher name
-        contentContainer.querySelector('#honor-roll-school-en')?.addEventListener('blur', (e) => {
-          schoolEnglishName = (e.target.textContent || '').trim();
-          try { localStorage.setItem('honor_roll_school_en', schoolEnglishName); } catch (_) {}
-        });
+        // Persist Principal name and Teacher name
         contentContainer.querySelector('#honor-roll-principal-name')?.addEventListener('blur', (e) => {
           principalName = (e.target.textContent || '').trim();
           try { localStorage.setItem('honor_roll_principal_name', principalName); } catch (_) {}
