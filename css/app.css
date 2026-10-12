@@ -2259,4 +2259,43 @@ td.att-day-td.is-absent {
   font-weight: 700 !important;
 }
 
+select.att-day-select,
+.score-table select.att-day-select {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  text-align: center !important;
+  text-align-last: center !important;
+  font-family: monospace !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  color: inherit !important;
+  cursor: pointer !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+select.att-day-select option {
+  background-color: #ffffff;
+  color: #0f172a;
+  font-family: monospace;
+  font-weight: 700;
+  text-align: center;
+}
+
+.dark select.att-day-select option {
+  background-color: #1e293b;
+  color: #f8fafc;
+}
+
+
 

@@ -109,18 +109,14 @@ export const AttendancePage = {
             <p class="text-xs sm:text-sm text-muted-foreground mt-0.5 font-khmer">${t('attendance.subtitle')}</p>
           </div>
           <div class="flex items-center gap-2 flex-wrap">
-            <!-- Typing Legend -->
+            <!-- Legend -->
             <div class="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-lg border border-border bg-card text-xs font-khmer">
               <span class="inline-flex items-center gap-1 font-semibold text-sky-700 dark:text-sky-300">
-                <kbd class="px-1.5 py-0.5 rounded bg-sky-500/15 border border-sky-500/30 font-mono text-[11px]">ច</kbd>
-                <span>ឬ</span>
                 <kbd class="px-1.5 py-0.5 rounded bg-sky-500/15 border border-sky-500/30 font-mono text-[11px]">P</kbd>
                 <span>= ច្បាប់</span>
               </span>
               <span class="text-border">|</span>
               <span class="inline-flex items-center gap-1 font-semibold text-rose-700 dark:text-rose-300">
-                <kbd class="px-1.5 py-0.5 rounded bg-rose-500/15 border border-rose-500/30 font-mono text-[11px]">អ</kbd>
-                <span>ឬ</span>
                 <kbd class="px-1.5 py-0.5 rounded bg-rose-500/15 border border-rose-500/30 font-mono text-[11px]">A</kbd>
                 <span>= ឥតច្បាប់</span>
               </span>
@@ -412,7 +408,11 @@ export const AttendancePage = {
       for (let d = 1; d <= daysInMonth; d++) {
         const dayName = dayNames[new Date(yearNum, monthNum - 1, d).getDay()];
         const cellObj = row.days[d] || { status: 'Present', mark: '' };
-        const markVal = cellObj.mark || '';
+        const markVal = cellObj.status === 'Excused'
+          ? 'P'
+          : cellObj.status === 'Absent'
+            ? 'A'
+            : '';
         const statusCellClass = cellObj.status === 'Excused'
           ? 'is-excused'
           : cellObj.status === 'Absent'
@@ -421,18 +421,18 @@ export const AttendancePage = {
 
         dayCellsHtml += `
           <td class="score-cell-td att-day-td ${statusCellClass}">
-            <input
-              type="text"
-              maxlength="3"
-              value="${markVal.replace(/"/g, '&quot;')}"
+            <select
               data-student-id="${row.studentId}"
               data-day="${d}"
               data-row-idx="${rowIdx}"
               data-col-idx="${d}"
-              placeholder=""
-              title="ថ្ងៃទី ${d} (${dayName}) (វាយ ច/P = ច្បាប់, អ/A = ឥតច្បាប់)"
-              class="score-cell-input att-day-input font-khmer"
-            />
+              title="ថ្ងៃទី ${d} (${dayName}) (P = ច្បាប់, A = ឥតច្បាប់, ទទេ = វត្តមាន)"
+              class="score-cell-input att-day-select no-shadcn font-mono font-bold"
+            >
+              <option value="" ${markVal === '' ? 'selected' : ''}></option>
+              <option value="P" ${markVal === 'P' ? 'selected' : ''}>P</option>
+              <option value="A" ${markVal === 'A' ? 'selected' : ''}>A</option>
+            </select>
           </td>
         `;
       }
@@ -489,16 +489,82 @@ export const AttendancePage = {
     const tbody = document.getElementById('attendance-table-body');
     if (!tbody || !this.state.sheet) return;
 
-    // Select input text on focus for fast overwriting
-    tbody.querySelectorAll('input.score-cell-input').forEach(inp => {
-      inp.addEventListener('focus', () => {
-        inp.select();
+    const applyCellChange = (sel) => {
+      const studentId = sel.getAttribute('data-student-id');
+      const day = parseInt(sel.getAttribute('data-day'), 10);
+      const row = this.state.sheet.rows.find(r => r.studentId === studentId);
+      if (!row) return;
+
+      const { status, mark } = classifyAttendanceMark(sel.value);
+      row.days[day] = { status, mark };
+
+      // Update cell visual style
+      const td = sel.closest('td');
+      if (td) {
+        td.classList.remove('is-excused', 'is-absent');
+        if (status === 'Excused') {
+          td.classList.add('is-excused');
+        } else if (status === 'Absent') {
+          td.classList.add('is-absent');
+        }
+      }
+
+      // Recalculate permission, absent, and total from all days in the month
+      let permCount = 0;
+      let absCount = 0;
+      for (let d = 1; d <= this.state.sheet.daysInMonth; d++) {
+        const st = row.days[d]?.status;
+        if (st === 'Excused') permCount++;
+        else if (st === 'Absent') absCount++;
+      }
+      row.permission = permCount;
+      row.absent = absCount;
+      row.total = permCount + absCount;
+
+      // Update read-only summary cells in DOM
+      const tr = sel.closest('tr');
+      if (tr) {
+        const permTd = tr.querySelector(`[data-perm-cell="${studentId}"]`);
+        const absTd = tr.querySelector(`[data-absent-cell="${studentId}"]`);
+        const totalTd = tr.querySelector(`[data-total-cell="${studentId}"]`);
+        if (permTd) permTd.textContent = row.permission;
+        if (absTd) absTd.textContent = row.absent;
+        if (totalTd) totalTd.textContent = row.total;
+      }
+
+      this.updateStats();
+      this.scheduleAutoSave();
+    };
+
+    tbody.querySelectorAll('select.att-day-select').forEach(sel => {
+      sel.addEventListener('change', () => {
+        applyCellChange(sel);
       });
 
-      // Arrow key & Enter navigation across cells
-      inp.addEventListener('keydown', (e) => {
-        const rowIdx = parseInt(inp.getAttribute('data-row-idx'), 10);
-        const colIdx = parseInt(inp.getAttribute('data-col-idx'), 10);
+      // Keyboard navigation & quick P / A / Delete shortcuts
+      sel.addEventListener('keydown', (e) => {
+        const keyUpper = (e.key || '').toUpperCase();
+        if (keyUpper === 'P') {
+          e.preventDefault();
+          sel.value = 'P';
+          applyCellChange(sel);
+          return;
+        }
+        if (keyUpper === 'A') {
+          e.preventDefault();
+          sel.value = 'A';
+          applyCellChange(sel);
+          return;
+        }
+        if (e.key === 'Backspace' || e.key === 'Delete') {
+          e.preventDefault();
+          sel.value = '';
+          applyCellChange(sel);
+          return;
+        }
+
+        const rowIdx = parseInt(sel.getAttribute('data-row-idx'), 10);
+        const colIdx = parseInt(sel.getAttribute('data-col-idx'), 10);
         let targetRow = rowIdx;
         let targetCol = colIdx;
 
@@ -506,7 +572,7 @@ export const AttendancePage = {
           targetCol = colIdx + 1;
         } else if (e.key === 'ArrowLeft') {
           targetCol = colIdx - 1;
-        } else if (e.key === 'ArrowDown' || e.key === 'Enter') {
+        } else if (e.key === 'ArrowDown') {
           targetRow = rowIdx + 1;
         } else if (e.key === 'ArrowUp') {
           targetRow = rowIdx - 1;
@@ -514,64 +580,13 @@ export const AttendancePage = {
           return;
         }
 
-        const nextInput = tbody.querySelector(
-          `input[data-row-idx="${targetRow}"][data-col-idx="${targetCol}"]`
+        const nextSelect = tbody.querySelector(
+          `select[data-row-idx="${targetRow}"][data-col-idx="${targetCol}"]`
         );
-        if (nextInput) {
+        if (nextSelect) {
           e.preventDefault();
-          nextInput.focus();
-          nextInput.select();
+          nextSelect.focus();
         }
-      });
-    });
-
-    // Day cell input handler
-    tbody.querySelectorAll('input.att-day-input').forEach(inp => {
-      inp.addEventListener('input', () => {
-        const studentId = inp.getAttribute('data-student-id');
-        const day = parseInt(inp.getAttribute('data-day'), 10);
-        const row = this.state.sheet.rows.find(r => r.studentId === studentId);
-        if (!row) return;
-
-        const { status, mark } = classifyAttendanceMark(inp.value);
-        row.days[day] = { status, mark };
-
-        // Update cell visual style
-        const td = inp.closest('td');
-        if (td) {
-          td.classList.remove('is-excused', 'is-absent');
-          if (status === 'Excused') {
-            td.classList.add('is-excused');
-          } else if (status === 'Absent') {
-            td.classList.add('is-absent');
-          }
-        }
-
-        // Recalculate permission, absent, and total from all days in the month
-        let permCount = 0;
-        let absCount = 0;
-        for (let d = 1; d <= this.state.sheet.daysInMonth; d++) {
-          const st = row.days[d]?.status;
-          if (st === 'Excused') permCount++;
-          else if (st === 'Absent') absCount++;
-        }
-        row.permission = permCount;
-        row.absent = absCount;
-        row.total = permCount + absCount;
-
-        // Update read-only summary cells in DOM
-        const tr = inp.closest('tr');
-        if (tr) {
-          const permTd = tr.querySelector(`[data-perm-cell="${studentId}"]`);
-          const absTd = tr.querySelector(`[data-absent-cell="${studentId}"]`);
-          const totalTd = tr.querySelector(`[data-total-cell="${studentId}"]`);
-          if (permTd) permTd.textContent = row.permission;
-          if (absTd) absTd.textContent = row.absent;
-          if (totalTd) totalTd.textContent = row.total;
-        }
-
-        this.updateStats();
-        this.scheduleAutoSave();
       });
     });
   },

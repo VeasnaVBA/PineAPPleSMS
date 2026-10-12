@@ -13,7 +13,7 @@ export function classifyAttendanceMark(rawVal) {
   const v = String(rawVal ?? '').trim();
   if (!v) return { status: 'Present', mark: '' };
   const upper = v.toUpperCase();
-  // Permission / Excused: ច, ច្បាប់, មានច្បាប់, P, E
+  // Permission / Excused: P
   if (
     upper === 'P' ||
     upper === 'E' ||
@@ -21,9 +21,9 @@ export function classifyAttendanceMark(rawVal) {
     v.startsWith('ច') ||
     v.includes('ច្បាប់')
   ) {
-    return { status: 'Excused', mark: v };
+    return { status: 'Excused', mark: 'P' };
   }
-  // Absent / Unexcused: អ, ឥ, ឥតច្បាប់, A, X, 0
+  // Absent / Unexcused: A
   if (
     upper === 'A' ||
     upper === 'X' ||
@@ -31,10 +31,9 @@ export function classifyAttendanceMark(rawVal) {
     v.startsWith('អ') ||
     v.startsWith('ឥ')
   ) {
-    return { status: 'Absent', mark: v };
+    return { status: 'Absent', mark: 'A' };
   }
-  // Default non-empty mark in attendance grid treated as Absent unless P/ច
-  return { status: 'Absent', mark: v };
+  return { status: 'Present', mark: '' };
 }
 
 export function resolveCalendarYearForMonth(academicYear, monthNum) {
@@ -172,10 +171,9 @@ export const AttendanceService = {
         const dateParts = String(rec.date || '').split('-');
         const dayNum = dateParts.length === 3 ? parseInt(dateParts[2], 10) : new Date(rec.date).getDate();
         if (dayNum >= 1 && dayNum <= daysInMonth) {
-          const defaultMark = isExc ? 'ច' : 'អ';
           days[dayNum] = {
             status: isExc ? 'Excused' : 'Absent',
-            mark: rec.mark ? String(rec.mark) : defaultMark
+            mark: isExc ? 'P' : 'A'
           };
         }
       }
