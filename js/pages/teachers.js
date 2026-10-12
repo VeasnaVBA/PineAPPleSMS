@@ -87,80 +87,74 @@ export const TeachersPage = {
               ${t('teachers.subtitle')}
             </p>
           </div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <!-- Hidden File Inputs -->
-            <input type="file" id="teacherExcelInput" accept=".xlsx, .xls" class="hidden" />
-            <input type="file" id="teacherJsonInput" accept=".json" class="hidden" />
+          <div class="flex flex-col sm:items-end gap-1.5">
+            <div class="flex items-center gap-2 flex-wrap">
+              <!-- Hidden File Inputs -->
+              <input type="file" id="teacherExcelInput" accept=".xlsx, .xls" class="hidden" />
+              <input type="file" id="teacherJsonInput" accept=".json" class="hidden" />
 
-            <!-- Excel Dropdown (Export & Import) -->
-            <div class="relative inline-block text-left" id="excel-dropdown-wrapper">
-              <button id="btn-excel-dropdown" 
-                      type="button" 
-                      class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-card hover:bg-muted/70 text-xs sm:text-sm font-medium transition-colors shadow-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer select-none">
-                ${getIcon('fileSpreadsheet', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
-                <span>${t('teachers.excel')}</span>
-                ${getIcon('chevronDown', 'w-3.5 h-3.5 text-muted-foreground ml-0.5')}
-              </button>
-              <div id="excel-dropdown-menu" class="hidden absolute right-0 sm:left-0 sm:right-auto mt-1.5 w-52 rounded-lg border border-border bg-card/95 backdrop-blur-md text-foreground shadow-lg shadow-black/10 dark:shadow-black/60 z-50 p-1 text-xs sm:text-sm animate-in fade-in-0 zoom-in-95">
-                <button id="btn-export-excel" type="button" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
-                  ${getIcon('download', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
-                  <span>${t('teachers.exportExcel')}</span>
+              <!-- Excel Dropdown (Export & Import) -->
+              <div class="relative inline-block text-left" id="excel-dropdown-wrapper">
+                <button id="btn-excel-dropdown" 
+                        type="button" 
+                        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-card hover:bg-muted/70 text-xs sm:text-sm font-medium transition-colors shadow-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer select-none">
+                  ${getIcon('fileSpreadsheet', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
+                  <span>${t('teachers.excel')}</span>
+                  ${getIcon('chevronDown', 'w-3.5 h-3.5 text-muted-foreground ml-0.5')}
                 </button>
-                <button id="btn-import-excel" type="button" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
-                  ${getIcon('upload', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
-                  <span>${t('teachers.importExcel')}</span>
-                </button>
+                <div id="excel-dropdown-menu" class="hidden absolute right-0 sm:left-0 sm:right-auto mt-1.5 w-52 rounded-lg border border-border bg-card/95 backdrop-blur-md text-foreground shadow-lg shadow-black/10 dark:shadow-black/60 z-50 p-1 text-xs sm:text-sm animate-in fade-in-0 zoom-in-95">
+                  <button id="btn-export-excel" type="button" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
+                    ${getIcon('download', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
+                    <span>${t('teachers.exportExcel')}</span>
+                  </button>
+                  <button id="btn-import-excel" type="button" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
+                    ${getIcon('upload', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
+                    <span>${t('teachers.importExcel')}</span>
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <!-- JSON Dropdown (Export & Import) -->
-            <div class="relative inline-block text-left" id="json-dropdown-wrapper">
-              <button id="btn-json-dropdown" 
-                      type="button" 
-                      class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-card hover:bg-muted/70 text-xs sm:text-sm font-medium transition-colors shadow-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer select-none">
-                ${getIcon('fileCode', 'w-4 h-4 text-blue-600 dark:text-blue-400')}
-                <span>${t('teachers.json')}</span>
-                ${getIcon('chevronDown', 'w-3.5 h-3.5 text-muted-foreground ml-0.5')}
-              </button>
-              <div id="json-dropdown-menu" class="hidden absolute right-0 sm:left-0 sm:right-auto mt-1.5 w-50 rounded-lg border border-border bg-card/95 backdrop-blur-md text-foreground shadow-lg shadow-black/10 dark:shadow-black/60 z-50 p-1 text-xs sm:text-sm animate-in fade-in-0 zoom-in-95">
-                <button id="btn-export-json" type="button" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
-                  ${getIcon('download', 'w-4 h-4 text-blue-600 dark:text-blue-400')}
-                  <span>${t('teachers.exportJson')}</span>
+              <!-- JSON Dropdown (Export & Import) -->
+              <div class="relative inline-block text-left" id="json-dropdown-wrapper">
+                <button id="btn-json-dropdown" 
+                        type="button" 
+                        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-card hover:bg-muted/70 text-xs sm:text-sm font-medium transition-colors shadow-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer select-none">
+                  ${getIcon('fileCode', 'w-4 h-4 text-blue-600 dark:text-blue-400')}
+                  <span>${t('teachers.json')}</span>
+                  ${getIcon('chevronDown', 'w-3.5 h-3.5 text-muted-foreground ml-0.5')}
                 </button>
-                <button id="btn-import-json" type="button" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
-                  ${getIcon('upload', 'w-4 h-4 text-blue-600 dark:text-blue-400')}
-                  <span>${t('teachers.importJson')}</span>
-                </button>
+                <div id="json-dropdown-menu" class="hidden absolute right-0 sm:left-0 sm:right-auto mt-1.5 w-50 rounded-lg border border-border bg-card/95 backdrop-blur-md text-foreground shadow-lg shadow-black/10 dark:shadow-black/60 z-50 p-1 text-xs sm:text-sm animate-in fade-in-0 zoom-in-95">
+                  <button id="btn-export-json" type="button" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
+                    ${getIcon('download', 'w-4 h-4 text-blue-600 dark:text-blue-400')}
+                    <span>${t('teachers.exportJson')}</span>
+                  </button>
+                  <button id="btn-import-json" type="button" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
+                    ${getIcon('upload', 'w-4 h-4 text-blue-600 dark:text-blue-400')}
+                    <span>${t('teachers.importJson')}</span>
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <!-- Add Teacher Button -->
-            <button id="btn-add-teacher" 
-                    ${isLimitReached ? 'disabled aria-disabled="true"' : ''}
-                    title="${isLimitReached ? t('teachers.profileLimitTooltip') : t('teachers.addTeacher')}"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-medium shadow-sm transition-all ${
-                      isLimitReached
-                        ? 'bg-muted text-muted-foreground border border-border opacity-50 cursor-not-allowed pointer-events-none'
-                        : 'bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer'
-                    }">
-              ${getIcon('plus', 'w-4 h-4')}
-              <span>${t('teachers.addTeacher')}</span>
-            </button>
+              <!-- Add Teacher Button -->
+              <button id="btn-add-teacher" 
+                      ${isLimitReached ? 'disabled aria-disabled="true"' : ''}
+                      title="${isLimitReached ? t('teachers.profileLimitTooltip') : t('teachers.addTeacher')}"
+                      class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-medium shadow-sm transition-all ${
+                        isLimitReached
+                          ? 'bg-muted text-muted-foreground border border-border opacity-50 cursor-not-allowed pointer-events-none'
+                          : 'bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer'
+                      } ${isKm ? 'font-khmer' : ''}">
+                ${getIcon('plus', 'w-4 h-4')}
+                <span>${t('teachers.addTeacher')}</span>
+              </button>
+            </div>
+            ${isLimitReached ? `
+              <p class="text-[11px] text-amber-600 dark:text-amber-400 font-medium ${isKm ? 'font-khmer' : ''}">
+                ${t('teachers.profileLimitTooltip')}
+              </p>
+            ` : ''}
           </div>
         </div>
-
-        <!-- Teacher Limit Notice Banner (shown only when teacher role has reached limit: 1) -->
-        ${isLimitReached ? `
-          <div class="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs flex items-center justify-between gap-3">
-            <div class="flex items-center gap-2.5">
-              ${getIcon('shield', 'w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0')}
-              <span>${t('teachers.profileLimitNotice')}</span>
-            </div>
-            <span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-              1 / 1 Profile
-            </span>
-          </div>
-        ` : ''}
 
         <!-- Filter & Search Toolbar -->
         <div class="p-3 sm:p-4 rounded-xl border border-border bg-card shadow-sm flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 w-full box-border">

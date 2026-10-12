@@ -61,40 +61,34 @@ export const ClassesPage = {
             <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">${t('classes.title')}</h1>
             <p class="text-sm text-muted-foreground mt-1">${t('classes.subtitle')}</p>
           </div>
-          <div class="flex items-center gap-2">
-            ${!isTeacher ? `
-              <a href="#promotion"
-                 class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-border bg-card text-foreground hover:bg-muted text-xs sm:text-sm font-medium shadow-xs transition-all cursor-pointer">
-                ${getIcon('graduationCap', 'w-4 h-4 text-purple-600 dark:text-purple-400')}
-                <span>${t('nav.promotion')}</span>
-              </a>
+          <div class="flex flex-col sm:items-end gap-1.5">
+            <div class="flex items-center gap-2">
+              ${!isTeacher ? `
+                <a href="#promotion"
+                   class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-border bg-card text-foreground hover:bg-muted text-xs sm:text-sm font-medium shadow-xs transition-all cursor-pointer">
+                  ${getIcon('graduationCap', 'w-4 h-4 text-purple-600 dark:text-purple-400')}
+                  <span>${t('nav.promotion')}</span>
+                </a>
+              ` : ''}
+              <button id="btn-add-class"
+                      ${isLimitReached ? 'disabled aria-disabled="true"' : ''}
+                      title="${isLimitReached ? t('classes.classLimitTooltip') : t('classes.addClass')}"
+                      class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-medium shadow-sm transition-all ${
+                        isLimitReached
+                          ? 'bg-muted text-muted-foreground border border-border opacity-50 cursor-not-allowed pointer-events-none'
+                          : 'bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer'
+                      } ${isKm ? 'font-khmer' : ''}">
+                ${getIcon('plus', 'w-4 h-4')}
+                <span>${t('classes.addClass')}</span>
+              </button>
+            </div>
+            ${isLimitReached ? `
+              <p class="text-[11px] text-amber-600 dark:text-amber-400 font-medium ${isKm ? 'font-khmer' : ''}">
+                ${t('classes.classLimitTooltip')}
+              </p>
             ` : ''}
-            <button id="btn-add-class"
-                    ${isLimitReached ? 'disabled aria-disabled="true"' : ''}
-                    title="${isLimitReached ? t('classes.classLimitTooltip') : t('classes.addClass')}"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-medium shadow-sm transition-all ${
-                      isLimitReached
-                        ? 'bg-muted text-muted-foreground border border-border opacity-50 cursor-not-allowed pointer-events-none'
-                        : 'bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer'
-                    }">
-              ${getIcon('plus', 'w-4 h-4')}
-              <span>${t('classes.addClass')}</span>
-            </button>
           </div>
         </div>
-
-        <!-- Teacher Classroom Limit Notice Banner (shown only when Teacher has reached 1 classroom limit) -->
-        ${isLimitReached ? `
-          <div class="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs flex items-center justify-between gap-3">
-            <div class="flex items-center gap-2.5">
-              ${getIcon('shield', 'w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0')}
-              <span>${t('classes.classLimitNotice')}</span>
-            </div>
-            <span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-              1 / 1
-            </span>
-          </div>
-        ` : ''}
 
         <!-- Class Cards Grid -->
         ${classes.length === 0 ? `
