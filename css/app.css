@@ -537,18 +537,21 @@ button.bg-primary:hover {
 }
 
 /* Topbar Action Buttons: Guarantee Identical 36px (2.25rem) Height & Proportions */
-#btn-lang-toggle {
+#btn-lang-toggle,
+#btn-cloud-sync-to-drive,
+#btn-cloud-restore-from-drive {
   height: 2.25rem !important;
   min-height: 2.25rem !important;
   max-height: 2.25rem !important;
+  width: auto !important;
+  min-width: unset !important;
+  max-width: none !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   box-sizing: border-box !important;
 }
 
-#btn-cloud-sync-to-drive,
-#btn-cloud-restore-from-drive,
 #btn-theme-toggle,
 #btn-theme-color,
 #btn-notifications,
