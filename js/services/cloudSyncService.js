@@ -267,27 +267,35 @@ export const CloudSyncService = {
    * @param {Object} [options={}] - Options (e.g. { force: true } to force restore immediately without confirmation modal)
    */
   async pushToApp(user = null, options = {}) {
+    const isLogin = options?.isLogin === true;
+    const isSilent = options?.silent === true;
+    const isForce = options?.force === true || isLogin;
+
     // 1. Safeguard: Check internet connection
     if (!this.isOnline()) {
-      toast.error(t('cloudSync.offlineError'), t('cloudSync.errorTitle'));
+      if (!isSilent && !isLogin) {
+        toast.error(t('cloudSync.offlineError'), t('cloudSync.errorTitle'));
+      }
       return false;
     }
 
     // 2. Identify active user
     const currentUser = user || authService.getCurrentUser();
     if (!currentUser || !currentUser.username) {
-      toast.error('No active logged-in user account found.', t('cloudSync.errorTitle'));
+      if (!isSilent && !isLogin) {
+        toast.error('No active logged-in user account found.', t('cloudSync.errorTitle'));
+      }
       return false;
     }
 
     // 3. Check endpoint URL
     const endpoint = getCloudSyncUrl();
     if (!endpoint) {
-      this.openConfigModal(() => this.pushToApp(currentUser, options));
+      if (!isLogin) {
+        this.openConfigModal(() => this.pushToApp(currentUser, options));
+      }
       return false;
     }
-
-    const isForce = options?.force === true;
 
     try {
       const payload = {
@@ -295,7 +303,7 @@ export const CloudSyncService = {
         username: currentUser.username
       };
 
-      const timeoutMs = isForce ? 60000 : 45000;
+      const timeoutMs = isLogin ? 35000 : (isForce ? 60000 : 45000);
       const result = await this.dispatchGoogleScriptRequest(endpoint, payload, timeoutMs);
 
       if (!result || result.success === false) {
@@ -304,18 +312,36 @@ export const CloudSyncService = {
 
       // 4. If not found in Google Drive
       if (result.found === false) {
-        toast.error(
-          t('cloudSync.notFound', { username: currentUser.username }),
-          t('cloudSync.restoreFromDrive')
-        );
+        if (!isLogin && !isSilent) {
+          toast.error(
+            t('cloudSync.notFound', { username: currentUser.username }),
+            t('cloudSync.restoreFromDrive')
+          );
+        } else {
+          console.log(`[CloudSync] No existing spreadsheet found on Drive for @${currentUser.username} (new account).`);
+        }
         return false;
+      }
+
+      // 4.1 If sheet was newly created in Drive, seed it with current local workspace
+      if (result.isNewlyCreated) {
+        try {
+          await this.pullToDrive(currentUser, { silent: true });
+        } catch (_) {}
+        if (!isSilent) {
+          toast.info(
+            `Created new Google Drive sheet: SchoolWorkspace_${currentUser.username}`,
+            t('cloudSync.driveSync') || 'Google Drive'
+          );
+        }
+        return true;
       }
 
       const incomingData = result.data || {};
 
-      // 5. If force option is active, apply immediately without confirmation prompt
+      // 5. If force option or login is active, apply immediately without confirmation prompt
       if (isForce) {
-        await this.applyRestoredData(incomingData, currentUser, { silent: false });
+        await this.applyRestoredData(incomingData, currentUser, { silent: isSilent });
         return true;
       }
 
@@ -335,7 +361,9 @@ export const CloudSyncService = {
       return true;
     } catch (err) {
       console.error('pushToApp error:', err);
-      this.showErrorModal(err.message);
+      if (!isSilent && !isLogin) {
+        this.showErrorModal(err.message);
+      }
       return false;
     }
   },
@@ -678,6 +706,12 @@ export const CloudSyncService = {
     if (!this.isOnline()) return false;
     const currentUser = user || authService.getCurrentUser();
     if (!currentUser || !currentUser.username) return false;
+
+    // If local changes are dirty (unsynced), don't overwrite with cloud data; instead save local changes to cloud!
+    if (syncStateManager.isDirty()) {
+      syncStateManager.scheduleAutoSync(1000);
+      return false;
+    }
 
     const endpoint = getCloudSyncUrl();
     if (!endpoint) return false;

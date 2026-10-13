@@ -178,14 +178,12 @@ class SyncStateManager {
 
       console.log(`[SyncStateManager] Auto-syncing workspace changes to Google Drive for @${currentUser.username}...`);
 
-      // Run silent background sync to user's SchoolWorkspace_<username>
-      const success = await CloudSyncService.pullToDrive(currentUser, { silent: true });
-
-      // If user is Admin, also ensure SchoolSystem_AdminData is kept fresh
-      if (currentUser.role === 'ADMIN' && typeof AdminDataService !== 'undefined') {
-        try {
-          await AdminDataService.saveToGoogleSheet({ silent: true });
-        } catch (_) {}
+      let success = false;
+      if (currentUser.role === 'ADMIN') {
+        const res = await AdminDataService.saveToGoogleSheet({ silent: true });
+        success = Boolean(res?.success);
+      } else {
+        success = await CloudSyncService.pullToDrive(currentUser, { silent: true });
       }
 
       if (success) {

@@ -28,7 +28,7 @@ export class NavbarSyncButtons {
 
     if (!status.isOnline) {
       return `
-        <div id="topbar-sync-status-badge" class="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border select-none" title="${t('cloudSync.offlineWaiting')}">
+        <div id="topbar-sync-status-badge" class="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border select-none" title="${t('cloudSync.offlineWaiting')}">
           <span class="w-1.5 h-1.5 rounded-full bg-muted-foreground"></span>
           <span>${t('cloudSync.offlineWaiting')}</span>
         </div>
@@ -37,7 +37,7 @@ export class NavbarSyncButtons {
 
     if (status.isAutoSyncing) {
       return `
-        <div id="topbar-sync-status-badge" class="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-primary/10 text-primary border border-primary/20 select-none animate-pulse" title="${t('cloudSync.autoSyncing')}">
+        <div id="topbar-sync-status-badge" class="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[11px] font-medium bg-primary/10 text-primary border border-primary/20 select-none animate-pulse" title="${t('cloudSync.autoSyncing')}">
           ${getIcon('loader2', 'w-3 h-3 animate-spin')}
           <span>${t('cloudSync.autoSyncing')}</span>
         </div>
@@ -46,7 +46,7 @@ export class NavbarSyncButtons {
 
     if (status.isDirty) {
       return `
-        <div id="topbar-sync-status-badge" class="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 select-none" title="${t('cloudSync.unsyncedChanges')}">
+        <div id="topbar-sync-status-badge" class="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[11px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 select-none" title="${t('cloudSync.unsyncedChanges')}">
           <span class="relative flex h-2 w-2">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
             <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
@@ -58,7 +58,7 @@ export class NavbarSyncButtons {
 
     // Default: Clean / Synced
     return `
-      <div id="topbar-sync-status-badge" class="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 select-none" title="${t('cloudSync.syncedToDrive')}">
+      <div id="topbar-sync-status-badge" class="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 select-none" title="${t('cloudSync.syncedToDrive')}">
         ${getIcon('check', 'w-3 h-3 text-emerald-600 dark:text-emerald-400')}
         <span>${t('cloudSync.syncedToDrive')}</span>
       </div>
@@ -161,8 +161,22 @@ export class NavbarSyncButtons {
       this.unsubscribe();
       this.unsubscribe = null;
     }
-    this.unsubscribe = syncStateManager.subscribe(() => {
+    this.unsubscribe = syncStateManager.subscribe((status) => {
       this.updateBadge(parentElement);
+      // Give visual indicator on Save button if auto-sync is actively running
+      const syncBtn = parentElement.querySelector('#btn-cloud-sync-to-drive');
+      if (syncBtn && !this.isSyncing) {
+        const iconSpan = syncBtn.querySelector('.btn-icon');
+        const textSpan = syncBtn.querySelector('.btn-text');
+        const isKm = i18n.getLocale() === 'km';
+        if (status?.isAutoSyncing) {
+          if (iconSpan) iconSpan.innerHTML = getIcon('loader2', 'w-4 h-4 text-primary animate-spin');
+          if (textSpan) textSpan.textContent = isKm ? 'កំពុងរក្សាទុក...' : 'Saving...';
+        } else {
+          if (iconSpan) iconSpan.innerHTML = getIcon('cloudUpload', 'w-4 h-4 text-primary');
+          if (textSpan) textSpan.textContent = isKm ? 'រក្សាទុក' : 'Save';
+        }
+      }
     });
 
     syncBtn?.addEventListener('click', async (e) => {

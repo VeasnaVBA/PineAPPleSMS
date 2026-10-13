@@ -184,7 +184,10 @@ class GlobalDatabase {
         const tx = db.transaction(storeName, 'readwrite');
         const store = tx.objectStore(storeName);
         const req = store.add(item);
-        req.onsuccess = () => resolve(req.result);
+        req.onsuccess = () => {
+          notifyWorkspaceMutation(storeName, 'add');
+          resolve(req.result);
+        };
         req.onerror = () => reject(req.error);
       } catch (err) {
         console.warn(`GlobalDatabase add error on ${storeName}:`, err);
@@ -203,7 +206,10 @@ class GlobalDatabase {
         const tx = db.transaction(storeName, 'readwrite');
         const store = tx.objectStore(storeName);
         const req = store.put(item);
-        req.onsuccess = () => resolve(req.result);
+        req.onsuccess = () => {
+          notifyWorkspaceMutation(storeName, 'put');
+          resolve(req.result);
+        };
         req.onerror = () => reject(req.error);
       } catch (err) {
         console.warn(`GlobalDatabase put error on ${storeName}:`, err);
@@ -222,7 +228,10 @@ class GlobalDatabase {
         const tx = db.transaction(storeName, 'readwrite');
         const store = tx.objectStore(storeName);
         const req = store.delete(key);
-        req.onsuccess = () => resolve(true);
+        req.onsuccess = () => {
+          notifyWorkspaceMutation(storeName, 'delete');
+          resolve(true);
+        };
         req.onerror = () => reject(req.error);
       } catch (err) {
         console.warn(`GlobalDatabase delete error on ${storeName}:`, err);
@@ -280,7 +289,10 @@ class GlobalDatabase {
         const tx = db.transaction(storeName, 'readwrite');
         const store = tx.objectStore(storeName);
         const req = store.clear();
-        req.onsuccess = () => resolve(true);
+        req.onsuccess = () => {
+          notifyWorkspaceMutation(storeName, 'clear');
+          resolve(true);
+        };
         req.onerror = () => reject(req.error);
       } catch (err) {
         console.warn(`GlobalDatabase clear error on ${storeName}:`, err);
@@ -302,6 +314,7 @@ class GlobalDatabase {
  * Synchronizable Workspace Object Stores (mirrored to Google Drive: SchoolWorkspace_<username>)
  */
 export const WORKSPACE_SYNCABLE_STORES = new Set([
+  'users',
   'students',
   'schools',
   'classes',

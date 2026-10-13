@@ -31,6 +31,7 @@ import {
 import { DEFAULT_USERS } from '../config/defaultUsers.js';
 import { seedWorkspaceBaseline } from '../database/seed.js';
 import { toast } from '../components/toast.js';
+import { syncStateManager } from './syncStateManager.js';
 
 export const AdminDataService = {
   /**
@@ -171,6 +172,9 @@ export const AdminDataService = {
         localStorage.setItem(ADMIN_DATA_LAST_SYNC_KEY, new Date().toISOString());
       }
 
+      // Mark sync state clean
+      syncStateManager.markClean();
+
       if (!isSilent) {
         const counts = result.counts || { settings: 0, users: payloadData.users.length };
         const msg = currentLocale === 'km'
@@ -217,19 +221,21 @@ export const AdminDataService = {
    * Pull Admin Central Data from Google Spreadsheet (SchoolSystem_AdminData) and apply locally
    * @param {Object} [options={}]
    * @param {boolean} [options.silent=false]
+   * @param {boolean} [options.isLogin=false]
    */
   async pullFromGoogleSheet(options = {}) {
     const isSilent = options.silent === true;
+    const isLogin = options.isLogin === true;
     const currentLocale = i18n.getLocale();
 
     if (!CloudSyncService.isOnline()) {
-      if (!isSilent) toast.error(t('cloudSync.offlineError'), t('cloudSync.errorTitle'));
+      if (!isSilent && !isLogin) toast.error(t('cloudSync.offlineError'), t('cloudSync.errorTitle'));
       return { success: false, error: 'OFFLINE' };
     }
 
     const endpoint = getCloudSyncUrl();
     if (!endpoint) {
-      if (!isSilent) CloudSyncService.openConfigModal(() => this.pullFromGoogleSheet(options));
+      if (!isSilent && !isLogin) CloudSyncService.openConfigModal(() => this.pullFromGoogleSheet(options));
       return { success: false, error: 'NO_ENDPOINT' };
     }
 
@@ -238,7 +244,7 @@ export const AdminDataService = {
         action: 'GET_ADMIN_DATA'
       };
 
-      const timeoutMs = options.force === true ? 60000 : 45000;
+      const timeoutMs = isLogin ? 35000 : (options.force === true ? 60000 : 45000);
       const result = await CloudSyncService.dispatchGoogleScriptRequest(endpoint, payload, timeoutMs);
 
       if (!result || result.success === false) {
@@ -246,10 +252,12 @@ export const AdminDataService = {
       }
 
       if (result.found === false) {
-        const notFoundMsg = currentLocale === 'km'
-          ? `មិនទាន់មានឯកសារ ${ADMIN_SPREADSHEET_NAME} នៅលើ Google Drive នោះទេ។ សូមចុច "រក្សាទុកទិន្នន័យ Admin" ជាមុនសិន។`
-          : `Admin spreadsheet "${ADMIN_SPREADSHEET_NAME}" not found on Google Drive yet. Please click "Save Admin Data" first.`;
-        if (!isSilent) toast.error(notFoundMsg, 'Admin Data Not Found');
+        if (!isSilent && !isLogin) {
+          const notFoundMsg = currentLocale === 'km'
+            ? `មិនទាន់មានឯកសារ ${ADMIN_SPREADSHEET_NAME} នៅលើ Google Drive នោះទេ។ សូមចុច "រក្សាទុកទិន្នន័យ Admin" ជាមុនសិន។`
+            : `Admin spreadsheet "${ADMIN_SPREADSHEET_NAME}" not found on Google Drive yet. Please click "Save Admin Data" first.`;
+          toast.error(notFoundMsg, 'Admin Data Not Found');
+        }
         return { success: false, found: false, error: 'NOT_FOUND' };
       }
 
@@ -263,11 +271,19 @@ export const AdminDataService = {
         localStorage.setItem(ADMIN_DATA_LAST_SYNC_KEY, new Date().toISOString());
       }
 
+      // Mark sync state clean
+      syncStateManager.markClean();
+
       if (!isSilent) {
         const successMsg = currentLocale === 'km'
           ? `បានទាញ និងធ្វើបច្ចុប្បន្នភាពទិន្នន័យ Admin ពី Google Sheet ដោយជោគជ័យ! (${appliedStats.usersCount} គណនី, ការកំណត់រូបរាង & សិទ្ធិ)`
           : `Admin data pulled and updated successfully! (${appliedStats.usersCount} accounts, appearance settings, and permissions)`;
         toast.success(successMsg, currentLocale === 'km' ? 'ទាញទិន្នន័យ Admin' : 'Admin Data Pulled');
+      }
+
+      // Refresh view if router is active
+      if (window.router?.handleRoute) {
+        await window.router.handleRoute();
       }
 
       return {
@@ -278,7 +294,7 @@ export const AdminDataService = {
       };
     } catch (err) {
       console.error('pullFromGoogleSheet error:', err);
-      if (!isSilent) {
+      if (!isSilent && !isLogin) {
         CloudSyncService.showErrorModal(err.message);
       }
       return { success: false, error: err.message };

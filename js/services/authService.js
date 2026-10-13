@@ -3,7 +3,7 @@
  * Handles user login, password hashing (SHA-256), session state, role checks,
  * and user workspace database lifecycle switching.
  */
-import { globalDb, initUserDatabase, closeUserDatabase } from '../database/db.js';
+import { globalDb, initUserDatabase, closeUserDatabase, setSuppressWorkspaceMutation } from '../database/db.js';
 import { seedWorkspaceBaseline } from '../database/seed.js';
 import { permissionService } from './permissionService.js';
 import { LocationService } from './locationService.js';
@@ -235,8 +235,14 @@ class AuthService {
     this.clearServiceCaches();
 
     // 4. Initialize the user's private, isolated workspace database
-    await initUserDatabase(user.id);
-    await seedWorkspaceBaseline();
+    // Suppress mutations during initial baseline seed to avoid premature auto-sync
+    setSuppressWorkspaceMutation(true);
+    try {
+      await initUserDatabase(user.id);
+      await seedWorkspaceBaseline();
+    } finally {
+      setSuppressWorkspaceMutation(false);
+    }
 
     // 5. Save session in localStorage
     const sessionData = {
@@ -262,29 +268,27 @@ class AuthService {
       }
     }
 
-    // 7. Whenever logging into an account, ALWAYS load and give values from Drive sheet file to app
+    // 7. Whenever logging into an account, ALWAYS execute the "Get Data" function from Google Drive
     if (typeof navigator !== 'undefined' && navigator.onLine) {
       if (sessionData.role !== 'ADMIN') {
         try {
           const { CloudSyncService } = await import('./cloudSyncService.js');
-          const restored = await CloudSyncService.restoreOnLogin(sessionData, { silent: false });
-          if (!restored) {
-            const isKm = i18n.getLocale() === 'km';
-            toast.warning(
-              isKm
-                ? 'ការទាញទិន្នន័យពី Drive ពេលចូលប្រព័ន្ធយឺត ឬមិនទាន់រួចរាល់។ អ្នកអាចចុចប៊ូតុង "ទាញទិន្នន័យ" នៅលើ Navbar គ្រប់ពេល!'
-                : 'Drive sync was slow during login. You can click "Get Data" on the top navbar at any time to force sync!',
-              isKm ? 'ដំណឹង Google Drive' : 'Google Drive Notice'
-            );
-          }
+          await CloudSyncService.pushToApp(sessionData, { force: true, isLogin: true, silent: false });
         } catch (cloudErr) {
-          console.warn('[Auth] Workspace restore on login notice:', cloudErr);
+          console.warn('[Auth] Workspace pushToApp on login notice:', cloudErr);
+          const isKm = i18n.getLocale() === 'km';
+          toast.warning(
+            isKm
+              ? 'បានចូលប្រព័ន្ធជាមួយទិន្នន័យលើឧបករណ៍។ ការទាញទិន្នន័យពី Drive យឺត ឬមិនទាន់ឆ្លើយតប។ អ្នកអាចចុចប៊ូតុង "ទាញទិន្នន័យ" នៅលើ Navbar គ្រប់ពេល!'
+              : 'Logged in with local data. Drive sync was slow. You can click "Get Data" on the top navbar at any time!',
+            isKm ? 'ដំណឹង Google Drive' : 'Google Drive Notice'
+          );
         }
       } else {
         // If Admin logs in, pull latest SchoolSystem_AdminData
         try {
           const { AdminDataService } = await import('./adminDataService.js');
-          await AdminDataService.pullFromGoogleSheet({ silent: false, force: true });
+          await AdminDataService.pullFromGoogleSheet({ silent: false, force: true, isLogin: true });
         } catch (adminErr) {
           console.warn('[Auth] Admin login sync notice:', adminErr);
         }
