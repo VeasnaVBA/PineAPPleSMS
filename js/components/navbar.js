@@ -21,48 +21,10 @@ export class NavbarSyncButtons {
   static unsubscribe = null;
 
   /**
-   * Generates badge HTML according to current syncStateManager status
+   * Generates badge HTML according to current syncStateManager status (removed per user request)
    */
   static renderBadgeHtml() {
-    const status = syncStateManager.getSyncStatus();
-
-    if (!status.isOnline) {
-      return `
-        <div id="topbar-sync-status-badge" class="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[11px] font-medium bg-muted text-muted-foreground border border-border select-none" title="${t('cloudSync.offlineWaiting')}">
-          <span class="w-1.5 h-1.5 rounded-full bg-muted-foreground"></span>
-          <span>${t('cloudSync.offlineWaiting')}</span>
-        </div>
-      `;
-    }
-
-    if (status.isAutoSyncing) {
-      return `
-        <div id="topbar-sync-status-badge" class="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[11px] font-medium bg-primary/10 text-primary border border-primary/20 select-none animate-pulse" title="${t('cloudSync.autoSyncing')}">
-          ${getIcon('loader2', 'w-3 h-3 animate-spin')}
-          <span>${t('cloudSync.autoSyncing')}</span>
-        </div>
-      `;
-    }
-
-    if (status.isDirty) {
-      return `
-        <div id="topbar-sync-status-badge" class="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[11px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 select-none" title="${t('cloudSync.unsyncedChanges')}">
-          <span class="relative flex h-2 w-2">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-          </span>
-          <span>${t('cloudSync.unsyncedChanges')}</span>
-        </div>
-      `;
-    }
-
-    // Default: Clean / Synced
-    return `
-      <div id="topbar-sync-status-badge" class="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 select-none" title="${t('cloudSync.syncedToDrive')}">
-        ${getIcon('check', 'w-3 h-3 text-emerald-600 dark:text-emerald-400')}
-        <span>${t('cloudSync.syncedToDrive')}</span>
-      </div>
-    `;
+    return '';
   }
 
   /**
@@ -96,9 +58,6 @@ export class NavbarSyncButtons {
 
     return `
       <div id="topbar-cloud-sync-group" class="flex items-center gap-1 sm:gap-2">
-        <!-- Live Sync Status Badge -->
-        ${this.renderBadgeHtml()}
-
         <!-- Button: Save to Drive -->
         <button 
           id="btn-cloud-sync-to-drive"
@@ -133,19 +92,14 @@ export class NavbarSyncButtons {
   }
 
   /**
-   * Dynamically update badge without re-rendering entire topbar
+   * Remove any stale badge element without re-rendering entire topbar
    */
   static updateBadge(parentElement = document) {
     const group = parentElement.querySelector('#topbar-cloud-sync-group');
     if (!group) return;
     const oldBadge = group.querySelector('#topbar-sync-status-badge');
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = this.renderBadgeHtml().trim();
-    const newBadge = tempDiv.firstElementChild;
-    if (oldBadge && newBadge) {
-      oldBadge.replaceWith(newBadge);
-    } else if (!oldBadge && newBadge) {
-      group.prepend(newBadge);
+    if (oldBadge) {
+      oldBadge.remove();
     }
   }
 
