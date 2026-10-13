@@ -20,7 +20,9 @@ export const SettingsService = {
   },
 
   async getAcademicYears() {
-    const years = await db.getAll('academicYears');
+    let years = await db.getAll('academicYears');
+    const isTeacher = authService.isTeacher();
+
     if (!years || years.length === 0) {
       const defaultYear = {
         id: 'ay-2024-2025',
@@ -33,6 +35,23 @@ export const SettingsService = {
       await this.set('active_academic_year', '2024–2025');
       return [defaultYear];
     }
+
+    // Teacher account rule: Teacher accounts must have strictly ONE study year
+    if (isTeacher && years.length > 1) {
+      const activeName = await this.getActiveAcademicYear().catch(() => '');
+      const normDash = (str) => String(str || '').replace(/[–—−]/g, '-').trim().toLowerCase();
+      const primaryIdx = years.findIndex(y => y.isActive || normDash(y.name) === normDash(activeName));
+      const keep = years[primaryIdx >= 0 ? primaryIdx : 0];
+      keep.isActive = true;
+      for (const y of years) {
+        if (y.id !== keep.id) {
+          await db.delete('academicYears', y.id);
+        }
+      }
+      await db.put('academicYears', keep);
+      return [keep];
+    }
+
     return years;
   },
 
@@ -49,22 +68,138 @@ export const SettingsService = {
     return years[0]?.name || '2024–2025';
   },
 
+  /**
+   * Set or edit the single study year for a teacher account.
+   * Ensures teacher has strictly 1 study year in workspace.
+   * Cascades the rename across classes, students, scores, and attendance.
+   */
+  async setTeacherStudyYear(name, { startDate = '', endDate = '' } = {}) {
+    if (!name || !name.trim()) {
+      throw new Error('Study year name is required');
+    }
+    const trimmed = name.trim();
+    const normDash = (str) => String(str || '').replace(/[–—−]/g, '-').trim().toLowerCase();
+    const years = await db.getAll('academicYears');
+
+    let target = null;
+    let oldName = null;
+
+    if (years && years.length > 0) {
+      // Find active or primary year to update
+      const activeYearName = await this.getActiveAcademicYear().catch(() => '');
+      const matchIdx = years.findIndex(y => y.isActive || normDash(y.name) === normDash(activeYearName));
+      target = years[matchIdx >= 0 ? matchIdx : 0];
+      oldName = target.name;
+      target.name = trimmed;
+      target.isActive = true;
+      if (startDate) target.startDate = startDate;
+      if (endDate) target.endDate = endDate;
+      target.updatedAt = new Date().toISOString();
+      await db.put('academicYears', target);
+
+      // Clean up any extra years so teacher account has strictly 1 study year
+      for (let i = 0; i < years.length; i++) {
+        if (years[i].id !== target.id) {
+          await db.delete('academicYears', years[i].id);
+        }
+      }
+    } else {
+      // No academic year existed yet; create the single one
+      const cleanSlug = trimmed.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+      const uniqueSuffix = Date.now().toString(36);
+      const newId = cleanSlug ? `ay-${cleanSlug}-${uniqueSuffix}` : `ay-${uniqueSuffix}`;
+      target = {
+        id: newId,
+        name: trimmed,
+        isActive: true,
+        startDate: startDate || '2024-09-01',
+        endDate: endDate || '2025-06-30',
+        createdAt: new Date().toISOString()
+      };
+      await db.put('academicYears', target);
+    }
+
+    await this.set('active_academic_year', trimmed);
+
+    // Cascade rename across all related records if changed
+    if (oldName && normDash(oldName) !== normDash(trimmed)) {
+      await this._cascadeRenameStudyYear(oldName, trimmed);
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('app:refresh-data', {
+        detail: { source: 'teacher.setStudyYear', year: trimmed }
+      }));
+    }
+
+    return target;
+  },
+
+  /**
+   * Helper: Cascade study year rename across classes, students, scores, and attendance
+   */
+  async _cascadeRenameStudyYear(oldName, newName) {
+    if (!oldName || !newName) return;
+    const normDash = (str) => String(str || '').replace(/[–—−]/g, '-').trim().toLowerCase();
+    const oldNorm = normDash(oldName);
+
+    try {
+      // 1. Classes
+      const classes = await db.getAll('classes');
+      for (const c of classes) {
+        if (!c.academicYear || normDash(c.academicYear) === oldNorm) {
+          c.academicYear = newName;
+          await db.put('classes', c);
+        }
+      }
+
+      // 2. Students
+      const students = await db.getAll('students');
+      for (const s of students) {
+        if (!s.academicYear || normDash(s.academicYear) === oldNorm) {
+          s.academicYear = newName;
+          await db.put('students', s);
+        }
+      }
+
+      // 3. Scores
+      const scores = await db.getAll('scores');
+      for (const sc of scores) {
+        if (!sc.academicYear || normDash(sc.academicYear) === oldNorm) {
+          sc.academicYear = newName;
+          await db.put('scores', sc);
+        }
+      }
+
+      // 4. Attendance
+      const attendance = await db.getAll('attendance');
+      for (const att of attendance) {
+        if (!att.academicYear || normDash(att.academicYear) === oldNorm) {
+          att.academicYear = newName;
+          await db.put('attendance', att);
+        }
+      }
+    } catch (err) {
+      console.warn('Cascade study year rename notice:', err);
+    }
+  },
+
   async createAcademicYear({ name, startDate = '', endDate = '' }) {
     if (!name || !name.trim()) {
       throw new Error('Academic year name is required');
     }
     const trimmed = name.trim();
     const normDash = (str) => String(str || '').replace(/[–—−]/g, '-').trim().toLowerCase();
+
+    // Teacher role rule: If teacher creates study year, update their single study year
+    if (authService.isTeacher()) {
+      return await this.setTeacherStudyYear(trimmed, { startDate, endDate });
+    }
+
     const years = await db.getAll('academicYears');
     const existing = years.find(y => normDash(y.name || y) === normDash(trimmed));
     if (existing) {
       return existing;
-    }
-
-    // Teacher role rule: Teacher account can create/have only 1 academic year
-    const isTeacher = authService.isTeacher();
-    if (isTeacher && years && years.length >= 1) {
-      throw new Error('គណនីគ្រូបង្រៀនអាចបង្កើតឆ្នាំសិក្សាបានត្រឹមតែ ១ ប៉ុណ្ណោះ (Teacher accounts can create only 1 study year).');
     }
 
     const cleanSlug = trimmed.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').toLowerCase();
@@ -91,6 +226,12 @@ export const SettingsService = {
     if (!name || !name.trim()) throw new Error('Academic year name is required');
     const trimmed = name.trim();
     const normDash = (str) => String(str || '').replace(/[–—−]/g, '-').trim().toLowerCase();
+
+    // If teacher, delegate to setTeacherStudyYear
+    if (authService.isTeacher()) {
+      return await this.setTeacherStudyYear(trimmed, { startDate, endDate });
+    }
+
     const years = await db.getAll('academicYears');
     const target = years.find(y => y.id === idOrName || y.name === idOrName || normDash(y.name) === normDash(idOrName));
     if (!target) throw new Error('Academic year not found');
@@ -106,24 +247,9 @@ export const SettingsService = {
       await this.set('active_academic_year', trimmed);
     }
 
-    // Cascade update in student & class records if renamed
+    // Cascade update in student, class, score, & attendance records if renamed
     if (normDash(oldName) !== normDash(trimmed)) {
-      try {
-        const students = await db.getAll('students');
-        for (const s of students) {
-          if (normDash(s.academicYear) === normDash(oldName)) {
-            s.academicYear = trimmed;
-            await db.put('students', s);
-          }
-        }
-        const classes = await db.getAll('classes');
-        for (const c of classes) {
-          if (normDash(c.academicYear) === normDash(oldName)) {
-            c.academicYear = trimmed;
-            await db.put('classes', c);
-          }
-        }
-      } catch (_) {}
+      await this._cascadeRenameStudyYear(oldName, trimmed);
     }
 
     return target;

@@ -92,11 +92,22 @@ export const ClassesPage = {
 
         <!-- Class Cards Grid -->
         ${classes.length === 0 ? `
-          <div class="p-12 text-center rounded-xl border border-dashed border-border bg-card">
-            <div class="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto text-muted-foreground mb-3">
-              ${getIcon('classes', 'w-6 h-6')}
+          <div class="p-10 sm:p-12 text-center rounded-xl border border-dashed border-border bg-card">
+            <div class="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3">
+              ${getIcon('classes', 'w-7 h-7')}
             </div>
-            <p class="text-sm text-muted-foreground">${t('classes.emptyList')}</p>
+            <h3 class="text-base font-bold text-foreground font-khmer mb-1">
+              ${isTeacher ? (isKm ? 'មិនទាន់មានថ្នាក់រៀននៅឡើយទេ' : 'No classroom created yet') : t('classes.emptyList')}
+            </h3>
+            <p class="text-xs text-muted-foreground max-w-md mx-auto mb-5 font-khmer leading-relaxed">
+              ${isTeacher 
+                ? (isKm ? 'សូមបង្កើតថ្នាក់រៀន និងកំណត់ឆ្នាំសិក្សារបស់អ្នក ដើម្បីចាប់ផ្តើមប្រើប្រាស់កម្មវិធី។' : 'Please create your classroom and define your study year to start using the system.') 
+                : t('classes.emptyList')}
+            </p>
+            <button id="btn-empty-add-class" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-xs sm:text-sm font-semibold shadow-sm transition-all cursor-pointer font-khmer">
+              ${getIcon('plus', 'w-4 h-4')}
+              <span>${isTeacher ? (isKm ? 'បង្កើតថ្នាក់រៀន និងឆ្នាំសិក្សា' : 'Create Classroom & Study Year') : t('classes.addClass')}</span>
+            </button>
           </div>
         ` : `
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -231,15 +242,18 @@ export const ClassesPage = {
 
   bindEvents() {
     // Add Class button with limit guard
-    document.getElementById('btn-add-class')?.addEventListener('click', (e) => {
+    const handleAddClick = (e) => {
       if (this.state.isLimitReached) {
-        e.preventDefault();
-        e.stopPropagation();
+        e?.preventDefault();
+        e?.stopPropagation();
         toast.error(t('classes.limitReachedToast'));
         return;
       }
       this.openClassFormModal();
-    });
+    };
+
+    document.getElementById('btn-add-class')?.addEventListener('click', handleAddClick);
+    document.getElementById('btn-empty-add-class')?.addEventListener('click', handleAddClick);
 
     // View Student Roster
     this.container.querySelectorAll('.btn-view-roster').forEach(btn => {
@@ -326,6 +340,13 @@ export const ClassesPage = {
     }
 
     const currentClsYear = existingClass?.academicYear || activeYear || academicYearsList[0];
+    const suggestedYears = Array.from(new Set([
+      ...academicYearsList,
+      '2024–2025',
+      '2025–2026',
+      '2026–2027',
+      '2027–2028'
+    ])).filter(Boolean);
 
     const content = `
       <form id="class-form" class="space-y-4 text-xs sm:text-sm">
@@ -356,17 +377,44 @@ export const ClassesPage = {
             <input type="text" id="form-cls-room" value="${existingClass?.room || ''}" placeholder="e.g. Room 204" class="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs" />
           </div>
 
-          <div>
-            <label class="block text-xs font-medium text-foreground mb-1">${t('common.academicYear')} <span class="text-destructive">*</span></label>
-            <select id="form-cls-year" class="w-full h-10 px-3 py-2 pr-9 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs cursor-pointer">
-              ${academicYearsList.map(yr => `
-                <option value="${yr}" ${yr === currentClsYear ? 'selected' : ''}>${yr}</option>
-              `).join('')}
-              ${!academicYearsList.includes(currentClsYear) && currentClsYear ? `
-                <option value="${currentClsYear}" selected>${currentClsYear}</option>
-              ` : ''}
-            </select>
-          </div>
+          ${isTeacher ? `
+            <div class="col-span-1 sm:col-span-2">
+              <label class="block text-xs font-semibold text-foreground mb-1">
+                ${t('common.academicYear')} <span class="text-destructive">*</span>
+              </label>
+              <div class="relative">
+                <input 
+                  type="text" 
+                  id="form-cls-year-input" 
+                  required 
+                  value="${currentClsYear || ''}" 
+                  list="list-suggested-academic-years"
+                  placeholder="${isKm ? 'ឧ. 2024–2025 ឬ 2025–2026' : 'e.g. 2024–2025 or 2025–2026'}" 
+                  class="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-mono font-medium box-border shadow-xs" 
+                />
+                <datalist id="list-suggested-academic-years">
+                  ${suggestedYears.map(yr => `<option value="${yr}">${yr}</option>`).join('')}
+                </datalist>
+              </div>
+              <p class="text-[11px] text-muted-foreground mt-1 font-khmer">
+                ${isKm 
+                  ? 'គណនីគ្រូបង្រៀនមានឆ្នាំសិក្សាតែ ១ ប៉ុណ្ណោះ។ អ្នកអាចកំណត់ ឬកែប្រែឆ្នាំសិក្សារបស់អ្នកនៅទីនេះបាន។' 
+                  : 'Teacher accounts have only 1 study year. You can set or edit your study year here.'}
+              </p>
+            </div>
+          ` : `
+            <div>
+              <label class="block text-xs font-medium text-foreground mb-1">${t('common.academicYear')} <span class="text-destructive">*</span></label>
+              <select id="form-cls-year" class="w-full h-10 px-3 py-2 pr-9 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs cursor-pointer">
+                ${academicYearsList.map(yr => `
+                  <option value="${yr}" ${yr === currentClsYear ? 'selected' : ''}>${yr}</option>
+                `).join('')}
+                ${!academicYearsList.includes(currentClsYear) && currentClsYear ? `
+                  <option value="${currentClsYear}" selected>${currentClsYear}</option>
+                ` : ''}
+              </select>
+            </div>
+          `}
 
           <div>
             <label class="block text-xs font-medium text-foreground mb-1">${t('common.status')}</label>
@@ -404,11 +452,23 @@ export const ClassesPage = {
         return;
       }
 
+      let academicYear = '';
+      if (isTeacher) {
+        academicYear = modal.element.querySelector('#form-cls-year-input')?.value.trim();
+        if (!academicYear) {
+          toast.error(isKm ? 'សូមបញ្ចូលឆ្នាំសិក្សា' : 'Academic year is required');
+          return;
+        }
+        await SettingsService.setTeacherStudyYear(academicYear);
+      } else {
+        academicYear = modal.element.querySelector('#form-cls-year')?.value;
+      }
+
       const data = {
         name,
         teacherId: modal.element.querySelector('#form-cls-teacher')?.value,
         room: modal.element.querySelector('#form-cls-room')?.value.trim(),
-        academicYear: modal.element.querySelector('#form-cls-year')?.value,
+        academicYear,
         status: modal.element.querySelector('#form-cls-status')?.value
       };
 
@@ -417,7 +477,10 @@ export const ClassesPage = {
           await ClassService.update(existingClass.id, data);
           toast.success(t('classes.updatedSuccess'));
         } else {
-          await ClassService.create(data);
+          const created = await ClassService.create(data);
+          if (isTeacher && created?.id) {
+            await authService.setAssignedClassId(created.id);
+          }
           toast.success(t('classes.savedSuccess'));
         }
         modal.close();
