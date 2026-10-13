@@ -83,6 +83,9 @@ export class NavbarSyncButtons {
       ? (isKm ? 'ទាញគណនីបង្ខំពី Google Sheet ក្នុង Drive (Force Get User Acc)' : 'Force get user accounts and permissions from Google Sheet in Drive')
       : (isKm ? 'ទាញទិន្នន័យបង្ខំពី Google Sheet ក្នុង Drive សម្រាប់គណនីនេះ (Force Get Data)' : 'Force get data from Google Sheet in Drive for this user account');
 
+    const saveLabelText = isKm ? 'រក្សាទុក' : 'Save';
+    const saveLoadingText = isKm ? 'កំពុងរក្សាទុក...' : 'Saving...';
+
     const restoreLabelText = isAdmin
       ? (isKm ? 'ទាញគណនី' : 'Get User Acc')
       : (isKm ? 'ទាញទិន្នន័យ' : 'Get Data');
@@ -92,7 +95,7 @@ export class NavbarSyncButtons {
       : (isKm ? 'កំពុងទាញយក...' : 'Getting Data...');
 
     return `
-      <div id="topbar-cloud-sync-group" class="flex items-center gap-1.5 sm:gap-2">
+      <div id="topbar-cloud-sync-group" class="flex items-center gap-1 sm:gap-2">
         <!-- Live Sync Status Badge -->
         ${this.renderBadgeHtml()}
 
@@ -102,9 +105,12 @@ export class NavbarSyncButtons {
           type="button"
           title="${saveTooltip}"
           ${isSyncActive ? 'disabled' : ''}
-          class="w-9 h-9 min-w-[36px] min-h-[36px] max-w-[36px] max-h-[36px] flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-foreground transition-all shadow-xs cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed group shrink-0">
-          <span class="btn-icon text-primary group-hover:scale-110 transition-transform flex items-center justify-center">
+          class="h-9 min-h-[36px] max-h-[36px] px-2 sm:px-2.5 flex items-center justify-center gap-1.5 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-foreground transition-all shadow-xs cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed group shrink-0">
+          <span class="btn-icon text-primary group-hover:scale-105 transition-transform flex items-center justify-center shrink-0">
             ${isSyncActive ? getIcon('loader2', 'w-4 h-4 text-primary animate-spin') : getIcon('cloudUpload', 'w-4 h-4 text-primary')}
+          </span>
+          <span class="btn-text font-khmer font-semibold text-xs leading-none text-foreground whitespace-nowrap">
+            ${isSyncActive ? saveLoadingText : saveLabelText}
           </span>
         </button>
 
@@ -114,9 +120,12 @@ export class NavbarSyncButtons {
           type="button"
           title="${restoreTooltip}"
           ${isRestoreActive ? 'disabled' : ''}
-          class="w-9 h-9 min-w-[36px] min-h-[36px] max-w-[36px] max-h-[36px] flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-foreground transition-all shadow-xs cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed group shrink-0">
-          <span class="btn-icon text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform flex items-center justify-center">
+          class="h-9 min-h-[36px] max-h-[36px] px-2 sm:px-2.5 flex items-center justify-center gap-1.5 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground text-foreground transition-all shadow-xs cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed group shrink-0">
+          <span class="btn-icon text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform flex items-center justify-center shrink-0">
             ${isRestoreActive ? getIcon('loader2', 'w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-spin') : getIcon('cloudDownload', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
+          </span>
+          <span class="btn-text font-khmer font-semibold text-xs leading-none text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+            ${isRestoreActive ? restoreLoadingText : restoreLabelText}
           </span>
         </button>
       </div>
@@ -210,11 +219,20 @@ export class NavbarSyncButtons {
     syncBtn.disabled = isLoading;
     if (restoreBtn) restoreBtn.disabled = isLoading;
 
+    const isKm = i18n.getLocale() === 'km';
+    const saveLabelText = isKm ? 'រក្សាទុក' : 'Save';
+    const saveLoadingText = isKm ? 'កំពុងរក្សាទុក...' : 'Saving...';
+
     const iconSpan = syncBtn.querySelector('.btn-icon');
     if (iconSpan) {
       iconSpan.innerHTML = isLoading 
         ? getIcon('loader2', 'w-4 h-4 text-primary animate-spin') 
         : getIcon('cloudUpload', 'w-4 h-4 text-primary');
+    }
+
+    const textSpan = syncBtn.querySelector('.btn-text');
+    if (textSpan) {
+      textSpan.textContent = isLoading ? saveLoadingText : saveLabelText;
     }
   }
 
@@ -230,11 +248,28 @@ export class NavbarSyncButtons {
     restoreBtn.disabled = isLoading;
     if (syncBtn) syncBtn.disabled = isLoading;
 
+    const isKm = i18n.getLocale() === 'km';
+    const currentUser = authService.getCurrentUser();
+    const isAdmin = currentUser?.role === 'ADMIN';
+
+    const restoreLabelText = isAdmin
+      ? (isKm ? 'ទាញគណនី' : 'Get User Acc')
+      : (isKm ? 'ទាញទិន្នន័យ' : 'Get Data');
+
+    const restoreLoadingText = isAdmin
+      ? (isKm ? 'កំពុងទាញគណនី...' : 'Getting Accounts...')
+      : (isKm ? 'កំពុងទាញយក...' : 'Getting Data...');
+
     const iconSpan = restoreBtn.querySelector('.btn-icon');
     if (iconSpan) {
       iconSpan.innerHTML = isLoading 
         ? getIcon('loader2', 'w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-spin') 
         : getIcon('cloudDownload', 'w-4 h-4 text-emerald-600 dark:text-emerald-400');
+    }
+
+    const textSpan = restoreBtn.querySelector('.btn-text');
+    if (textSpan) {
+      textSpan.textContent = isLoading ? restoreLoadingText : restoreLabelText;
     }
   }
 }

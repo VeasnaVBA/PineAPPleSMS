@@ -7,7 +7,7 @@ import { StudentService } from '../services/studentService.js';
 import { getIcon } from './icons.js';
 import { toast } from './toast.js';
 import { SearchModal } from './searchModal.js';
-import { NavbarSyncButtons } from './navbar.js';
+import { NavbarSyncButtons } from './navbar.js?v=3.0.8';
 import { ThemeColorModal } from './themeColorModal.js';
 import { Modal } from './modal.js';
 import { AdminDataService } from '../services/adminDataService.js';
@@ -58,7 +58,7 @@ export class Topbar {
       : (currentLocale === 'km' ? 'ប្តូរទៅផ្ទៃងងឹត (Dark Mode)' : 'Switch to Dark Mode');
 
     this.container.innerHTML = `
-      <header class="h-16 border-b border-border bg-background/95 backdrop-blur px-4 flex items-center justify-between gap-4 select-none sticky top-0 z-30">
+      <header class="h-16 border-b border-border bg-background/95 backdrop-blur px-2.5 sm:px-4 flex items-center justify-between gap-2 sm:gap-4 select-none sticky top-0 z-30">
         <!-- Left Section: Toggle Sidebar -->
         <div class="flex items-center gap-3">
           <button id="btn-toggle-sidebar" 
