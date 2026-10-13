@@ -7,6 +7,8 @@ import { globalDb, deleteWorkspaceDatabase, db } from '../database/db.js';
 import { hashPassword, authService } from './authService.js';
 import { CloudSyncService } from './cloudSyncService.js';
 import { AdminDataService } from './adminDataService.js';
+import { DEFAULT_USERS } from '../config/defaultUsers.js';
+import { i18n } from '../i18n/i18n.js';
 
 export const UserService = {
   /**
@@ -38,15 +40,28 @@ export const UserService = {
   },
 
   /**
-   * Check if username already exists
+   * Check if username already exists (case-insensitive & trimmed)
    */
   async usernameExists(username, excludeId = null) {
     const cleanUsername = (username || '').trim().toLowerCase();
+    if (!cleanUsername) return false;
+
     const users = await globalDb.getAll('users');
-    const match = users.find(u => u.username.toLowerCase() === cleanUsername);
-    if (!match) return false;
-    if (excludeId && match.id === excludeId) return false;
-    return true;
+    const match = users.find(u => (u.username || '').trim().toLowerCase() === cleanUsername);
+    if (match) {
+      if (excludeId && match.id === excludeId) return false;
+      return true;
+    }
+
+    if (Array.isArray(DEFAULT_USERS)) {
+      const defMatch = DEFAULT_USERS.find(d => (d.username || '').trim().toLowerCase() === cleanUsername);
+      if (defMatch) {
+        if (excludeId && defMatch.id === excludeId) return false;
+        return true;
+      }
+    }
+
+    return false;
   },
 
   /**
@@ -62,15 +77,32 @@ export const UserService = {
    * and automatically initialize the user's workspace spreadsheet in Google Drive (SchoolWorkspace_<username>)
    */
   async create({ displayName, username, password, role, classId = null }, options = {}) {
+    const isKm = i18n?.getLocale?.() === 'km';
     const cleanUsername = (username || '').trim().toLowerCase();
-    if (!cleanUsername) throw new Error('Username is required.');
-    if (!password || password.length < 4) throw new Error('Password must be at least 4 characters long.');
+    if (!cleanUsername) {
+      throw new Error(isKm ? 'សូមបញ្ចូលឈ្មោះគណនី (Username)។' : 'Username is required.');
+    }
+    if (cleanUsername.length < 3) {
+      throw new Error(isKm ? 'ឈ្មោះគណនីត្រូវមានយ៉ាងហោចណាស់ ៣ តួអក្សរ។' : 'Username must be at least 3 characters long.');
+    }
+    if (!/^[a-z0-9_.-]+$/.test(cleanUsername)) {
+      throw new Error(isKm ? 'ឈ្មោះគណនីអាចប្រើបានតែអក្សរ លេខ និងសញ្ញា (_ . -) ប៉ុណ្ណោះ។' : 'Username can only contain letters, numbers, and (_ . -).');
+    }
+    if (!password || password.length < 4) {
+      throw new Error(isKm ? 'ពាក្យសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ ៤ តួអក្សរ។' : 'Password must be at least 4 characters long.');
+    }
     const cleanRole = (role || '').trim().toUpperCase();
-    if (!['ADMIN', 'DIRECTOR', 'TEACHER'].includes(cleanRole)) throw new Error('Invalid account role.');
+    if (!['ADMIN', 'DIRECTOR', 'TEACHER'].includes(cleanRole)) {
+      throw new Error(isKm ? 'តួនាទីគណនីមិនត្រឹមត្រូវទេ។' : 'Invalid account role.');
+    }
 
     const exists = await this.usernameExists(cleanUsername);
     if (exists) {
-      throw new Error(`Username "${cleanUsername}" is already taken.`);
+      throw new Error(
+        isKm 
+          ? `ឈ្មោះគណនី "${cleanUsername}" នេះមានរួចហើយ! សូមជ្រើសរើសឈ្មោះផ្សេង។`
+          : `Username "${cleanUsername}" is already taken! Please choose another username.`
+      );
     }
 
     const id = 'USR' + String(Date.now()).slice(-6);

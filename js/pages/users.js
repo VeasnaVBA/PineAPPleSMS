@@ -790,11 +790,17 @@ export const UsersPage = {
           <label class="block font-semibold text-foreground mb-1">
             ${isKm ? 'ឈ្មោះគណនី' : 'Username'} *
           </label>
-          <input type="text" id="modal-user-username" required
-                 ${isEdit ? 'disabled' : ''}
-                 value="${userToEdit ? userToEdit.username : ''}"
-                 placeholder="${isKm ? 'ឧទាហរណ៍៖ teacher03' : 'e.g. teacher03'}"
-                 class="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs disabled:opacity-60 disabled:cursor-not-allowed" />
+          <div class="relative">
+            <input type="text" id="modal-user-username" required
+                   autocomplete="off"
+                   spellcheck="false"
+                   ${isEdit ? 'disabled' : ''}
+                   value="${userToEdit ? userToEdit.username : ''}"
+                   placeholder="${isKm ? 'ឧទាហរណ៍៖ teacher03' : 'e.g. teacher03'}"
+                   class="w-full h-10 px-3 py-2 pr-9 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs disabled:opacity-60 disabled:cursor-not-allowed transition-colors" />
+            <span id="modal-username-status-icon" class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none hidden"></span>
+          </div>
+          <div id="modal-username-feedback" class="mt-1 text-xs hidden"></div>
         </div>
 
         <!-- Role Selector -->
@@ -875,19 +881,168 @@ export const UsersPage = {
     });
 
     const roleSelect = document.getElementById('modal-user-role');
+    const usernameInput = document.getElementById('modal-user-username');
+    const usernameFeedback = document.getElementById('modal-username-feedback');
+    const usernameStatusIcon = document.getElementById('modal-username-status-icon');
+    const saveBtn = document.getElementById('btn-modal-save');
+    const cancelBtn = document.getElementById('btn-modal-cancel');
+    const errBox = document.getElementById('modal-form-error');
+
+    let isDuplicateUsername = false;
+    let usernameCheckTimer = null;
+
+    const setUsernameState = (state, message = '') => {
+      // state: 'neutral' | 'checking' | 'error' | 'success'
+      if (!usernameInput || !usernameFeedback || !usernameStatusIcon) return;
+
+      usernameInput.classList.remove(
+        'border-destructive', 'focus-visible:ring-destructive',
+        'border-emerald-500', 'focus-visible:ring-emerald-500'
+      );
+
+      if (state === 'neutral') {
+        usernameFeedback.classList.add('hidden');
+        usernameFeedback.textContent = '';
+        usernameStatusIcon.classList.add('hidden');
+        usernameStatusIcon.innerHTML = '';
+        isDuplicateUsername = false;
+      } else if (state === 'checking') {
+        usernameFeedback.className = 'mt-1 text-xs text-muted-foreground flex items-center gap-1.5';
+        usernameFeedback.innerHTML = `
+          ${getIcon('loader2', 'w-3 h-3 animate-spin shrink-0 text-muted-foreground')}
+          <span>${isKm ? 'កំពុងពិនិត្យឈ្មោះគណនី...' : 'Checking username...'}</span>
+        `;
+        usernameFeedback.classList.remove('hidden');
+        usernameStatusIcon.innerHTML = getIcon('loader2', 'w-4 h-4 animate-spin text-muted-foreground');
+        usernameStatusIcon.classList.remove('hidden');
+      } else if (state === 'error') {
+        usernameInput.classList.add('border-destructive', 'focus-visible:ring-destructive');
+        usernameFeedback.className = 'mt-1 text-xs text-destructive font-medium flex items-center gap-1.5';
+        usernameFeedback.innerHTML = `
+          ${getIcon('alertCircle', 'w-3.5 h-3.5 shrink-0 text-destructive')}
+          <span>${message}</span>
+        `;
+        usernameFeedback.classList.remove('hidden');
+        usernameStatusIcon.innerHTML = getIcon('alertCircle', 'w-4 h-4 text-destructive');
+        usernameStatusIcon.classList.remove('hidden');
+        isDuplicateUsername = true;
+      } else if (state === 'success') {
+        usernameInput.classList.add('border-emerald-500', 'focus-visible:ring-emerald-500');
+        usernameFeedback.className = 'mt-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5';
+        usernameFeedback.innerHTML = `
+          ${getIcon('check', 'w-3.5 h-3.5 shrink-0 text-emerald-600 dark:text-emerald-400')}
+          <span>${message}</span>
+        `;
+        usernameFeedback.classList.remove('hidden');
+        usernameStatusIcon.innerHTML = getIcon('check', 'w-4 h-4 text-emerald-600 dark:text-emerald-400');
+        usernameStatusIcon.classList.remove('hidden');
+        isDuplicateUsername = false;
+      }
+    };
+
+    const checkDuplicateUsername = async () => {
+      if (isEdit || !usernameInput) return true;
+      const rawVal = usernameInput.value || '';
+      const cleanUsername = rawVal.trim().toLowerCase();
+
+      if (!cleanUsername) {
+        setUsernameState('neutral');
+        return true;
+      }
+
+      if (cleanUsername.length < 3) {
+        setUsernameState('error', isKm ? 'ឈ្មោះគណនីត្រូវមានយ៉ាងហោចណាស់ ៣ តួអក្សរ' : 'Username must be at least 3 characters.');
+        return false;
+      }
+
+      if (!/^[a-z0-9_.-]+$/.test(cleanUsername)) {
+        setUsernameState('error', isKm ? 'ឈ្មោះគណនីអាចប្រើបានតែអក្សរ លេខ និងសញ្ញា (_ . -) ប៉ុណ្ណោះ' : 'Only letters, numbers, and (_ . -) allowed.');
+        return false;
+      }
+
+      // Check against local database and in-memory list
+      const existsInDb = await UserService.usernameExists(cleanUsername);
+      const existsInMemory = (this.users || []).some(
+        u => (u.username || '').trim().toLowerCase() === cleanUsername
+      );
+
+      if (existsInDb || existsInMemory) {
+        setUsernameState(
+          'error',
+          isKm 
+            ? `ឈ្មោះគណនី "${cleanUsername}" នេះមានរួចហើយ! សូមជ្រើសរើសឈ្មោះផ្សេង`
+            : `Username "${cleanUsername}" is already taken! Please choose another.`
+        );
+        return false;
+      } else {
+        setUsernameState(
+          'success',
+          isKm 
+            ? `ឈ្មោះគណនី "${cleanUsername}" អាចប្រើបាន`
+            : `Username "${cleanUsername}" is available`
+        );
+        return true;
+      }
+    };
+
+    if (!isEdit && usernameInput) {
+      usernameInput.addEventListener('input', () => {
+        if (errBox) errBox.classList.add('hidden');
+        clearTimeout(usernameCheckTimer);
+        const val = usernameInput.value.trim();
+        if (!val) {
+          setUsernameState('neutral');
+          return;
+        }
+        setUsernameState('checking');
+        usernameCheckTimer = setTimeout(async () => {
+          await checkDuplicateUsername();
+        }, 250);
+      });
+
+      usernameInput.addEventListener('blur', async () => {
+        clearTimeout(usernameCheckTimer);
+        await checkDuplicateUsername();
+      });
+    }
 
     document.getElementById('btn-modal-cancel')?.addEventListener('click', () => modal.close());
 
     document.getElementById('user-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const errBox = document.getElementById('modal-form-error');
       if (errBox) errBox.classList.add('hidden');
 
       const displayName = document.getElementById('modal-user-name')?.value || '';
-      const username = document.getElementById('modal-user-username')?.value || '';
+      const username = usernameInput?.value || '';
       const role = roleSelect?.value || 'TEACHER';
       const pass = document.getElementById('modal-user-password')?.value || '';
       const confirmPass = document.getElementById('modal-user-confirm-password')?.value || '';
+
+      // Check username before anything else if creating new account
+      if (!isEdit) {
+        const cleanUsername = (username || '').trim().toLowerCase();
+        if (!cleanUsername || cleanUsername.length < 3) {
+          if (errBox) {
+            errBox.textContent = isKm ? 'សូមបញ្ចូលឈ្មោះគណនីយ៉ាងហោចណាស់ ៣ តួអក្សរ' : 'Please enter a username of at least 3 characters.';
+            errBox.classList.remove('hidden');
+          }
+          usernameInput?.focus();
+          return;
+        }
+
+        const isAvailable = await checkDuplicateUsername();
+        if (!isAvailable || isDuplicateUsername) {
+          if (errBox) {
+            errBox.textContent = isKm 
+              ? `ឈ្មោះគណនី "${cleanUsername}" នេះមានរួចហើយ! សូមជ្រើសរើសឈ្មោះផ្សេង។`
+              : `Username "${cleanUsername}" is already taken! Please choose another username.`;
+            errBox.classList.remove('hidden');
+          }
+          usernameInput?.focus();
+          usernameInput?.select();
+          return;
+        }
+      }
 
       if (pass && pass !== confirmPass) {
         if (errBox) {
@@ -896,9 +1051,6 @@ export const UsersPage = {
         }
         return;
       }
-
-      const saveBtn = document.getElementById('btn-modal-save');
-      const cancelBtn = document.getElementById('btn-modal-cancel');
 
       try {
         if (isEdit) {
