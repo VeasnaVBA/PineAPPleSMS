@@ -569,6 +569,9 @@ export const ScoreService = {
     const isSemester = this.isSemesterPeriod(period);
     const isAnnual = this.isAnnualPeriod(period);
 
+    const toPut = [];
+    const toDelete = [];
+
     for (const row of rows) {
       if (!isSemester && !isAnnual) {
         for (const sub of subjects) {
@@ -581,7 +584,7 @@ export const ScoreService = {
             const numVal = Math.max(0, Number(val) || 0);
             const fullScore = SubjectService.getSubjectFullScore(sub, className);
             const gradeInfo = SubjectService.calculateGrade(numVal, fullScore);
-            const record = {
+            toPut.push({
               id: recordId,
               studentId: row.studentId,
               classId: isTeacher && teacherClassId ? teacherClassId : classId,
@@ -599,14 +602,13 @@ export const ScoreService = {
               grade: gradeInfo.grade,
               notes: '',
               updatedAt: new Date().toISOString()
-            };
-            await db.put('scores', record);
+            });
           } else {
             // Cell was cleared/deleted: remove from database so it never comes back
             if (existingRecord) {
-              await db.delete('scores', existingRecord.id);
+              toDelete.push(existingRecord.id);
             }
-            await db.delete('scores', defaultId);
+            toDelete.push(defaultId);
           }
         }
       }
@@ -622,7 +624,7 @@ export const ScoreService = {
 
           if (val !== null && val !== undefined && val !== '') {
             const numVal = Math.max(0, Number(val) || 0);
-            const record = {
+            toPut.push({
               id: recordId,
               studentId: row.studentId,
               classId: isTeacher && teacherClassId ? teacherClassId : classId,
@@ -640,13 +642,12 @@ export const ScoreService = {
               grade: SubjectService.calculateGrade(numVal, 50).grade,
               notes: '',
               updatedAt: new Date().toISOString()
-            };
-            await db.put('scores', record);
+            });
           } else {
             if (existingRecord) {
-              await db.delete('scores', existingRecord.id);
+              toDelete.push(existingRecord.id);
             }
-            await db.delete('scores', defaultId);
+            toDelete.push(defaultId);
           }
         }
       }
@@ -666,7 +667,7 @@ export const ScoreService = {
 
           if (val !== null && val !== undefined && val !== '') {
             const numVal = Math.max(0, Number(val) || 0);
-            const record = {
+            toPut.push({
               id: recordId,
               studentId: row.studentId,
               classId: isTeacher && teacherClassId ? teacherClassId : classId,
@@ -684,17 +685,19 @@ export const ScoreService = {
               grade: SubjectService.calculateGrade(numVal, 50).grade,
               notes: '',
               updatedAt: new Date().toISOString()
-            };
-            await db.put('scores', record);
+            });
           } else {
             if (existingRecord) {
-              await db.delete('scores', existingRecord.id);
+              toDelete.push(existingRecord.id);
             }
-            await db.delete('scores', defaultId);
+            toDelete.push(defaultId);
           }
         }
       }
     }
+
+    // Atomic single transaction save for high performance
+    await db.batchSave('scores', { toPut, toDelete });
     syncStateManager.markDirty('scores.saveMasterScoreSheet');
     return true;
   },
@@ -785,12 +788,13 @@ export const ScoreService = {
     const isTeacher = authService.isTeacher();
     const teacherClassId = authService.getAssignedClassId();
 
+    const toPut = [];
     for (const sc of scores) {
       if (isTeacher && teacherClassId && sc.classId !== teacherClassId) {
         throw new Error('Access denied: Cannot record scores for another classroom.');
       }
       const id = `sc-${sc.academicYear}-${sc.classId}-${sc.subjectId}-${sc.month}-${sc.studentId}`;
-      const record = {
+      toPut.push({
         id,
         studentId: sc.studentId,
         classId: isTeacher && teacherClassId ? teacherClassId : sc.classId,
@@ -806,9 +810,9 @@ export const ScoreService = {
         grade: sc.grade || 'F',
         notes: sc.notes || '',
         updatedAt: new Date().toISOString()
-      };
-      await db.put('scores', record);
+      });
     }
+    await db.batchSave('scores', { toPut });
     syncStateManager.markDirty('scores.saveScoreSheet');
     return true;
   },

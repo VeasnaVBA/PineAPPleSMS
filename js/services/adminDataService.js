@@ -174,8 +174,10 @@ export const AdminDataService = {
         localStorage.setItem(ADMIN_DATA_LAST_SYNC_KEY, new Date().toISOString());
       }
 
-      // Mark sync state clean
-      syncStateManager.markClean();
+      // Mark sync state clean only if not managed by auto-sync generation manager
+      if (!syncStateManager.getSyncStatus().isAutoSyncing) {
+        syncStateManager.markClean();
+      }
 
       if (!isSilent) {
         const counts = result.counts || { settings: 0, users: payloadData.users.length };

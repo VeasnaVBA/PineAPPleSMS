@@ -504,12 +504,10 @@ export const AttendanceService = {
       }
     }
 
-    for (const delId of existingIdsToDelete) {
-      await db.delete('attendance', delId);
-    }
-    for (const rec of recordsToPut) {
-      await db.put('attendance', rec);
-    }
+    await db.batchSave('attendance', {
+      toPut: recordsToPut,
+      toDelete: Array.from(existingIdsToDelete)
+    });
 
     syncStateManager.markDirty('attendance.save');
     return true;
@@ -565,12 +563,13 @@ export const AttendanceService = {
     const isTeacher = authService.isTeacher();
     const teacherClassId = authService.getAssignedClassId();
 
+    const toPut = [];
     for (const r of records) {
       if (isTeacher && teacherClassId && r.classId !== teacherClassId) {
         throw new Error('Access denied: Cannot record attendance for another classroom.');
       }
       const id = `att-${r.date}-${r.studentId}`;
-      const record = {
+      toPut.push({
         id,
         date: r.date,
         classId: isTeacher && teacherClassId ? teacherClassId : r.classId,
@@ -579,9 +578,9 @@ export const AttendanceService = {
         status: r.status,
         notes: r.notes || '',
         updatedAt: new Date().toISOString()
-      };
-      await db.put('attendance', record);
+      });
     }
+    await db.batchSave('attendance', { toPut });
     syncStateManager.markDirty('attendance.save');
     return true;
   },

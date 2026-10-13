@@ -18,6 +18,7 @@ import { toast } from '../components/toast.js';
 import { getIcon } from '../components/icons.js';
 import { Modal } from '../components/modal.js';
 import { ReportViewer } from '../components/reportViewer.js';
+import { syncStateManager } from '../services/syncStateManager.js';
 import {
   getMonthKhmerCalendarMap,
   getKhmerLunarDayInfo,
@@ -918,8 +919,12 @@ export const AttendancePage = {
       clearTimeout(this.state.autoSaveTimer);
     }
     this.state.autoSaveTimer = setTimeout(async () => {
+      if (this.state.isSaving) {
+        this.scheduleAutoSave();
+        return;
+      }
       await this.saveSheet({ silent: true });
-    }, 650);
+    }, 600);
   },
 
   async saveSheet({ silent = false } = {}) {
@@ -933,6 +938,7 @@ export const AttendancePage = {
     try {
       await AttendanceService.saveMonthlyAttendanceSheet(this.state.sheet);
       if (!silent) {
+        syncStateManager.triggerAutoSync().catch(() => {});
         const selectedCls = this.state.classes.find(c => c.id === this.state.selectedClassId);
         const monthObj = ATTENDANCE_MONTHS.find(m => m.id === this.state.selectedMonth);
         toast.success(`បានរក្សាទុកវត្តមាន ${selectedCls?.name || ''} (${monthObj ? 'ខែ' + monthObj.nameKm : ''} ${this.state.selectedYear}) ដោយជោគជ័យ`);

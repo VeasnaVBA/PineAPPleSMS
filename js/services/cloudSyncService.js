@@ -208,8 +208,10 @@ export const CloudSyncService = {
         throw new Error(result?.error || 'Unknown error occurred while syncing to Google Drive.');
       }
 
-      // Mark state as clean
-      syncStateManager.markClean();
+      // Mark state as clean only if not managed by auto-sync generation manager
+      if (!syncStateManager.getSyncStatus().isAutoSyncing) {
+        syncStateManager.markClean();
+      }
 
       // 6. Success toast with direct link to open Google Sheets (if not silent)
       if (!isSilent) {

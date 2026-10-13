@@ -1822,6 +1822,11 @@ export const ScoresPage = {
 
     this.state.saveDebounceTimer = setTimeout(async () => {
       if (!this.state.selectedPeriod) return;
+      if (this.state.isSaving) {
+        this.triggerDebouncedAutoSave();
+        return;
+      }
+      this.state.isSaving = true;
       try {
         await ScoreService.saveMasterScoreSheet({
           classId: this.state.selectedClassId,
@@ -1832,12 +1837,14 @@ export const ScoresPage = {
         });
 
         if (statusText) {
-          statusText.textContent = i18n.getLocale() === 'km' ? 'បានធ្វើសមកាលកម្ម' : 'Synced';
+          statusText.textContent = i18n.getLocale() === 'km' ? 'បានរក្សាទុក' : 'Saved';
         }
       } catch (err) {
         console.warn('Auto-save scores notice:', err);
+      } finally {
+        this.state.isSaving = false;
       }
-    }, 800);
+    }, 600);
   },
 
   updateRanksInDOM() {
@@ -1994,6 +2001,9 @@ export const ScoresPage = {
           rows: this.state.rows,
           subjects: this.state.subjects
         });
+
+        // Trigger Google Drive cloud sync immediately in background
+        syncStateManager.triggerAutoSync().catch(() => {});
 
         const isKm = i18n.getLocale() === 'km';
         const cls = this.state.classes.find(c => c.id === this.state.selectedClassId);

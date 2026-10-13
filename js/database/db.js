@@ -240,6 +240,54 @@ class GlobalDatabase {
     });
   }
 
+  async batchSave(storeName, { toPut = [], toDelete = [] } = {}) {
+    const db = await this.open();
+    if (!db.objectStoreNames.contains(storeName)) {
+      return { putCount: 0, deleteCount: 0 };
+    }
+
+    const hasPut = Array.isArray(toPut) && toPut.length > 0;
+    const hasDelete = Array.isArray(toDelete) && toDelete.length > 0;
+    if (!hasPut && !hasDelete) {
+      return { putCount: 0, deleteCount: 0 };
+    }
+
+    return new Promise((resolve, reject) => {
+      try {
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+
+        if (hasDelete) {
+          for (let i = 0; i < toDelete.length; i++) {
+            const key = toDelete[i];
+            if (key !== undefined && key !== null) {
+              store.delete(key);
+            }
+          }
+        }
+
+        if (hasPut) {
+          for (let i = 0; i < toPut.length; i++) {
+            const item = toPut[i];
+            if (item) {
+              store.put(item);
+            }
+          }
+        }
+
+        tx.oncomplete = () => {
+          notifyWorkspaceMutation(storeName, 'batch');
+          resolve({ putCount: toPut ? toPut.length : 0, deleteCount: toDelete ? toDelete.length : 0 });
+        };
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
+      } catch (err) {
+        console.warn(`GlobalDatabase batchSave error on ${storeName}:`, err);
+        resolve({ putCount: 0, deleteCount: 0 });
+      }
+    });
+  }
+
   async count(storeName) {
     const db = await this.open();
     if (!db.objectStoreNames.contains(storeName)) {
@@ -635,6 +683,54 @@ class WorkspaceDatabase {
     });
   }
 
+  async batchSave(storeName, { toPut = [], toDelete = [] } = {}) {
+    const db = await this.open();
+    if (!db.objectStoreNames.contains(storeName)) {
+      return { putCount: 0, deleteCount: 0 };
+    }
+
+    const hasPut = Array.isArray(toPut) && toPut.length > 0;
+    const hasDelete = Array.isArray(toDelete) && toDelete.length > 0;
+    if (!hasPut && !hasDelete) {
+      return { putCount: 0, deleteCount: 0 };
+    }
+
+    return new Promise((resolve, reject) => {
+      try {
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+
+        if (hasDelete) {
+          for (let i = 0; i < toDelete.length; i++) {
+            const key = toDelete[i];
+            if (key !== undefined && key !== null) {
+              store.delete(key);
+            }
+          }
+        }
+
+        if (hasPut) {
+          for (let i = 0; i < toPut.length; i++) {
+            const item = toPut[i];
+            if (item) {
+              store.put(item);
+            }
+          }
+        }
+
+        tx.oncomplete = () => {
+          notifyWorkspaceMutation(storeName, 'batch');
+          resolve({ putCount: toPut ? toPut.length : 0, deleteCount: toDelete ? toDelete.length : 0 });
+        };
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
+      } catch (err) {
+        console.warn(`batchSave error on ${storeName}:`, err);
+        resolve({ putCount: 0, deleteCount: 0 });
+      }
+    });
+  }
+
   async count(storeName) {
     const db = await this.open();
     if (!db.objectStoreNames.contains(storeName)) {
@@ -886,6 +982,14 @@ export const db = {
     }
     const active = getActiveDb();
     return await active.delete(storeName, key);
+  },
+
+  batchSave: async (storeName, payload) => {
+    if (storeName === 'users') {
+      return await globalDb.batchSave('users', payload);
+    }
+    const active = getActiveDb();
+    return await active.batchSave(storeName, payload);
   },
 
   count: async (storeName) => {

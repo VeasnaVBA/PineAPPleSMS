@@ -32,11 +32,14 @@ export const AUTO_SAVE_PRESETS = [
 class SyncStateManager {
   constructor() {
     this._isDirty = false;
+    this._mutationCount = 0;
+    this._syncedMutationCount = 0;
     this._lastSyncedTimestamp = null;
     this._autoSyncTimer = null;
     this._isAutoSyncing = false;
     this._listeners = new Set();
     this._initialized = false;
+    this._notifyRaf = null;
     this.DEBOUNCE_MS = this.getAutoSyncInterval();
   }
 
@@ -111,18 +114,13 @@ class SyncStateManager {
       this.markDirty(`${storeName}.${op}`);
     });
 
-    // 1. Online / Offline network listeners
     if (typeof window !== 'undefined') {
-      window.addEventListener('workspace:data-mutation', (e) => {
-        const { storeName, operation } = e.detail || {};
-        this.markDirty(`${storeName || 'workspace'}.${operation || 'change'}`);
-      });
-
+      // 1. Online / Offline network listeners
       window.addEventListener('online', () => {
         this.notify();
         // If there were unsynced changes accumulated while offline, trigger auto-sync
         if (this._isDirty && !this._isAutoSyncing) {
-          this.scheduleAutoSync(1500); // 1.5s after coming online
+          this.scheduleAutoSync(1000);
         }
       });
 
@@ -134,7 +132,7 @@ class SyncStateManager {
       window.addEventListener('beforeunload', (event) => {
         if (this._isDirty) {
           event.preventDefault();
-          event.returnValue = ''; // Native browser "Leave site? Changes may not be saved" dialog
+          event.returnValue = ''; // Native browser dialog
           return '';
         }
       });
@@ -161,15 +159,13 @@ class SyncStateManager {
 
   /**
    * Mark local database state as having unsaved/unsynced changes
-   * @param {string} [source=''] - Informative source tag (e.g. 'students.create')
+   * @param {string} [source=''] - Informative source tag (e.g. 'scores.batch', 'students.create')
    */
   markDirty(source = '') {
     this._isDirty = true;
+    this._mutationCount++;
     this.notify();
     this.scheduleAutoSync(this.DEBOUNCE_MS);
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('app:refresh-data', { detail: { source } }));
-    }
   }
 
   /**
@@ -178,6 +174,7 @@ class SyncStateManager {
   markClean() {
     this._isDirty = false;
     this._isAutoSyncing = false;
+    this._syncedMutationCount = this._mutationCount;
     this._lastSyncedTimestamp = new Date().toISOString();
     if (this._autoSyncTimer) {
       clearTimeout(this._autoSyncTimer);
@@ -223,9 +220,14 @@ class SyncStateManager {
     }
 
     const waitMs = (delayMs !== undefined && delayMs !== null && delayMs >= 0) ? delayMs : this.DEBOUNCE_MS;
-    if (waitMs <= 0) return;
+    if (waitMs < 0) return;
 
     this._autoSyncTimer = setTimeout(async () => {
+      // If a sync is already running in background, re-schedule to run once it finishes
+      if (this._isAutoSyncing) {
+        this.scheduleAutoSync(Math.max(1000, this.DEBOUNCE_MS));
+        return;
+      }
       await this.triggerAutoSync();
     }, waitMs);
   }
@@ -237,17 +239,16 @@ class SyncStateManager {
     // Check prerequisites
     if (!this._isDirty) return;
     if (this._isAutoSyncing) return;
+    if (this.DEBOUNCE_MS === 0) return;
 
     const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
     if (!isOnline) {
-      // Keep dirty until online event fires
       this.notify();
       return;
     }
 
     const endpoint = getCloudSyncUrl();
     if (!endpoint) {
-      // No endpoint configured yet; wait for user configuration
       return;
     }
 
@@ -256,10 +257,12 @@ class SyncStateManager {
       return;
     }
 
-    try {
-      this._isAutoSyncing = true;
-      this.notify();
+    // Capture mutation generation before starting background I/O
+    const syncGen = this._mutationCount;
+    this._isAutoSyncing = true;
+    this.notify();
 
+    try {
       console.log(`[SyncStateManager] Auto-syncing workspace changes to Google Drive for @${currentUser.username}...`);
 
       let success = false;
@@ -271,14 +274,28 @@ class SyncStateManager {
       }
 
       if (success) {
-        console.log(`[SyncStateManager] Workspace auto-sync completed successfully for @${currentUser.username}.`);
-        this.markClean();
+        this._lastSyncedTimestamp = new Date().toISOString();
+        if (this._mutationCount === syncGen) {
+          // No new mutations arrived during the sync operation
+          this._isDirty = false;
+          this._isAutoSyncing = false;
+          this._syncedMutationCount = syncGen;
+          this.notify();
+          console.log(`[SyncStateManager] Auto-sync complete and state clean for @${currentUser.username}.`);
+        } else {
+          // New mutations were recorded while sync was in flight; schedule follow-up sync
+          console.log(`[SyncStateManager] New changes arrived during sync. Re-queuing auto-sync...`);
+          this._isDirty = true;
+          this._isAutoSyncing = false;
+          this.notify();
+          this.scheduleAutoSync(this.DEBOUNCE_MS);
+        }
       } else {
         this._isAutoSyncing = false;
         this.notify();
       }
     } catch (err) {
-      console.warn('Background auto-sync failed (will retry on next modification):', err);
+      console.warn('[SyncStateManager] Background auto-sync failed (will retry):', err);
       this._isAutoSyncing = false;
       this.notify();
     }
@@ -293,13 +310,22 @@ class SyncStateManager {
   }
 
   notify() {
-    const status = this.getSyncStatus();
-    for (const listener of this._listeners) {
-      try {
-        listener(status);
-      } catch (err) {
-        console.error('Error in sync state listener:', err);
+    const trigger = () => {
+      const status = this.getSyncStatus();
+      for (const listener of this._listeners) {
+        try {
+          listener(status);
+        } catch (err) {
+          console.error('Error in sync state listener:', err);
+        }
       }
+    };
+
+    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+      if (this._notifyRaf) cancelAnimationFrame(this._notifyRaf);
+      this._notifyRaf = requestAnimationFrame(trigger);
+    } else {
+      trigger();
     }
   }
 }
