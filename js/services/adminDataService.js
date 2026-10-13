@@ -72,6 +72,7 @@ export const AdminDataService = {
     const locale = i18n.getLocale();
     const activeAcademicYear = await SettingsService.getActiveAcademicYear();
     const autoBackup = BackupService.getAutoBackupInterval();
+    const autoSaveInterval = syncStateManager.getAutoSyncInterval();
     
     let schoolNameEn = 'SmartSchool Management';
     let schoolNameKm = 'ប្រព័ន្ធគ្រប់គ្រងសាលារៀន ស្មាតស្គូល';
@@ -90,6 +91,7 @@ export const AdminDataService = {
       locale,
       activeAcademicYear,
       autoBackup,
+      autoSaveInterval,
       schoolNameEn,
       schoolNameKm,
       lastUpdated: new Date().toISOString()
@@ -363,6 +365,9 @@ export const AdminDataService = {
       if (settings.scriptUrl && settings.scriptUrl.startsWith('http')) {
         setCloudSyncUrl(settings.scriptUrl);
       }
+      if (settings.autoSaveInterval !== undefined && settings.autoSaveInterval !== null) {
+        syncStateManager.setAutoSyncInterval(settings.autoSaveInterval);
+      }
     }
 
     // 2. Apply User Accounts into globalDb and prune locally deleted accounts
@@ -492,6 +497,24 @@ export const AdminDataService = {
         console.warn('[AdminDataService] Auto-sync background notice:', e);
       }
     }, 800);
+  },
+
+  /**
+   * Set global auto-save interval for all accounts and sync to Google Sheet
+   */
+  async setGlobalAutoSaveInterval(intervalMs) {
+    const updated = syncStateManager.setAutoSyncInterval(intervalMs);
+    let cloudSynced = false;
+    try {
+      if (CloudSyncService.isOnline()) {
+        const res = await this.saveToGoogleSheet({ silent: true });
+        cloudSynced = !!(res && res.success);
+        console.log(`[AdminDataService] Synced global auto-save interval (${updated}ms) to Google Sheet.`);
+      }
+    } catch (err) {
+      console.warn('[AdminDataService] Auto-save interval cloud sync notice:', err);
+    }
+    return { success: true, cloudSynced, interval: updated };
   },
 
   /**

@@ -19,6 +19,7 @@ import { AdminDataService } from '../services/adminDataService.js';
 import { db } from '../database/db.js';
 import { getCloudSyncUrl, setCloudSyncUrl, getWorkspaceSpreadsheetName, GOOGLE_APPS_SCRIPT_BACKEND_CODE, ADMIN_SPREADSHEET_NAME } from '../config/cloudSync.js';
 import { UsersPage } from './users.js';
+import { syncStateManager, AUTO_SAVE_PRESETS } from '../services/syncStateManager.js';
 
 export const SettingsPage = {
   async render(container) {
@@ -34,6 +35,7 @@ export const SettingsPage = {
     const academicYears = await SettingsService.getAcademicYears();
     const activeYear = await SettingsService.getActiveAcademicYear();
     const autoBackup = BackupService.getAutoBackupInterval();
+    const currentAutoSaveInterval = syncStateManager.getAutoSyncInterval();
 
     container.innerHTML = `
       <div class="space-y-6 max-w-4xl animate-fade-in pb-16 select-none">
@@ -443,6 +445,53 @@ export const SettingsPage = {
               <div class="text-[11px] text-muted-foreground">
                 <span>${t('cloudSync.lastSynced')}: </span>
                 <span class="font-medium text-foreground font-mono">${AdminDataService.getLastSyncTimestamp() ? new Date(AdminDataService.getLastSyncTimestamp()).toLocaleString() : (currentLocale === 'km' ? 'មិនទាន់ Sync' : 'Never')}</span>
+              </div>
+            </div>
+
+            <!-- Global Auto-Save Delay Setting Row -->
+            <div class="p-3.5 rounded-lg border border-border/80 bg-background/60 space-y-2">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-semibold text-foreground text-xs flex items-center gap-1.5">
+                      ${getIcon('clock', 'w-3.5 h-3.5 text-primary')}
+                      <span>${currentLocale === 'km' ? 'កំណត់ពេល Auto-Save ទៅ Google Drive' : 'Global Auto-Save Delay to Google Drive'}</span>
+                    </span>
+                    ${!authService.isAdmin() ? `
+                      <span class="px-2 py-0.5 text-[10px] font-medium rounded-full bg-muted text-muted-foreground border border-border">
+                        ${currentLocale === 'km' ? 'កំណត់ដោយ Admin' : 'Managed by Admin'}
+                      </span>
+                    ` : ''}
+                  </div>
+                  <p class="text-[11px] text-muted-foreground leading-relaxed">
+                    ${currentLocale === 'km'
+                      ? 'ពេលបង្កើត កែប្រែ ឬលុបទិន្នន័យ (សិស្ស ពិន្ទុ អវត្តមាន គ្រូ...) ប្រព័ន្ធនឹងរង់ចាំតាមរយៈពេលនេះ រួចរក្សាទុកទៅ Google Drive ដោយស្វ័យប្រវត្តិ។ ការកំណត់នេះត្រូវបានអនុវត្តលើគ្រប់គណនីទាំងអស់។'
+                      : 'When creating, updating, or deleting records (students, scores, attendance, teachers...), the app waits this duration then automatically saves to Google Drive. Applies to all accounts.'}
+                  </p>
+                </div>
+
+                <div class="flex items-center gap-2 shrink-0">
+                  <select 
+                    id="settings-auto-save-interval" 
+                    ${!authService.isAdmin() ? 'disabled' : ''}
+                    class="px-2.5 py-1.5 rounded-md border border-input bg-background text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60 disabled:cursor-not-allowed">
+                    ${AUTO_SAVE_PRESETS.map(preset => `
+                      <option value="${preset.value}" ${preset.value === currentAutoSaveInterval ? 'selected' : ''}>
+                        ${currentLocale === 'km' ? preset.labelKm : preset.labelEn}
+                      </option>
+                    `).join('')}
+                  </select>
+
+                  ${authService.isAdmin() ? `
+                    <button 
+                      id="btn-settings-save-auto-save-interval" 
+                      type="button" 
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-xs transition-colors cursor-pointer whitespace-nowrap">
+                      ${getIcon('save', 'w-3.5 h-3.5')}
+                      <span>${currentLocale === 'km' ? 'រក្សាទុក' : 'Save'}</span>
+                    </button>
+                  ` : ''}
+                </div>
               </div>
             </div>
 
@@ -904,6 +953,54 @@ export const SettingsPage = {
       } catch (err) {
         toast.error(err.message, 'Export Error');
       }
+    });
+
+    // Global Auto-Save Interval setting (Admin sets, all accounts adopt)
+    const autoSaveSelect = container.querySelector('#settings-auto-save-interval');
+    const saveAutoSaveBtn = container.querySelector('#btn-settings-save-auto-save-interval');
+
+    const handleSaveAutoSaveInterval = async () => {
+      if (!authService.isAdmin() || !autoSaveSelect) return;
+      const intervalMs = parseInt(autoSaveSelect.value, 10);
+      if (isNaN(intervalMs)) return;
+
+      const originalHtml = saveAutoSaveBtn ? saveAutoSaveBtn.innerHTML : '';
+      if (saveAutoSaveBtn) {
+        saveAutoSaveBtn.disabled = true;
+        saveAutoSaveBtn.innerHTML = `${getIcon('loader2', 'w-3.5 h-3.5 animate-spin')} <span>${currentLocale === 'km' ? 'កំពុងរក្សាទុក...' : 'Saving...'}</span>`;
+      }
+
+      try {
+        const res = await AdminDataService.setGlobalAutoSaveInterval(intervalMs);
+        if (res?.success) {
+          if (res.cloudSynced) {
+            toast.success(
+              currentLocale === 'km'
+                ? 'បានកំណត់ និងធ្វើសមកាលកម្មរយៈពេល Auto-Save សម្រាប់គ្រប់គណនីទៅ Google Drive រួចរាល់'
+                : 'Auto-save interval updated and synced to Google Drive for all accounts'
+            );
+          } else {
+            toast.success(
+              currentLocale === 'km'
+                ? 'បានរក្សាទុកក្នុងម៉ាស៊ីនរួចរាល់'
+                : 'Saved locally'
+            );
+          }
+        }
+      } catch (err) {
+        console.error('Failed to set global auto save interval:', err);
+        toast.error(err.message || 'Error updating auto-save interval');
+      } finally {
+        if (saveAutoSaveBtn) {
+          saveAutoSaveBtn.disabled = false;
+          saveAutoSaveBtn.innerHTML = originalHtml;
+        }
+      }
+    };
+
+    saveAutoSaveBtn?.addEventListener('click', handleSaveAutoSaveInterval);
+    autoSaveSelect?.addEventListener('change', () => {
+      handleSaveAutoSaveInterval();
     });
 
     // Save Admin Central Data to Sheet

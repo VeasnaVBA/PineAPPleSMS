@@ -12,8 +12,8 @@ import { db } from './database/db.js';
 import { seedInitialData } from './database/seed.js';
 import { WorkspaceSetupService } from './services/workspaceSetupService.js';
 import { Sidebar } from './components/sidebar.js';
-import { Topbar } from './components/topbar.js?v=3.0.11';
-import { Router } from './router.js?v=3.0.11';
+import { Topbar } from './components/topbar.js?v=3.0.12';
+import { Router } from './router.js?v=3.0.12';
 import { LoginPage } from './pages/login.js';
 import { syncStateManager } from './services/syncStateManager.js';
 import { AdminDataService } from './services/adminDataService.js';
@@ -69,11 +69,12 @@ class SchoolApp {
       // Background auto-sync latest data from Google Drive for active session if online
       if (typeof navigator !== 'undefined' && navigator.onLine) {
         const user = authService.getCurrentUser();
-        if (user?.role === 'ADMIN') {
-          import('./services/adminDataService.js').then(({ AdminDataService }) => {
-            AdminDataService.checkAndSyncOnStartup();
-          }).catch(() => {});
-        } else if (user) {
+        // Always run AdminDataService startup sync so all accounts (Admin, Director, Teachers) get latest global admin settings
+        import('./services/adminDataService.js').then(({ AdminDataService }) => {
+          AdminDataService.checkAndSyncOnStartup();
+        }).catch(() => {});
+
+        if (user && user.role !== 'ADMIN') {
           import('./services/cloudSyncService.js').then(({ CloudSyncService }) => {
             CloudSyncService.checkAndSyncOnStartup(user).catch(e => {
               console.warn('Workspace startup sync notice:', e);

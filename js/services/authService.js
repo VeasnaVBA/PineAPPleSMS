@@ -284,6 +284,11 @@ class AuthService {
             isKm ? 'ដំណឹង Google Drive' : 'Google Drive Notice'
           );
         }
+
+        // Also silently pull AdminData to ensure latest global auto-save interval and settings are applied
+        import('./adminDataService.js').then(({ AdminDataService }) => {
+          AdminDataService.pullFromGoogleSheet({ silent: true }).catch(() => {});
+        }).catch(() => {});
       } else {
         // If Admin logs in, pull latest SchoolSystem_AdminData
         try {

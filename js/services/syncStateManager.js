@@ -14,6 +14,21 @@ import { AdminDataService } from './adminDataService.js';
 import { ExitSyncModal } from '../components/exitSyncModal.js';
 import { setWorkspaceMutationCallback } from '../database/db.js';
 
+export const AUTO_SAVE_INTERVAL_KEY = 'school_auto_save_interval';
+export const DEFAULT_AUTO_SAVE_INTERVAL = 1500;
+
+export const AUTO_SAVE_PRESETS = [
+  { value: 1500, labelKm: '១.៥ វិនាទី (ភ្លាមៗ - លំនាំដើម)', labelEn: '1.5 seconds (Instant - Default)' },
+  { value: 3000, labelKm: '៣ វិនាទី', labelEn: '3 seconds' },
+  { value: 5000, labelKm: '៥ វិនាទី', labelEn: '5 seconds' },
+  { value: 10000, labelKm: '១០ វិនាទី', labelEn: '10 seconds' },
+  { value: 30000, labelKm: '៣០ វិនាទី', labelEn: '30 seconds' },
+  { value: 60000, labelKm: '១ នាទី', labelEn: '1 minute' },
+  { value: 120000, labelKm: '២ នាទី', labelEn: '2 minutes' },
+  { value: 300000, labelKm: '៥ នាទី', labelEn: '5 minutes' },
+  { value: 0, labelKm: 'បិទ Auto-Save (រក្សាទុកដោយដៃ)', labelEn: 'Disable Auto-Save (Manual only)' }
+];
+
 class SyncStateManager {
   constructor() {
     this._isDirty = false;
@@ -22,13 +37,72 @@ class SyncStateManager {
     this._isAutoSyncing = false;
     this._listeners = new Set();
     this._initialized = false;
-    this.DEBOUNCE_MS = 1500; // 1.5 seconds of user inactivity for responsive auto-sync
+    this.DEBOUNCE_MS = this.getAutoSyncInterval();
+  }
+
+  /**
+   * Get current auto-save debounce delay in milliseconds
+   */
+  getAutoSyncInterval() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const val = localStorage.getItem(AUTO_SAVE_INTERVAL_KEY);
+        if (val !== null) {
+          const parsed = parseInt(val, 10);
+          if (!isNaN(parsed) && parsed >= 0) {
+            return parsed;
+          }
+        }
+      }
+    } catch (_) {}
+    return DEFAULT_AUTO_SAVE_INTERVAL;
+  }
+
+  /**
+   * Set and persist auto-save interval for this client
+   * @param {number|string} intervalMs - Milliseconds (e.g. 1500, 5000, 0 for off)
+   */
+  setAutoSyncInterval(intervalMs) {
+    const parsed = parseInt(intervalMs, 10);
+    const validVal = (!isNaN(parsed) && parsed >= 0) ? parsed : DEFAULT_AUTO_SAVE_INTERVAL;
+    this.DEBOUNCE_MS = validVal;
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(AUTO_SAVE_INTERVAL_KEY, String(validVal));
+      }
+    } catch (_) {}
+
+    if (this._autoSyncTimer) {
+      clearTimeout(this._autoSyncTimer);
+      this._autoSyncTimer = null;
+      if (validVal > 0 && this._isDirty) {
+        this.scheduleAutoSync(validVal);
+      }
+    }
+
+    this.notify();
+    return validVal;
+  }
+
+  /**
+   * Get localized label for current auto-save interval
+   */
+  getIntervalLabel(locale = 'km') {
+    const curVal = this.getAutoSyncInterval();
+    const match = AUTO_SAVE_PRESETS.find(p => p.value === curVal);
+    if (match) {
+      return locale === 'km' ? match.labelKm : match.labelEn;
+    }
+    if (curVal === 0) return locale === 'km' ? 'បិទ Auto-Save' : 'Disabled';
+    const seconds = Math.round(curVal / 1000);
+    return locale === 'km' ? `${seconds} វិនាទី` : `${seconds}s`;
   }
 
   /**
    * Initialize lifecycle listeners (online/offline, beforeunload, Electron IPC, database mutations)
    */
   init() {
+    this.DEBOUNCE_MS = this.getAutoSyncInterval();
     if (this._initialized) return;
     this._initialized = true;
 
@@ -128,6 +202,7 @@ class SyncStateManager {
       isDirty: this._isDirty,
       isAutoSyncing: this._isAutoSyncing,
       lastSyncedTimestamp: this._lastSyncedTimestamp,
+      autoSaveInterval: this.DEBOUNCE_MS,
       isOnline
     };
   }
@@ -139,11 +214,20 @@ class SyncStateManager {
   scheduleAutoSync(delayMs = this.DEBOUNCE_MS) {
     if (this._autoSyncTimer) {
       clearTimeout(this._autoSyncTimer);
+      this._autoSyncTimer = null;
     }
+
+    if (this.DEBOUNCE_MS === 0) {
+      // Auto-save disabled by Admin; user saves manually
+      return;
+    }
+
+    const waitMs = (delayMs !== undefined && delayMs !== null && delayMs >= 0) ? delayMs : this.DEBOUNCE_MS;
+    if (waitMs <= 0) return;
 
     this._autoSyncTimer = setTimeout(async () => {
       await this.triggerAutoSync();
-    }, delayMs);
+    }, waitMs);
   }
 
   /**
