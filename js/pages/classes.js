@@ -416,13 +416,17 @@ export const ClassesPage = {
             </div>
           `}
 
-          <div>
-            <label class="block text-xs font-medium text-foreground mb-1">${t('common.status')}</label>
-            <select id="form-cls-status" class="w-full h-10 px-3 py-2 pr-9 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs">
-              <option value="Active" ${existingClass?.status === 'Active' ? 'selected' : ''}>${t('common.active')}</option>
-              <option value="Inactive" ${existingClass?.status === 'Inactive' ? 'selected' : ''}>${t('common.inactive')}</option>
-            </select>
-          </div>
+          ${!isTeacher ? `
+            <div>
+              <label class="block text-xs font-medium text-foreground mb-1">${t('common.status')}</label>
+              <select id="form-cls-status" class="w-full h-10 px-3 py-2 pr-9 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs">
+                <option value="Active" ${existingClass?.status === 'Active' ? 'selected' : ''}>${isKm ? 'សកម្ម' : 'Active'}</option>
+                <option value="Inactive" ${existingClass?.status === 'Inactive' ? 'selected' : ''}>${isKm ? 'អសកម្ម' : 'Inactive'}</option>
+              </select>
+            </div>
+          ` : `
+            <input type="hidden" id="form-cls-status" value="${existingClass?.status || 'Active'}" />
+          `}
         </div>
       </form>
     `;
@@ -469,7 +473,7 @@ export const ClassesPage = {
         teacherId: modal.element.querySelector('#form-cls-teacher')?.value,
         room: modal.element.querySelector('#form-cls-room')?.value.trim(),
         academicYear,
-        status: modal.element.querySelector('#form-cls-status')?.value
+        status: modal.element.querySelector('#form-cls-status')?.value || 'Active'
       };
 
       try {
