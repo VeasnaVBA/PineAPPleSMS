@@ -652,6 +652,7 @@ export const ReportsPage = {
         const reportDateObj = planData.reportDate ? new Date(planData.reportDate) : new Date();
         const lunarDateText = formatKhmerLunarDate(reportDateObj) || '';
         const solarDateText = formatKhmerSolarDate(reportDateObj) || '';
+        const scaleMatrix = StudentPlanService.getScoreScaleMatrix();
 
         paperContainer.innerHTML = `
           <div class="report-explicit-page student-plan-sheet font-khmer text-black leading-tight select-text" style="color: #000000 !important; width: 100%;">
@@ -767,14 +768,24 @@ export const ReportsPage = {
               </div>
             </div>
 
-            <!-- Score Scale Matrix (Simple text separated by commas) -->
-            <div class="score-scale-text border border-gray-400 p-1 rounded mb-1 space-y-0.5 text-[7.5px] leading-tight" style="border: 1px solid #9ca3af !important; line-height: 1.15 !important;">
-              ${StudentPlanService.getScoreScaleMatrix().map(row => `
-                <div class="flex items-baseline gap-1.5 flex-wrap">
-                  <span class="font-bold shrink-0 text-black">${escapeHtml(row.scaleLabel)}</span>
-                  <span class="text-gray-900">${escapeHtml(row.grades.map(g => g.text).join(', '))}</span>
-                </div>
-              `).join('')}
+            <!-- Score Scale Matrix (2 Columns in box: 3 in left column, 3 in right column) -->
+            <div class="score-scale-text border border-gray-400 p-1 rounded mb-1 grid grid-cols-2 gap-x-2 text-[7.5px] leading-tight" style="border: 1px solid #9ca3af !important; line-height: 1.15 !important; display: grid !important; grid-template-columns: 1fr 1fr !important;">
+              <div class="space-y-0.5 pr-2" style="border-right: 1px solid #d1d5db;">
+                ${scaleMatrix.slice(0, 3).map(row => `
+                  <div class="flex items-baseline gap-1 flex-wrap">
+                    <span class="font-bold shrink-0 text-black">${escapeHtml(row.scaleLabel)}</span>
+                    <span class="text-gray-900">${escapeHtml(row.grades.map(g => g.text).join(', '))}</span>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="space-y-0.5 pl-2">
+                ${scaleMatrix.slice(3, 6).map(row => `
+                  <div class="flex items-baseline gap-1 flex-wrap">
+                    <span class="font-bold shrink-0 text-black">${escapeHtml(row.scaleLabel)}</span>
+                    <span class="text-gray-900">${escapeHtml(row.grades.map(g => g.text).join(', '))}</span>
+                  </div>
+                `).join('')}
+              </div>
             </div>
 
             <!-- 24-Column Score Table (Dynamic Row Height) -->
