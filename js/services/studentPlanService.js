@@ -344,6 +344,7 @@ export const StudentPlanService = {
                         '';
     const teacherName = saved.teacherName || teacher.name || '';
     const teacherPhone = saved.teacherPhone || teacher.phone || '';
+    const familyStatus = saved.familyStatus || student?.familyStatus || student?.notes || '';
     // School name strictly from school table
     let schoolNameFinal = schoolTableName;
     if (!schoolNameFinal) {
