@@ -885,8 +885,7 @@ export const ReportsPage = {
               <div>
                 <p class="font-semibold text-[8px]">បានឃើញ និងឯកភាព</p>
                 <p class="font-bold text-[8.5px]">នាយកសាលា</p>
-                <div style="height: 18px;"></div>
-                <p class="border-t border-dotted border-black inline-block px-6 pt-0.5 text-gray-700 font-medium text-[7.5px]" style="border-top: 1px dotted #000000 !important;">ហត្ថលេខា និងត្រា</p>
+                <div style="height: 24px;"></div>
               </div>
 
               <!-- Parent / Guardian -->
