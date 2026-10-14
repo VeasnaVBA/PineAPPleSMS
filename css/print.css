@@ -214,7 +214,7 @@
   }
 
   @page {
-    size: A4 portrait;
+    size: auto;
     margin: 8mm 10mm;
   }
 
@@ -523,65 +523,13 @@
 }
 
 @media print {
-  @page {
-    size: A4 portrait;
-    margin: 10mm;
-  }
-
-  body.print-student-plan {
-    background-color: #ffffff !important;
-  }
-
-  body.print-student-plan @page {
-    size: A4 landscape;
-    margin: 6mm 8mm;
-  }
-
-  body.print-student-plan #printable-report-area {
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-
-  body.print-student-plan .student-plan-document {
-    width: 100% !important;
-    max-width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
-  }
-
-  body.print-student-plan .student-plan-input {
-    border: none !important;
-    background: transparent !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    text-align: center !important;
-    font-size: 9pt !important;
-  }
-
-  body.print-student-plan .student-plan-table th,
-  body.print-student-plan .student-plan-table td {
-    border: 1px solid #111827 !important;
-    padding: 2.5px 3px !important;
-    font-size: 8.5pt !important;
-    line-height: 1.25 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  body.print-student-plan .scale-table th,
-  body.print-student-plan .scale-table td {
-    border: 1px solid #374151 !important;
-    padding: 1.5px 3px !important;
-    font-size: 7.5pt !important;
-    line-height: 1.2 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+  /* Student Plan Landscape Print Sheet */
+  .student-plan-sheet {
+    page: landscape-sheet !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }
+
 
 

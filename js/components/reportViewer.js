@@ -122,8 +122,13 @@ export class ReportViewer {
           this.settings.padding = { ...this.settings.padding, ...savedPadding };
           this.settings.margins = { ...this.settings.margins, ...savedPadding };
         }
-        if (saved.paperSize) this.settings.paperSize = String(saved.paperSize).toUpperCase();
-        if (saved.orientation) this.settings.orientation = saved.orientation;
+        if (saved.paperSize && !this.options.alwaysFresh) this.settings.paperSize = String(saved.paperSize).toUpperCase();
+        if (saved.orientation && !this.options.alwaysFresh && !this.options.forceOrientation) {
+          this.settings.orientation = saved.orientation;
+        }
+        if (this.options.forceOrientation) {
+          this.settings.orientation = this.options.forceOrientation;
+        }
         if (saved.zoom) this.settings.zoom = Number(saved.zoom);
         if (saved.defaultFontFamily) this.settings.defaultFontFamily = saved.defaultFontFamily;
         if (saved.defaultFontSize) this.settings.defaultFontSize = Number(saved.defaultFontSize);
@@ -1110,11 +1115,34 @@ export class ReportViewer {
     const pad = padding || this.settings.margins || { top: 15, bottom: 15, left: 15, right: 15 };
     const { width: pageW_mm, height: pageH_mm } = getPaperDimensions(paperSize, orientation);
 
+    const isLandscape = orientation === 'landscape';
+
     this.styleElement.innerHTML = `
       @media print {
         @page {
           size: ${paperSize} ${orientation};
+          size: ${orientation};
+          size: ${pageW_mm}mm ${pageH_mm}mm;
           margin: 0;
+        }
+        @page landscape-sheet {
+          size: ${paperSize} landscape;
+          size: landscape;
+          size: 297mm 210mm;
+          margin: 0;
+        }
+        @page portrait-sheet {
+          size: ${paperSize} portrait;
+          size: portrait;
+          size: 210mm 297mm;
+          margin: 0;
+        }
+        .report-preview-workspace,
+        .a4-sheet-page,
+        .report-viewer-sheet,
+        .student-plan-sheet,
+        #rv-paper-sheet {
+          page: ${isLandscape ? 'landscape-sheet' : 'portrait-sheet'} !important;
         }
         html, body {
           background-color: #ffffff !important;
@@ -1122,6 +1150,11 @@ export class ReportViewer {
           overflow: visible !important;
           margin: 0 !important;
           padding: 0 !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        body.printing-report-viewer.landscape-print {
+          width: ${pageW_mm}mm !important;
         }
         body * {
           visibility: hidden;
@@ -3800,10 +3833,23 @@ export class ReportViewer {
   print() {
     this.updatePrintStyles();
     document.body.classList.add('printing-report-viewer');
-    window.print();
-    setTimeout(() => {
-      document.body.classList.remove('printing-report-viewer');
-    }, 1000);
+    if (this.settings.orientation === 'landscape') {
+      document.body.classList.add('landscape-print');
+      document.body.classList.remove('portrait-print');
+    } else {
+      document.body.classList.add('portrait-print');
+      document.body.classList.remove('landscape-print');
+    }
+
+    void document.body.offsetHeight;
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+          document.body.classList.remove('printing-report-viewer', 'landscape-print', 'portrait-print');
+        }, 1000);
+      }, 60);
+    });
   }
 
   /**
@@ -3819,6 +3865,13 @@ export class ReportViewer {
 
     this.updatePrintStyles();
     document.body.classList.add('printing-report-viewer');
+    if (this.settings.orientation === 'landscape') {
+      document.body.classList.add('landscape-print');
+      document.body.classList.remove('portrait-print');
+    } else {
+      document.body.classList.add('portrait-print');
+      document.body.classList.remove('landscape-print');
+    }
 
     try {
       // 1. Electron Desktop App: Native Save Dialog & Direct PDF Generation
@@ -3844,16 +3897,22 @@ export class ReportViewer {
       // 2. Standard Web Browser: Native Print/Save dialog
       const originalTitle = document.title;
       document.title = `${cleanTitle}_${new Date().toISOString().slice(0, 10)}`;
-      window.print();
-      setTimeout(() => {
-        document.title = originalTitle;
-      }, 1000);
+      void document.body.offsetHeight;
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          window.print();
+          setTimeout(() => {
+            document.title = originalTitle;
+            document.body.classList.remove('printing-report-viewer', 'landscape-print', 'portrait-print');
+          }, 1000);
+        }, 60);
+      });
     } catch (err) {
       console.error('exportPDF failed:', err);
       toast.error(isKm ? 'បរាជ័យក្នុងការនាំចេញ PDF' : 'Failed to export PDF');
     } finally {
       setTimeout(() => {
-        document.body.classList.remove('printing-report-viewer');
+        document.body.classList.remove('printing-report-viewer', 'landscape-print', 'portrait-print');
       }, 1000);
     }
   }

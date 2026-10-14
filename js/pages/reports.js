@@ -398,6 +398,7 @@ export const ReportsPage = {
       title: isKm ? 'ផែនការសិក្សារបស់សិស្ស (SEIP)' : 'Student Study Plan (SEIP)',
       alwaysFresh: true,
       defaultOrientation: 'landscape',
+      forceOrientation: 'landscape',
       defaultPaperSize: 'A4',
       defaultMargins: { top: 4, bottom: 4, left: 6, right: 6 },
       defaultFontFamily: 'Kantumruy Pro',
@@ -657,7 +658,16 @@ export const ReportsPage = {
         paperContainer.innerHTML = `
           <div class="report-explicit-page student-plan-sheet font-khmer text-black leading-tight select-text" style="color: #000000 !important; width: 100%;">
             <style>
+              @media print {
+                @page {
+                  size: A4 landscape;
+                  size: landscape;
+                  size: 297mm 210mm;
+                  margin: 0;
+                }
+              }
               .student-plan-sheet {
+                page: landscape-sheet !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
               }
