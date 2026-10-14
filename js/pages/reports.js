@@ -5,7 +5,7 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.59';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.60';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
@@ -1105,8 +1105,8 @@ export const ReportsPage = {
                       ${escapeHtml(sub.targetFinal || '')}
                     </td>
                     <!-- End of year Actual -->
-                    <td class="font-bold text-center" style="background-color: #fff1f2; font-size: ${cellFontSize}; color: #dc2626 !important; height: ${rowHeight}px !important; border: 1px solid #000000 !important;">
-                      ${escapeHtml(sub.actualFinal || '')}
+                    <td class="font-medium text-center" style="background-color: #fff1f2; font-size: ${cellFontSize}; height: ${rowHeight}px !important; border: 1px solid #000000 !important;">
+                      ${sub.actualFinalGrade ? `${escapeHtml(sub.actualFinalScore)} , <span style="color: #dc2626 !important; font-weight: bold !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">${escapeHtml(sub.actualFinalGrade)}</span>` : escapeHtml(sub.actualFinal || '')}
                     </td>
                   </tr>
                 `).join('')}
