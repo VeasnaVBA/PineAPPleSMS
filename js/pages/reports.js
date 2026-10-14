@@ -789,9 +789,9 @@ export const ReportsPage = {
               </div>
             </div>
 
-            <!-- Score Scale Matrix (2 Columns in box: 3 in left column, 3 in right column) -->
-            <div class="score-scale-text border border-black p-1 rounded mb-1 grid grid-cols-2 gap-x-2 text-[7.5px] leading-tight" style="border: 1px solid #000000 !important; line-height: 1.15 !important; display: grid !important; grid-template-columns: 1fr 1fr !important;">
-              <div class="space-y-0.5 pr-2" style="border-right: 1px solid #000000;">
+            <!-- Score Scale Matrix (2 Columns without box: 3 in left column, 3 in right column) -->
+            <div class="score-scale-text mb-1 grid grid-cols-2 gap-x-3 text-[7.5px] leading-tight" style="line-height: 1.15 !important; display: grid !important; grid-template-columns: 1fr 1fr !important; border: none !important;">
+              <div class="space-y-0.5">
                 ${scaleMatrix.slice(0, 3).map(row => `
                   <div class="flex items-baseline gap-1 flex-wrap">
                     <span class="font-bold shrink-0 text-black">${escapeHtml(row.scaleLabel)}</span>
@@ -799,7 +799,7 @@ export const ReportsPage = {
                   </div>
                 `).join('')}
               </div>
-              <div class="space-y-0.5 pl-2">
+              <div class="space-y-0.5">
                 ${scaleMatrix.slice(3, 6).map(row => `
                   <div class="flex items-baseline gap-1 flex-wrap">
                     <span class="font-bold shrink-0 text-black">${escapeHtml(row.scaleLabel)}</span>
