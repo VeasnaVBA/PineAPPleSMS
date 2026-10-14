@@ -12,6 +12,7 @@ import { db } from '../database/db.js';
 import { SubjectService } from './subjectService.js';
 import { SettingsService } from './settingsService.js';
 import { SchoolService } from './schoolService.js';
+import { authService } from './authService.js';
 import { normalizeStudentRecord } from './studentService.js';
 import { isStudentActive } from './scoreService.js';
 
@@ -207,17 +208,36 @@ export const StudentPlanService = {
       } catch (_) {}
     }
 
-    const schoolKm = (await SettingsService.get('school_name_km')) ||
-                     (schoolCatalog && schoolCatalog[0]?.name) ||
-                     'សាលារៀន';
-    const schoolEn = (await SettingsService.get('school_name_en')) ||
-                     (schoolCatalog && schoolCatalog[0]?.nameEn) ||
-                     'School';
-    const province = (await SettingsService.get('school_province')) ||
-                     (schoolCatalog && schoolCatalog[0]?.province) ||
-                     student?.birthProvince ||
-                     student?.currentProvince ||
-                     '';
+    // Strictly resolve school from 'schools' table
+    const allSchools = Array.isArray(schoolCatalog) ? schoolCatalog : [];
+    let matchedSchool = null;
+    if (targetClass.schoolId) {
+      matchedSchool = allSchools.find(s => s.id === targetClass.schoolId);
+    }
+    if (!matchedSchool && student?.schoolId) {
+      matchedSchool = allSchools.find(s => s.id === student.schoolId);
+    }
+    if (!matchedSchool && student?.school) {
+      matchedSchool = allSchools.find(s => s.id === student.school || s.name === student.school);
+    }
+    const currentUser = authService.getCurrentUser();
+    if (!matchedSchool && currentUser?.school) {
+      matchedSchool = allSchools.find(s => s.id === currentUser.school || s.name === currentUser.school);
+    }
+    if (!matchedSchool && allSchools.length > 0) {
+      matchedSchool = allSchools[0];
+    }
+
+    const schoolTableName = matchedSchool ? (matchedSchool.name || matchedSchool.nameKm || '') : '';
+    const schoolTableProvince = matchedSchool?.province || 
+                                (matchedSchool?.address ? matchedSchool.address.split(',').pop().trim() : '') || 
+                                student?.birthProvince || 
+                                student?.currentProvince || 
+                                '';
+
+    const schoolKm = schoolTableName || (await SettingsService.get('school_name_km')) || 'សាលារៀន';
+    const schoolEn = (matchedSchool?.nameEn) || (await SettingsService.get('school_name_en')) || 'School';
+    const province = schoolTableProvince || (await SettingsService.get('school_province')) || '';
 
     const subjects = await this.resolvePlanSubjects(targetClass);
 
@@ -324,9 +344,14 @@ export const StudentPlanService = {
                         '';
     const teacherName = saved.teacherName || teacher.name || '';
     const teacherPhone = saved.teacherPhone || teacher.phone || '';
-    const familyStatus = saved.familyStatus || student?.notes || '';
-    const schoolNameFinal = saved.schoolName || schoolKm;
-    const provinceFinal = saved.province || province;
+    // School name strictly from school table
+    let schoolNameFinal = schoolTableName;
+    if (!schoolNameFinal) {
+      schoolNameFinal = (saved.schoolName && !saved.schoolName.includes('PineAPPleSMS')) 
+        ? saved.schoolName 
+        : (schoolKm || 'សាលារៀន');
+    }
+    const provinceFinal = schoolTableProvince || saved.province || province;
 
     return {
       class: {
