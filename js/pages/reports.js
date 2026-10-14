@@ -892,8 +892,7 @@ export const ReportsPage = {
               <div>
                 <p class="font-semibold text-[8px]">បានឃើញ និងឯកភាព</p>
                 <p class="font-bold text-[8.5px]">មាតាបិតា ឬអាណាព្យាបាលសិស្ស</p>
-                <div style="height: 18px;"></div>
-                <p class="border-t border-dotted border-black inline-block px-6 pt-0.5 font-bold text-[8px]" style="border-top: 1px dotted #000000 !important;">${escapeHtml(student.fatherName || student.motherName || 'ហត្ថលេខា')}</p>
+                <div style="height: 24px;"></div>
               </div>
 
               <!-- Student -->
@@ -902,7 +901,7 @@ export const ReportsPage = {
                 <p class="text-[7.5px] leading-tight font-medium">${school.province ? `${school.province} ` : ''}${solarDateText}</p>
                 <p class="font-bold pt-0.5 text-[8px]">ហត្ថលេខានិងឈ្មោះសិស្ស</p>
                 <div style="height: 16px;"></div>
-                <p class="font-bold underline underline-offset-2 inline-block px-4 text-[8px]">${escapeHtml(student.khmerName || student.englishName)}</p>
+                <p class="font-bold text-[8px] report-nudge-box outline-none inline-block px-4" contenteditable="true" spellcheck="false" style="display: inline-block; position: relative; left: 2rem; text-decoration: none !important;">${escapeHtml(student.khmerName || student.englishName)}</p>
               </div>
             </div>
           </div>
