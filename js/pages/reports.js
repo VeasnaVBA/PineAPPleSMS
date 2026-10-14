@@ -709,7 +709,7 @@ export const ReportsPage = {
             </div>
 
             <!-- Metadata Block (Simple text, ultra-compact 3 rows) -->
-            <div class="text-[9px] leading-tight border border-gray-400 p-1 rounded mb-1 space-y-0.5" style="border: 1px solid #9ca3af !important; line-height: 1.2 !important;">
+            <div class="text-[9px] leading-tight border border-black p-1 rounded mb-1 space-y-0.5" style="border: 1px solid #000000 !important; line-height: 1.2 !important;">
               <!-- Row 1: Student info -->
               <div class="flex items-center justify-between gap-2 flex-wrap">
                 <div class="flex items-center gap-1">
@@ -776,8 +776,8 @@ export const ReportsPage = {
             </div>
 
             <!-- Score Scale Matrix (2 Columns in box: 3 in left column, 3 in right column) -->
-            <div class="score-scale-text border border-gray-400 p-1 rounded mb-1 grid grid-cols-2 gap-x-2 text-[7.5px] leading-tight" style="border: 1px solid #9ca3af !important; line-height: 1.15 !important; display: grid !important; grid-template-columns: 1fr 1fr !important;">
-              <div class="space-y-0.5 pr-2" style="border-right: 1px solid #d1d5db;">
+            <div class="score-scale-text border border-black p-1 rounded mb-1 grid grid-cols-2 gap-x-2 text-[7.5px] leading-tight" style="border: 1px solid #000000 !important; line-height: 1.15 !important; display: grid !important; grid-template-columns: 1fr 1fr !important;">
+              <div class="space-y-0.5 pr-2" style="border-right: 1px solid #000000;">
                 ${scaleMatrix.slice(0, 3).map(row => `
                   <div class="flex items-baseline gap-1 flex-wrap">
                     <span class="font-bold shrink-0 text-black">${escapeHtml(row.scaleLabel)}</span>
@@ -855,13 +855,13 @@ export const ReportsPage = {
             </table>
 
             <!-- Signatures Footer -->
-            <div class="grid grid-cols-3 gap-2 text-center text-[9px] font-khmer mt-1 pt-1" style="border-top: 1px solid #9ca3af; line-height: 1.2;">
+            <div class="grid grid-cols-3 gap-2 text-center text-[9px] font-khmer mt-1 pt-1" style="border-top: 1px solid #000000; line-height: 1.2;">
               <!-- Principal -->
               <div>
                 <p class="font-semibold text-[8px]">បានឃើញ និងឯកភាព</p>
                 <p class="font-bold text-[8.5px]">នាយកសាលា</p>
                 <div style="height: 18px;"></div>
-                <p class="border-t border-dotted border-gray-400 inline-block px-6 pt-0.5 text-gray-500 font-medium text-[7.5px]">ហត្ថលេខា និងត្រា</p>
+                <p class="border-t border-dotted border-black inline-block px-6 pt-0.5 text-gray-700 font-medium text-[7.5px]" style="border-top: 1px dotted #000000 !important;">ហត្ថលេខា និងត្រា</p>
               </div>
 
               <!-- Parent / Guardian -->
@@ -869,7 +869,7 @@ export const ReportsPage = {
                 <p class="font-semibold text-[8px]">បានឃើញ និងឯកភាព</p>
                 <p class="font-bold text-[8.5px]">មាតាបិតា ឬអាណាព្យាបាលសិស្ស</p>
                 <div style="height: 18px;"></div>
-                <p class="border-t border-dotted border-gray-400 inline-block px-6 pt-0.5 font-bold text-[8px]">${escapeHtml(student.fatherName || student.motherName || 'ហត្ថលេខា')}</p>
+                <p class="border-t border-dotted border-black inline-block px-6 pt-0.5 font-bold text-[8px]" style="border-top: 1px dotted #000000 !important;">${escapeHtml(student.fatherName || student.motherName || 'ហត្ថលេខា')}</p>
               </div>
 
               <!-- Student -->
