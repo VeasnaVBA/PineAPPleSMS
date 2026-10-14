@@ -653,6 +653,9 @@ export const ReportsPage = {
         const lunarDateText = formatKhmerLunarDate(reportDateObj) || '';
         const solarDateText = formatKhmerSolarDate(reportDateObj) || '';
         const scaleMatrix = StudentPlanService.getScoreScaleMatrix();
+        const schoolDisplayName = (school.nameKm && school.nameKm !== '—') 
+          ? school.nameKm 
+          : (this.state.schoolNameKm || 'សាលារៀន');
 
         paperContainer.innerHTML = `
           <div class="report-explicit-page student-plan-sheet font-khmer text-black leading-tight select-text" style="color: #000000 !important; width: 100%;">
@@ -706,8 +709,16 @@ export const ReportsPage = {
                 padding: 0 1px !important;
               }
             </style>
-            <!-- Top Royal Header -->
-            <div class="flex justify-end pr-2 mb-0.5">
+            <!-- Top Header Section (School Name & Royal Motto) -->
+            <div class="flex items-start justify-between font-khmer select-none leading-tight pr-2 mb-0.5">
+              <!-- Top Left: School Name -->
+              <div class="text-left space-y-0.5 pt-0.5">
+                <p class="font-bold text-xs leading-relaxed tracking-wide font-khmer-muol" style="font-family: 'Khmer OS Muol Light', 'Khmer OS Moul Light', 'Moul', cursive, sans-serif;">
+                  <span class="report-nudge-box outline-none" contenteditable="true" spellcheck="false" style="display: inline-block; position: relative; left: 0px; top: 0px;">${escapeHtml(schoolDisplayName)}</span>
+                </p>
+              </div>
+
+              <!-- Top Right: Royal Motto -->
               <div class="text-center">
                 <div class="font-bold text-xs leading-relaxed tracking-wide font-khmer-muol" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">ព្រះរាជាណាចក្រកម្ពុជា</div>
                 <div class="font-bold text-[10.5px] leading-relaxed tracking-wider font-khmer-muol" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
@@ -752,7 +763,7 @@ export const ReportsPage = {
               <div class="flex items-center justify-center gap-x-5 flex-wrap">
                 <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">សាលារៀន ៖</span>
-                  <span>${escapeHtml(school.nameKm || '—')}</span>
+                  <span>${escapeHtml(schoolDisplayName)}</span>
                 </div>
                 <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">ខេត្ត ៖</span>
