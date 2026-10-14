@@ -401,7 +401,7 @@ export const ReportsPage = {
       alwaysFresh: true,
       defaultOrientation: 'landscape',
       defaultPaperSize: 'A4',
-      defaultMargins: { top: 6, bottom: 6, left: 8, right: 8 },
+      defaultMargins: { top: 4, bottom: 4, left: 6, right: 6 },
       defaultFontFamily: 'Kantumruy Pro',
       defaultFontSize: 8.5,
       renderHeaderControls: (controlsContainer, viewer) => {
@@ -491,7 +491,7 @@ export const ReportsPage = {
         const openSubjectSelectionModal = async () => {
           const targetClass = classes.find(c => c.id === currentClassId);
           const allSubs = await StudentPlanService.resolvePlanSubjects(targetClass);
-          const hiddenList = await StudentPlanService.getHiddenSubjectIds(currentClassId);
+          const hiddenList = await StudentPlanService.getHiddenSubjectIds(currentClassId, allSubs);
           const hiddenSet = new Set(hiddenList);
 
           // Remove any previous modal instance
@@ -635,49 +635,103 @@ export const ReportsPage = {
         const school = planData.school;
         const teacher = planData.teacher;
         const subjects = planData.subjects || [];
+        const subCount = subjects.length;
+
+        // Dynamic height scaling to fit in exactly 1 single A4 Landscape page:
+        // Default is 10 subjects. If user chooses more than 10, make table height shorter!
+        let rowHeight = 18;
+        let inputHeight = 17;
+        let cellFontSize = '8px';
+        let scaleRowHeight = 11;
+        let scaleFontSize = '7.5px';
+
+        if (subCount > 13) {
+          rowHeight = 13;
+          inputHeight = 12;
+          cellFontSize = '7px';
+          scaleRowHeight = 9.5;
+          scaleFontSize = '7px';
+        } else if (subCount > 10) {
+          rowHeight = 15;
+          inputHeight = 14;
+          cellFontSize = '7.5px';
+          scaleRowHeight = 10.5;
+          scaleFontSize = '7px';
+        }
 
         const reportDateObj = planData.reportDate ? new Date(planData.reportDate) : new Date();
         const lunarDateText = formatKhmerLunarDate(reportDateObj) || '';
         const solarDateText = formatKhmerSolarDate(reportDateObj) || '';
 
         paperContainer.innerHTML = `
-          <div class="student-plan-sheet font-khmer text-black leading-tight select-text" style="color: #000000 !important; width: 100%;">
+          <div class="report-explicit-page student-plan-sheet font-khmer text-black leading-tight select-text" style="color: #000000 !important; width: 100%;">
             <style>
+              .student-plan-sheet {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+              }
               .seip-scale-table {
                 border-collapse: collapse !important;
-                font-size: 7.5px !important;
-                line-height: 1.15 !important;
+                font-size: ${scaleFontSize} !important;
+                line-height: 1.1 !important;
               }
               .seip-scale-table tr {
-                height: 14px !important;
-                min-height: 14px !important;
+                height: ${scaleRowHeight}px !important;
+                min-height: ${scaleRowHeight}px !important;
               }
               .seip-scale-table td {
-                padding: 1px 3px !important;
-                line-height: 1.15 !important;
-                height: 14px !important;
-                font-size: 7.5px !important;
+                padding: 0.5px 3px !important;
+                line-height: 1.1 !important;
+                height: ${scaleRowHeight}px !important;
+                font-size: ${scaleFontSize} !important;
                 vertical-align: middle !important;
+              }
+              .seip-score-table {
+                border-collapse: collapse !important;
+                margin-bottom: 4px !important;
+              }
+              .seip-score-table tr {
+                height: ${rowHeight}px !important;
+              }
+              .seip-score-table th {
+                font-size: ${cellFontSize} !important;
+                padding: 1px 2px !important;
+                line-height: 1.15 !important;
+              }
+              .seip-score-table td {
+                height: ${rowHeight}px !important;
+                font-size: ${cellFontSize} !important;
+                padding: 0 !important;
+                line-height: 1.1 !important;
+                vertical-align: middle !important;
+              }
+              .seip-score-table input.rv-plan-cell {
+                height: ${inputHeight}px !important;
+                font-size: ${cellFontSize} !important;
+                line-height: 1 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                border: none !important;
               }
             </style>
             <!-- Top Royal Header -->
-            <div class="flex justify-end pr-2 mb-1">
+            <div class="flex justify-end pr-2 mb-0.5">
               <div class="text-center">
                 <div class="font-bold text-xs leading-relaxed tracking-wide font-khmer-muol" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">ព្រះរាជាណាចក្រកម្ពុជា</div>
-                <div class="font-bold text-[11px] leading-relaxed tracking-wider font-khmer-muol" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
-                <div class="text-[9px] text-gray-500 tracking-widest mt-0.5 select-none font-bold">៚៚៚</div>
+                <div class="font-bold text-[10.5px] leading-relaxed tracking-wider font-khmer-muol" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+                <div class="text-[8px] text-gray-500 tracking-widest mt-0.5 select-none font-bold">៚៚៚</div>
               </div>
             </div>
 
             <!-- Main Document Title -->
-            <div class="text-center my-1">
+            <div class="text-center my-0.5">
               <h2 class="text-sm sm:text-base font-bold tracking-tight font-khmer-muol" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">
                 ផែនការសិក្សារបស់សិស្ស ឆ្នាំសិក្សា${toKhmerNumerals(planData.academicYear)}
               </h2>
             </div>
 
-            <!-- Metadata Block (Simple text, compact fit) -->
-            <div class="text-[9.5px] leading-tight border border-gray-400 p-1.5 rounded mb-1.5 space-y-1" style="border: 1px solid #9ca3af !important; line-height: 1.25 !important;">
+            <!-- Metadata Block (Simple text, ultra-compact 3 rows) -->
+            <div class="text-[9px] leading-tight border border-gray-400 p-1 rounded mb-1 space-y-0.5" style="border: 1px solid #9ca3af !important; line-height: 1.2 !important;">
               <!-- Row 1: Student info -->
               <div class="flex items-center justify-between gap-2 flex-wrap">
                 <div class="flex items-center gap-1">
@@ -702,117 +756,109 @@ export const ReportsPage = {
                 </div>
               </div>
 
-              <!-- Row 2: School & Province -->
-              <div class="grid grid-cols-2 gap-2 items-center">
-                <div class="flex items-center gap-1">
+              <!-- Row 2: School & Homeroom Teacher -->
+              <div class="grid grid-cols-4 gap-2 items-center">
+                <div class="flex items-center gap-1 col-span-1">
                   <span class="font-bold shrink-0">សាលារៀន ៖</span>
-                  <span>${escapeHtml(school.nameKm || '—')}</span>
+                  <span class="truncate">${escapeHtml(school.nameKm || '—')}</span>
                 </div>
-                <div class="flex items-center gap-1">
+                <div class="flex items-center gap-1 col-span-1">
                   <span class="font-bold shrink-0">ខេត្ត ៖</span>
                   <span>${escapeHtml(school.province || '—')}</span>
                 </div>
-              </div>
-
-              <!-- Row 3: Father -->
-              <div class="grid grid-cols-2 gap-2 items-center">
-                <div class="flex items-center gap-1">
-                  <span class="font-bold shrink-0">ឈ្មោះឪពុក ៖</span>
-                  <span>${escapeHtml(student.fatherName || '—')}</span>
-                </div>
-                <div class="flex items-center gap-1">
-                  <span class="font-bold shrink-0">លេខទូរស័ព្ទ ៖</span>
-                  <span class="font-mono">${escapeHtml(student.fatherPhone || '—')}</span>
-                </div>
-              </div>
-
-              <!-- Row 4: Mother -->
-              <div class="grid grid-cols-2 gap-2 items-center">
-                <div class="flex items-center gap-1">
-                  <span class="font-bold shrink-0">ឈ្មោះម្តាយ ៖</span>
-                  <span>${escapeHtml(student.motherName || '—')}</span>
-                </div>
-                <div class="flex items-center gap-1">
-                  <span class="font-bold shrink-0">លេខទូរស័ព្ទ ៖</span>
-                  <span class="font-mono">${escapeHtml(student.motherPhone || '—')}</span>
-                </div>
-              </div>
-
-              <!-- Row 5: Teacher -->
-              <div class="grid grid-cols-2 gap-2 items-center">
-                <div class="flex items-center gap-1">
+                <div class="flex items-center gap-1 col-span-1">
                   <span class="font-bold shrink-0">ឈ្មោះគ្រូបន្ទុកថ្នាក់ ៖</span>
                   <span>${escapeHtml(teacher.name || '—')}</span>
                 </div>
-                <div class="flex items-center gap-1">
+                <div class="flex items-center gap-1 col-span-1">
                   <span class="font-bold shrink-0">លេខទូរស័ព្ទ ៖</span>
                   <span class="font-mono">${escapeHtml(teacher.phone || '—')}</span>
+                </div>
+              </div>
+
+              <!-- Row 3: Parents -->
+              <div class="grid grid-cols-4 gap-2 items-center">
+                <div class="flex items-center gap-1 col-span-1">
+                  <span class="font-bold shrink-0">ឈ្មោះឪពុក ៖</span>
+                  <span>${escapeHtml(student.fatherName || '—')}</span>
+                </div>
+                <div class="flex items-center gap-1 col-span-1">
+                  <span class="font-bold shrink-0">លេខទូរស័ព្ទ ៖</span>
+                  <span class="font-mono">${escapeHtml(student.fatherPhone || '—')}</span>
+                </div>
+                <div class="flex items-center gap-1 col-span-1">
+                  <span class="font-bold shrink-0">ឈ្មោះម្តាយ ៖</span>
+                  <span>${escapeHtml(student.motherName || '—')}</span>
+                </div>
+                <div class="flex items-center gap-1 col-span-1">
+                  <span class="font-bold shrink-0">លេខទូរស័ព្ទ ៖</span>
+                  <span class="font-mono">${escapeHtml(student.motherPhone || '—')}</span>
                 </div>
               </div>
             </div>
 
             <!-- Score Scale Matrix (Short height, tightly fitting the text) -->
-            <table class="seip-scale-table w-full border-collapse mb-1.5" style="border: 1px solid #4b5563; line-height: 1.15 !important;">
+            <table class="seip-scale-table w-full border-collapse mb-1" style="border: 1px solid #4b5563; line-height: 1.1 !important;">
               <tbody>
                 ${StudentPlanService.getScoreScaleMatrix().map(row => `
-                  <tr style="border-bottom: 1px solid #9ca3af; height: auto !important;">
-                    <td class="font-bold whitespace-nowrap bg-gray-100" style="border-right: 1px solid #9ca3af; width: 130px; padding: 1px 4px !important; font-size: 7.5px !important; line-height: 1.15 !important; height: auto !important;">${row.scaleLabel}</td>
+                  <tr style="border-bottom: 1px solid #9ca3af; height: ${scaleRowHeight}px !important;">
+                    <td class="font-bold whitespace-nowrap bg-gray-100" style="border-right: 1px solid #9ca3af; width: 130px; padding: 0.5px 3px !important; font-size: ${scaleFontSize} !important; line-height: 1.1 !important; height: ${scaleRowHeight}px !important;">${row.scaleLabel}</td>
                     ${row.grades.map(g => `
-                      <td class="text-center whitespace-nowrap" style="border-right: 1px solid #9ca3af; padding: 1px 2px !important; font-size: 7.5px !important; line-height: 1.15 !important; height: auto !important;">${g.text}</td>
+                      <td class="text-center whitespace-nowrap" style="border-right: 1px solid #9ca3af; padding: 0.5px 2px !important; font-size: ${scaleFontSize} !important; line-height: 1.1 !important; height: ${scaleRowHeight}px !important;">${g.text}</td>
                     `).join('')}
                   </tr>
                 `).join('')}
               </tbody>
             </table>
 
-            <!-- 24-Column Score Table -->
-            <table class="w-full border-collapse text-[9px] leading-tight mb-4" style="border: 1.5px solid #000000;">
+            <!-- 24-Column Score Table (Dynamic Row Height) -->
+            <table class="seip-score-table w-full border-collapse text-[8.5px] leading-tight mb-1" style="border: 1.5px solid #000000;">
               <thead>
-                <tr class="bg-gray-100 text-center font-bold" style="border-bottom: 1px solid #000000;">
-                  <th rowspan="2" class="p-1 min-w-[90px] text-center" style="border-right: 1px solid #000000;">មុខវិជ្ជា</th>
-                  <th rowspan="2" class="p-0.5 min-w-[40px] text-center" style="border-right: 1px solid #000000;">កម្រិតពិន្ទុ<br>ដើមឆ្នាំ</th>
+                <tr class="bg-gray-100 text-center font-bold" style="border-bottom: 1px solid #000000; height: 18px;">
+                  <th rowspan="2" class="p-0.5 min-w-[85px] text-center" style="border-right: 1px solid #000000;">មុខវិជ្ជា</th>
+                  <th rowspan="2" class="p-0.5 min-w-[36px] text-center" style="border-right: 1px solid #000000;">កម្រិតពិន្ទុ<br>ដើមឆ្នាំ</th>
                   <th colspan="20" class="p-0.5 text-center" style="border-right: 1px solid #000000;">
                     កម្រិតពិន្ទុនិងលទ្ធផលដើមឆ្នាំ(ខ្មៅ) និងចុងឆ្នាំ(<span style="color: #dc2626 !important;">ក្រហម</span>)
                   </th>
-                  <th colspan="2" class="p-0.5 min-w-[70px] text-center">
+                  <th colspan="2" class="p-0.5 min-w-[65px] text-center">
                     កម្រិតពិន្ទុ<br>ចុងឆ្នាំ
                   </th>
                 </tr>
-                <tr class="bg-gray-50 text-center font-bold text-[8.5px]" style="border-bottom: 1.5px solid #000000;">
+                <tr class="bg-gray-50 text-center font-bold text-[8px]" style="border-bottom: 1.5px solid #000000; height: 16px;">
                   ${StudentPlanService.getMonths().map(m => `
                     <th class="p-0.5 text-center" style="border-right: 1px solid #9ca3af; min-width: 25px;">${m.labelKm}</th>
                     <th class="p-0.5 text-center" style="border-right: 1px solid #000000; min-width: 25px; color: #dc2626 !important;">ជាក់ស្តែង</th>
                   `).join('')}
-                  <th class="p-0.5 text-center" style="border-right: 1px solid #9ca3af; min-width: 28px;">ដាក់ពិន្ទុ</th>
-                  <th class="p-0.5 text-center" style="min-width: 28px; color: #dc2626 !important;">ជាក់ស្តែង</th>
+                  <th class="p-0.5 text-center" style="border-right: 1px solid #9ca3af; min-width: 26px;">ដាក់ពិន្ទុ</th>
+                  <th class="p-0.5 text-center" style="min-width: 26px; color: #dc2626 !important;">ជាក់ស្តែង</th>
                 </tr>
               </thead>
               <tbody>
                 ${subjects.map((sub, sIdx) => `
-                  <tr style="border-bottom: 1px solid #9ca3af;" data-subject-id="${sub.id}">
-                    <td class="p-1 font-medium whitespace-nowrap" style="border-right: 1px solid #000000;">
+                  <tr style="border-bottom: 1px solid #9ca3af; height: ${rowHeight}px !important;" data-subject-id="${sub.id}">
+                    <td class="px-1 font-medium whitespace-nowrap" style="border-right: 1px solid #000000; font-size: ${cellFontSize}; height: ${rowHeight}px !important;">
                       ${sub.name}
                     </td>
                     <!-- Baseline -->
                     <td class="p-0 text-center" style="border-right: 1px solid #000000;">
-                      <input type="text" class="rv-plan-cell w-full text-center text-[9px] bg-transparent focus:bg-yellow-50 focus:outline-none" data-subject-id="${sub.id}" data-field="baseline" value="${escapeHtml(sub.baseline || '')}" style="height: 20px;">
+                      <input type="text" class="rv-plan-cell w-full text-center bg-transparent focus:bg-yellow-50 focus:outline-none" data-subject-id="${sub.id}" data-field="baseline" value="${escapeHtml(sub.baseline || '')}" style="height: ${inputHeight}px; font-size: ${cellFontSize};">
                     </td>
                     <!-- 10 Months -->
                     ${sub.months.map(m => `
                       <td class="p-0 text-center" style="border-right: 1px solid #d1d5db;">
-                        <input type="text" class="rv-plan-cell w-full text-center text-[9px] bg-transparent focus:bg-yellow-50 focus:outline-none" data-subject-id="${sub.id}" data-field="target" data-month-key="${m.key}" value="${escapeHtml(m.target || '')}" style="height: 20px;">
+                        <input type="text" class="rv-plan-cell w-full text-center bg-transparent focus:bg-yellow-50 focus:outline-none" data-subject-id="${sub.id}" data-field="target" data-month-key="${m.key}" value="${escapeHtml(m.target || '')}" style="height: ${inputHeight}px; font-size: ${cellFontSize};">
                       </td>
                       <td class="p-0 text-center" style="border-right: 1px solid #000000; background-color: #fff1f2;">
-                        <input type="text" class="rv-plan-cell w-full text-center text-[9px] bg-transparent focus:bg-rose-100 focus:outline-none font-bold" data-subject-id="${sub.id}" data-field="actual" data-month-key="${m.key}" value="${escapeHtml(m.actual || '')}" style="height: 20px; color: #dc2626 !important;">
+                        <input type="text" class="rv-plan-cell w-full text-center bg-transparent focus:bg-rose-100 focus:outline-none font-bold" data-subject-id="${sub.id}" data-field="actual" data-month-key="${m.key}" value="${escapeHtml(m.actual || '')}" style="height: ${inputHeight}px; font-size: ${cellFontSize}; color: #dc2626 !important;">
                       </td>
                     `).join('')}
                     <!-- End of year Target -->
                     <td class="p-0 text-center" style="border-right: 1px solid #d1d5db;">
-                      <input type="text" class="rv-plan-cell w-full text-center text-[9px] bg-transparent focus:bg-yellow-50 focus:outline-none" data-subject-id="${sub.id}" data-field="targetFinal" value="${escapeHtml(sub.targetFinal || '')}" style="height: 20px;">
+                      <input type="text" class="rv-plan-cell w-full text-center bg-transparent focus:bg-yellow-50 focus:outline-none" data-subject-id="${sub.id}" data-field="targetFinal" value="${escapeHtml(sub.targetFinal || '')}" style="height: ${inputHeight}px; font-size: ${cellFontSize};">
                     </td>
                     <!-- End of year Actual -->
                     <td class="p-0 text-center" style="background-color: #fff1f2;">
-                      <input type="text" class="rv-plan-cell w-full text-center text-[9px] bg-transparent focus:bg-rose-100 focus:outline-none font-bold" data-subject-id="${sub.id}" data-field="actualFinal" value="${escapeHtml(sub.actualFinal || '')}" style="height: 20px; color: #dc2626 !important;">
+                      <input type="text" class="rv-plan-cell w-full text-center bg-transparent focus:bg-rose-100 focus:outline-none font-bold" data-subject-id="${sub.id}" data-field="actualFinal" value="${escapeHtml(sub.actualFinal || '')}" style="height: ${inputHeight}px; font-size: ${cellFontSize}; color: #dc2626 !important;">
                     </td>
                   </tr>
                 `).join('')}
@@ -820,30 +866,30 @@ export const ReportsPage = {
             </table>
 
             <!-- Signatures Footer -->
-            <div class="grid grid-cols-3 gap-4 text-center text-[10px] font-khmer mt-4 pt-2" style="border-top: 1px solid #9ca3af;">
+            <div class="grid grid-cols-3 gap-2 text-center text-[9px] font-khmer mt-1 pt-1" style="border-top: 1px solid #9ca3af; line-height: 1.2;">
               <!-- Principal -->
               <div>
-                <p class="font-semibold">បានឃើញ និងឯកភាព</p>
-                <p class="font-bold">នាយកសាលា</p>
-                <div class="h-12"></div>
-                <p class="border-t border-dotted border-gray-400 inline-block px-8 pt-0.5 text-gray-500 font-medium">ហត្ថលេខា និងត្រា</p>
+                <p class="font-semibold text-[8px]">បានឃើញ និងឯកភាព</p>
+                <p class="font-bold text-[8.5px]">នាយកសាលា</p>
+                <div style="height: 18px;"></div>
+                <p class="border-t border-dotted border-gray-400 inline-block px-6 pt-0.5 text-gray-500 font-medium text-[7.5px]">ហត្ថលេខា និងត្រា</p>
               </div>
 
               <!-- Parent / Guardian -->
               <div>
-                <p class="font-semibold">បានឃើញ និងឯកភាព</p>
-                <p class="font-bold">មាតាបិតា ឬអាណាព្យាបាលសិស្ស</p>
-                <div class="h-12"></div>
-                <p class="border-t border-dotted border-gray-400 inline-block px-8 pt-0.5 font-bold">${escapeHtml(student.fatherName || student.motherName || 'ហត្ថលេខា')}</p>
+                <p class="font-semibold text-[8px]">បានឃើញ និងឯកភាព</p>
+                <p class="font-bold text-[8.5px]">មាតាបិតា ឬអាណាព្យាបាលសិស្ស</p>
+                <div style="height: 18px;"></div>
+                <p class="border-t border-dotted border-gray-400 inline-block px-6 pt-0.5 font-bold text-[8px]">${escapeHtml(student.fatherName || student.motherName || 'ហត្ថលេខា')}</p>
               </div>
 
               <!-- Student -->
               <div>
-                <p class="text-[9.5px] leading-tight font-medium">${lunarDateText}</p>
-                <p class="text-[9.5px] leading-tight font-medium">${school.province ? `${school.province} ` : ''}${solarDateText}</p>
-                <p class="font-bold pt-0.5">ហត្ថលេខានិងឈ្មោះសិស្ស</p>
-                <div class="h-10"></div>
-                <p class="font-bold underline underline-offset-2 inline-block px-4">${escapeHtml(student.khmerName || student.englishName)}</p>
+                <p class="text-[7.5px] leading-tight font-medium">${lunarDateText}</p>
+                <p class="text-[7.5px] leading-tight font-medium">${school.province ? `${school.province} ` : ''}${solarDateText}</p>
+                <p class="font-bold pt-0.5 text-[8px]">ហត្ថលេខានិងឈ្មោះសិស្ស</p>
+                <div style="height: 16px;"></div>
+                <p class="font-bold underline underline-offset-2 inline-block px-4 text-[8px]">${escapeHtml(student.khmerName || student.englishName)}</p>
               </div>
             </div>
           </div>

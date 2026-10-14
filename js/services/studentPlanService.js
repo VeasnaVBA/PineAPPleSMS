@@ -169,8 +169,9 @@ export const StudentPlanService = {
 
   /**
    * Get list of hidden subject IDs for a class
+   * If not configured by user yet, default to showing only the first 10 subjects
    */
-  async getHiddenSubjectIds(classId) {
+  async getHiddenSubjectIds(classId, allSubjects = null) {
     if (!classId) return [];
     try {
       const rec = await db.get('report_settings', `student_plan_hidden_subjects_${classId}`);
@@ -186,6 +187,11 @@ export const StudentPlanService = {
         if (Array.isArray(parsed)) return parsed;
       }
     } catch (_) {}
+
+    // Default configuration: Show first 10 subjects, hide subjects at index >= 10
+    if (Array.isArray(allSubjects) && allSubjects.length > 10) {
+      return allSubjects.slice(10).map(s => s.id || s.code || s.name);
+    }
     return [];
   },
 
@@ -280,7 +286,7 @@ export const StudentPlanService = {
     const province = schoolTableProvince || (await SettingsService.get('school_province')) || '';
 
     const allSubjects = await this.resolvePlanSubjects(targetClass);
-    const hiddenSubjectIds = await this.getHiddenSubjectIds(classId);
+    const hiddenSubjectIds = await this.getHiddenSubjectIds(classId, allSubjects);
     const subjects = allSubjects.filter(sub => {
       const sId = sub.id || sub.code || sub.name;
       return !hiddenSubjectIds.includes(sId) && !hiddenSubjectIds.includes(sub.id) && !hiddenSubjectIds.includes(sub.code);
