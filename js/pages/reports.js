@@ -5,7 +5,7 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.60';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.61';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
@@ -429,6 +429,62 @@ export const ReportsPage = {
           const header = e.target.closest('#th-baseline-header');
           if (header) {
             window.toggleSeipBaselineMode(e);
+          }
+        });
+      }
+
+      window.toggleSeipFinalActualMode = function(e) {
+        if (e) {
+          if (typeof e.preventDefault === 'function') e.preventDefault();
+          if (typeof e.stopPropagation === 'function') e.stopPropagation();
+        }
+
+        const currentMode = localStorage.getItem('seip_final_actual_mode') || 'both';
+        // Cycle: score -> grade -> both -> score ...
+        let nextMode = 'score';
+        if (currentMode === 'score') {
+          nextMode = 'grade';
+        } else if (currentMode === 'grade') {
+          nextMode = 'both';
+        } else {
+          nextMode = 'score';
+        }
+
+        localStorage.setItem('seip_final_actual_mode', nextMode);
+
+        const cells = document.querySelectorAll('.seip-final-actual-cell');
+        cells.forEach(cell => {
+          const score = cell.dataset.score !== undefined ? cell.dataset.score : '';
+          const grade = cell.dataset.grade || '';
+          if (!score && !grade) {
+            cell.innerHTML = '';
+            return;
+          }
+
+          const redGrade = grade ? `<span style="color: #dc2626 !important; font-weight: bold !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">${grade}</span>` : '';
+
+          if (nextMode === 'score') {
+            cell.innerHTML = score;
+          } else if (nextMode === 'grade') {
+            cell.innerHTML = redGrade;
+          } else {
+            cell.innerHTML = (score && redGrade) ? `${score} , ${redGrade}` : (score || redGrade);
+          }
+        });
+
+        toast.success(
+          nextMode === 'score' ? 'កម្រិតពិន្ទុចុងឆ្នាំ (ជាក់ស្តែង): ១. បង្ហាញតែពិន្ទុ (Score only)' :
+          nextMode === 'grade' ? 'កម្រិតពិន្ទុចុងឆ្នាំ (ជាក់ស្តែង): ២. បង្ហាញតែកម្រិត (Grade only)' :
+          'កម្រិតពិន្ទុចុងឆ្នាំ (ជាក់ស្តែង): ៣. បង្ហាញពិន្ទុ និងកម្រិត (Score and Grade)'
+        );
+      };
+
+      if (!window._seipFinalActualHeaderHandlerAttached) {
+        window._seipFinalActualHeaderHandlerAttached = true;
+        document.addEventListener('click', (e) => {
+          const header = e.target.closest('#th-final-actual-header, #th-final-actual-sub-header');
+          if (header) {
+            window.toggleSeipFinalActualMode(e);
           }
         });
       }
@@ -857,6 +913,7 @@ export const ReportsPage = {
         // Clean up any lingering baseline popover
         document.getElementById('seip-baseline-menu')?.remove();
         let currentBaselineMode = localStorage.getItem('seip_baseline_mode') || 'both';
+        let currentFinalActualMode = localStorage.getItem('seip_final_actual_mode') || 'both';
 
         const renderBaselineHtml = (subItem, mode = currentBaselineMode) => {
           const score = escapeHtml(subItem.baselineScore !== undefined && subItem.baselineScore !== null ? String(subItem.baselineScore) : '0');
@@ -870,6 +927,25 @@ export const ReportsPage = {
             return redGradeHtml;
           }
           return `${score} , ${redGradeHtml}`;
+        };
+
+        const renderFinalActualHtml = (subItem, mode = currentFinalActualMode) => {
+          const score = escapeHtml(subItem.actualFinalScore !== undefined && subItem.actualFinalScore !== null ? String(subItem.actualFinalScore) : '');
+          const grade = escapeHtml(subItem.actualFinalGrade || '');
+          if (!score && !grade) return '';
+
+          const redGradeHtml = grade ? `<span style="color: #dc2626 !important; font-weight: bold !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">${grade}</span>` : '';
+
+          if (mode === 'score') {
+            return score || '';
+          }
+          if (mode === 'grade') {
+            return redGradeHtml || '';
+          }
+          if (score && redGradeHtml) {
+            return `${score} , ${redGradeHtml}`;
+          }
+          return score || redGradeHtml || '';
         };
 
         paperContainer.innerHTML = `
@@ -1060,7 +1136,7 @@ export const ReportsPage = {
                   <th colspan="20" class="p-0.5 text-center" style="border: 1px solid #000000 !important;">
                     កម្រិតពិន្ទុនិងលទ្ធផលដើមឆ្នាំ(ខ្មៅ) និងចុងឆ្នាំ(<span style="color: #dc2626 !important;">ក្រហម</span>)
                   </th>
-                  <th colspan="2" class="p-0.5 text-center" style="border: 1px solid #000000 !important;">
+                  <th colspan="2" id="th-final-actual-header" onclick="window.toggleSeipFinalActualMode && window.toggleSeipFinalActualMode(event)" class="p-0.5 text-center cursor-pointer select-none hover:bg-gray-200 transition-colors" style="border: 1px solid #000000 !important; cursor: pointer !important;" title="ចុចដើម្បីប្តូររបៀបបង្ហាញក្នុងជួរជាក់ស្តែង (Click to toggle: Score -> Grade -> Both)">
                     កម្រិតពិន្ទុ<br>ចុងឆ្នាំ
                   </th>
                 </tr>
@@ -1078,7 +1154,7 @@ export const ReportsPage = {
                     `;
                   }).join('')}
                   <th class="p-0 text-center whitespace-nowrap overflow-hidden" style="border: 1px solid #000000 !important; vertical-align: middle !important;">ដាក់ពិន្ទុ</th>
-                  <th class="p-0 text-center whitespace-nowrap overflow-hidden" style="color: #dc2626 !important; border: 1px solid #000000 !important; vertical-align: middle !important;">ជាក់ស្តែង</th>
+                  <th id="th-final-actual-sub-header" onclick="window.toggleSeipFinalActualMode && window.toggleSeipFinalActualMode(event)" class="p-0 text-center whitespace-nowrap overflow-hidden cursor-pointer hover:bg-gray-200 transition-colors" style="color: #dc2626 !important; border: 1px solid #000000 !important; vertical-align: middle !important; cursor: pointer !important;" title="ចុចដើម្បីប្តូររបៀបបង្ហាញ (Click to toggle: Score -> Grade -> Both)">ជាក់ស្តែង</th>
                 </tr>
               </thead>
               <tbody>
@@ -1105,8 +1181,8 @@ export const ReportsPage = {
                       ${escapeHtml(sub.targetFinal || '')}
                     </td>
                     <!-- End of year Actual -->
-                    <td class="font-medium text-center" style="background-color: #fff1f2; font-size: ${cellFontSize}; height: ${rowHeight}px !important; border: 1px solid #000000 !important;">
-                      ${sub.actualFinalGrade ? `${escapeHtml(sub.actualFinalScore)} , <span style="color: #dc2626 !important; font-weight: bold !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">${escapeHtml(sub.actualFinalGrade)}</span>` : escapeHtml(sub.actualFinal || '')}
+                    <td class="seip-final-actual-cell font-medium text-center" data-subject-id="${sub.id}" data-score="${escapeHtml(sub.actualFinalScore !== undefined && sub.actualFinalScore !== null ? String(sub.actualFinalScore) : '')}" data-grade="${escapeHtml(sub.actualFinalGrade || '')}" style="background-color: #fff1f2; font-size: ${cellFontSize}; height: ${rowHeight}px !important; border: 1px solid #000000 !important;">
+                      ${renderFinalActualHtml(sub, currentFinalActualMode)}
                     </td>
                   </tr>
                 `).join('')}
