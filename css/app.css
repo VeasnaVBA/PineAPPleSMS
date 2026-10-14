@@ -844,9 +844,9 @@ table th.text-right {
   text-align: right !important;
 }
 
-table:not(.no-shadcn) td,
-table tbody tr > td,
-table tbody tr > th {
+table:not(.no-shadcn):not(.seip-score-table) td,
+table:not(.no-shadcn):not(.seip-score-table) tbody tr > td,
+table:not(.no-shadcn):not(.seip-score-table) tbody tr > th {
   padding: 0.75rem 1rem;
   vertical-align: middle;
   border-bottom: 1px solid hsl(var(--border) / 0.4) !important;
