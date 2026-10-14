@@ -901,7 +901,7 @@ export const ReportsPage = {
                 <p class="text-[7.5px] leading-tight font-medium">${school.province ? `${school.province} ` : ''}${solarDateText}</p>
                 <p class="font-bold pt-0.5 text-[8px]">ហត្ថលេខានិងឈ្មោះសិស្ស</p>
                 <div style="height: 16px;"></div>
-                <p class="font-bold text-[8px] report-nudge-box outline-none inline-block px-4" contenteditable="true" spellcheck="false" style="display: inline-block; position: relative; left: 2rem; text-decoration: none !important;">${escapeHtml(student.khmerName || student.englishName)}</p>
+                <p class="font-bold font-khmer-muol text-blue-700 text-[8.5px] report-nudge-box outline-none inline-block px-4" contenteditable="true" spellcheck="false" style="font-family: 'Khmer OS Muol Light', 'Khmer OS Moul Light', 'Moul', cursive, sans-serif; color: #1d4ed8 !important; text-decoration: none !important; display: inline-block; position: relative; left: 2rem; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">${escapeHtml(student.khmerName || student.englishName)}</p>
               </div>
             </div>
           </div>
