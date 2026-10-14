@@ -714,7 +714,7 @@ export const ReportsPage = {
               <!-- Top Left: School Name -->
               <div class="text-left space-y-0.5 pt-0.5">
                 <p class="font-bold text-xs leading-relaxed tracking-wide font-khmer-muol" style="font-family: 'Khmer OS Muol Light', 'Khmer OS Moul Light', 'Moul', cursive, sans-serif;">
-                  <span class="report-nudge-box outline-none" contenteditable="true" spellcheck="false" style="display: inline-block; position: relative; left: 0px; top: 0px;">${escapeHtml(schoolDisplayName)}</span>
+                  <span class="report-nudge-box outline-none" contenteditable="true" spellcheck="false" style="display: inline-block; position: relative; left: 0px; top: 20px;">${escapeHtml(schoolDisplayName)}</span>
                 </p>
               </div>
 
