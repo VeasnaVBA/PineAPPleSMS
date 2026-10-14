@@ -5,7 +5,7 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.64';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.65';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
@@ -1136,7 +1136,7 @@ export const ReportsPage = {
                   <th colspan="20" class="p-0.5 text-center" style="border: 1px solid #000000 !important;">
                     កម្រិតពិន្ទុនិងលទ្ធផលដើមឆ្នាំ(ខ្មៅ) និងចុងឆ្នាំ(<span style="color: #dc2626 !important;">ក្រហម</span>)
                   </th>
-                  <th colspan="2" id="th-final-actual-header" onclick="window.toggleSeipFinalActualMode && window.toggleSeipFinalActualMode(event)" class="p-0.5 text-center cursor-pointer select-none hover:bg-gray-200 transition-colors" style="border: 1px solid #000000 !important; cursor: pointer !important;" title="ចុចដើម្បីប្តូររបៀបបង្ហាញក្នុងជួរជាក់ស្តែង (Click to toggle: Score -> Grade -> Both)">
+                  <th colspan="2" id="th-final-actual-header" onclick="window.toggleSeipFinalActualMode && window.toggleSeipFinalActualMode(event)" class="p-0.5 text-center cursor-pointer select-none hover:bg-gray-200 transition-colors" style="color: #dc2626 !important; border: 1px solid #000000 !important; cursor: pointer !important;" title="ចុចដើម្បីប្តូររបៀបបង្ហាញក្នុងជួរជាក់ស្តែង (Click to toggle: Score -> Grade -> Both)">
                     កម្រិតពិន្ទុ<br>ចុងឆ្នាំ
                   </th>
                 </tr>
