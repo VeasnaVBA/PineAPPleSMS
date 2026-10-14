@@ -672,12 +672,21 @@ export const ReportsPage = {
                 width: 100% !important;
                 border: 1px solid #000000 !important;
               }
+              .seip-score-table thead,
+              .seip-score-table tbody {
+                border: 1px solid #000000 !important;
+              }
               .seip-score-table tr {
                 height: ${rowHeight}px !important;
+                border-bottom: 1px solid #000000 !important;
               }
               .seip-score-table th,
               .seip-score-table td {
                 border: 1px solid #000000 !important;
+                border-top: 1px solid #000000 !important;
+                border-bottom: 1px solid #000000 !important;
+                border-left: 1px solid #000000 !important;
+                border-right: 1px solid #000000 !important;
                 text-align: center !important;
                 vertical-align: middle !important;
                 line-height: 1.1 !important;
@@ -803,7 +812,7 @@ export const ReportsPage = {
                 ${Array(22).fill('<col style="width: 3.636%;">').join('')}
               </colgroup>
               <thead>
-                <tr class="bg-gray-100 text-center font-bold" style="height: 18px;">
+                <tr class="bg-gray-100 text-center font-bold" style="height: 18px; border-bottom: 1px solid #000000 !important;">
                   <th rowspan="2" class="p-0.5 text-center">មុខវិជ្ជា</th>
                   <th rowspan="2" class="p-0.5 text-center">កម្រិតពិន្ទុ<br>ដើមឆ្នាំ</th>
                   <th colspan="20" class="p-0.5 text-center">
@@ -813,7 +822,7 @@ export const ReportsPage = {
                     កម្រិតពិន្ទុ<br>ចុងឆ្នាំ
                   </th>
                 </tr>
-                <tr class="bg-gray-50 text-center font-bold text-[7.5px]" style="height: 16px;">
+                <tr class="bg-gray-50 text-center font-bold text-[7.5px]" style="height: 16px; border-bottom: 1px solid #000000 !important;">
                   ${StudentPlanService.getMonths().map(m => `
                     <th class="p-0 text-center whitespace-nowrap overflow-hidden">${m.labelKm}</th>
                     <th class="p-0 text-center whitespace-nowrap overflow-hidden" style="color: #dc2626 !important;">ជាក់ស្តែង</th>
@@ -824,7 +833,7 @@ export const ReportsPage = {
               </thead>
               <tbody>
                 ${subjects.map((sub, sIdx) => `
-                  <tr style="height: ${rowHeight}px !important;" data-subject-id="${sub.id}">
+                  <tr style="height: ${rowHeight}px !important; border-bottom: 1px solid #000000 !important;" data-subject-id="${sub.id}">
                     <td class="font-medium whitespace-nowrap overflow-hidden text-center" style="font-size: ${cellFontSize}; height: ${rowHeight}px !important; padding: 0 2px;">
                       ${sub.name}
                     </td>
