@@ -518,29 +518,29 @@ export const ReportsPage = {
               </h2>
             </div>
 
-            <!-- Metadata Block -->
+            <!-- Metadata Block (Simple text, no textbox inputs) -->
             <div class="text-[10px] leading-normal border border-gray-400 p-2 rounded mb-2 space-y-1.5" style="border: 1px solid #9ca3af !important;">
               <!-- Row 1: Student info -->
               <div class="flex items-center justify-between gap-2 flex-wrap">
                 <div class="flex items-center gap-1">
                   <span class="font-bold">ឈ្មោះសិស្ស ៖</span>
-                  <span class="font-bold underline underline-offset-2">${escapeHtml(student.khmerName || student.englishName)}</span>
+                  <span class="font-bold underline underline-offset-2">${escapeHtml(student.khmerName || student.englishName || '—')}</span>
                 </div>
                 <div class="flex items-center gap-1">
                   <span class="font-bold">ភេទ ៖</span>
-                  <span>${student.gender}</span>
+                  <span>${escapeHtml(student.gender || '—')}</span>
                 </div>
                 <div class="flex items-center gap-1">
                   <span class="font-bold">អត្តលេខ ៖</span>
-                  <span class="font-mono">${student.studentId}</span>
+                  <span class="font-mono">${escapeHtml(student.studentId || '—')}</span>
                 </div>
                 <div class="flex items-center gap-1">
                   <span class="font-bold">ថ្នាក់ទី ៖</span>
-                  <span class="font-bold">${cls.name}</span>
+                  <span class="font-bold">${escapeHtml(cls.name || '—')}</span>
                 </div>
                 <div class="flex items-center gap-1">
                   <span class="font-bold">ស្ថានភាពគ្រួសារ ៖</span>
-                  <input type="text" id="rv-input-family-status" value="${escapeHtml(student.familyStatus || '')}" placeholder="ក្រីក្រ១ / មធ្យម..." class="rv-plan-cell border-b border-dashed border-gray-400 px-1 text-[10px] bg-transparent focus:outline-none w-28">
+                  <span>${escapeHtml(student.familyStatus || '—')}</span>
                 </div>
               </div>
 
@@ -548,11 +548,11 @@ export const ReportsPage = {
               <div class="grid grid-cols-2 gap-2 items-center">
                 <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">សាលារៀន ៖</span>
-                  <input type="text" id="rv-input-school-name" value="${escapeHtml(school.nameKm || '')}" placeholder="ឈ្មោះសាលារៀន..." class="rv-plan-cell border-b border-dashed border-gray-400 px-1 text-[10px] bg-transparent focus:outline-none flex-1">
+                  <span>${escapeHtml(school.nameKm || '—')}</span>
                 </div>
                 <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">ខេត្ត ៖</span>
-                  <input type="text" id="rv-input-province" value="${escapeHtml(school.province || '')}" placeholder="ខេត្ត..." class="rv-plan-cell border-b border-dashed border-gray-400 px-1 text-[10px] bg-transparent focus:outline-none flex-1">
+                  <span>${escapeHtml(school.province || '—')}</span>
                 </div>
               </div>
 
@@ -560,11 +560,11 @@ export const ReportsPage = {
               <div class="grid grid-cols-2 gap-2 items-center">
                 <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">ឈ្មោះឪពុក ៖</span>
-                  <input type="text" id="rv-input-father-name" value="${escapeHtml(student.fatherName || '')}" placeholder="ឈ្មោះឪពុក..." class="rv-plan-cell border-b border-dashed border-gray-400 px-1 text-[10px] bg-transparent focus:outline-none flex-1">
+                  <span>${escapeHtml(student.fatherName || '—')}</span>
                 </div>
                 <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">លេខទូរស័ព្ទ ៖</span>
-                  <input type="text" id="rv-input-father-phone" value="${escapeHtml(student.fatherPhone || '')}" placeholder="លេខទូរស័ព្ទឪពុក..." class="rv-plan-cell border-b border-dashed border-gray-400 px-1 text-[10px] bg-transparent focus:outline-none flex-1">
+                  <span class="font-mono">${escapeHtml(student.fatherPhone || '—')}</span>
                 </div>
               </div>
 
@@ -572,11 +572,11 @@ export const ReportsPage = {
               <div class="grid grid-cols-2 gap-2 items-center">
                 <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">ឈ្មោះម្តាយ ៖</span>
-                  <input type="text" id="rv-input-mother-name" value="${escapeHtml(student.motherName || '')}" placeholder="ឈ្មោះម្តាយ..." class="rv-plan-cell border-b border-dashed border-gray-400 px-1 text-[10px] bg-transparent focus:outline-none flex-1">
+                  <span>${escapeHtml(student.motherName || '—')}</span>
                 </div>
                 <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">លេខទូរស័ព្ទ ៖</span>
-                  <input type="text" id="rv-input-mother-phone" value="${escapeHtml(student.motherPhone || '')}" placeholder="លេខទូរស័ព្ទម្តាយ..." class="rv-plan-cell border-b border-dashed border-gray-400 px-1 text-[10px] bg-transparent focus:outline-none flex-1">
+                  <span class="font-mono">${escapeHtml(student.motherPhone || '—')}</span>
                 </div>
               </div>
 
@@ -584,11 +584,11 @@ export const ReportsPage = {
               <div class="grid grid-cols-2 gap-2 items-center">
                 <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">ឈ្មោះគ្រូបន្ទុកថ្នាក់ ៖</span>
-                  <input type="text" id="rv-input-teacher-name" value="${escapeHtml(teacher.name || '')}" placeholder="ឈ្មោះគ្រូបន្ទុកថ្នាក់..." class="rv-plan-cell border-b border-dashed border-gray-400 px-1 text-[10px] bg-transparent focus:outline-none flex-1">
+                  <span>${escapeHtml(teacher.name || '—')}</span>
                 </div>
                 <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">លេខទូរស័ព្ទ ៖</span>
-                  <input type="text" id="rv-input-teacher-phone" value="${escapeHtml(teacher.phone || '')}" placeholder="លេខទូរស័ព្ទគ្រូ..." class="rv-plan-cell border-b border-dashed border-gray-400 px-1 text-[10px] bg-transparent focus:outline-none flex-1">
+                  <span class="font-mono">${escapeHtml(teacher.phone || '—')}</span>
                 </div>
               </div>
             </div>
@@ -693,17 +693,17 @@ export const ReportsPage = {
 
         // Gather and auto-save handler for inputs inside ReportViewer
         const gatherViewerPayload = () => {
-          const familyStatus = paperContainer.querySelector('#rv-input-family-status')?.value || '';
-          const schoolName = paperContainer.querySelector('#rv-input-school-name')?.value || '';
-          const province = paperContainer.querySelector('#rv-input-province')?.value || '';
-          const fatherName = paperContainer.querySelector('#rv-input-father-name')?.value || '';
-          const fatherPhone = paperContainer.querySelector('#rv-input-father-phone')?.value || '';
-          const motherName = paperContainer.querySelector('#rv-input-mother-name')?.value || '';
-          const motherPhone = paperContainer.querySelector('#rv-input-mother-phone')?.value || '';
+          const familyStatus = student.familyStatus || '';
+          const schoolName = school.nameKm || '';
+          const province = school.province || '';
+          const fatherName = student.fatherName || '';
+          const fatherPhone = student.fatherPhone || '';
+          const motherName = student.motherName || '';
+          const motherPhone = student.motherPhone || '';
           const parentName = [fatherName, motherName].filter(Boolean).join(' / ');
           const parentPhone = fatherPhone || motherPhone || '';
-          const teacherName = paperContainer.querySelector('#rv-input-teacher-name')?.value || '';
-          const teacherPhone = paperContainer.querySelector('#rv-input-teacher-phone')?.value || '';
+          const teacherName = teacher.name || '';
+          const teacherPhone = teacher.phone || '';
 
           const baseline = {};
           const targets = {};
