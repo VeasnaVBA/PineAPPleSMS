@@ -509,7 +509,7 @@ export const StudentPlanService = {
     };
 
     const extractGrade = (sc, subItem) => {
-      if (!sc) return '';
+      if (!sc) return 'F';
       if (sc.grade && /^[A-F]$/i.test(String(sc.grade).trim())) {
         return String(sc.grade).trim().toUpperCase();
       }
@@ -517,9 +517,9 @@ export const StudentPlanService = {
       if (raw !== '') {
         const num = Number(raw) || 0;
         const fullScore = sc.fullScore || SubjectService.getSubjectFullScore(subItem, targetClass?.name || 'G7') || subItem.fullScore || 50;
-        return SubjectService.calculateGrade(num, fullScore).grade || '';
+        return SubjectService.calculateGrade(num, fullScore).grade || 'F';
       }
-      return '';
+      return 'F';
     };
 
     // Build subject rows
@@ -597,12 +597,19 @@ export const StudentPlanService = {
           const match = studentScores.find(s => matchPeriodScore(s, sub, m.id));
           if (match) {
             actualGrade = extractGrade(match, sub);
+          } else {
+            actualGrade = 'F';
           }
         }
 
         const manualActual = savedActuals[subId]?.[m.key];
         if (manualActual !== undefined && manualActual !== null && String(manualActual).trim() !== '') {
           actualGrade = String(manualActual).trim().toUpperCase();
+        }
+
+        // Don't let column ជាក់ស្តែង empty: if user has not input score yet but choose month already, show grade F
+        if (!actualGrade) {
+          actualGrade = 'F';
         }
 
         // Target grade calculation:
@@ -676,13 +683,13 @@ export const StudentPlanService = {
           actualFinalScore = Number.isInteger(s1Num) ? String(s1Num) : String(Math.round(s1Num * 10) / 10);
         } else if (s1Num === null && s2Num !== null) {
           actualFinalScore = Number.isInteger(s2Num) ? String(s2Num) : String(Math.round(s2Num * 10) / 10);
+        } else {
+          actualFinalScore = '0';
         }
 
-        if (actualFinalScore !== '') {
-          const fullScore = s2Match?.fullScore || s1Match?.fullScore || SubjectService.getSubjectFullScore(sub, targetClass?.name || 'G7') || sub.fullScore || 50;
-          actualFinalGrade = SubjectService.calculateGrade(Number(actualFinalScore), fullScore).grade || 'F';
-          actualFinalText = `${actualFinalScore} , ${actualFinalGrade}`;
-        }
+        const fullScore = s2Match?.fullScore || s1Match?.fullScore || SubjectService.getSubjectFullScore(sub, targetClass?.name || 'G7') || sub.fullScore || 50;
+        actualFinalGrade = SubjectService.calculateGrade(Number(actualFinalScore) || 0, fullScore).grade || 'F';
+        actualFinalText = `${actualFinalScore} , ${actualFinalGrade}`;
 
         const manualActualFinal = savedFinalActual[subId];
         if (manualActualFinal !== undefined && manualActualFinal !== null && String(manualActualFinal).trim() !== '') {
