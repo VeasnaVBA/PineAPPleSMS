@@ -3,20 +3,20 @@
  * Handles navigation without page reloads, compatible with browser & Electron
  * Enforces route-level RBAC permissions (ADMIN, DIRECTOR, TEACHER)
  */
-import { DashboardPage } from './pages/dashboard.js?v=3.0.55';
-import { StudentsPage } from './pages/students.js?v=3.0.55';
-import { TeachersPage } from './pages/teachers.js?v=3.0.55';
-import { ClassesPage } from './pages/classes.js?v=3.0.55';
-import { AttendancePage } from './pages/attendance.js?v=3.0.55';
-import { ScoresPage } from './pages/scores.js?v=3.0.55';
-import { ReportsPage } from './pages/reports.js?v=3.0.55';
-import { SettingsPage } from './pages/settings.js?v=3.0.55';
-import { UsersPage } from './pages/users.js?v=3.0.55';
-import { SchoolsPage } from './pages/schools.js?v=3.0.55';
-import { RegistrationPage } from './pages/registration.js?v=3.0.55';
-import { PromotionPage } from './pages/promotion.js?v=3.0.55';
-import { SubjectsPage } from './pages/subjects.js?v=3.0.55';
-import { DownloadDataPage } from './pages/downloadData.js?v=3.0.55';
+import { DashboardPage } from './pages/dashboard.js?v=3.0.56';
+import { StudentsPage } from './pages/students.js?v=3.0.56';
+import { TeachersPage } from './pages/teachers.js?v=3.0.56';
+import { ClassesPage } from './pages/classes.js?v=3.0.56';
+import { AttendancePage } from './pages/attendance.js?v=3.0.56';
+import { ScoresPage } from './pages/scores.js?v=3.0.56';
+import { ReportsPage } from './pages/reports.js?v=3.0.56';
+import { SettingsPage } from './pages/settings.js?v=3.0.56';
+import { UsersPage } from './pages/users.js?v=3.0.56';
+import { SchoolsPage } from './pages/schools.js?v=3.0.56';
+import { RegistrationPage } from './pages/registration.js?v=3.0.56';
+import { PromotionPage } from './pages/promotion.js?v=3.0.56';
+import { SubjectsPage } from './pages/subjects.js?v=3.0.56';
+import { DownloadDataPage } from './pages/downloadData.js?v=3.0.56';
 import { authService } from './services/authService.js';
 import { WorkspaceSetupService } from './services/workspaceSetupService.js';
 import { getIcon } from './components/icons.js';
