@@ -642,6 +642,24 @@ export const ReportsPage = {
 
         paperContainer.innerHTML = `
           <div class="student-plan-sheet font-khmer text-black leading-tight select-text" style="color: #000000 !important; width: 100%;">
+            <style>
+              .seip-scale-table {
+                border-collapse: collapse !important;
+                font-size: 7.5px !important;
+                line-height: 1.15 !important;
+              }
+              .seip-scale-table tr {
+                height: 14px !important;
+                min-height: 14px !important;
+              }
+              .seip-scale-table td {
+                padding: 1px 3px !important;
+                line-height: 1.15 !important;
+                height: 14px !important;
+                font-size: 7.5px !important;
+                vertical-align: middle !important;
+              }
+            </style>
             <!-- Top Royal Header -->
             <div class="flex justify-end pr-2 mb-1">
               <div class="text-center">
@@ -652,14 +670,14 @@ export const ReportsPage = {
             </div>
 
             <!-- Main Document Title -->
-            <div class="text-center my-1.5">
+            <div class="text-center my-1">
               <h2 class="text-sm sm:text-base font-bold tracking-tight font-khmer-muol" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">
                 ផែនការសិក្សារបស់សិស្ស ឆ្នាំសិក្សា${toKhmerNumerals(planData.academicYear)}
               </h2>
             </div>
 
-            <!-- Metadata Block (Simple text, no textbox inputs) -->
-            <div class="text-[10px] leading-normal border border-gray-400 p-2 rounded mb-2 space-y-1.5" style="border: 1px solid #9ca3af !important;">
+            <!-- Metadata Block (Simple text, compact fit) -->
+            <div class="text-[9.5px] leading-tight border border-gray-400 p-1.5 rounded mb-1.5 space-y-1" style="border: 1px solid #9ca3af !important; line-height: 1.25 !important;">
               <!-- Row 1: Student info -->
               <div class="flex items-center justify-between gap-2 flex-wrap">
                 <div class="flex items-center gap-1">
@@ -733,14 +751,14 @@ export const ReportsPage = {
               </div>
             </div>
 
-            <!-- Score Scale Matrix -->
-            <table class="w-full border-collapse text-[8.5px] leading-tight mb-2" style="border: 1px solid #4b5563;">
+            <!-- Score Scale Matrix (Short height, tightly fitting the text) -->
+            <table class="seip-scale-table w-full border-collapse mb-1.5" style="border: 1px solid #4b5563; line-height: 1.15 !important;">
               <tbody>
                 ${StudentPlanService.getScoreScaleMatrix().map(row => `
-                  <tr style="border-bottom: 1px solid #9ca3af;">
-                    <td class="font-bold py-0.5 px-1.5 whitespace-nowrap bg-gray-100" style="border-right: 1px solid #9ca3af; width: 140px;">${row.scaleLabel}</td>
+                  <tr style="border-bottom: 1px solid #9ca3af; height: auto !important;">
+                    <td class="font-bold whitespace-nowrap bg-gray-100" style="border-right: 1px solid #9ca3af; width: 130px; padding: 1px 4px !important; font-size: 7.5px !important; line-height: 1.15 !important; height: auto !important;">${row.scaleLabel}</td>
                     ${row.grades.map(g => `
-                      <td class="py-0.5 px-1 text-center whitespace-nowrap" style="border-right: 1px solid #9ca3af;">${g.text}</td>
+                      <td class="text-center whitespace-nowrap" style="border-right: 1px solid #9ca3af; padding: 1px 2px !important; font-size: 7.5px !important; line-height: 1.15 !important; height: auto !important;">${g.text}</td>
                     `).join('')}
                   </tr>
                 `).join('')}
