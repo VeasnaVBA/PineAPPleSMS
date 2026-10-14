@@ -439,11 +439,13 @@ export const StudentPlanService = {
         id: activePeriodId,
         nameKm: activePeriodId
       }) : null;
-      const headerLabel = isChosen ? (periodInfo.nameKm || activePeriodId) : m.labelKm;
+      const periodNameKm = isChosen ? (periodInfo.nameKm || activePeriodId) : '';
+      const headerLabel = isChosen ? `${m.labelKm}\n(${periodNameKm})` : m.labelKm;
       return {
         key: m.key,
         id: activePeriodId,
         isChosen,
+        periodNameKm,
         nameKm: isChosen ? periodInfo.nameKm : (m.nameKm || m.labelKm),
         labelKm: m.labelKm,
         headerLabel
@@ -607,6 +609,7 @@ export const StudentPlanService = {
           key: m.key,
           id: m.id,
           isChosen: true,
+          periodNameKm: m.periodNameKm,
           nameKm: m.nameKm,
           labelKm: m.labelKm,
           headerLabel: m.headerLabel,

@@ -5,7 +5,7 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.58';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.59';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
@@ -1064,15 +1064,21 @@ export const ReportsPage = {
                     កម្រិតពិន្ទុ<br>ចុងឆ្នាំ
                   </th>
                 </tr>
-                <tr class="bg-gray-50 text-center font-bold text-[7.5px]" style="height: 16px; border-bottom: 1px solid #000000 !important;">
-                  ${(planData.months || StudentPlanService.getMonths()).map(m => `
-                    <th data-month-key="${m.key}" data-month-label="${m.labelKm}" onclick="window.openSeipMonthPicker && window.openSeipMonthPicker(event, '${m.key}', '${m.labelKm}')" class="seip-month-col-header p-0 text-center whitespace-nowrap overflow-hidden cursor-pointer hover:bg-gray-200 select-none transition-colors" style="border: 1px solid #000000 !important; cursor: pointer !important;" title="ចុចដើម្បីជ្រើសរើសខែ ឬការប្រឡង (${escapeHtml(m.headerLabel || m.labelKm)})">
-                      ${escapeHtml(m.headerLabel || m.nameKm || m.labelKm)}
-                    </th>
-                    <th class="p-0 text-center whitespace-nowrap overflow-hidden" style="color: #dc2626 !important; border: 1px solid #000000 !important;">ជាក់ស្តែង</th>
-                  `).join('')}
-                  <th class="p-0 text-center whitespace-nowrap overflow-hidden" style="border: 1px solid #000000 !important;">ដាក់ពិន្ទុ</th>
-                  <th class="p-0 text-center whitespace-nowrap overflow-hidden" style="color: #dc2626 !important; border: 1px solid #000000 !important;">ជាក់ស្តែង</th>
+                <tr class="bg-gray-50 text-center font-bold text-[7.5px]" style="min-height: 18px; border-bottom: 1px solid #000000 !important;">
+                  ${(planData.months || StudentPlanService.getMonths()).map(m => {
+                    const periodName = m.periodNameKm || (m.isChosen ? m.nameKm : '');
+                    const headerHtml = periodName
+                      ? `<div class="leading-none py-0.5"><span class="block">${escapeHtml(m.labelKm)}</span><span class="block text-[6.5px] font-semibold mt-0.5">(${escapeHtml(periodName)})</span></div>`
+                      : `<div class="leading-none py-0.5"><span class="block">${escapeHtml(m.labelKm)}</span></div>`;
+                    return `
+                      <th data-month-key="${m.key}" data-month-label="${m.labelKm}" onclick="window.openSeipMonthPicker && window.openSeipMonthPicker(event, '${m.key}', '${m.labelKm}')" class="seip-month-col-header p-0 text-center whitespace-nowrap overflow-hidden cursor-pointer hover:bg-gray-200 select-none transition-colors" style="border: 1px solid #000000 !important; cursor: pointer !important; vertical-align: middle !important;" title="ចុចដើម្បីជ្រើសរើសខែ ឬការប្រឡង">
+                        ${headerHtml}
+                      </th>
+                      <th class="p-0 text-center whitespace-nowrap overflow-hidden" style="color: #dc2626 !important; border: 1px solid #000000 !important; vertical-align: middle !important;">ជាក់ស្តែង</th>
+                    `;
+                  }).join('')}
+                  <th class="p-0 text-center whitespace-nowrap overflow-hidden" style="border: 1px solid #000000 !important; vertical-align: middle !important;">ដាក់ពិន្ទុ</th>
+                  <th class="p-0 text-center whitespace-nowrap overflow-hidden" style="color: #dc2626 !important; border: 1px solid #000000 !important; vertical-align: middle !important;">ជាក់ស្តែង</th>
                 </tr>
               </thead>
               <tbody>
