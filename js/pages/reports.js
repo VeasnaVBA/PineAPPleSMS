@@ -5,7 +5,7 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.65';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.66';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
@@ -794,7 +794,6 @@ export const ReportsPage = {
                           <div class="font-semibold text-xs sm:text-sm text-foreground truncate group-hover:text-primary transition-colors">
                             ${idx + 1}. ${escapeHtml(sub.name || sub.nameKm || '')}
                           </div>
-                          ${sub.nameEn ? `<div class="text-[10px] text-muted-foreground truncate">${escapeHtml(sub.nameEn)}</div>` : ''}
                         </div>
                       </div>
                       <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground shrink-0">
