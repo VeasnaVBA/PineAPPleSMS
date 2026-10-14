@@ -5,7 +5,7 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.63';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.64';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
@@ -239,7 +239,7 @@ export const ReportsPage = {
               ${t('reports.studentPlanReport') || 'ផែនការសិស្សម្នាក់ៗ'}
             </h2>
             <p class="text-xs sm:text-sm text-muted-foreground font-khmer max-w-md mb-8 leading-relaxed">
-              ពិនិត្យមើល កែប្រែពិន្ទុដៅ និងបោះពុម្ពតារាងផែនការសិក្សារបស់សិស្សម្នាក់ៗ (SEIP) ជាទម្រង់ក្រដាស A4 Landscape ផ្លូវការ
+              ពិនិត្យមើល កែប្រែពិន្ទុដៅ និងបោះពុម្ពតារាងផែនការសិក្សារបស់សិស្សម្នាក់ៗ ជាទម្រង់ក្រដាស A4 Landscape ផ្លូវការ
             </p>
             <button id="btn-open-student-plan-modal" type="button" class="inline-flex items-center gap-3 px-8 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm sm:text-base shadow-lg hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
               ${getIcon('printer', 'w-5 h-5')}
@@ -645,7 +645,7 @@ export const ReportsPage = {
 
     await ReportViewer.open({
       reportKey: 'student_individual_plan',
-      title: isKm ? 'ផែនការសិក្សារបស់សិស្ស (SEIP)' : 'Student Study Plan (SEIP)',
+      title: isKm ? 'ផែនការសិក្សារបស់សិស្ស' : 'Student Study Plan',
       alwaysFresh: true,
       defaultOrientation: 'landscape',
       defaultPaperSize: 'A4',
@@ -759,7 +759,7 @@ export const ReportsPage = {
                     ${getIcon('slidersHorizontal', 'w-4 h-4')}
                   </div>
                   <div>
-                    <h3 class="font-bold text-sm sm:text-base text-foreground leading-tight">កំណត់ការបង្ហាញមុខវិជ្ជា (SEIP)</h3>
+                    <h3 class="font-bold text-sm sm:text-base text-foreground leading-tight">កំណត់ការបង្ហាញមុខវិជ្ជា</h3>
                     <p class="text-[11px] text-muted-foreground mt-0.5">ជ្រើសរើសមុខវិជ្ជាដែលត្រូវបង្ហាញក្នុងតារាងផែនការ</p>
                   </div>
                 </div>
