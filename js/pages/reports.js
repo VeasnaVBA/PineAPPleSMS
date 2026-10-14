@@ -728,7 +728,7 @@ export const ReportsPage = {
               <div class="flex items-center justify-center gap-x-5 flex-wrap">
                 <div class="flex items-center gap-1">
                   <span class="font-bold">ឈ្មោះសិស្ស ៖</span>
-                  <span class="font-bold underline underline-offset-2 font-khmer-muol text-blue-700 text-[9.5px]" style="font-family: 'Khmer OS Muol Light', 'Khmer OS Moul Light', 'Moul', cursive, sans-serif; color: #1d4ed8 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">${escapeHtml(student.khmerName || student.englishName || '—')}</span>
+                  <span class="font-bold font-khmer-muol text-blue-700 text-[9.5px]" style="font-family: 'Khmer OS Muol Light', 'Khmer OS Moul Light', 'Moul', cursive, sans-serif; color: #1d4ed8 !important; text-decoration: none !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">${escapeHtml(student.khmerName || student.englishName || '—')}</span>
                 </div>
                 <div class="flex items-center gap-1">
                   <span class="font-bold">ភេទ ៖</span>
