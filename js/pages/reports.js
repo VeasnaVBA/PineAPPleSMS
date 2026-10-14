@@ -722,10 +722,10 @@ export const ReportsPage = {
               </h2>
             </div>
 
-            <!-- Metadata Block (Simple text, ultra-compact 3 rows) -->
-            <div class="text-[9px] leading-tight border border-black p-1 rounded mb-1 space-y-0.5" style="border: 1px solid #000000 !important; line-height: 1.2 !important;">
+            <!-- Metadata Block (Simple text, borderless, compact text close to each other) -->
+            <div class="text-[9px] leading-tight mb-1 space-y-0.5" style="border: none !important; padding: 0 !important; line-height: 1.25 !important;">
               <!-- Row 1: Student info -->
-              <div class="flex items-center justify-between gap-2 flex-wrap">
+              <div class="flex items-center gap-x-5 flex-wrap">
                 <div class="flex items-center gap-1">
                   <span class="font-bold">ឈ្មោះសិស្ស ៖</span>
                   <span class="font-bold underline underline-offset-2">${escapeHtml(student.khmerName || student.englishName || '—')}</span>
@@ -749,40 +749,40 @@ export const ReportsPage = {
               </div>
 
               <!-- Row 2: School & Homeroom Teacher -->
-              <div class="grid grid-cols-4 gap-2 items-center">
-                <div class="flex items-center gap-1 col-span-1">
+              <div class="flex items-center gap-x-5 flex-wrap">
+                <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">សាលារៀន ៖</span>
-                  <span class="truncate">${escapeHtml(school.nameKm || '—')}</span>
+                  <span>${escapeHtml(school.nameKm || '—')}</span>
                 </div>
-                <div class="flex items-center gap-1 col-span-1">
+                <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">ខេត្ត ៖</span>
                   <span>${escapeHtml(school.province || '—')}</span>
                 </div>
-                <div class="flex items-center gap-1 col-span-1">
+                <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">ឈ្មោះគ្រូបន្ទុកថ្នាក់ ៖</span>
                   <span>${escapeHtml(teacher.name || '—')}</span>
                 </div>
-                <div class="flex items-center gap-1 col-span-1">
+                <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">លេខទូរស័ព្ទ ៖</span>
                   <span class="font-mono">${escapeHtml(teacher.phone || '—')}</span>
                 </div>
               </div>
 
               <!-- Row 3: Parents -->
-              <div class="grid grid-cols-4 gap-2 items-center">
-                <div class="flex items-center gap-1 col-span-1">
+              <div class="flex items-center gap-x-5 flex-wrap">
+                <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">ឈ្មោះឪពុក ៖</span>
                   <span>${escapeHtml(student.fatherName || '—')}</span>
                 </div>
-                <div class="flex items-center gap-1 col-span-1">
+                <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">លេខទូរស័ព្ទ ៖</span>
                   <span class="font-mono">${escapeHtml(student.fatherPhone || '—')}</span>
                 </div>
-                <div class="flex items-center gap-1 col-span-1">
+                <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">ឈ្មោះម្តាយ ៖</span>
                   <span>${escapeHtml(student.motherName || '—')}</span>
                 </div>
-                <div class="flex items-center gap-1 col-span-1">
+                <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">លេខទូរស័ព្ទ ៖</span>
                   <span class="font-mono">${escapeHtml(student.motherPhone || '—')}</span>
                 </div>
