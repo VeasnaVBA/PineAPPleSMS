@@ -5,7 +5,7 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.54';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.55';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
@@ -750,17 +750,17 @@ export const ReportsPage = {
 
         // Dynamic height scaling to fit in exactly 1 single A4 Landscape page:
         // Default is 10 subjects. If user chooses more than 10, make table height shorter!
-        let rowHeight = 18;
+        let rowHeight = 14;
         let cellFontSize = '9px';
         let scaleFontSize = '7.5px';
 
         if (subCount > 13) {
-          rowHeight = 14;
-          cellFontSize = '8px';
+          rowHeight = 12;
+          cellFontSize = '7.5px';
           scaleFontSize = '6.5px';
         } else if (subCount > 10) {
-          rowHeight = 16;
-          cellFontSize = '8.5px';
+          rowHeight = 13;
+          cellFontSize = '8px';
           scaleFontSize = '7px';
         }
 
@@ -825,12 +825,13 @@ export const ReportsPage = {
               }
               .seip-score-table tr {
                 height: ${rowHeight}px !important;
+                max-height: ${rowHeight}px !important;
               }
               .seip-score-table th,
               .seip-score-table td {
                 text-align: center !important;
                 vertical-align: middle !important;
-                line-height: 1.1 !important;
+                line-height: 1 !important;
               }
               .seip-score-table th {
                 font-size: ${cellFontSize} !important;
@@ -838,6 +839,7 @@ export const ReportsPage = {
               }
               .seip-score-table td {
                 height: ${rowHeight}px !important;
+                max-height: ${rowHeight}px !important;
                 font-size: ${cellFontSize} !important;
                 padding: 0 1px !important;
               }
