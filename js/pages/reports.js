@@ -5,7 +5,7 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.53';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.54';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
@@ -970,11 +970,8 @@ export const ReportsPage = {
               <thead>
                 <tr class="bg-gray-100 text-center font-bold" style="height: 18px; border-bottom: 1px solid #000000 !important;">
                   <th rowspan="2" class="p-0.5 text-center" style="border: 1px solid #000000 !important;">មុខវិជ្ជា</th>
-                  <th rowspan="2" id="th-baseline-header" onclick="window.openSeipBaselineMenu && window.openSeipBaselineMenu(event, this)" class="p-0.5 text-center cursor-pointer select-none hover:bg-gray-200 transition-colors group relative" style="border: 1px solid #000000 !important; cursor: pointer !important;" title="ចុចដើម្បីជ្រើសរើសរបៀបបង្ហាញ (Click to choose options)">
-                    <div class="inline-flex items-center justify-center gap-0.5 pointer-events-none">
-                      <span>កម្រិតពិន្ទុ<br>ដើមឆ្នាំ</span>
-                      <span class="text-[8px] text-gray-500 group-hover:text-black opacity-75 print:hidden ml-0.5">▾</span>
-                    </div>
+                  <th rowspan="2" id="th-baseline-header" onclick="window.openSeipBaselineMenu && window.openSeipBaselineMenu(event, this)" class="p-0.5 text-center cursor-pointer select-none hover:bg-gray-200 transition-colors" style="border: 1px solid #000000 !important; cursor: pointer !important;" title="ចុចដើម្បីជ្រើសរើសរបៀបបង្ហាញ (Click to choose options)">
+                    កម្រិតពិន្ទុ<br>ដើមឆ្នាំ
                   </th>
                   <th colspan="20" class="p-0.5 text-center" style="border: 1px solid #000000 !important;">
                     កម្រិតពិន្ទុនិងលទ្ធផលដើមឆ្នាំ(ខ្មៅ) និងចុងឆ្នាំ(<span style="color: #dc2626 !important;">ក្រហម</span>)
