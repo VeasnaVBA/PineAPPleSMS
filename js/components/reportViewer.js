@@ -1107,8 +1107,9 @@ export class ReportViewer {
     if (!this.styleElement) {
       this.styleElement = document.createElement('style');
       this.styleElement.id = 'report-viewer-dynamic-print-style';
-      document.head.appendChild(this.styleElement);
     }
+    // Always move styleElement to very end of head for top precedence
+    document.head.appendChild(this.styleElement);
 
     const { padding, orientation } = this.settings;
     const paperSize = (this.settings.paperSize || 'A4').toUpperCase();
@@ -1116,25 +1117,23 @@ export class ReportViewer {
     const { width: pageW_mm, height: pageH_mm } = getPaperDimensions(paperSize, orientation);
 
     const isLandscape = orientation === 'landscape';
+    const orientKeyword = isLandscape ? 'landscape' : 'portrait';
 
     this.styleElement.innerHTML = `
       @media print {
         @page {
-          size: ${paperSize} ${orientation};
-          size: ${orientation};
-          size: ${pageW_mm}mm ${pageH_mm}mm;
+          size: ${orientKeyword};
+          size: ${paperSize} ${orientKeyword};
           margin: 0;
         }
         @page landscape-sheet {
-          size: ${paperSize} landscape;
           size: landscape;
-          size: 297mm 210mm;
+          size: ${paperSize} landscape;
           margin: 0;
         }
         @page portrait-sheet {
-          size: ${paperSize} portrait;
           size: portrait;
-          size: 210mm 297mm;
+          size: ${paperSize} portrait;
           margin: 0;
         }
         .report-preview-workspace,
@@ -1150,11 +1149,14 @@ export class ReportViewer {
           overflow: visible !important;
           margin: 0 !important;
           padding: 0 !important;
+          width: ${pageW_mm}mm !important;
+          height: ${pageH_mm}mm !important;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
-        body.printing-report-viewer.landscape-print {
+        body.printing-report-viewer {
           width: ${pageW_mm}mm !important;
+          height: ${pageH_mm}mm !important;
         }
         body * {
           visibility: hidden;
@@ -3848,7 +3850,7 @@ export class ReportViewer {
         setTimeout(() => {
           document.body.classList.remove('printing-report-viewer', 'landscape-print', 'portrait-print');
         }, 1000);
-      }, 60);
+      }, 100);
     });
   }
 
@@ -3905,7 +3907,7 @@ export class ReportViewer {
             document.title = originalTitle;
             document.body.classList.remove('printing-report-viewer', 'landscape-print', 'portrait-print');
           }, 1000);
-        }, 60);
+        }, 100);
       });
     } catch (err) {
       console.error('exportPDF failed:', err);
