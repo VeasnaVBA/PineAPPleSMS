@@ -440,8 +440,15 @@ export const ReportsPage = {
               <span class="text-muted-foreground text-[11px] whitespace-nowrap ml-1">
                 (${currIdx >= 0 ? currIdx + 1 : 0}/${studentsInClass.length})
               </span>
-              <span id="rv-plan-save-indicator" class="text-emerald-600 dark:text-emerald-400 font-medium text-[11px] ml-1.5 whitespace-nowrap"></span>
             </div>
+
+            <!-- Subject Visibility Filter Button -->
+            <button type="button" id="rv-plan-btn-toggle-subjects" class="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-md border border-input bg-card hover:bg-muted text-xs font-semibold text-foreground cursor-pointer shadow-xs whitespace-nowrap active:scale-95 transition-all" title="ជ្រើសរើសមុខវិជ្ជាបង្ហាញ/លាក់">
+              ${getIcon('slidersHorizontal', 'w-3.5 h-3.5 text-primary')}
+              <span>មុខវិជ្ជា</span>
+            </button>
+
+            <span id="rv-plan-save-indicator" class="text-emerald-600 dark:text-emerald-400 font-medium text-[11px] ml-1.5 whitespace-nowrap"></span>
           `;
 
           controlsContainer.querySelector('#rv-plan-filter-class')?.addEventListener('change', async (e) => {
@@ -474,6 +481,139 @@ export const ReportsPage = {
               updateControls();
               await viewer.refreshContent(true);
             }
+          });
+
+          controlsContainer.querySelector('#rv-plan-btn-toggle-subjects')?.addEventListener('click', async () => {
+            await openSubjectSelectionModal();
+          });
+        };
+
+        const openSubjectSelectionModal = async () => {
+          const targetClass = classes.find(c => c.id === currentClassId);
+          const allSubs = await StudentPlanService.resolvePlanSubjects(targetClass);
+          const hiddenList = await StudentPlanService.getHiddenSubjectIds(currentClassId);
+          const hiddenSet = new Set(hiddenList);
+
+          // Remove any previous modal instance
+          document.getElementById('modal-rv-plan-subjects')?.remove();
+
+          const modalEl = document.createElement('div');
+          modalEl.id = 'modal-rv-plan-subjects';
+          modalEl.className = 'fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-sm animate-fade-in font-khmer select-none';
+
+          modalEl.innerHTML = `
+            <div class="w-full max-w-md sm:max-w-lg bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] text-foreground animate-scale-in">
+              <!-- Header -->
+              <div class="px-5 py-4 border-b border-border flex items-center justify-between bg-muted/30">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                    ${getIcon('slidersHorizontal', 'w-4 h-4')}
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-sm sm:text-base text-foreground leading-tight">កំណត់ការបង្ហាញមុខវិជ្ជា (SEIP)</h3>
+                    <p class="text-[11px] text-muted-foreground mt-0.5">ជ្រើសរើសមុខវិជ្ជាដែលត្រូវបង្ហាញក្នុងតារាងផែនការ</p>
+                  </div>
+                </div>
+                <button type="button" id="btn-close-sub-modal" class="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer transition-colors">
+                  ${getIcon('x', 'w-4 h-4')}
+                </button>
+              </div>
+
+              <!-- Quick action bar -->
+              <div class="px-4 py-2.5 border-b border-border/80 bg-muted/10 flex items-center justify-between gap-2 text-xs">
+                <div class="flex items-center gap-1.5">
+                  <button type="button" id="btn-select-all-subs" class="px-2.5 py-1 rounded-md border border-input bg-card hover:bg-muted font-medium text-[11px] transition-colors cursor-pointer shadow-xs">
+                    ជ្រើសទាំងអស់
+                  </button>
+                  <button type="button" id="btn-deselect-all-subs" class="px-2.5 py-1 rounded-md border border-input bg-card hover:bg-muted font-medium text-[11px] transition-colors cursor-pointer shadow-xs">
+                    ដោះទាំងអស់
+                  </button>
+                </div>
+                <span id="sub-modal-selected-counter" class="text-xs text-muted-foreground font-medium"></span>
+              </div>
+
+              <!-- Subject Checkboxes List -->
+              <div class="p-3 sm:p-4 overflow-y-auto flex-1 space-y-1.5 divide-y divide-border/40" id="sub-modal-list">
+                ${allSubs.map((sub, idx) => {
+                  const sId = sub.id || sub.code || sub.name;
+                  const isChecked = !hiddenSet.has(sId) && !hiddenSet.has(sub.id) && !hiddenSet.has(sub.code);
+                  return `
+                    <label class="flex items-center justify-between gap-3 p-2.5 rounded-xl hover:bg-muted/50 cursor-pointer transition-colors select-none group border border-transparent hover:border-border/40">
+                      <div class="flex items-center gap-2.5 min-w-0">
+                        <input type="checkbox" class="sub-checkbox w-4 h-4 rounded text-primary focus:ring-primary cursor-pointer accent-primary" data-subject-id="${escapeHtml(sId)}" ${isChecked ? 'checked' : ''}>
+                        <div class="min-w-0">
+                          <div class="font-semibold text-xs sm:text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                            ${idx + 1}. ${escapeHtml(sub.name || sub.nameKm || '')}
+                          </div>
+                          ${sub.nameEn ? `<div class="text-[10px] text-muted-foreground truncate">${escapeHtml(sub.nameEn)}</div>` : ''}
+                        </div>
+                      </div>
+                      <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground shrink-0">
+                        ${escapeHtml(sub.code || 'SUB')}
+                      </span>
+                    </label>
+                  `;
+                }).join('')}
+              </div>
+
+              <!-- Footer -->
+              <div class="px-5 py-3.5 border-t border-border bg-muted/20 flex items-center justify-end gap-2">
+                <button type="button" id="btn-cancel-sub-modal" class="px-4 py-2 rounded-xl border border-input bg-card hover:bg-muted text-xs font-semibold text-foreground cursor-pointer transition-colors">
+                  បោះបង់
+                </button>
+                <button type="button" id="btn-save-sub-modal" class="px-5 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 cursor-pointer transition-colors shadow-sm">
+                  រក្សាទុក & អនុវត្ត
+                </button>
+              </div>
+            </div>
+          `;
+
+          document.body.appendChild(modalEl);
+
+          const updateCounter = () => {
+            const total = modalEl.querySelectorAll('.sub-checkbox').length;
+            const checked = modalEl.querySelectorAll('.sub-checkbox:checked').length;
+            const counterEl = modalEl.querySelector('#sub-modal-selected-counter');
+            if (counterEl) {
+              counterEl.textContent = `បានជ្រើសរើស: ${checked} / ${total}`;
+            }
+          };
+
+          updateCounter();
+
+          modalEl.querySelectorAll('.sub-checkbox').forEach(cb => {
+            cb.addEventListener('change', updateCounter);
+          });
+
+          modalEl.querySelector('#btn-select-all-subs')?.addEventListener('click', () => {
+            modalEl.querySelectorAll('.sub-checkbox').forEach(cb => cb.checked = true);
+            updateCounter();
+          });
+
+          modalEl.querySelector('#btn-deselect-all-subs')?.addEventListener('click', () => {
+            modalEl.querySelectorAll('.sub-checkbox').forEach(cb => cb.checked = false);
+            updateCounter();
+          });
+
+          const closeModal = () => modalEl.remove();
+          modalEl.querySelector('#btn-close-sub-modal')?.addEventListener('click', closeModal);
+          modalEl.querySelector('#btn-cancel-sub-modal')?.addEventListener('click', closeModal);
+          modalEl.addEventListener('click', (e) => {
+            if (e.target === modalEl) closeModal();
+          });
+
+          modalEl.querySelector('#btn-save-sub-modal')?.addEventListener('click', async () => {
+            const newHiddenIds = [];
+            modalEl.querySelectorAll('.sub-checkbox').forEach(cb => {
+              if (!cb.checked) {
+                newHiddenIds.push(cb.dataset.subjectId);
+              }
+            });
+
+            await StudentPlanService.setHiddenSubjectIds(currentClassId, newHiddenIds);
+            closeModal();
+            toast.success('បានរក្សាទុកការកំណត់មុខវិជ្ជាជោគជ័យ');
+            await viewer.refreshContent(true);
           });
         };
 

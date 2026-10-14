@@ -168,6 +168,46 @@ export const StudentPlanService = {
   },
 
   /**
+   * Get list of hidden subject IDs for a class
+   */
+  async getHiddenSubjectIds(classId) {
+    if (!classId) return [];
+    try {
+      const rec = await db.get('report_settings', `student_plan_hidden_subjects_${classId}`);
+      if (rec && rec.value) {
+        const parsed = typeof rec.value === 'string' ? JSON.parse(rec.value) : rec.value;
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (_) {}
+    try {
+      const local = localStorage.getItem(`student_plan_hidden_subjects_${classId}`);
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (_) {}
+    return [];
+  },
+
+  /**
+   * Save list of hidden subject IDs for a class
+   */
+  async setHiddenSubjectIds(classId, hiddenIds) {
+    if (!classId) return;
+    const cleanIds = Array.isArray(hiddenIds) ? hiddenIds : [];
+    try {
+      localStorage.setItem(`student_plan_hidden_subjects_${classId}`, JSON.stringify(cleanIds));
+      await db.put('report_settings', {
+        key: `student_plan_hidden_subjects_${classId}`,
+        value: JSON.stringify(cleanIds),
+        updatedAt: new Date().toISOString()
+      });
+    } catch (err) {
+      console.warn('Failed to save hidden subject IDs:', err);
+    }
+  },
+
+  /**
    * Get all active students for a class
    */
   async getClassStudents(classId) {
@@ -239,7 +279,12 @@ export const StudentPlanService = {
     const schoolEn = (matchedSchool?.nameEn) || (await SettingsService.get('school_name_en')) || 'School';
     const province = schoolTableProvince || (await SettingsService.get('school_province')) || '';
 
-    const subjects = await this.resolvePlanSubjects(targetClass);
+    const allSubjects = await this.resolvePlanSubjects(targetClass);
+    const hiddenSubjectIds = await this.getHiddenSubjectIds(classId);
+    const subjects = allSubjects.filter(sub => {
+      const sId = sub.id || sub.code || sub.name;
+      return !hiddenSubjectIds.includes(sId) && !hiddenSubjectIds.includes(sub.id) && !hiddenSubjectIds.includes(sub.code);
+    });
 
     // Filter scores belonging to this student for this academic year
     const studentScores = (allScores || []).filter(s => 
@@ -386,6 +431,8 @@ export const StudentPlanService = {
       },
       academicYear: academicYear || targetClass.academicYear || '2023–2024',
       subjects: subjectRows,
+      allAvailableSubjects: allSubjects,
+      hiddenSubjectIds: hiddenSubjectIds,
       reportDate: saved.reportDate || new Date().toISOString().split('T')[0]
     };
   },
