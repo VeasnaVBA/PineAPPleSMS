@@ -356,12 +356,30 @@ export const StudentPlanService = {
 
       // Baseline: Beginning of year score (First Test)
       let baseline = savedBaseline[subId];
-      if (baseline === undefined || baseline === null || String(baseline).trim() === '') {
+      if (baseline !== undefined && baseline !== null && String(baseline).trim() !== '') {
+        const strVal = String(baseline).trim();
+        if (/[A-F]$/i.test(strVal)) {
+          baseline = strVal;
+        } else {
+          const num = Number(strVal) || 0;
+          const fullScore = SubjectService.getSubjectFullScore(sub, targetClass?.name || 'G7') || sub.fullScore || 50;
+          const grade = SubjectService.calculateGrade(num, fullScore).grade;
+          baseline = `${strVal} , ${grade}`;
+        }
+      } else {
         const firstTestMatch = studentScores.find(s => isFirstTestPeriod(s) && matchSubject(sub, s));
         if (firstTestMatch) {
-          baseline = getScoreValue(firstTestMatch);
+          const rawScore = getScoreValue(firstTestMatch);
+          if (rawScore !== '') {
+            const num = Number(rawScore) || 0;
+            const fullScore = firstTestMatch.fullScore || SubjectService.getSubjectFullScore(sub, targetClass?.name || 'G7') || sub.fullScore || 50;
+            const grade = firstTestMatch.grade || SubjectService.calculateGrade(num, fullScore).grade;
+            baseline = `${rawScore} , ${grade}`;
+          } else {
+            baseline = '0 , F';
+          }
         } else {
-          baseline = '';
+          baseline = '0 , F';
         }
       }
 
