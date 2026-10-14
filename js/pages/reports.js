@@ -722,10 +722,10 @@ export const ReportsPage = {
               </h2>
             </div>
 
-            <!-- Metadata Block (Simple text, borderless, compact text close to each other) -->
-            <div class="text-[9px] leading-tight mb-1 space-y-0.5" style="border: none !important; padding: 0 !important; line-height: 1.25 !important;">
+            <!-- Metadata Block (Simple text, borderless, compact text centered) -->
+            <div class="text-[9px] leading-tight mb-1 space-y-0.5 text-center" style="border: none !important; padding: 0 !important; line-height: 1.25 !important;">
               <!-- Row 1: Student info -->
-              <div class="flex items-center gap-x-5 flex-wrap">
+              <div class="flex items-center justify-center gap-x-5 flex-wrap">
                 <div class="flex items-center gap-1">
                   <span class="font-bold">ឈ្មោះសិស្ស ៖</span>
                   <span class="font-bold underline underline-offset-2">${escapeHtml(student.khmerName || student.englishName || '—')}</span>
@@ -749,7 +749,7 @@ export const ReportsPage = {
               </div>
 
               <!-- Row 2: School & Homeroom Teacher -->
-              <div class="flex items-center gap-x-5 flex-wrap">
+              <div class="flex items-center justify-center gap-x-5 flex-wrap">
                 <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">សាលារៀន ៖</span>
                   <span>${escapeHtml(school.nameKm || '—')}</span>
@@ -769,7 +769,7 @@ export const ReportsPage = {
               </div>
 
               <!-- Row 3: Parents -->
-              <div class="flex items-center gap-x-5 flex-wrap">
+              <div class="flex items-center justify-center gap-x-5 flex-wrap">
                 <div class="flex items-center gap-1">
                   <span class="font-bold shrink-0">ឈ្មោះឪពុក ៖</span>
                   <span>${escapeHtml(student.fatherName || '—')}</span>
