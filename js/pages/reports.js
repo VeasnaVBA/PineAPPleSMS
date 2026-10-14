@@ -2,7 +2,7 @@
  * Reports & Printable Documents Center (Section 17)
  * Generates and prints official rosters, student directory, faculty list,
  * attendance reports, academic rank lists, and individual student study plans
- * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template).
+ * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
 import { StudentPlanService } from '../services/studentPlanService.js';
@@ -12,6 +12,7 @@ import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
+import { ReportViewer } from '../components/reportViewer.js';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -35,11 +36,8 @@ export const ReportsPage = {
     schoolNameEn: 'SmartSchool International Academy',
     reportData: [],
     currentHeaders: [],
-    // Student Plan state
     studentsInClass: [],
-    selectedStudentId: null,
-    studentPlanData: null,
-    planSaveDebounceTimer: null
+    selectedStudentId: null
   },
 
   async render(container) {
@@ -85,7 +83,7 @@ export const ReportsPage = {
             <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">${t('reports.title')}</h1>
             <p class="text-sm text-muted-foreground mt-1">${t('reports.subtitle')}</p>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2" id="rep-top-actions">
             ${authService.can('reports.export') ? `
               <button id="btn-export-csv" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-border bg-card hover:bg-muted text-xs sm:text-sm font-medium transition-colors cursor-pointer">
                 ${getIcon('download', 'w-4 h-4')}
@@ -95,7 +93,7 @@ export const ReportsPage = {
             ${authService.can('reports.print') ? `
               <button id="btn-print-report" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs sm:text-sm font-medium shadow-sm hover:bg-primary/90 transition-colors cursor-pointer">
                 ${getIcon('printer', 'w-4 h-4')}
-                <span>${t('reports.printReport')}</span>
+                <span id="btn-print-report-text">${t('reports.printReport')}</span>
               </button>
             ` : ''}
           </div>
@@ -151,23 +149,6 @@ export const ReportsPage = {
                   `).join('')}
                 </select>
               `}
-            </div>
-
-            <!-- Student Selector for Student Plan Tab -->
-            <div class="flex items-center gap-2 hidden" id="filter-rep-student-box">
-              <span class="text-muted-foreground">${t('reports.filterStudent') || 'ជ្រើសរើសសិស្ស៖'}</span>
-              <div class="flex items-center gap-1">
-                <button id="btn-prev-student" type="button" class="h-9 w-9 flex items-center justify-center rounded-md border border-input bg-card hover:bg-muted text-foreground transition-colors cursor-pointer" title="${t('reports.prevStudent') || 'សិស្សមុន'}">
-                  ${getIcon('chevronLeft', 'w-4 h-4')}
-                </button>
-                <select id="select-rep-student" class="h-9 px-2.5 py-1.5 pr-8 rounded-md border border-input bg-card text-foreground box-border shadow-xs max-w-[200px] sm:max-w-[240px]">
-                  <option value="">កំពុងផ្ទុក...</option>
-                </select>
-                <button id="btn-next-student" type="button" class="h-9 w-9 flex items-center justify-center rounded-md border border-input bg-card hover:bg-muted text-foreground transition-colors cursor-pointer" title="${t('reports.nextStudent') || 'សិស្សបន្ទាប់'}">
-                  ${getIcon('chevronRight', 'w-4 h-4')}
-                </button>
-              </div>
-              <span id="plan-sync-status" class="text-xs text-emerald-600 dark:text-emerald-400 font-medium ml-1"></span>
             </div>
 
             <!-- Status Filter -->
@@ -234,50 +215,52 @@ export const ReportsPage = {
     const counterBox = document.getElementById('rep-record-counter');
     const stdHeader = document.getElementById('rep-standard-header');
     const stdFooter = document.getElementById('rep-standard-footer');
+    const filtersBox = document.getElementById('rep-filters-box');
+    const exportCsvBtn = document.getElementById('btn-export-csv');
+    const topActions = document.getElementById('rep-top-actions');
 
-    // Handle Student Individual Study Plan Tab
+    // Handle Student Individual Study Plan Tab:
+    // Show only the "ផែនការសិស្ស" button card that opens full A4 Landscape ReportViewer!
     if (tab === 'studentPlan') {
       if (stdHeader) stdHeader.classList.add('hidden');
       if (stdFooter) stdFooter.classList.add('hidden');
+      if (filtersBox) filtersBox.classList.add('hidden');
+      if (topActions) topActions.classList.add('hidden');
 
-      // Make sure a valid class is selected
-      let classId = this.state.selectedClassId;
-      if (!classId || classId === 'all') {
-        if (this.state.classes.length > 0) {
-          classId = this.state.classes[0].id;
-          this.state.selectedClassId = classId;
-          const selectClassEl = document.getElementById('select-rep-class');
-          if (selectClassEl) selectClassEl.value = classId;
-        }
-      }
+      if (counterBox) counterBox.textContent = '';
 
-      await this.updateStudentSelector();
-
-      if (!this.state.selectedStudentId) {
-        if (counterBox) counterBox.textContent = '0 records';
-        if (tableBox) {
-          tableBox.innerHTML = `
-            <div class="py-16 text-center text-xs text-muted-foreground font-khmer">
-              មិនមានសិស្សក្នុងថ្នាក់នេះនៅឡើយទេ។ សូមជ្រើសរើសថ្នាក់ផ្សេង ឬបញ្ចូលសិស្សក្នុងថ្នាក់នេះ។
+      if (tableBox) {
+        tableBox.innerHTML = `
+          <div class="py-12 sm:py-16 px-4 flex flex-col items-center justify-center text-center">
+            <div class="w-20 h-20 rounded-3xl bg-primary/10 text-primary flex items-center justify-center mb-5 shadow-xs border border-primary/20">
+              ${getIcon('clipboardList', 'w-10 h-10')}
             </div>
-          `;
-        }
-        return;
-      }
+            <h2 class="text-xl sm:text-2xl font-bold font-khmer text-foreground mb-2">
+              ${t('reports.studentPlanReport') || 'ផែនការសិស្សម្នាក់ៗ'}
+            </h2>
+            <p class="text-xs sm:text-sm text-muted-foreground font-khmer max-w-md mb-8 leading-relaxed">
+              ពិនិត្យមើល កែប្រែពិន្ទុដៅ និងបោះពុម្ពតារាងផែនការសិក្សារបស់សិស្សម្នាក់ៗ (SEIP) ជាទម្រង់ក្រដាស A4 Landscape ផ្លូវការ
+            </p>
+            <button id="btn-open-student-plan-modal" type="button" class="inline-flex items-center gap-3 px-8 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm sm:text-base shadow-lg hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
+              ${getIcon('printer', 'w-5 h-5')}
+              <span>ផែនការសិស្ស</span>
+            </button>
+          </div>
+        `;
 
-      const planData = await StudentPlanService.getStudentPlan(
-        this.state.selectedClassId,
-        this.state.selectedStudentId,
-        this.state.activeYear
-      );
-      this.state.studentPlanData = planData;
-      this.renderStudentPlanReport(planData);
+        document.getElementById('btn-open-student-plan-modal')?.addEventListener('click', () => {
+          this.openStudentPlanViewer();
+        });
+      }
       return;
     }
 
     // Standard Reports tabs
     if (stdHeader) stdHeader.classList.remove('hidden');
     if (stdFooter) stdFooter.classList.remove('hidden');
+    if (filtersBox) filtersBox.classList.remove('hidden');
+    if (topActions) topActions.classList.remove('hidden');
+    if (exportCsvBtn) exportCsvBtn.classList.remove('hidden');
 
     let rows = [];
     let headers = [];
@@ -392,395 +375,408 @@ export const ReportsPage = {
     `;
   },
 
-  async updateStudentSelector() {
-    const studentBox = document.getElementById('filter-rep-student-box');
-    const studentSelect = document.getElementById('select-rep-student');
-    const counterBox = document.getElementById('rep-record-counter');
-
-    if (this.state.activeTab !== 'studentPlan') {
-      studentBox?.classList.add('hidden');
-      return;
-    }
-
-    studentBox?.classList.remove('hidden');
-
-    let classId = this.state.selectedClassId;
-    if (!classId || classId === 'all') {
+  /**
+   * Opens the full A4 Landscape Report Viewer for Student Individual Study Plan
+   */
+  async openStudentPlanViewer() {
+    let currentClassId = this.state.selectedClassId;
+    if (!currentClassId || currentClassId === 'all') {
       if (this.state.classes.length > 0) {
-        classId = this.state.classes[0].id;
-        this.state.selectedClassId = classId;
+        currentClassId = this.state.classes[0].id;
       }
     }
 
-    this.state.studentsInClass = await StudentPlanService.getClassStudents(classId);
+    let studentsInClass = await StudentPlanService.getClassStudents(currentClassId);
+    let currentStudentId = this.state.selectedStudentId || studentsInClass[0]?.studentId || null;
+    const activeYear = this.state.activeYear;
+    const isKm = (localStorage.getItem('school_lang') || 'km') === 'km';
+    const classes = this.state.classes;
+    const isTeacher = authService.isTeacher();
 
-    if (!this.state.selectedStudentId || !this.state.studentsInClass.some(s => s.studentId === this.state.selectedStudentId)) {
-      this.state.selectedStudentId = this.state.studentsInClass[0]?.studentId || null;
-    }
+    let autoSaveTimer = null;
 
-    if (studentSelect) {
-      if (this.state.studentsInClass.length === 0) {
-        studentSelect.innerHTML = `<option value="">${t('classes.emptyList') || 'មិនមានសិស្ស'}</option>`;
-      } else {
-        studentSelect.innerHTML = this.state.studentsInClass.map((s, idx) => `
-          <option value="${s.studentId}" ${this.state.selectedStudentId === s.studentId ? 'selected' : ''}>
-            ${idx + 1}. ${s.khmerName || s.englishName} (${s.studentId})
-          </option>
-        `).join('');
-      }
-    }
-
-    const currIdx = this.state.studentsInClass.findIndex(s => s.studentId === this.state.selectedStudentId);
-    if (counterBox) {
-      if (this.state.studentsInClass.length > 0) {
-        counterBox.textContent = `សិស្សទី ${currIdx >= 0 ? currIdx + 1 : 1} នៃ ${this.state.studentsInClass.length} នាក់`;
-      } else {
-        counterBox.textContent = `0 records`;
-      }
-    }
-  },
-
-  renderStudentPlanReport(planData) {
-    const tableBox = document.getElementById('rep-table-container');
-    if (!tableBox) return;
-
-    if (!planData || !planData.student) {
-      tableBox.innerHTML = `
-        <div class="py-16 text-center text-xs text-muted-foreground font-khmer">
-          ${t('reports.emptyReport')}
-        </div>
-      `;
-      return;
-    }
-
-    const student = planData.student;
-    const cls = planData.class;
-    const school = planData.school;
-    const teacher = planData.teacher;
-    const subjects = planData.subjects || [];
-
-    const reportDateObj = planData.reportDate ? new Date(planData.reportDate) : new Date();
-    const lunarDateText = formatKhmerLunarDate(reportDateObj) || '';
-    const solarDateText = formatKhmerSolarDate(reportDateObj) || '';
-
-    tableBox.innerHTML = `
-      <div class="student-plan-document font-khmer space-y-4">
-        <!-- Top Royal Header -->
-        <div class="flex justify-end pr-2">
-          <div class="text-center">
-            <div class="font-bold text-sm leading-relaxed tracking-wide text-foreground" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">ព្រះរាជាណាចក្រកម្ពុជា</div>
-            <div class="font-bold text-xs leading-relaxed tracking-wider text-foreground" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
-            <div class="text-[10px] text-muted-foreground tracking-widest mt-0.5 select-none font-bold">៚៚៚</div>
-          </div>
-        </div>
-
-        <!-- Main Document Title -->
-        <div class="text-center my-2">
-          <h2 class="text-base sm:text-lg font-bold text-foreground tracking-tight" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">
-            ផែនការសិក្សារបស់សិស្ស ឆ្នាំសិក្សា${toKhmerNumerals(planData.academicYear)}
-          </h2>
-        </div>
-
-        <!-- 4-Row Student Metadata Block matching Image 1 -->
-        <div class="text-xs leading-relaxed border border-border/70 rounded-lg p-3 bg-muted/15 space-y-2">
-          <!-- Row 1: Student info -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2 items-center">
-            <div class="flex items-center gap-1.5 md:col-span-1">
-              <span class="font-bold text-foreground shrink-0">ឈ្មោះសិស្ស ៖</span>
-              <span class="font-bold text-primary truncate underline underline-offset-4">${student.khmerName || student.englishName}</span>
-            </div>
+    await ReportViewer.open({
+      reportKey: 'student_individual_plan',
+      title: isKm ? 'ផែនការសិក្សារបស់សិស្ស (SEIP)' : 'Student Study Plan (SEIP)',
+      alwaysFresh: true,
+      defaultOrientation: 'landscape',
+      defaultPaperSize: 'A4',
+      defaultMargins: { top: 6, bottom: 6, left: 8, right: 8 },
+      defaultFontFamily: 'Kantumruy Pro',
+      defaultFontSize: 8.5,
+      renderHeaderControls: (controlsContainer, viewer) => {
+        const updateControls = () => {
+          const currIdx = studentsInClass.findIndex(s => s.studentId === currentStudentId);
+          controlsContainer.className = 'flex items-center gap-2 sm:gap-3 flex-wrap font-khmer text-xs';
+          controlsContainer.innerHTML = `
+            <!-- Class Filter -->
             <div class="flex items-center gap-1.5">
-              <span class="font-bold text-foreground shrink-0">ភេទ ៖</span>
-              <span class="font-medium">${student.gender}</span>
+              <span class="text-muted-foreground whitespace-nowrap">${t('reports.filterClass') || 'ថ្នាក់រៀន:'}</span>
+              ${isTeacher && classes.length <= 1 ? `
+                <span class="font-semibold px-2 py-1 rounded bg-primary/10 text-primary">${classes[0]?.name || ''}</span>
+              ` : `
+                <select id="rv-plan-filter-class" class="h-8 py-0 px-2 rounded-md border border-input bg-card text-xs text-foreground cursor-pointer shadow-xs">
+                  ${classes.map(c => `<option value="${c.id}" ${c.id === currentClassId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
+                </select>
+              `}
             </div>
-            <div class="flex items-center gap-1.5">
-              <span class="font-bold text-foreground shrink-0">អត្តលេខ ៖</span>
-              <span class="font-mono font-medium">${student.studentId}</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="font-bold text-foreground shrink-0">ថ្នាក់ទី ៖</span>
-              <span class="font-bold">${cls.name}</span>
-            </div>
-            <div class="flex items-center gap-1.5 md:col-span-1">
-              <span class="font-bold text-foreground shrink-0">ស្ថានភាពគ្រួសារ ៖</span>
-              <input type="text" id="meta-family-status" value="${escapeHtml(student.familyStatus || '')}" placeholder="ក្រីក្រ១ / មធ្យម..." class="student-plan-input border-b border-dashed border-border px-1 py-0.5 text-xs bg-transparent focus:border-primary focus:outline-none flex-1">
-            </div>
-          </div>
 
-          <!-- Row 2: School & Province -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 items-center">
-            <div class="flex items-center gap-1.5">
-              <span class="font-bold text-foreground shrink-0">សាលារៀន ៖</span>
-              <input type="text" id="meta-school-name" value="${escapeHtml(school.nameKm || '')}" placeholder="ឈ្មោះសាលារៀន..." class="student-plan-input border-b border-dashed border-border px-1 py-0.5 text-xs bg-transparent focus:border-primary focus:outline-none flex-1">
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="font-bold text-foreground shrink-0">ខេត្ត ៖</span>
-              <input type="text" id="meta-province" value="${escapeHtml(school.province || '')}" placeholder="ខេត្ត..." class="student-plan-input border-b border-dashed border-border px-1 py-0.5 text-xs bg-transparent focus:border-primary focus:outline-none flex-1">
-            </div>
-          </div>
-
-          <!-- Row 3: Father & Phone -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 items-center">
-            <div class="flex items-center gap-1.5">
-              <span class="font-bold text-foreground shrink-0">ឈ្មោះឪពុក ៖</span>
-              <input type="text" id="meta-father-name" value="${escapeHtml(student.fatherName || '')}" placeholder="ឈ្មោះឪពុក..." class="student-plan-input border-b border-dashed border-border px-1 py-0.5 text-xs bg-transparent focus:border-primary focus:outline-none flex-1">
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="font-bold text-foreground shrink-0">លេខទូរស័ព្ទ ៖</span>
-              <input type="text" id="meta-father-phone" value="${escapeHtml(student.fatherPhone || '')}" placeholder="លេខទូរស័ព្ទឪពុក..." class="student-plan-input border-b border-dashed border-border px-1 py-0.5 text-xs bg-transparent focus:border-primary focus:outline-none flex-1">
-            </div>
-          </div>
-
-          <!-- Row 4: Mother & Phone -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 items-center">
-            <div class="flex items-center gap-1.5">
-              <span class="font-bold text-foreground shrink-0">ឈ្មោះម្តាយ ៖</span>
-              <input type="text" id="meta-mother-name" value="${escapeHtml(student.motherName || '')}" placeholder="ឈ្មោះម្តាយ..." class="student-plan-input border-b border-dashed border-border px-1 py-0.5 text-xs bg-transparent focus:border-primary focus:outline-none flex-1">
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="font-bold text-foreground shrink-0">លេខទូរស័ព្ទ ៖</span>
-              <input type="text" id="meta-mother-phone" value="${escapeHtml(student.motherPhone || '')}" placeholder="លេខទូរស័ព្ទម្តាយ..." class="student-plan-input border-b border-dashed border-border px-1 py-0.5 text-xs bg-transparent focus:border-primary focus:outline-none flex-1">
-            </div>
-          </div>
-
-          <!-- Row 5: Homeroom Teacher & Phone -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 items-center">
-            <div class="flex items-center gap-1.5">
-              <span class="font-bold text-foreground shrink-0">ឈ្មោះគ្រូបន្ទុកថ្នាក់ ៖</span>
-              <input type="text" id="meta-teacher-name" value="${escapeHtml(teacher.name || '')}" placeholder="ឈ្មោះគ្រូបន្ទុកថ្នាក់..." class="student-plan-input border-b border-dashed border-border px-1 py-0.5 text-xs bg-transparent focus:border-primary focus:outline-none flex-1">
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="font-bold text-foreground shrink-0">លេខទូរស័ព្ទ ៖</span>
-              <input type="text" id="meta-teacher-phone" value="${escapeHtml(teacher.phone || '')}" placeholder="លេខទូរស័ព្ទគ្រូ..." class="student-plan-input border-b border-dashed border-border px-1 py-0.5 text-xs bg-transparent focus:border-primary focus:outline-none flex-1">
-            </div>
-          </div>
-        </div>
-
-        <!-- 6-Row Score Scale Reference Matrix matching Image 1 -->
-        <div class="overflow-x-auto my-3 border border-border/80 rounded-md">
-          <table class="scale-table w-full border-collapse text-[10.5px] leading-tight">
-            <tbody>
-              ${StudentPlanService.getScoreScaleMatrix().map((row, rIdx) => `
-                <tr class="${rIdx % 2 === 0 ? 'bg-muted/30' : 'bg-card'} border-b border-border/60 last:border-b-0 hover:bg-muted/40">
-                  <td class="font-bold py-1 px-2 border-r border-border/70 text-foreground whitespace-nowrap min-w-[170px]">${row.scaleLabel}</td>
-                  ${row.grades.map(g => `
-                    <td class="py-1 px-1.5 border-r border-border/70 last:border-r-0 text-center whitespace-nowrap">${g.text}</td>
-                  `).join('')}
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Mobile Swipe Helper Indicator -->
-        <div class="sm:hidden no-print flex items-center justify-between text-[11px] text-muted-foreground bg-muted/40 px-3 py-1.5 rounded-lg my-2 select-none">
-          <span class="flex items-center gap-1 font-khmer">
-            ${getIcon('chevronLeft', 'w-3.5 h-3.5')}
-            <span>អូសទៅឆ្វេង/ស្តាំដើម្បីមើលគ្រប់ខែ (Swipe table)</span>
-          </span>
-          ${getIcon('chevronRight', 'w-3.5 h-3.5')}
-        </div>
-
-        <!-- 24-Column Main Score Plan Table matching Image 1 & 2 -->
-        <div class="overflow-x-auto my-3 border border-border rounded-lg shadow-2xs">
-          <table class="student-plan-table w-full border-collapse text-xs">
-            <thead>
-              <tr class="bg-muted/70 font-semibold text-foreground text-center border-b border-border">
-                <th rowspan="2" class="p-2 border-r border-border min-w-[130px] text-center font-bold">មុខវិជ្ជា</th>
-                <th rowspan="2" class="p-1 border-r border-border min-w-[55px] text-center font-bold">កម្រិតពិន្ទុ<br>ដើមឆ្នាំ</th>
-                <th colspan="20" class="p-1 border-r border-border font-bold text-center">
-                  កម្រិតពិន្ទុនិងលទ្ធផលដើមឆ្នាំ(ខ្មៅ) និងចុងឆ្នាំ(<span class="text-rose-600 font-bold">ក្រហម</span>)
-                </th>
-                <th colspan="2" class="p-1 min-w-[90px] font-bold text-center">
-                  កម្រិតពិន្ទុ<br>ចុងឆ្នាំ
-                </th>
-              </tr>
-              <tr class="bg-muted/50 font-semibold text-foreground text-center text-[11px] border-b-2 border-border">
-                <!-- 10 Months -->
-                ${StudentPlanService.getMonths().map(m => `
-                  <th class="p-1 border-r border-border/60 min-w-[34px] text-center font-bold" title="${m.nameKm}">${m.labelKm}</th>
-                  <th class="p-1 border-r border-border min-w-[34px] text-center font-bold text-rose-600">ជាក់ស្តែង</th>
+            <!-- Student Filter with Prev/Next -->
+            <div class="flex items-center gap-1">
+              <span class="text-muted-foreground whitespace-nowrap">${t('reports.filterStudent') || 'សិស្ស:'}</span>
+              <button type="button" id="rv-plan-btn-prev" class="h-8 w-8 flex items-center justify-center rounded-md border border-input bg-card hover:bg-muted text-foreground cursor-pointer shadow-xs disabled:opacity-40" ${currIdx <= 0 ? 'disabled' : ''} title="សិស្សមុន">
+                ${getIcon('chevronLeft', 'w-3.5 h-3.5')}
+              </button>
+              <select id="rv-plan-filter-student" class="h-8 py-0 px-2 rounded-md border border-input bg-card text-xs text-foreground cursor-pointer shadow-xs max-w-[170px] sm:max-w-[210px]">
+                ${studentsInClass.map((s, idx) => `
+                  <option value="${s.studentId}" ${s.studentId === currentStudentId ? 'selected' : ''}>
+                    ${idx + 1}. ${escapeHtml(s.khmerName || s.englishName)} (${s.studentId})
+                  </option>
                 `).join('')}
-                <!-- End of Year -->
-                <th class="p-1 border-r border-border/60 min-w-[38px] text-center font-bold">ដាក់ពិន្ទុ</th>
-                <th class="p-1 min-w-[38px] text-center font-bold text-rose-600">ជាក់ស្តែង</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-border/70">
-              ${subjects.map((sub, sIdx) => `
-                <tr class="${sIdx % 2 === 0 ? 'bg-card' : 'bg-muted/10'} hover:bg-muted/30 transition-colors" data-subject-id="${sub.id}">
-                  <td class="p-1.5 border-r border-border font-medium text-foreground whitespace-nowrap">
-                    ${sub.name}
-                  </td>
-                  <!-- Baseline -->
-                  <td class="p-0 border-r border-border text-center">
-                    <input type="text" class="plan-cell-input student-plan-input w-full h-8 text-center text-xs bg-transparent focus:bg-primary/10 focus:outline-none" data-subject-id="${sub.id}" data-field="baseline" value="${escapeHtml(sub.baseline || '')}">
-                  </td>
-                  <!-- 10 Months -->
-                  ${sub.months.map(m => `
-                    <!-- Target (Black) -->
-                    <td class="p-0 border-r border-border/50 text-center">
-                      <input type="text" class="plan-cell-input student-plan-input w-full h-8 text-center text-xs bg-transparent focus:bg-primary/10 focus:outline-none font-medium" data-subject-id="${sub.id}" data-field="target" data-month-key="${m.key}" value="${escapeHtml(m.target || '')}">
-                    </td>
-                    <!-- Actual (Red) -->
-                    <td class="p-0 border-r border-border text-center bg-rose-50/25 dark:bg-rose-950/10">
-                      <input type="text" class="plan-cell-input student-plan-input w-full h-8 text-center text-xs bg-transparent focus:bg-rose-100/50 dark:focus:bg-rose-900/30 focus:outline-none font-bold text-rose-600" data-subject-id="${sub.id}" data-field="actual" data-month-key="${m.key}" value="${escapeHtml(m.actual || '')}">
-                    </td>
-                  `).join('')}
-                  <!-- End of Year Target -->
-                  <td class="p-0 border-r border-border/50 text-center">
-                    <input type="text" class="plan-cell-input student-plan-input w-full h-8 text-center text-xs bg-transparent focus:bg-primary/10 focus:outline-none font-medium" data-subject-id="${sub.id}" data-field="targetFinal" value="${escapeHtml(sub.targetFinal || '')}">
-                  </td>
-                  <!-- End of Year Actual -->
-                  <td class="p-0 text-center bg-rose-50/25 dark:bg-rose-950/10">
-                    <input type="text" class="plan-cell-input student-plan-input w-full h-8 text-center text-xs bg-transparent focus:bg-rose-100/50 dark:focus:bg-rose-900/30 focus:outline-none font-bold text-rose-600" data-subject-id="${sub.id}" data-field="actualFinal" value="${escapeHtml(sub.actualFinal || '')}">
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
+              </select>
+              <button type="button" id="rv-plan-btn-next" class="h-8 w-8 flex items-center justify-center rounded-md border border-input bg-card hover:bg-muted text-foreground cursor-pointer shadow-xs disabled:opacity-40" ${currIdx >= studentsInClass.length - 1 ? 'disabled' : ''} title="សិស្សបន្ទាប់">
+                ${getIcon('chevronRight', 'w-3.5 h-3.5')}
+              </button>
+              <span class="text-muted-foreground text-[11px] whitespace-nowrap ml-1">
+                (${currIdx >= 0 ? currIdx + 1 : 0}/${studentsInClass.length})
+              </span>
+              <span id="rv-plan-save-indicator" class="text-emerald-600 dark:text-emerald-400 font-medium text-[11px] ml-1.5 whitespace-nowrap"></span>
+            </div>
+          `;
 
-        <!-- Signatures Footer matching Image 2 -->
-        <div class="mt-8 pt-4 border-t border-border grid grid-cols-1 sm:grid-cols-3 gap-6 text-xs text-center font-khmer">
-          <!-- Principal -->
-          <div class="space-y-1">
-            <p class="font-semibold text-foreground">បានឃើញ និងឯកភាព</p>
-            <p class="font-bold text-foreground">នាយកសាលា</p>
-            <div class="h-16"></div>
-            <p class="border-t border-dotted border-border inline-block px-8 pt-1 text-muted-foreground font-medium">ហត្ថលេខា និងត្រា</p>
-          </div>
+          controlsContainer.querySelector('#rv-plan-filter-class')?.addEventListener('change', async (e) => {
+            currentClassId = e.target.value;
+            studentsInClass = await StudentPlanService.getClassStudents(currentClassId);
+            currentStudentId = studentsInClass[0]?.studentId || null;
+            updateControls();
+            await viewer.refreshContent(true);
+          });
 
-          <!-- Parent / Guardian -->
-          <div class="space-y-1">
-            <p class="font-semibold text-foreground">បានឃើញ និងឯកភាព</p>
-            <p class="font-bold text-foreground">មាតាបិតា ឬអាណាព្យាបាលសិស្ស</p>
-            <div class="h-16"></div>
-            <p class="border-t border-dotted border-border inline-block px-8 pt-1 text-foreground font-semibold">${student.fatherName || student.motherName || student.parentName || 'ហត្ថលេខា'}</p>
-          </div>
+          controlsContainer.querySelector('#rv-plan-filter-student')?.addEventListener('change', async (e) => {
+            currentStudentId = e.target.value;
+            updateControls();
+            await viewer.refreshContent(true);
+          });
 
-          <!-- Student Signature with Lunar and Solar date -->
-          <div class="space-y-0.5">
-            <p class="text-[11px] leading-relaxed text-foreground font-medium">
-              ${lunarDateText}
-            </p>
-            <p class="text-[11px] leading-relaxed text-foreground font-medium">
-              ${school.province ? `${school.province} ` : ''}${solarDateText}
-            </p>
-            <p class="font-bold text-foreground pt-1">ហត្ថលេខានិងឈ្មោះសិស្ស</p>
-            <div class="h-14"></div>
-            <p class="font-bold text-primary underline underline-offset-4 inline-block px-4">${student.khmerName || student.englishName}</p>
-          </div>
-        </div>
-      </div>
-    `;
+          controlsContainer.querySelector('#rv-plan-btn-prev')?.addEventListener('click', async () => {
+            const idx = studentsInClass.findIndex(s => s.studentId === currentStudentId);
+            if (idx > 0) {
+              currentStudentId = studentsInClass[idx - 1].studentId;
+              updateControls();
+              await viewer.refreshContent(true);
+            }
+          });
 
-    this.bindPlanInputEvents();
-  },
+          controlsContainer.querySelector('#rv-plan-btn-next')?.addEventListener('click', async () => {
+            const idx = studentsInClass.findIndex(s => s.studentId === currentStudentId);
+            if (idx >= 0 && idx < studentsInClass.length - 1) {
+              currentStudentId = studentsInClass[idx + 1].studentId;
+              updateControls();
+              await viewer.refreshContent(true);
+            }
+          });
+        };
 
-  gatherPlanPayload() {
-    const container = document.getElementById('rep-table-container');
-    if (!container) return {};
-
-    const familyStatus = container.querySelector('#meta-family-status')?.value || '';
-    const schoolName = container.querySelector('#meta-school-name')?.value || '';
-    const province = container.querySelector('#meta-province')?.value || '';
-    const fatherName = container.querySelector('#meta-father-name')?.value || '';
-    const fatherPhone = container.querySelector('#meta-father-phone')?.value || '';
-    const motherName = container.querySelector('#meta-mother-name')?.value || '';
-    const motherPhone = container.querySelector('#meta-mother-phone')?.value || '';
-    const parentName = [fatherName, motherName].filter(Boolean).join(' / ');
-    const parentPhone = fatherPhone || motherPhone || '';
-    const teacherName = container.querySelector('#meta-teacher-name')?.value || '';
-    const teacherPhone = container.querySelector('#meta-teacher-phone')?.value || '';
-
-    const baseline = {};
-    const targets = {};
-    const actuals = {};
-    const targetFinal = {};
-    const actualFinal = {};
-
-    container.querySelectorAll('.plan-cell-input').forEach(input => {
-      const subId = input.dataset.subjectId;
-      const field = input.dataset.field;
-      const val = input.value.trim();
-
-      if (!subId) return;
-
-      if (field === 'baseline') {
-        baseline[subId] = val;
-      } else if (field === 'target') {
-        const mKey = input.dataset.monthKey;
-        if (!targets[subId]) targets[subId] = {};
-        targets[subId][mKey] = val;
-      } else if (field === 'actual') {
-        const mKey = input.dataset.monthKey;
-        if (!actuals[subId]) actuals[subId] = {};
-        actuals[subId][mKey] = val;
-      } else if (field === 'targetFinal') {
-        targetFinal[subId] = val;
-      } else if (field === 'actualFinal') {
-        actualFinal[subId] = val;
-      }
-    });
-
-    return {
-      familyStatus,
-      schoolName,
-      province,
-      fatherName,
-      fatherPhone,
-      motherName,
-      motherPhone,
-      parentName,
-      parentPhone,
-      teacherName,
-      teacherPhone,
-      baseline,
-      targets,
-      actuals,
-      targetFinal,
-      actualFinal,
-      reportDate: this.state.studentPlanData?.reportDate || new Date().toISOString().split('T')[0]
-    };
-  },
-
-  bindPlanInputEvents() {
-    const container = document.getElementById('rep-table-container');
-    if (!container) return;
-
-    const triggerAutoSave = () => {
-      const statusEl = document.getElementById('plan-sync-status');
-      if (statusEl) statusEl.textContent = 'កំពុងរក្សាទុក...';
-
-      clearTimeout(this.state.planSaveDebounceTimer);
-      this.state.planSaveDebounceTimer = setTimeout(async () => {
-        try {
-          const payload = this.gatherPlanPayload();
-          await StudentPlanService.saveStudentPlan(
-            this.state.selectedClassId,
-            this.state.selectedStudentId,
-            this.state.activeYear,
-            payload
-          );
-          if (statusEl) {
-            statusEl.textContent = 'បានរក្សាទុក';
-            setTimeout(() => {
-              if (statusEl && statusEl.textContent === 'បានរក្សាទុក') {
-                statusEl.textContent = '';
-              }
-            }, 2500);
-          }
-        } catch (err) {
-          console.warn('Auto save plan error:', err);
-          if (statusEl) statusEl.textContent = 'រក្សាទុកបរាជ័យ';
+        updateControls();
+      },
+      renderContent: async (paperContainer, viewer) => {
+        if (!currentStudentId) {
+          paperContainer.innerHTML = `
+            <div class="py-24 text-center text-xs text-muted-foreground font-khmer">
+              មិនមានទិន្នន័យសិស្សក្នុងថ្នាក់នេះទេ។
+            </div>
+          `;
+          return;
         }
-      }, 500);
-    };
 
-    container.querySelectorAll('input.student-plan-input').forEach(input => {
-      input.addEventListener('input', triggerAutoSave);
-      input.addEventListener('change', triggerAutoSave);
+        const planData = await StudentPlanService.getStudentPlan(currentClassId, currentStudentId, activeYear);
+        const student = planData.student;
+        const cls = planData.class;
+        const school = planData.school;
+        const teacher = planData.teacher;
+        const subjects = planData.subjects || [];
+
+        const reportDateObj = planData.reportDate ? new Date(planData.reportDate) : new Date();
+        const lunarDateText = formatKhmerLunarDate(reportDateObj) || '';
+        const solarDateText = formatKhmerSolarDate(reportDateObj) || '';
+
+        paperContainer.innerHTML = `
+          <div class="student-plan-sheet font-khmer text-black leading-tight select-text" style="color: #000000 !important; width: 100%;">
+            <!-- Top Royal Header -->
+            <div class="flex justify-end pr-2 mb-1">
+              <div class="text-center">
+                <div class="font-bold text-xs leading-relaxed tracking-wide font-khmer-muol" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">ព្រះរាជាណាចក្រកម្ពុជា</div>
+                <div class="font-bold text-[11px] leading-relaxed tracking-wider font-khmer-muol" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+                <div class="text-[9px] text-gray-500 tracking-widest mt-0.5 select-none font-bold">៚៚៚</div>
+              </div>
+            </div>
+
+            <!-- Main Document Title -->
+            <div class="text-center my-1.5">
+              <h2 class="text-sm sm:text-base font-bold tracking-tight font-khmer-muol" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">
+                ផែនការសិក្សារបស់សិស្ស ឆ្នាំសិក្សា${toKhmerNumerals(planData.academicYear)}
+              </h2>
+            </div>
+
+            <!-- Metadata Block -->
+            <div class="text-[10px] leading-normal border border-gray-400 p-2 rounded mb-2 space-y-1.5" style="border: 1px solid #9ca3af !important;">
+              <!-- Row 1: Student info -->
+              <div class="flex items-center justify-between gap-2 flex-wrap">
+                <div class="flex items-center gap-1">
+                  <span class="font-bold">ឈ្មោះសិស្ស ៖</span>
+                  <span class="font-bold underline underline-offset-2">${escapeHtml(student.khmerName || student.englishName)}</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <span class="font-bold">ភេទ ៖</span>
+                  <span>${student.gender}</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <span class="font-bold">អត្តលេខ ៖</span>
+                  <span class="font-mono">${student.studentId}</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <span class="font-bold">ថ្នាក់ទី ៖</span>
+                  <span class="font-bold">${cls.name}</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <span class="font-bold">ស្ថានភាពគ្រួសារ ៖</span>
+                  <input type="text" id="rv-input-family-status" value="${escapeHtml(student.familyStatus || '')}" placeholder="ក្រីក្រ១ / មធ្យម..." class="rv-plan-cell border-b border-dashed border-gray-400 px-1 text-[10px] bg-transparent focus:outline-none w-28">
+                </div>
+              </div>
+
+              <!-- Row 2: School & Province -->
+              <div class="grid grid-cols-2 gap-2 items-center">
+                <div class="flex items-center gap-1">
+                  <span class="font-bold shrink-0">សាលារៀន ៖</span>
+                  <input type="text" id="rv-input-school-name" value="${escapeHtml(school.nameKm || '')}" placeholder="ឈ្មោះសាលារៀន..." class="rv-plan-cell border-b border-dashed border-gray-400 px-1 text-[10px] bg-transparent focus:outline-none flex-1">
+                </div>
+                <div class="flex items-center gap-1">
+                  <span class="font-bold shrink-0">ខេត្ត ៖</span>
+                  <input type="text" id="rv-input-province" value="${escapeHtml(school.province || '')}" placeholder="ខេត្ត..." class="rv-plan-cell border-b border-dashed border-gray-400 px-1 text-[10px] bg-transparent focus:outline-none flex-1">
+                </div>
+              </div>
+
+              <!-- Row 3: Father -->
+              <div class="grid grid-cols-2 gap-2 items-center">
+                <div class="flex items-center gap-1">
+                  <span class="font-bold shrink-0">ឈ្មោះឪពុក ៖</span>
+                  <input type="text" id="rv-input-father-name" value="${escapeHtml(student.fatherName || '')}" placeholder="ឈ្មោះឪពុក..." class="rv-plan-cell border-b border-dashed border-gray-400 px-1 text-[10px] bg-transparent focus:outline-none flex-1">
+                </div>
+                <div class="flex items-center gap-1">
+                  <span class="font-bold shrink-0">លេខទូរស័ព្ទ ៖</span>
+                  <input type="text" id="rv-input-father-phone" value="${escapeHtml(student.fatherPhone || '')}" placeholder="លេខទូរស័ព្ទឪពុក..." class="rv-plan-cell border-b border-dashed border-gray-400 px-1 text-[10px] bg-transparent focus:outline-none flex-1">
+                </div>
+              </div>
+
+              <!-- Row 4: Mother -->
+              <div class="grid grid-cols-2 gap-2 items-center">
+                <div class="flex items-center gap-1">
+                  <span class="font-bold shrink-0">ឈ្មោះម្តាយ ៖</span>
+                  <input type="text" id="rv-input-mother-name" value="${escapeHtml(student.motherName || '')}" placeholder="ឈ្មោះម្តាយ..." class="rv-plan-cell border-b border-dashed border-gray-400 px-1 text-[10px] bg-transparent focus:outline-none flex-1">
+                </div>
+                <div class="flex items-center gap-1">
+                  <span class="font-bold shrink-0">លេខទូរស័ព្ទ ៖</span>
+                  <input type="text" id="rv-input-mother-phone" value="${escapeHtml(student.motherPhone || '')}" placeholder="លេខទូរស័ព្ទម្តាយ..." class="rv-plan-cell border-b border-dashed border-gray-400 px-1 text-[10px] bg-transparent focus:outline-none flex-1">
+                </div>
+              </div>
+
+              <!-- Row 5: Teacher -->
+              <div class="grid grid-cols-2 gap-2 items-center">
+                <div class="flex items-center gap-1">
+                  <span class="font-bold shrink-0">ឈ្មោះគ្រូបន្ទុកថ្នាក់ ៖</span>
+                  <input type="text" id="rv-input-teacher-name" value="${escapeHtml(teacher.name || '')}" placeholder="ឈ្មោះគ្រូបន្ទុកថ្នាក់..." class="rv-plan-cell border-b border-dashed border-gray-400 px-1 text-[10px] bg-transparent focus:outline-none flex-1">
+                </div>
+                <div class="flex items-center gap-1">
+                  <span class="font-bold shrink-0">លេខទូរស័ព្ទ ៖</span>
+                  <input type="text" id="rv-input-teacher-phone" value="${escapeHtml(teacher.phone || '')}" placeholder="លេខទូរស័ព្ទគ្រូ..." class="rv-plan-cell border-b border-dashed border-gray-400 px-1 text-[10px] bg-transparent focus:outline-none flex-1">
+                </div>
+              </div>
+            </div>
+
+            <!-- Score Scale Matrix -->
+            <table class="w-full border-collapse text-[8.5px] leading-tight mb-2" style="border: 1px solid #4b5563;">
+              <tbody>
+                ${StudentPlanService.getScoreScaleMatrix().map(row => `
+                  <tr style="border-bottom: 1px solid #9ca3af;">
+                    <td class="font-bold py-0.5 px-1.5 whitespace-nowrap bg-gray-100" style="border-right: 1px solid #9ca3af; width: 140px;">${row.scaleLabel}</td>
+                    ${row.grades.map(g => `
+                      <td class="py-0.5 px-1 text-center whitespace-nowrap" style="border-right: 1px solid #9ca3af;">${g.text}</td>
+                    `).join('')}
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <!-- 24-Column Score Table -->
+            <table class="w-full border-collapse text-[9px] leading-tight mb-4" style="border: 1.5px solid #000000;">
+              <thead>
+                <tr class="bg-gray-100 text-center font-bold" style="border-bottom: 1px solid #000000;">
+                  <th rowspan="2" class="p-1 min-w-[90px] text-center" style="border-right: 1px solid #000000;">មុខវិជ្ជា</th>
+                  <th rowspan="2" class="p-0.5 min-w-[40px] text-center" style="border-right: 1px solid #000000;">កម្រិតពិន្ទុ<br>ដើមឆ្នាំ</th>
+                  <th colspan="20" class="p-0.5 text-center" style="border-right: 1px solid #000000;">
+                    កម្រិតពិន្ទុនិងលទ្ធផលដើមឆ្នាំ(ខ្មៅ) និងចុងឆ្នាំ(<span style="color: #dc2626 !important;">ក្រហម</span>)
+                  </th>
+                  <th colspan="2" class="p-0.5 min-w-[70px] text-center">
+                    កម្រិតពិន្ទុ<br>ចុងឆ្នាំ
+                  </th>
+                </tr>
+                <tr class="bg-gray-50 text-center font-bold text-[8.5px]" style="border-bottom: 1.5px solid #000000;">
+                  ${StudentPlanService.getMonths().map(m => `
+                    <th class="p-0.5 text-center" style="border-right: 1px solid #9ca3af; min-width: 25px;">${m.labelKm}</th>
+                    <th class="p-0.5 text-center" style="border-right: 1px solid #000000; min-width: 25px; color: #dc2626 !important;">ជាក់ស្តែង</th>
+                  `).join('')}
+                  <th class="p-0.5 text-center" style="border-right: 1px solid #9ca3af; min-width: 28px;">ដាក់ពិន្ទុ</th>
+                  <th class="p-0.5 text-center" style="min-width: 28px; color: #dc2626 !important;">ជាក់ស្តែង</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${subjects.map((sub, sIdx) => `
+                  <tr style="border-bottom: 1px solid #9ca3af;" data-subject-id="${sub.id}">
+                    <td class="p-1 font-medium whitespace-nowrap" style="border-right: 1px solid #000000;">
+                      ${sub.name}
+                    </td>
+                    <!-- Baseline -->
+                    <td class="p-0 text-center" style="border-right: 1px solid #000000;">
+                      <input type="text" class="rv-plan-cell w-full text-center text-[9px] bg-transparent focus:bg-yellow-50 focus:outline-none" data-subject-id="${sub.id}" data-field="baseline" value="${escapeHtml(sub.baseline || '')}" style="height: 20px;">
+                    </td>
+                    <!-- 10 Months -->
+                    ${sub.months.map(m => `
+                      <td class="p-0 text-center" style="border-right: 1px solid #d1d5db;">
+                        <input type="text" class="rv-plan-cell w-full text-center text-[9px] bg-transparent focus:bg-yellow-50 focus:outline-none" data-subject-id="${sub.id}" data-field="target" data-month-key="${m.key}" value="${escapeHtml(m.target || '')}" style="height: 20px;">
+                      </td>
+                      <td class="p-0 text-center" style="border-right: 1px solid #000000; background-color: #fff1f2;">
+                        <input type="text" class="rv-plan-cell w-full text-center text-[9px] bg-transparent focus:bg-rose-100 focus:outline-none font-bold" data-subject-id="${sub.id}" data-field="actual" data-month-key="${m.key}" value="${escapeHtml(m.actual || '')}" style="height: 20px; color: #dc2626 !important;">
+                      </td>
+                    `).join('')}
+                    <!-- End of year Target -->
+                    <td class="p-0 text-center" style="border-right: 1px solid #d1d5db;">
+                      <input type="text" class="rv-plan-cell w-full text-center text-[9px] bg-transparent focus:bg-yellow-50 focus:outline-none" data-subject-id="${sub.id}" data-field="targetFinal" value="${escapeHtml(sub.targetFinal || '')}" style="height: 20px;">
+                    </td>
+                    <!-- End of year Actual -->
+                    <td class="p-0 text-center" style="background-color: #fff1f2;">
+                      <input type="text" class="rv-plan-cell w-full text-center text-[9px] bg-transparent focus:bg-rose-100 focus:outline-none font-bold" data-subject-id="${sub.id}" data-field="actualFinal" value="${escapeHtml(sub.actualFinal || '')}" style="height: 20px; color: #dc2626 !important;">
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <!-- Signatures Footer -->
+            <div class="grid grid-cols-3 gap-4 text-center text-[10px] font-khmer mt-4 pt-2" style="border-top: 1px solid #9ca3af;">
+              <!-- Principal -->
+              <div>
+                <p class="font-semibold">បានឃើញ និងឯកភាព</p>
+                <p class="font-bold">នាយកសាលា</p>
+                <div class="h-12"></div>
+                <p class="border-t border-dotted border-gray-400 inline-block px-8 pt-0.5 text-gray-500 font-medium">ហត្ថលេខា និងត្រា</p>
+              </div>
+
+              <!-- Parent / Guardian -->
+              <div>
+                <p class="font-semibold">បានឃើញ និងឯកភាព</p>
+                <p class="font-bold">មាតាបិតា ឬអាណាព្យាបាលសិស្ស</p>
+                <div class="h-12"></div>
+                <p class="border-t border-dotted border-gray-400 inline-block px-8 pt-0.5 font-bold">${escapeHtml(student.fatherName || student.motherName || 'ហត្ថលេខា')}</p>
+              </div>
+
+              <!-- Student -->
+              <div>
+                <p class="text-[9.5px] leading-tight font-medium">${lunarDateText}</p>
+                <p class="text-[9.5px] leading-tight font-medium">${school.province ? `${school.province} ` : ''}${solarDateText}</p>
+                <p class="font-bold pt-0.5">ហត្ថលេខានិងឈ្មោះសិស្ស</p>
+                <div class="h-10"></div>
+                <p class="font-bold underline underline-offset-2 inline-block px-4">${escapeHtml(student.khmerName || student.englishName)}</p>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Gather and auto-save handler for inputs inside ReportViewer
+        const gatherViewerPayload = () => {
+          const familyStatus = paperContainer.querySelector('#rv-input-family-status')?.value || '';
+          const schoolName = paperContainer.querySelector('#rv-input-school-name')?.value || '';
+          const province = paperContainer.querySelector('#rv-input-province')?.value || '';
+          const fatherName = paperContainer.querySelector('#rv-input-father-name')?.value || '';
+          const fatherPhone = paperContainer.querySelector('#rv-input-father-phone')?.value || '';
+          const motherName = paperContainer.querySelector('#rv-input-mother-name')?.value || '';
+          const motherPhone = paperContainer.querySelector('#rv-input-mother-phone')?.value || '';
+          const parentName = [fatherName, motherName].filter(Boolean).join(' / ');
+          const parentPhone = fatherPhone || motherPhone || '';
+          const teacherName = paperContainer.querySelector('#rv-input-teacher-name')?.value || '';
+          const teacherPhone = paperContainer.querySelector('#rv-input-teacher-phone')?.value || '';
+
+          const baseline = {};
+          const targets = {};
+          const actuals = {};
+          const targetFinal = {};
+          const actualFinal = {};
+
+          paperContainer.querySelectorAll('input.rv-plan-cell').forEach(inp => {
+            const sId = inp.dataset.subjectId;
+            const f = inp.dataset.field;
+            const v = inp.value.trim();
+            if (!sId) return;
+
+            if (f === 'baseline') baseline[sId] = v;
+            else if (f === 'target') {
+              const mk = inp.dataset.monthKey;
+              if (!targets[sId]) targets[sId] = {};
+              targets[sId][mk] = v;
+            } else if (f === 'actual') {
+              const mk = inp.dataset.monthKey;
+              if (!actuals[sId]) actuals[sId] = {};
+              actuals[sId][mk] = v;
+            } else if (f === 'targetFinal') targetFinal[sId] = v;
+            else if (f === 'actualFinal') actualFinal[sId] = v;
+          });
+
+          return {
+            familyStatus,
+            schoolName,
+            province,
+            fatherName,
+            fatherPhone,
+            motherName,
+            motherPhone,
+            parentName,
+            parentPhone,
+            teacherName,
+            teacherPhone,
+            baseline,
+            targets,
+            actuals,
+            targetFinal,
+            actualFinal,
+            reportDate: planData?.reportDate || new Date().toISOString().split('T')[0]
+          };
+        };
+
+        const triggerAutoSave = () => {
+          const indicator = document.getElementById('rv-plan-save-indicator');
+          if (indicator) indicator.textContent = 'កំពុងរក្សាទុក...';
+          clearTimeout(autoSaveTimer);
+          autoSaveTimer = setTimeout(async () => {
+            try {
+              const payload = gatherViewerPayload();
+              await StudentPlanService.saveStudentPlan(currentClassId, currentStudentId, activeYear, payload);
+              if (indicator) {
+                indicator.textContent = 'បានរក្សាទុក';
+                setTimeout(() => {
+                  if (indicator.textContent === 'បានរក្សាទុក') indicator.textContent = '';
+                }, 2000);
+              }
+            } catch (err) {
+              console.warn('Auto save plan error:', err);
+              if (indicator) indicator.textContent = 'រក្សាទុកបរាជ័យ';
+            }
+          }, 500);
+        };
+
+        paperContainer.querySelectorAll('input.rv-plan-cell').forEach(inp => {
+          inp.addEventListener('input', triggerAutoSave);
+          inp.addEventListener('change', triggerAutoSave);
+        });
+      }
     });
   },
 
@@ -795,25 +791,15 @@ export const ReportsPage = {
 
         const classFilterBox = document.getElementById('filter-rep-class-box');
         const statusFilterBox = document.getElementById('filter-rep-status-box');
-        const studentFilterBox = document.getElementById('filter-rep-student-box');
 
         if (this.state.activeTab === 'teachers' || this.state.activeTab === 'classes') {
           classFilterBox?.classList.add('hidden');
           statusFilterBox?.classList.add('hidden');
-          studentFilterBox?.classList.add('hidden');
         } else if (this.state.activeTab === 'studentPlan') {
-          classFilterBox?.classList.remove('hidden');
+          classFilterBox?.classList.add('hidden');
           statusFilterBox?.classList.add('hidden');
-          studentFilterBox?.classList.remove('hidden');
-          // If 'all' was selected, switch to first class
-          if (this.state.selectedClassId === 'all' && this.state.classes.length > 0) {
-            this.state.selectedClassId = this.state.classes[0].id;
-            const selectCls = document.getElementById('select-rep-class');
-            if (selectCls) selectCls.value = this.state.selectedClassId;
-          }
         } else {
           classFilterBox?.classList.remove('hidden');
-          studentFilterBox?.classList.add('hidden');
           if (this.state.activeTab === 'students') statusFilterBox?.classList.remove('hidden');
           else statusFilterBox?.classList.add('hidden');
         }
@@ -828,41 +814,7 @@ export const ReportsPage = {
       if (authService.isTeacher() && this.state.selectedClassId && this.state.selectedClassId !== 'all') {
         await authService.setAssignedClassId(this.state.selectedClassId);
       }
-      if (this.state.activeTab === 'studentPlan') {
-        this.state.selectedStudentId = null;
-      }
       await this.loadReportData();
-    });
-
-    // Filter student (for student plan tab)
-    document.getElementById('select-rep-student')?.addEventListener('change', async (e) => {
-      this.state.selectedStudentId = e.target.value;
-      await this.loadReportData();
-    });
-
-    // Prev / Next Student Buttons
-    document.getElementById('btn-prev-student')?.addEventListener('click', async () => {
-      const list = this.state.studentsInClass;
-      if (!list || list.length === 0) return;
-      const currIdx = list.findIndex(s => s.studentId === this.state.selectedStudentId);
-      if (currIdx > 0) {
-        this.state.selectedStudentId = list[currIdx - 1].studentId;
-        const sel = document.getElementById('select-rep-student');
-        if (sel) sel.value = this.state.selectedStudentId;
-        await this.loadReportData();
-      }
-    });
-
-    document.getElementById('btn-next-student')?.addEventListener('click', async () => {
-      const list = this.state.studentsInClass;
-      if (!list || list.length === 0) return;
-      const currIdx = list.findIndex(s => s.studentId === this.state.selectedStudentId);
-      if (currIdx >= 0 && currIdx < list.length - 1) {
-        this.state.selectedStudentId = list[currIdx + 1].studentId;
-        const sel = document.getElementById('select-rep-student');
-        if (sel) sel.value = this.state.selectedStudentId;
-        await this.loadReportData();
-      }
     });
 
     // Filter status
@@ -874,63 +826,14 @@ export const ReportsPage = {
     // Print
     document.getElementById('btn-print-report')?.addEventListener('click', () => {
       if (this.state.activeTab === 'studentPlan') {
-        document.body.classList.add('print-student-plan');
-        window.addEventListener('afterprint', () => {
-          document.body.classList.remove('print-student-plan');
-        }, { once: true });
-        setTimeout(() => {
-          document.body.classList.remove('print-student-plan');
-        }, 8000);
+        this.openStudentPlanViewer();
+        return;
       }
       window.print();
     });
 
     // Export CSV
     document.getElementById('btn-export-csv')?.addEventListener('click', () => {
-      if (this.state.activeTab === 'studentPlan') {
-        if (!this.state.studentPlanData) {
-          toast.error('No student plan data to export');
-          return;
-        }
-        const plan = this.state.studentPlanData;
-        const student = plan.student || {};
-        const cls = plan.class || {};
-        const months = StudentPlanService.getMonths();
-
-        const headers = [
-          { key: 'no', label: '#' },
-          { key: 'subject', label: 'មុខវិជ្ជា' },
-          { key: 'baseline', label: 'កម្រិតពិន្ទុដើមឆ្នាំ' },
-          ...months.flatMap(m => [
-            { key: `${m.key}_target`, label: `${m.labelKm} ដាក់ពិន្ទុ` },
-            { key: `${m.key}_actual`, label: `${m.labelKm} ជាក់ស្តែង` }
-          ]),
-          { key: 'final_target', label: 'កម្រិតពិន្ទុចុងឆ្នាំ ដាក់ពិន្ទុ' },
-          { key: 'final_actual', label: 'កម្រិតពិន្ទុចុងឆ្នាំ ជាក់ស្តែង' }
-        ];
-
-        const payload = this.gatherPlanPayload();
-        const rows = (plan.subjects || []).map((sub, idx) => {
-          const row = {
-            no: idx + 1,
-            subject: sub.name,
-            baseline: payload.baseline?.[sub.id] ?? sub.baseline ?? '',
-            final_target: payload.targetFinal?.[sub.id] ?? sub.targetFinal ?? '',
-            final_actual: payload.actualFinal?.[sub.id] ?? sub.actualFinal ?? ''
-          };
-          months.forEach(m => {
-            row[`${m.key}_target`] = payload.targets?.[sub.id]?.[m.key] ?? sub.months.find(x => x.key === m.key)?.target ?? '';
-            row[`${m.key}_actual`] = payload.actuals?.[sub.id]?.[m.key] ?? sub.months.find(x => x.key === m.key)?.actual ?? '';
-          });
-          return row;
-        });
-
-        const filename = `PhanKarSiss_${student.khmerName || student.studentId}_${cls.name}_${new Date().toISOString().split('T')[0]}`;
-        ReportService.exportToCSV(filename, headers, rows);
-        toast.success('CSV report generated and downloaded');
-        return;
-      }
-
       if (!this.state.reportData || this.state.reportData.length === 0) {
         toast.error('No data to export');
         return;
