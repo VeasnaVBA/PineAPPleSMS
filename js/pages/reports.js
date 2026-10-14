@@ -477,7 +477,7 @@ export const ReportsPage = {
         <!-- Main Document Title -->
         <div class="text-center my-2">
           <h2 class="text-base sm:text-lg font-bold text-foreground tracking-tight" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">
-            ផែនការសិក្សារបស់សិស្ស ឆ្នាំសិក្សា${toKhmerNumerals(planData.academicYear)} (${cls.educationLevelText ? cls.educationLevelText + ' ' : ''}ថ្នាក់ទី${toKhmerNumerals(cls.name)})
+            ផែនការសិក្សារបស់សិស្ស ឆ្នាំសិក្សា${toKhmerNumerals(planData.academicYear)}
           </h2>
         </div>
 
