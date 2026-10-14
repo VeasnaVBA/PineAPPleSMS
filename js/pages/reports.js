@@ -642,20 +642,17 @@ export const ReportsPage = {
         let rowHeight = 18;
         let inputHeight = 17;
         let cellFontSize = '8px';
-        let scaleRowHeight = 11;
         let scaleFontSize = '7.5px';
 
         if (subCount > 13) {
           rowHeight = 13;
           inputHeight = 12;
           cellFontSize = '7px';
-          scaleRowHeight = 9.5;
-          scaleFontSize = '7px';
+          scaleFontSize = '6.5px';
         } else if (subCount > 10) {
           rowHeight = 15;
           inputHeight = 14;
           cellFontSize = '7.5px';
-          scaleRowHeight = 10.5;
           scaleFontSize = '7px';
         }
 
@@ -670,21 +667,9 @@ export const ReportsPage = {
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
               }
-              .seip-scale-table {
-                border-collapse: collapse !important;
+              .score-scale-text {
                 font-size: ${scaleFontSize} !important;
-                line-height: 1.1 !important;
-              }
-              .seip-scale-table tr {
-                height: ${scaleRowHeight}px !important;
-                min-height: ${scaleRowHeight}px !important;
-              }
-              .seip-scale-table td {
-                padding: 0.5px 3px !important;
-                line-height: 1.1 !important;
-                height: ${scaleRowHeight}px !important;
-                font-size: ${scaleFontSize} !important;
-                vertical-align: middle !important;
+                line-height: 1.15 !important;
               }
               .seip-score-table {
                 border-collapse: collapse !important;
@@ -797,19 +782,15 @@ export const ReportsPage = {
               </div>
             </div>
 
-            <!-- Score Scale Matrix (Short height, tightly fitting the text) -->
-            <table class="seip-scale-table w-full border-collapse mb-1" style="border: 1px solid #4b5563; line-height: 1.1 !important;">
-              <tbody>
-                ${StudentPlanService.getScoreScaleMatrix().map(row => `
-                  <tr style="border-bottom: 1px solid #9ca3af; height: ${scaleRowHeight}px !important;">
-                    <td class="font-bold whitespace-nowrap bg-gray-100" style="border-right: 1px solid #9ca3af; width: 130px; padding: 0.5px 3px !important; font-size: ${scaleFontSize} !important; line-height: 1.1 !important; height: ${scaleRowHeight}px !important;">${row.scaleLabel}</td>
-                    ${row.grades.map(g => `
-                      <td class="text-center whitespace-nowrap" style="border-right: 1px solid #9ca3af; padding: 0.5px 2px !important; font-size: ${scaleFontSize} !important; line-height: 1.1 !important; height: ${scaleRowHeight}px !important;">${g.text}</td>
-                    `).join('')}
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
+            <!-- Score Scale Matrix (Simple text separated by commas) -->
+            <div class="score-scale-text border border-gray-400 p-1 rounded mb-1 space-y-0.5 text-[7.5px] leading-tight" style="border: 1px solid #9ca3af !important; line-height: 1.15 !important;">
+              ${StudentPlanService.getScoreScaleMatrix().map(row => `
+                <div class="flex items-baseline gap-1.5 flex-wrap">
+                  <span class="font-bold shrink-0 text-black">${escapeHtml(row.scaleLabel)}</span>
+                  <span class="text-gray-900">${escapeHtml(row.grades.map(g => g.text).join(', '))}</span>
+                </div>
+              `).join('')}
+            </div>
 
             <!-- 24-Column Score Table (Dynamic Row Height) -->
             <table class="seip-score-table w-full border-collapse text-[8.5px] leading-tight mb-1" style="border: 1.5px solid #000000;">
