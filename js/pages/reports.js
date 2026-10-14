@@ -5,7 +5,7 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.56';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.57';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
@@ -440,6 +440,146 @@ export const ReportsPage = {
       }
     }
 
+    let activePlanViewer = null;
+    let activePlanClassId = currentClassId;
+
+    if (typeof window !== 'undefined') {
+      window.openSeipMonthPicker = async function(e, colKey, defaultLabel) {
+        if (e) {
+          if (typeof e.preventDefault === 'function') e.preventDefault();
+          if (typeof e.stopPropagation === 'function') e.stopPropagation();
+        }
+        if (!colKey) return;
+
+        // Clean up previous picker if any
+        document.getElementById('modal-seip-period-picker')?.remove();
+
+        const periods = StudentPlanService.getAvailablePeriods();
+        const currentMapping = await StudentPlanService.getColumnPeriods(activePlanClassId);
+        const currentPeriodId = currentMapping[colKey] || '';
+
+        const modalEl = document.createElement('div');
+        modalEl.id = 'modal-seip-period-picker';
+        modalEl.className = 'fixed inset-0 z-[75] flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-sm animate-fade-in font-khmer select-none';
+
+        const monthPeriods = periods.filter(p => p.group === 'month');
+        const examPeriods = periods.filter(p => p.group === 'exam');
+
+        modalEl.innerHTML = `
+          <div class="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col text-foreground animate-scale-in">
+            <!-- Header -->
+            <div class="px-5 py-4 border-b border-border flex items-center justify-between bg-muted/30">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="font-bold text-sm sm:text-base text-foreground leading-tight">ជ្រើសរើសខែ ឬការប្រឡង (${escapeHtml(defaultLabel || colKey)})</h3>
+                  <p class="text-[11px] text-muted-foreground mt-0.5">ជ្រើសរើសដើម្បីទាញយកពិន្ទុ/និទ្ទេសជាក់ស្តែងសម្រាប់ជួរឈរនេះ</p>
+                </div>
+              </div>
+              <button type="button" id="btn-close-period-modal" class="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer transition-colors">
+                ${getIcon('x', 'w-4 h-4')}
+              </button>
+            </div>
+
+            <div class="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+              <!-- Monthly Tests -->
+              <div>
+                <div class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <span>ពិន្ទុប្រចាំខែ (Monthly Tests)</span>
+                </div>
+                <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                  ${monthPeriods.map(p => {
+                    const isSelected = (currentPeriodId && (currentPeriodId === p.id || currentPeriodId === p.nameKm)) || (!currentPeriodId && defaultLabel === p.nameKm);
+                    return `
+                      <button type="button" class="btn-period-select px-3 py-2 rounded-xl border text-xs font-medium cursor-pointer transition-all flex flex-col items-center justify-center gap-0.5 ${isSelected ? 'bg-primary text-primary-foreground font-bold border-primary shadow-sm' : 'bg-card border-border hover:bg-muted hover:border-primary/50 text-foreground'}" data-period-id="${escapeHtml(p.id)}" data-period-name="${escapeHtml(p.nameKm)}">
+                        <span>${escapeHtml(p.nameKm)}</span>
+                        <span class="text-[9.5px] opacity-75">${escapeHtml(p.nameEn)}</span>
+                      </button>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+
+              <!-- Semester Exams & Tests -->
+              <div>
+                <div class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <span>ការប្រឡងឆមាស និងតេស្ត (Exams & Assessments)</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  ${examPeriods.map(p => {
+                    const isSelected = currentPeriodId && (currentPeriodId === p.id || currentPeriodId === p.nameKm);
+                    return `
+                      <button type="button" class="btn-period-select px-3 py-2.5 rounded-xl border text-xs font-medium cursor-pointer transition-all flex flex-col items-center justify-center gap-0.5 ${isSelected ? 'bg-primary text-primary-foreground font-bold border-primary shadow-sm' : 'bg-card border-border hover:bg-muted hover:border-primary/50 text-foreground'}" data-period-id="${escapeHtml(p.id)}" data-period-name="${escapeHtml(p.nameKm)}">
+                        <span class="font-bold">${escapeHtml(p.nameKm)}</span>
+                        <span class="text-[9.5px] opacity-75">${escapeHtml(p.nameEn)}</span>
+                      </button>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-5 py-3 border-t border-border bg-muted/20 flex items-center justify-between gap-2">
+              <button type="button" id="btn-reset-period" class="px-3.5 py-1.5 rounded-xl border border-input bg-card hover:bg-muted text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-colors">
+                កំណត់ដូចដើម (${escapeHtml(defaultLabel || colKey)})
+              </button>
+              <button type="button" id="btn-cancel-period-modal" class="px-4 py-1.5 rounded-xl border border-input bg-card hover:bg-muted text-xs font-semibold text-foreground cursor-pointer transition-colors">
+                បិទ
+              </button>
+            </div>
+          </div>
+        `;
+
+        document.body.appendChild(modalEl);
+
+        const closeModal = () => modalEl.remove();
+        modalEl.querySelector('#btn-close-period-modal')?.addEventListener('click', closeModal);
+        modalEl.querySelector('#btn-cancel-period-modal')?.addEventListener('click', closeModal);
+        modalEl.addEventListener('click', (ev) => {
+          if (ev.target === modalEl) closeModal();
+        });
+
+        modalEl.querySelectorAll('.btn-period-select').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const periodId = btn.dataset.periodId;
+            const periodName = btn.dataset.periodName;
+            await StudentPlanService.setColumnPeriod(activePlanClassId, colKey, periodId);
+            closeModal();
+            toast.success(`បានកំណត់ ${periodName} សម្រាប់ជួរ ${defaultLabel || colKey}`);
+            if (activePlanViewer) {
+              await activePlanViewer.refreshContent(true);
+            }
+          });
+        });
+
+        modalEl.querySelector('#btn-reset-period')?.addEventListener('click', async () => {
+          await StudentPlanService.setColumnPeriod(activePlanClassId, colKey, null);
+          closeModal();
+          toast.success(`បានកំណត់ ${defaultLabel || colKey} មកដូចដើមវិញ`);
+          if (activePlanViewer) {
+            await activePlanViewer.refreshContent(true);
+          }
+        });
+      };
+
+      if (!window._seipMonthHeaderHandlerAttached) {
+        window._seipMonthHeaderHandlerAttached = true;
+        document.addEventListener('click', (e) => {
+          const header = e.target.closest('.seip-month-col-header');
+          if (header) {
+            const colKey = header.dataset.monthKey;
+            const colLabel = header.dataset.monthLabel || '';
+            window.openSeipMonthPicker(e, colKey, colLabel);
+          }
+        });
+      }
+    }
+
     let studentsInClass = await StudentPlanService.getClassStudents(currentClassId);
     let currentStudentId = this.state.selectedStudentId || studentsInClass[0]?.studentId || null;
     const activeYear = this.state.activeYear;
@@ -458,6 +598,7 @@ export const ReportsPage = {
       defaultFontSize: 8.5,
       onClose: () => document.getElementById('seip-baseline-menu')?.remove(),
       renderHeaderControls: (controlsContainer, viewer) => {
+        activePlanViewer = viewer;
         const updateControls = () => {
           const currIdx = studentsInClass.findIndex(s => s.studentId === currentStudentId);
           controlsContainer.className = 'flex items-center gap-2 sm:gap-3 flex-wrap font-khmer text-xs';
@@ -504,6 +645,7 @@ export const ReportsPage = {
 
           controlsContainer.querySelector('#rv-plan-filter-class')?.addEventListener('change', async (e) => {
             currentClassId = e.target.value;
+            activePlanClassId = currentClassId;
             studentsInClass = await StudentPlanService.getClassStudents(currentClassId);
             currentStudentId = studentsInClass[0]?.studentId || null;
             updateControls();
@@ -923,8 +1065,10 @@ export const ReportsPage = {
                   </th>
                 </tr>
                 <tr class="bg-gray-50 text-center font-bold text-[7.5px]" style="height: 16px; border-bottom: 1px solid #000000 !important;">
-                  ${StudentPlanService.getMonths().map(m => `
-                    <th class="p-0 text-center whitespace-nowrap overflow-hidden" style="border: 1px solid #000000 !important;">${m.labelKm}</th>
+                  ${(planData.months || StudentPlanService.getMonths()).map(m => `
+                    <th data-month-key="${m.key}" data-month-label="${m.labelKm}" onclick="window.openSeipMonthPicker && window.openSeipMonthPicker(event, '${m.key}', '${m.labelKm}')" class="seip-month-col-header p-0 text-center whitespace-nowrap overflow-hidden cursor-pointer hover:bg-gray-200 select-none transition-colors" style="border: 1px solid #000000 !important; cursor: pointer !important;" title="ចុចដើម្បីជ្រើសរើសខែ ឬការប្រឡង (${escapeHtml(m.headerLabel || m.labelKm)})">
+                      ${escapeHtml(m.headerLabel || m.nameKm || m.labelKm)}
+                    </th>
                     <th class="p-0 text-center whitespace-nowrap overflow-hidden" style="color: #dc2626 !important; border: 1px solid #000000 !important;">ជាក់ស្តែង</th>
                   `).join('')}
                   <th class="p-0 text-center whitespace-nowrap overflow-hidden" style="border: 1px solid #000000 !important;">ដាក់ពិន្ទុ</th>

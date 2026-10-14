@@ -29,6 +29,37 @@ export const PLAN_MONTHS = [
   { key: 'm10', id: 'July', nameKm: 'កក្កដា', labelKm: 'ខែ១០' }
 ];
 
+export const ALL_EVALUATION_PERIODS = [
+  { id: 'October', nameKm: 'តុលា', nameEn: 'October', group: 'month' },
+  { id: 'November', nameKm: 'វិច្ឆិកា', nameEn: 'November', group: 'month' },
+  { id: 'December', nameKm: 'ធ្នូ', nameEn: 'December', group: 'month' },
+  { id: 'January', nameKm: 'មករា', nameEn: 'January', group: 'month' },
+  { id: 'February', nameKm: 'កុម្ភៈ', nameEn: 'February', group: 'month' },
+  { id: 'March', nameKm: 'មីនា', nameEn: 'March', group: 'month' },
+  { id: 'April', nameKm: 'មេសា', nameEn: 'April', group: 'month' },
+  { id: 'May', nameKm: 'ឧសភា', nameEn: 'May', group: 'month' },
+  { id: 'June', nameKm: 'មិថុនា', nameEn: 'June', group: 'month' },
+  { id: 'July', nameKm: 'កក្កដា', nameEn: 'July', group: 'month' },
+  { id: 'August', nameKm: 'សីហា', nameEn: 'August', group: 'month' },
+  { id: 'September', nameKm: 'កញ្ញា', nameEn: 'September', group: 'month' },
+  { id: 'First Test', nameKm: 'តេស្តដើមឆ្នាំ', nameEn: 'First Test', group: 'exam' },
+  { id: 'Semester 1 Exam', nameKm: 'ឆមាសទី១', nameEn: 'Semester 1 Exam', group: 'exam' },
+  { id: 'Semester 2 Exam', nameKm: 'ឆមាសទី២', nameEn: 'Semester 2 Exam', group: 'exam' }
+];
+
+export const GRADE_ORDER = ['F', 'E', 'D', 'C', 'B', 'A'];
+
+export function getUpperGrade(grade) {
+  if (!grade) return 'E';
+  const clean = String(grade).trim().toUpperCase();
+  const idx = GRADE_ORDER.indexOf(clean);
+  if (idx === -1) return 'E';
+  if (idx < GRADE_ORDER.length - 1) {
+    return GRADE_ORDER[idx + 1];
+  }
+  return 'A';
+}
+
 export const DEFAULT_PLAN_SUBJECTS = [
   { id: 'sub_reading_speed', name: 'ល្បឿនអំណាន', nameEn: 'Reading Speed', code: 'SUB-READ' },
   { id: 'sub_khmer_lit', name: 'ភាសាខ្មែរ', nameEn: 'Khmer Literature', code: 'SUB-103' },
@@ -125,6 +156,56 @@ export const StudentPlanService = {
 
   getScoreScaleMatrix() {
     return SCORE_SCALE_MATRIX;
+  },
+
+  getAvailablePeriods() {
+    return ALL_EVALUATION_PERIODS;
+  },
+
+  /**
+   * Get column period configuration mapping for a class
+   * e.g. { m1: 'January', m2: 'February', ... }
+   */
+  async getColumnPeriods(classId) {
+    let mapping = {};
+    try {
+      const rec = await db.get('report_settings', `student_plan_col_periods_${classId}`);
+      if (rec && rec.value) {
+        mapping = typeof rec.value === 'string' ? JSON.parse(rec.value) : rec.value;
+      }
+    } catch (_) {}
+    try {
+      const local = localStorage.getItem(`student_plan_col_periods_${classId}`) || localStorage.getItem('student_plan_col_periods');
+      if (local) {
+        mapping = { ...JSON.parse(local), ...mapping };
+      }
+    } catch (_) {}
+    return mapping || {};
+  },
+
+  /**
+   * Save column period configuration mapping for a class
+   */
+  async setColumnPeriod(classId, colKey, periodId) {
+    if (!colKey) return;
+    const current = await this.getColumnPeriods(classId);
+    if (periodId) {
+      current[colKey] = periodId;
+    } else {
+      delete current[colKey];
+    }
+    try {
+      localStorage.setItem(`student_plan_col_periods_${classId}`, JSON.stringify(current));
+      localStorage.setItem('student_plan_col_periods', JSON.stringify(current));
+      await db.put('report_settings', {
+        key: `student_plan_col_periods_${classId}`,
+        value: JSON.stringify(current),
+        updatedAt: new Date().toISOString()
+      });
+    } catch (err) {
+      console.warn('Failed to save column period mapping:', err);
+    }
+    return current;
   },
 
   getEducationLevelText(className) {
@@ -349,6 +430,74 @@ export const StudentPlanService = {
       return (val !== null && val !== undefined && String(val).trim() !== '') ? String(val).trim() : '';
     };
 
+    const colPeriods = await this.getColumnPeriods(classId);
+
+    const configuredPlanMonths = PLAN_MONTHS.map(m => {
+      const activePeriodId = colPeriods[m.key] || m.id;
+      const periodInfo = ALL_EVALUATION_PERIODS.find(p => p.id === activePeriodId || p.nameKm === activePeriodId) || {
+        id: activePeriodId,
+        nameKm: m.nameKm || m.labelKm
+      };
+      const headerLabel = colPeriods[m.key] ? periodInfo.nameKm : m.labelKm;
+      return {
+        key: m.key,
+        id: activePeriodId,
+        nameKm: periodInfo.nameKm,
+        labelKm: m.labelKm,
+        headerLabel
+      };
+    });
+
+    const matchPeriodScore = (sc, targetSub, targetPeriodId) => {
+      if (!sc || !targetSub || !targetPeriodId) return false;
+      if (!matchSubject(targetSub, sc)) return false;
+
+      const pNorm = String(targetPeriodId).trim().toLowerCase();
+      const m = String(sc.month || '').trim().toLowerCase();
+      const a = String(sc.assessmentType || '').trim().toLowerCase();
+
+      if (m === pNorm || a === pNorm) return true;
+
+      const ep = ALL_EVALUATION_PERIODS.find(p => 
+        p.id.toLowerCase() === pNorm || 
+        p.nameKm.toLowerCase() === pNorm || 
+        (p.nameEn && p.nameEn.toLowerCase() === pNorm)
+      );
+      if (ep) {
+        if (m === ep.id.toLowerCase() || a === ep.id.toLowerCase()) return true;
+        if (m === ep.nameKm.toLowerCase() || a === ep.nameKm.toLowerCase()) return true;
+        if (ep.nameEn && (m === ep.nameEn.toLowerCase() || a === ep.nameEn.toLowerCase())) return true;
+      }
+
+      if (pNorm.includes('semester 1') || pNorm.includes('ឆមាសទី១') || pNorm.includes('ឆមាស១')) {
+        if (m.includes('semester 1') || a.includes('semester 1') || m.includes('ឆមាសទី១') || a.includes('ឆមាសទី១') || m.includes('ឆមាស១') || a.includes('ឆមាស១')) {
+          return true;
+        }
+      }
+
+      if (pNorm.includes('semester 2') || pNorm.includes('ឆមាសទី២') || pNorm.includes('ឆមាស២')) {
+        if (m.includes('semester 2') || a.includes('semester 2') || m.includes('ឆមាសទី២') || a.includes('ឆមាសទី២') || m.includes('ឆមាស២') || a.includes('ឆមាស២')) {
+          return true;
+        }
+      }
+
+      return false;
+    };
+
+    const extractGrade = (sc, subItem) => {
+      if (!sc) return '';
+      if (sc.grade && /^[A-F]$/i.test(String(sc.grade).trim())) {
+        return String(sc.grade).trim().toUpperCase();
+      }
+      const raw = getScoreValue(sc);
+      if (raw !== '') {
+        const num = Number(raw) || 0;
+        const fullScore = sc.fullScore || SubjectService.getSubjectFullScore(subItem, targetClass?.name || 'G7') || subItem.fullScore || 50;
+        return SubjectService.calculateGrade(num, fullScore).grade || '';
+      }
+      return '';
+    };
+
     // Build subject rows
     const subjectRows = subjects.map(sub => {
       const subId = sub.id || sub.code || sub.name;
@@ -395,56 +544,65 @@ export const StudentPlanService = {
 
       const baseline = `${baselineScore} , ${baselineGrade}`;
 
-      const months = PLAN_MONTHS.map(m => {
-        const targetVal = savedTargets[subId]?.[m.key] ?? '';
+      // Dynamic Target Chaining:
+      // Month 1 target is 1 grade higher than baselineGrade
+      // Next months get grade from previous column's actual (if filled) and upper it.
+      // If no actual yet, upper previous target.
+      let runningPrevActual = null;
+      let runningPrevTarget = null;
 
-        // Match actual score from database if not explicitly overridden
-        let actualVal = savedActuals[subId]?.[m.key];
-        let isOverridden = false;
+      const months = configuredPlanMonths.map((m, colIdx) => {
+        // Actual grade from scores store for this column's period
+        let actualGrade = '';
+        const match = studentScores.find(s => matchPeriodScore(s, sub, m.id));
+        if (match) {
+          actualGrade = extractGrade(match, sub);
+        }
 
-        if (actualVal !== undefined && actualVal !== null && actualVal !== '') {
-          isOverridden = true;
+        const manualActual = savedActuals[subId]?.[m.key];
+        if (manualActual !== undefined && manualActual !== null && String(manualActual).trim() !== '') {
+          actualGrade = String(manualActual).trim().toUpperCase();
+        }
+
+        // Target grade calculation
+        let targetGrade = '';
+        if (colIdx === 0) {
+          targetGrade = getUpperGrade(baselineGrade);
         } else {
-          // Find matching score from scores store
-          const match = studentScores.find(s => {
-            const matchSub = matchSubject(sub, s);
-            const matchMonth = (s.month === m.id) || 
-                               (s.assessmentType === m.id) || 
-                               (s.month === m.nameKm) || 
-                               (s.assessmentType === m.nameKm);
-            return matchSub && matchMonth;
-          });
-
-          if (match) {
-            actualVal = getScoreValue(match);
+          if (runningPrevActual) {
+            targetGrade = getUpperGrade(runningPrevActual);
           } else {
-            actualVal = '';
+            targetGrade = getUpperGrade(runningPrevTarget);
           }
         }
+
+        const manualTarget = savedTargets[subId]?.[m.key];
+        if (manualTarget !== undefined && manualTarget !== null && String(manualTarget).trim() !== '') {
+          targetGrade = String(manualTarget).trim().toUpperCase();
+        }
+
+        runningPrevActual = actualGrade;
+        runningPrevTarget = targetGrade;
 
         return {
           key: m.key,
           id: m.id,
           nameKm: m.nameKm,
           labelKm: m.labelKm,
-          target: targetVal,
-          actual: actualVal,
-          isOverridden
+          headerLabel: m.headerLabel,
+          target: targetGrade,
+          actual: actualGrade
         };
       });
 
       // Compute or retrieve end-of-year target and actual
-      const targetFinal = savedFinalTarget[subId] ?? '';
+      const targetFinal = savedFinalTarget[subId] ?? (months[months.length - 1]?.target || 'A');
       let actualFinal = savedFinalActual[subId];
 
       if (actualFinal === undefined || actualFinal === null || actualFinal === '') {
-        // Average of filled actual monthly scores
-        const validScores = months
-          .map(m => parseFloat(m.actual))
-          .filter(n => !isNaN(n) && n > 0);
-        if (validScores.length > 0) {
-          const sum = validScores.reduce((acc, v) => acc + v, 0);
-          actualFinal = (sum / validScores.length).toFixed(1).replace(/\.0$/, '');
+        const filledGrades = months.map(m => m.actual).filter(Boolean);
+        if (filledGrades.length > 0) {
+          actualFinal = filledGrades[filledGrades.length - 1];
         } else {
           actualFinal = '';
         }
@@ -518,6 +676,7 @@ export const StudentPlanService = {
         province: provinceFinal
       },
       academicYear: academicYear || targetClass.academicYear || '2023–2024',
+      months: configuredPlanMonths,
       subjects: subjectRows,
       allAvailableSubjects: allSubjects,
       hiddenSubjectIds: hiddenSubjectIds,
