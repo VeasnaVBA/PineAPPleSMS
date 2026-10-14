@@ -3,6 +3,7 @@ import { ScoreService, isStudentActive } from './scoreService.js';
 import { SettingsService } from './settingsService.js';
 import { authService } from './authService.js';
 import { normalizeStudentRecord } from './studentService.js';
+import { StudentPlanService } from './studentPlanService.js';
 
 export const ReportService = {
   /**
@@ -334,6 +335,17 @@ export const ReportService = {
     try {
       localStorage.removeItem(`report_settings_${reportKey}`);
     } catch (_) {}
+  },
+
+  /**
+   * 6. Student Individual Study Plan (ផែនការសិស្សម្នាក់ៗ)
+   */
+  async getStudentPlan(classId, studentId, academicYear) {
+    return await StudentPlanService.getStudentPlan(classId, studentId, academicYear);
+  },
+
+  async saveStudentPlan(classId, studentId, academicYear, planPayload) {
+    return await StudentPlanService.saveStudentPlan(classId, studentId, academicYear, planPayload);
   }
 };
 
