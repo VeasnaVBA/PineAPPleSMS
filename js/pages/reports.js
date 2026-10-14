@@ -789,8 +789,8 @@ export const ReportsPage = {
               </div>
             </div>
 
-            <!-- Score Scale Matrix (2 Columns without box: 3 in left column, 3 in right column, indented 2 tabs) -->
-            <div class="score-scale-text mb-1 grid grid-cols-2 gap-x-3 text-[7.5px] leading-tight pl-8" style="line-height: 1.15 !important; display: grid !important; grid-template-columns: 1fr 1fr !important; border: none !important; padding-left: 2rem !important;">
+            <!-- Score Scale Matrix (2 Columns without box: 3 in left column, 3 in right column, indented 4 tabs) -->
+            <div class="score-scale-text mb-1 grid grid-cols-2 gap-x-3 text-[7.5px] leading-tight pl-16" style="line-height: 1.15 !important; display: grid !important; grid-template-columns: 1fr 1fr !important; border: none !important; padding-left: 4rem !important;">
               <div class="space-y-0.5">
                 ${scaleMatrix.slice(0, 3).map(row => `
                   <div class="flex items-baseline gap-1 flex-wrap">
