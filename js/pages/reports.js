@@ -5,7 +5,7 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.57';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.58';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
@@ -493,7 +493,7 @@ export const ReportsPage = {
                 </div>
                 <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
                   ${monthPeriods.map(p => {
-                    const isSelected = (currentPeriodId && (currentPeriodId === p.id || currentPeriodId === p.nameKm)) || (!currentPeriodId && defaultLabel === p.nameKm);
+                    const isSelected = Boolean(currentPeriodId && (currentPeriodId === p.id || currentPeriodId === p.nameKm));
                     return `
                       <button type="button" class="btn-period-select px-3 py-2 rounded-xl border text-xs font-medium cursor-pointer transition-all flex flex-col items-center justify-center gap-0.5 ${isSelected ? 'bg-primary text-primary-foreground font-bold border-primary shadow-sm' : 'bg-card border-border hover:bg-muted hover:border-primary/50 text-foreground'}" data-period-id="${escapeHtml(p.id)}" data-period-name="${escapeHtml(p.nameKm)}">
                         <span>${escapeHtml(p.nameKm)}</span>

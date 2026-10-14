@@ -433,16 +433,18 @@ export const StudentPlanService = {
     const colPeriods = await this.getColumnPeriods(classId);
 
     const configuredPlanMonths = PLAN_MONTHS.map(m => {
-      const activePeriodId = colPeriods[m.key] || m.id;
-      const periodInfo = ALL_EVALUATION_PERIODS.find(p => p.id === activePeriodId || p.nameKm === activePeriodId) || {
+      const activePeriodId = colPeriods ? colPeriods[m.key] : null;
+      const isChosen = Boolean(activePeriodId);
+      const periodInfo = isChosen ? (ALL_EVALUATION_PERIODS.find(p => p.id === activePeriodId || p.nameKm === activePeriodId) || {
         id: activePeriodId,
-        nameKm: m.nameKm || m.labelKm
-      };
-      const headerLabel = colPeriods[m.key] ? periodInfo.nameKm : m.labelKm;
+        nameKm: activePeriodId
+      }) : null;
+      const headerLabel = isChosen ? (periodInfo.nameKm || activePeriodId) : m.labelKm;
       return {
         key: m.key,
         id: activePeriodId,
-        nameKm: periodInfo.nameKm,
+        isChosen,
+        nameKm: isChosen ? periodInfo.nameKm : (m.nameKm || m.labelKm),
         labelKm: m.labelKm,
         headerLabel
       };
@@ -545,18 +547,35 @@ export const StudentPlanService = {
       const baseline = `${baselineScore} , ${baselineGrade}`;
 
       // Dynamic Target Chaining:
-      // Month 1 target is 1 grade higher than baselineGrade
-      // Next months get grade from previous column's actual (if filled) and upper it.
-      // If no actual yet, upper previous target.
-      let runningPrevActual = null;
-      let runningPrevTarget = null;
+      // If user hasn't chosen a month for a column, don't show any value (target: '', actual: '').
+      // Month 1 target is 1 grade higher than baselineGrade (e.g. F -> E).
+      // Month 2 target is obtained from Month 1 actual grade (ជាក់ស្តែង) and uppered 1 step.
+      // Subsequent months chain from the immediate previous month's actual grade.
+      const months = [];
+      for (let colIdx = 0; colIdx < configuredPlanMonths.length; colIdx++) {
+        const m = configuredPlanMonths[colIdx];
 
-      const months = configuredPlanMonths.map((m, colIdx) => {
+        if (!m.isChosen || !m.id) {
+          months.push({
+            key: m.key,
+            id: null,
+            isChosen: false,
+            nameKm: m.nameKm,
+            labelKm: m.labelKm,
+            headerLabel: m.headerLabel,
+            target: '',
+            actual: ''
+          });
+          continue;
+        }
+
         // Actual grade from scores store for this column's period
         let actualGrade = '';
-        const match = studentScores.find(s => matchPeriodScore(s, sub, m.id));
-        if (match) {
-          actualGrade = extractGrade(match, sub);
+        if (m.id) {
+          const match = studentScores.find(s => matchPeriodScore(s, sub, m.id));
+          if (match) {
+            actualGrade = extractGrade(match, sub);
+          }
         }
 
         const manualActual = savedActuals[subId]?.[m.key];
@@ -564,15 +583,18 @@ export const StudentPlanService = {
           actualGrade = String(manualActual).trim().toUpperCase();
         }
 
-        // Target grade calculation
+        // Target grade calculation:
         let targetGrade = '';
         if (colIdx === 0) {
           targetGrade = getUpperGrade(baselineGrade);
         } else {
-          if (runningPrevActual) {
-            targetGrade = getUpperGrade(runningPrevActual);
+          // Month 2 (and onwards) gets grade from previous month's actual (ជាក់ស្តែង) and uppers it
+          const prevCol = months[colIdx - 1];
+          const prevActual = prevCol?.actual;
+          if (prevActual) {
+            targetGrade = getUpperGrade(prevActual);
           } else {
-            targetGrade = getUpperGrade(runningPrevTarget);
+            targetGrade = '';
           }
         }
 
@@ -581,22 +603,23 @@ export const StudentPlanService = {
           targetGrade = String(manualTarget).trim().toUpperCase();
         }
 
-        runningPrevActual = actualGrade;
-        runningPrevTarget = targetGrade;
-
-        return {
+        months.push({
           key: m.key,
           id: m.id,
+          isChosen: true,
           nameKm: m.nameKm,
           labelKm: m.labelKm,
           headerLabel: m.headerLabel,
           target: targetGrade,
           actual: actualGrade
-        };
-      });
+        });
+      }
 
       // Compute or retrieve end-of-year target and actual
-      const targetFinal = savedFinalTarget[subId] ?? (months[months.length - 1]?.target || 'A');
+      const manualTargetFinal = savedFinalTarget[subId];
+      let targetFinal = (manualTargetFinal !== undefined && manualTargetFinal !== null && String(manualTargetFinal).trim() !== '')
+        ? String(manualTargetFinal).trim().toUpperCase()
+        : '';
       let actualFinal = savedFinalActual[subId];
 
       if (actualFinal === undefined || actualFinal === null || actualFinal === '') {
