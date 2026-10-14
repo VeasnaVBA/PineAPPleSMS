@@ -310,16 +310,17 @@ export const StudentPlanService = {
       };
     });
 
+    const fatherName = saved.fatherName || student?.fatherName || '';
+    const fatherPhone = saved.fatherPhone || student?.fatherPhone || student?.parentPhone || '';
+    const motherName = saved.motherName || student?.motherName || '';
+    const motherPhone = saved.motherPhone || student?.motherPhone || '';
     const parentName = saved.parentName ||
-                       [student?.fatherName, student?.motherName].filter(Boolean).join(' / ') ||
+                       [fatherName, motherName].filter(Boolean).join(' / ') ||
                        student?.guardian ||
-                       student?.fatherName ||
-                       student?.motherName ||
                        '';
     const parentPhone = saved.parentPhone ||
-                        student?.fatherPhone ||
-                        student?.motherPhone ||
-                        student?.parentPhone ||
+                        fatherPhone ||
+                        motherPhone ||
                         '';
     const teacherName = saved.teacherName || teacher.name || '';
     const teacherPhone = saved.teacherPhone || teacher.phone || '';
@@ -341,6 +342,10 @@ export const StudentPlanService = {
         englishName: student?.englishName || '',
         gender: (student?.gender === 'Female' || student?.gender === 'ស្រី' || student?.gender === 'F') ? 'ស្រី' : 'ប្រុស',
         familyStatus,
+        fatherName,
+        fatherPhone,
+        motherName,
+        motherPhone,
         parentName,
         parentPhone
       },

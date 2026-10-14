@@ -519,19 +519,31 @@ export const ReportsPage = {
             </div>
           </div>
 
-          <!-- Row 3: Parents & Phone -->
+          <!-- Row 3: Father & Phone -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-2 items-center">
             <div class="flex items-center gap-1.5">
-              <span class="font-bold text-foreground shrink-0">ឈ្មោះមាតាបិតា ៖</span>
-              <input type="text" id="meta-parent-name" value="${escapeHtml(student.parentName || '')}" placeholder="ឈ្មោះឪពុកម្តាយ ឬអាណាព្យាបាល..." class="student-plan-input border-b border-dashed border-border px-1 py-0.5 text-xs bg-transparent focus:border-primary focus:outline-none flex-1">
+              <span class="font-bold text-foreground shrink-0">ឈ្មោះឪពុក ៖</span>
+              <input type="text" id="meta-father-name" value="${escapeHtml(student.fatherName || '')}" placeholder="ឈ្មោះឪពុក..." class="student-plan-input border-b border-dashed border-border px-1 py-0.5 text-xs bg-transparent focus:border-primary focus:outline-none flex-1">
             </div>
             <div class="flex items-center gap-1.5">
               <span class="font-bold text-foreground shrink-0">លេខទូរស័ព្ទ ៖</span>
-              <input type="text" id="meta-parent-phone" value="${escapeHtml(student.parentPhone || '')}" placeholder="លេខទូរស័ព្ទមាតាបិតា..." class="student-plan-input border-b border-dashed border-border px-1 py-0.5 text-xs bg-transparent focus:border-primary focus:outline-none flex-1">
+              <input type="text" id="meta-father-phone" value="${escapeHtml(student.fatherPhone || '')}" placeholder="លេខទូរស័ព្ទឪពុក..." class="student-plan-input border-b border-dashed border-border px-1 py-0.5 text-xs bg-transparent focus:border-primary focus:outline-none flex-1">
             </div>
           </div>
 
-          <!-- Row 4: Homeroom Teacher & Phone -->
+          <!-- Row 4: Mother & Phone -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 items-center">
+            <div class="flex items-center gap-1.5">
+              <span class="font-bold text-foreground shrink-0">ឈ្មោះម្តាយ ៖</span>
+              <input type="text" id="meta-mother-name" value="${escapeHtml(student.motherName || '')}" placeholder="ឈ្មោះម្តាយ..." class="student-plan-input border-b border-dashed border-border px-1 py-0.5 text-xs bg-transparent focus:border-primary focus:outline-none flex-1">
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="font-bold text-foreground shrink-0">លេខទូរស័ព្ទ ៖</span>
+              <input type="text" id="meta-mother-phone" value="${escapeHtml(student.motherPhone || '')}" placeholder="លេខទូរស័ព្ទម្តាយ..." class="student-plan-input border-b border-dashed border-border px-1 py-0.5 text-xs bg-transparent focus:border-primary focus:outline-none flex-1">
+            </div>
+          </div>
+
+          <!-- Row 5: Homeroom Teacher & Phone -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-2 items-center">
             <div class="flex items-center gap-1.5">
               <span class="font-bold text-foreground shrink-0">ឈ្មោះគ្រូបន្ទុកថ្នាក់ ៖</span>
@@ -644,7 +656,7 @@ export const ReportsPage = {
             <p class="font-semibold text-foreground">បានឃើញ និងឯកភាព</p>
             <p class="font-bold text-foreground">មាតាបិតា ឬអាណាព្យាបាលសិស្ស</p>
             <div class="h-16"></div>
-            <p class="border-t border-dotted border-border inline-block px-8 pt-1 text-foreground font-semibold">${student.parentName || 'ហត្ថលេខា'}</p>
+            <p class="border-t border-dotted border-border inline-block px-8 pt-1 text-foreground font-semibold">${student.fatherName || student.motherName || student.parentName || 'ហត្ថលេខា'}</p>
           </div>
 
           <!-- Student Signature with Lunar and Solar date -->
@@ -673,8 +685,12 @@ export const ReportsPage = {
     const familyStatus = container.querySelector('#meta-family-status')?.value || '';
     const schoolName = container.querySelector('#meta-school-name')?.value || '';
     const province = container.querySelector('#meta-province')?.value || '';
-    const parentName = container.querySelector('#meta-parent-name')?.value || '';
-    const parentPhone = container.querySelector('#meta-parent-phone')?.value || '';
+    const fatherName = container.querySelector('#meta-father-name')?.value || '';
+    const fatherPhone = container.querySelector('#meta-father-phone')?.value || '';
+    const motherName = container.querySelector('#meta-mother-name')?.value || '';
+    const motherPhone = container.querySelector('#meta-mother-phone')?.value || '';
+    const parentName = [fatherName, motherName].filter(Boolean).join(' / ');
+    const parentPhone = fatherPhone || motherPhone || '';
     const teacherName = container.querySelector('#meta-teacher-name')?.value || '';
     const teacherPhone = container.querySelector('#meta-teacher-phone')?.value || '';
 
@@ -712,6 +728,10 @@ export const ReportsPage = {
       familyStatus,
       schoolName,
       province,
+      fatherName,
+      fatherPhone,
+      motherName,
+      motherPhone,
       parentName,
       parentPhone,
       teacherName,
