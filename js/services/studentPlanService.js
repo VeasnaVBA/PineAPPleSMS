@@ -293,10 +293,15 @@ export const StudentPlanService = {
     });
 
     // Filter scores belonging to this student for this academic year
-    const studentScores = (allScores || []).filter(s => 
-      s.studentId === studentId && 
-      (!s.academicYear || !academicYear || s.academicYear === academicYear)
-    );
+    const studentIdSet = new Set([studentId, rawStudent?.id, rawStudent?.studentId].filter(Boolean));
+    const normYear = (y) => String(y || '').replace(/[–—−]/g, '-').trim();
+    const activeYearNorm = normYear(academicYear);
+
+    const studentScores = (allScores || []).filter(s => {
+      const matchStd = studentIdSet.has(s.studentId);
+      const matchYr = !activeYearNorm || !s.academicYear || normYear(s.academicYear) === activeYearNorm;
+      return matchStd && matchYr;
+    });
 
     const saved = savedPlanRecord || {};
     const savedBaseline = saved.baseline || {};
@@ -305,12 +310,60 @@ export const StudentPlanService = {
     const savedFinalTarget = saved.targetFinal || {};
     const savedFinalActual = saved.actualFinal || {};
 
+    const matchSubject = (targetSub, sc) => {
+      if (!sc || !targetSub) return false;
+      const scSubId = sc.subjectId !== undefined ? String(sc.subjectId).trim() : '';
+      const targetSubId = targetSub.id !== undefined ? String(targetSub.id).trim() : '';
+      const targetCode = targetSub.code !== undefined ? String(targetSub.code).trim() : '';
+      const scCode = sc.subjectCode !== undefined ? String(sc.subjectCode).trim() : '';
+
+      if (scSubId && targetSubId && scSubId === targetSubId) return true;
+      if (scCode && targetCode && scCode === targetCode) return true;
+      if (scSubId && targetCode && scSubId === targetCode) return true;
+      if (scCode && targetSubId && scCode === targetSubId) return true;
+
+      const scNameKm = (sc.subjectNameKm || sc.subjectName || '').trim();
+      const targetName = (targetSub.name || targetSub.nameKm || '').trim();
+      if (scNameKm && targetName && scNameKm.toLowerCase() === targetName.toLowerCase()) return true;
+
+      const scNameEn = (sc.subjectNameEn || '').trim().toLowerCase();
+      const targetNameEn = (targetSub.nameEn || '').trim().toLowerCase();
+      if (scNameEn && targetNameEn && scNameEn === targetNameEn) return true;
+
+      return false;
+    };
+
+    const isFirstTestPeriod = (sc) => {
+      if (!sc) return false;
+      const m = String(sc.month || '').trim().toLowerCase();
+      const a = String(sc.assessmentType || '').trim().toLowerCase();
+      return m === 'first test' || a === 'first test' ||
+             m === 'តេស្តដើមឆ្នាំ' || a === 'តេស្តដើមឆ្នាំ' ||
+             m.includes('ដើមឆ្នាំ') || a.includes('ដើមឆ្នាំ') ||
+             m === 'first_test' || a === 'first_test';
+    };
+
+    const getScoreValue = (sc) => {
+      if (!sc) return '';
+      const val = sc.totalScore ?? sc.examScore ?? sc.score ?? sc.assignmentScore;
+      return (val !== null && val !== undefined && String(val).trim() !== '') ? String(val).trim() : '';
+    };
+
     // Build subject rows
     const subjectRows = subjects.map(sub => {
       const subId = sub.id || sub.code || sub.name;
       const subName = sub.name || sub.nameKm || sub.nameEn || '';
 
-      const baseline = savedBaseline[subId] ?? '';
+      // Baseline: Beginning of year score (First Test)
+      let baseline = savedBaseline[subId];
+      if (baseline === undefined || baseline === null || String(baseline).trim() === '') {
+        const firstTestMatch = studentScores.find(s => isFirstTestPeriod(s) && matchSubject(sub, s));
+        if (firstTestMatch) {
+          baseline = getScoreValue(firstTestMatch);
+        } else {
+          baseline = '';
+        }
+      }
 
       const months = PLAN_MONTHS.map(m => {
         const targetVal = savedTargets[subId]?.[m.key] ?? '';
@@ -324,9 +377,7 @@ export const StudentPlanService = {
         } else {
           // Find matching score from scores store
           const match = studentScores.find(s => {
-            const matchSub = (s.subjectId === sub.id) ||
-                             (s.subjectNameKm && s.subjectNameKm.trim() === subName.trim()) ||
-                             (s.subjectNameEn && sub.nameEn && s.subjectNameEn.trim() === sub.nameEn.trim());
+            const matchSub = matchSubject(sub, s);
             const matchMonth = (s.month === m.id) || 
                                (s.assessmentType === m.id) || 
                                (s.month === m.nameKm) || 
@@ -335,8 +386,7 @@ export const StudentPlanService = {
           });
 
           if (match) {
-            const rawScore = match.totalScore ?? match.examScore;
-            actualVal = (rawScore !== null && rawScore !== undefined) ? String(rawScore) : '';
+            actualVal = getScoreValue(match);
           } else {
             actualVal = '';
           }
