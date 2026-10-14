@@ -636,16 +636,16 @@ export const ReportsPage = {
         // Dynamic height scaling to fit in exactly 1 single A4 Landscape page:
         // Default is 10 subjects. If user chooses more than 10, make table height shorter!
         let rowHeight = 18;
-        let cellFontSize = '8px';
+        let cellFontSize = '9px';
         let scaleFontSize = '7.5px';
 
         if (subCount > 13) {
-          rowHeight = 13;
-          cellFontSize = '7px';
+          rowHeight = 14;
+          cellFontSize = '8px';
           scaleFontSize = '6.5px';
         } else if (subCount > 10) {
-          rowHeight = 15;
-          cellFontSize = '7.5px';
+          rowHeight = 16;
+          cellFontSize = '8.5px';
           scaleFontSize = '7px';
         }
 
