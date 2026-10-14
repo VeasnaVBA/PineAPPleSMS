@@ -668,21 +668,28 @@ export const ReportsPage = {
               .seip-score-table {
                 border-collapse: collapse !important;
                 margin-bottom: 4px !important;
+                table-layout: fixed !important;
+                width: 100% !important;
+                border: 1px solid #000000 !important;
               }
               .seip-score-table tr {
                 height: ${rowHeight}px !important;
               }
+              .seip-score-table th,
+              .seip-score-table td {
+                border: 1px solid #000000 !important;
+                text-align: center !important;
+                vertical-align: middle !important;
+                line-height: 1.1 !important;
+              }
               .seip-score-table th {
                 font-size: ${cellFontSize} !important;
-                padding: 1px 2px !important;
-                line-height: 1.15 !important;
+                padding: 1px 1px !important;
               }
               .seip-score-table td {
                 height: ${rowHeight}px !important;
                 font-size: ${cellFontSize} !important;
                 padding: 0 1px !important;
-                line-height: 1.1 !important;
-                vertical-align: middle !important;
               }
             </style>
             <!-- Top Royal Header -->
@@ -788,53 +795,58 @@ export const ReportsPage = {
               </div>
             </div>
 
-            <!-- 24-Column Score Table (Dynamic Row Height) -->
-            <table class="seip-score-table w-full border-collapse text-[8.5px] leading-tight mb-1" style="border: 1.5px solid #000000;">
+            <!-- 24-Column Score Table (Fixed layout, equal-width score columns, uniform 1px black border, centered data) -->
+            <table class="seip-score-table w-full border-collapse text-[8.5px] leading-tight mb-1" style="border: 1px solid #000000; table-layout: fixed;">
+              <colgroup>
+                <col style="width: 14%;">
+                <col style="width: 6%;">
+                ${Array(22).fill('<col style="width: 3.636%;">').join('')}
+              </colgroup>
               <thead>
-                <tr class="bg-gray-100 text-center font-bold" style="border-bottom: 1px solid #000000; height: 18px;">
-                  <th rowspan="2" class="p-0.5 min-w-[85px] text-center" style="border-right: 1px solid #000000;">មុខវិជ្ជា</th>
-                  <th rowspan="2" class="p-0.5 min-w-[36px] text-center" style="border-right: 1px solid #000000;">កម្រិតពិន្ទុ<br>ដើមឆ្នាំ</th>
-                  <th colspan="20" class="p-0.5 text-center" style="border-right: 1px solid #000000;">
+                <tr class="bg-gray-100 text-center font-bold" style="height: 18px;">
+                  <th rowspan="2" class="p-0.5 text-center">មុខវិជ្ជា</th>
+                  <th rowspan="2" class="p-0.5 text-center">កម្រិតពិន្ទុ<br>ដើមឆ្នាំ</th>
+                  <th colspan="20" class="p-0.5 text-center">
                     កម្រិតពិន្ទុនិងលទ្ធផលដើមឆ្នាំ(ខ្មៅ) និងចុងឆ្នាំ(<span style="color: #dc2626 !important;">ក្រហម</span>)
                   </th>
-                  <th colspan="2" class="p-0.5 min-w-[65px] text-center">
+                  <th colspan="2" class="p-0.5 text-center">
                     កម្រិតពិន្ទុ<br>ចុងឆ្នាំ
                   </th>
                 </tr>
-                <tr class="bg-gray-50 text-center font-bold text-[8px]" style="border-bottom: 1.5px solid #000000; height: 16px;">
+                <tr class="bg-gray-50 text-center font-bold text-[7.5px]" style="height: 16px;">
                   ${StudentPlanService.getMonths().map(m => `
-                    <th class="p-0.5 text-center" style="border-right: 1px solid #9ca3af; min-width: 25px;">${m.labelKm}</th>
-                    <th class="p-0.5 text-center" style="border-right: 1px solid #000000; min-width: 25px; color: #dc2626 !important;">ជាក់ស្តែង</th>
+                    <th class="p-0 text-center whitespace-nowrap overflow-hidden">${m.labelKm}</th>
+                    <th class="p-0 text-center whitespace-nowrap overflow-hidden" style="color: #dc2626 !important;">ជាក់ស្តែង</th>
                   `).join('')}
-                  <th class="p-0.5 text-center" style="border-right: 1px solid #9ca3af; min-width: 26px;">ដាក់ពិន្ទុ</th>
-                  <th class="p-0.5 text-center" style="min-width: 26px; color: #dc2626 !important;">ជាក់ស្តែង</th>
+                  <th class="p-0 text-center whitespace-nowrap overflow-hidden">ដាក់ពិន្ទុ</th>
+                  <th class="p-0 text-center whitespace-nowrap overflow-hidden" style="color: #dc2626 !important;">ជាក់ស្តែង</th>
                 </tr>
               </thead>
               <tbody>
                 ${subjects.map((sub, sIdx) => `
-                  <tr style="border-bottom: 1px solid #9ca3af; height: ${rowHeight}px !important;" data-subject-id="${sub.id}">
-                    <td class="px-1 font-medium whitespace-nowrap" style="border-right: 1px solid #000000; font-size: ${cellFontSize}; height: ${rowHeight}px !important; vertical-align: middle;">
+                  <tr style="height: ${rowHeight}px !important;" data-subject-id="${sub.id}">
+                    <td class="font-medium whitespace-nowrap overflow-hidden text-center" style="font-size: ${cellFontSize}; height: ${rowHeight}px !important; padding: 0 2px;">
                       ${sub.name}
                     </td>
                     <!-- Baseline -->
-                    <td class="p-0 text-center font-medium" style="border-right: 1px solid #000000; font-size: ${cellFontSize}; height: ${rowHeight}px !important; vertical-align: middle;">
+                    <td class="font-medium text-center" style="font-size: ${cellFontSize}; height: ${rowHeight}px !important;">
                       ${escapeHtml(sub.baseline || '')}
                     </td>
                     <!-- 10 Months -->
                     ${sub.months.map(m => `
-                      <td class="p-0 text-center font-medium" style="border-right: 1px solid #d1d5db; font-size: ${cellFontSize}; height: ${rowHeight}px !important; vertical-align: middle;">
+                      <td class="font-medium text-center" style="font-size: ${cellFontSize}; height: ${rowHeight}px !important;">
                         ${escapeHtml(m.target || '')}
                       </td>
-                      <td class="p-0 text-center font-bold" style="border-right: 1px solid #000000; background-color: #fff1f2; font-size: ${cellFontSize}; color: #dc2626 !important; height: ${rowHeight}px !important; vertical-align: middle;">
+                      <td class="font-bold text-center" style="background-color: #fff1f2; font-size: ${cellFontSize}; color: #dc2626 !important; height: ${rowHeight}px !important;">
                         ${escapeHtml(m.actual || '')}
                       </td>
                     `).join('')}
                     <!-- End of year Target -->
-                    <td class="p-0 text-center font-medium" style="border-right: 1px solid #d1d5db; font-size: ${cellFontSize}; height: ${rowHeight}px !important; vertical-align: middle;">
+                    <td class="font-medium text-center" style="font-size: ${cellFontSize}; height: ${rowHeight}px !important;">
                       ${escapeHtml(sub.targetFinal || '')}
                     </td>
                     <!-- End of year Actual -->
-                    <td class="p-0 text-center font-bold" style="background-color: #fff1f2; font-size: ${cellFontSize}; color: #dc2626 !important; height: ${rowHeight}px !important; vertical-align: middle;">
+                    <td class="font-bold text-center" style="background-color: #fff1f2; font-size: ${cellFontSize}; color: #dc2626 !important; height: ${rowHeight}px !important;">
                       ${escapeHtml(sub.actualFinal || '')}
                     </td>
                   </tr>
