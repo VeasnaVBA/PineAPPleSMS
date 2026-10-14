@@ -5,7 +5,7 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.51';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.52';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
@@ -402,6 +402,7 @@ export const ReportsPage = {
       defaultMargins: { top: 4, bottom: 4, left: 6, right: 6 },
       defaultFontFamily: 'Kantumruy Pro',
       defaultFontSize: 8.5,
+      onClose: () => document.getElementById('seip-baseline-menu')?.remove(),
       renderHeaderControls: (controlsContainer, viewer) => {
         const updateControls = () => {
           const currIdx = studentsInClass.findIndex(s => s.studentId === currentStudentId);
@@ -657,6 +658,24 @@ export const ReportsPage = {
           ? school.nameKm 
           : (this.state.schoolNameKm || 'សាលារៀន');
 
+        // Clean up any lingering baseline popover
+        document.getElementById('seip-baseline-menu')?.remove();
+        let currentBaselineMode = localStorage.getItem('seip_baseline_mode') || 'both';
+
+        const renderBaselineHtml = (subItem, mode = currentBaselineMode) => {
+          const score = escapeHtml(subItem.baselineScore !== undefined && subItem.baselineScore !== null ? String(subItem.baselineScore) : '0');
+          const grade = escapeHtml(subItem.baselineGrade || 'F');
+          const redGradeHtml = `<span style="color: #dc2626 !important; font-weight: bold !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">${grade}</span>`;
+
+          if (mode === 'score') {
+            return score;
+          }
+          if (mode === 'grade') {
+            return redGradeHtml;
+          }
+          return `${score} , ${redGradeHtml}`;
+        };
+
         paperContainer.innerHTML = `
           <div class="report-explicit-page student-plan-sheet font-khmer text-black leading-tight select-text" style="color: #000000 !important; width: 100%;">
             <style>
@@ -830,7 +849,12 @@ export const ReportsPage = {
               <thead>
                 <tr class="bg-gray-100 text-center font-bold" style="height: 18px; border-bottom: 1px solid #000000 !important;">
                   <th rowspan="2" class="p-0.5 text-center" style="border: 1px solid #000000 !important;">មុខវិជ្ជា</th>
-                  <th rowspan="2" class="p-0.5 text-center" style="border: 1px solid #000000 !important;">កម្រិតពិន្ទុ<br>ដើមឆ្នាំ</th>
+                  <th rowspan="2" id="th-baseline-header" class="p-0.5 text-center cursor-pointer select-none hover:bg-gray-200 transition-colors group relative" style="border: 1px solid #000000 !important;" title="ចុចដើម្បីជ្រើសរើសរបៀបបង្ហាញ (Click to choose options)">
+                    <div class="inline-flex items-center justify-center gap-0.5">
+                      <span>កម្រិតពិន្ទុ<br>ដើមឆ្នាំ</span>
+                      <span class="text-[8px] text-gray-500 group-hover:text-black opacity-75 print:hidden ml-0.5">▾</span>
+                    </div>
+                  </th>
                   <th colspan="20" class="p-0.5 text-center" style="border: 1px solid #000000 !important;">
                     កម្រិតពិន្ទុនិងលទ្ធផលដើមឆ្នាំ(ខ្មៅ) និងចុងឆ្នាំ(<span style="color: #dc2626 !important;">ក្រហម</span>)
                   </th>
@@ -854,8 +878,8 @@ export const ReportsPage = {
                       ${sub.name}
                     </td>
                     <!-- Baseline -->
-                    <td class="font-medium text-center" style="font-size: ${cellFontSize}; height: ${rowHeight}px !important; border: 1px solid #000000 !important;">
-                      ${escapeHtml(sub.baseline || '')}
+                    <td class="seip-baseline-cell font-medium text-center" data-subject-id="${sub.id}" style="font-size: ${cellFontSize}; height: ${rowHeight}px !important; border: 1px solid #000000 !important;">
+                      ${renderBaselineHtml(sub, currentBaselineMode)}
                     </td>
                     <!-- 10 Months -->
                     ${sub.months.map(m => `
@@ -906,6 +930,99 @@ export const ReportsPage = {
             </div>
           </div>
         `;
+
+        const baselineHeader = paperContainer.querySelector('#th-baseline-header');
+        if (baselineHeader) {
+          baselineHeader.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const existing = document.getElementById('seip-baseline-menu');
+            if (existing) {
+              existing.remove();
+              return;
+            }
+
+            const rect = baselineHeader.getBoundingClientRect();
+            const menu = document.createElement('div');
+            menu.id = 'seip-baseline-menu';
+            menu.className = 'fixed z-[9999] bg-white dark:bg-card border border-border shadow-2xl rounded-xl p-2 w-64 text-xs font-khmer text-foreground select-none print:hidden';
+
+            let top = rect.bottom + 4;
+            let left = rect.left;
+            if (left + 260 > window.innerWidth) {
+              left = window.innerWidth - 270;
+            }
+            if (top + 160 > window.innerHeight) {
+              top = rect.top - 165;
+            }
+            menu.style.top = `${Math.max(10, top)}px`;
+            menu.style.left = `${Math.max(10, left)}px`;
+
+            const currentMode = localStorage.getItem('seip_baseline_mode') || 'both';
+            const options = [
+              { id: 'score', num: '1', titleKm: 'បង្ហាញតែពិន្ទុ', titleEn: 'Show only score', preview: '10' },
+              { id: 'grade', num: '2', titleKm: 'បង្ហាញតែកម្រិត', titleEn: 'Show only grade', preview: '<span style="color:#dc2626 !important; font-weight:bold;">F</span>' },
+              { id: 'both', num: '3', titleKm: 'បង្ហាញពិន្ទុ និងកម្រិត', titleEn: 'Show score and grade', preview: '10 , <span style="color:#dc2626 !important; font-weight:bold;">F</span>' }
+            ];
+
+            menu.innerHTML = `
+              <div class="px-2.5 py-1.5 border-b border-border/60 mb-1.5 flex items-center justify-between">
+                <span class="font-bold text-[11px] text-muted-foreground">របៀបបង្ហាញពិន្ទុដើមឆ្នាំ</span>
+                <span class="text-[10px] text-muted-foreground/70">Display Options</span>
+              </div>
+              <div class="space-y-1">
+                ${options.map(opt => `
+                  <button type="button" data-mode="${opt.id}" class="opt-baseline-btn w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left text-xs transition-colors cursor-pointer ${currentMode === opt.id ? 'bg-primary/10 text-primary font-bold' : 'hover:bg-muted text-foreground'}">
+                    <div class="flex items-center gap-2">
+                      <span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${currentMode === opt.id ? 'bg-primary text-primary-foreground font-bold' : 'bg-muted text-muted-foreground'}">${opt.num}</span>
+                      <div>
+                        <div>${opt.titleKm}</div>
+                        <div class="text-[10px] text-muted-foreground font-normal">${opt.titleEn}</div>
+                      </div>
+                    </div>
+                    <div class="text-[11px] px-1.5 py-0.5 bg-muted/40 rounded border border-border/40 font-mono">
+                      ${opt.preview}
+                    </div>
+                  </button>
+                `).join('')}
+              </div>
+            `;
+
+            document.body.appendChild(menu);
+
+            menu.querySelectorAll('.opt-baseline-btn').forEach(btn => {
+              btn.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                const chosenMode = btn.dataset.mode;
+                localStorage.setItem('seip_baseline_mode', chosenMode);
+
+                const cells = paperContainer.querySelectorAll('.seip-baseline-cell');
+                cells.forEach((cell, idx) => {
+                  const s = subjects[idx];
+                  if (s) {
+                    cell.innerHTML = renderBaselineHtml(s, chosenMode);
+                  }
+                });
+
+                menu.remove();
+                toast.success(
+                  chosenMode === 'score' ? '1. បង្ហាញតែពិន្ទុ (Show only score)' :
+                  chosenMode === 'grade' ? '2. បង្ហាញតែកម្រិត (Show only grade)' :
+                  '3. បង្ហាញពិន្ទុ និងកម្រិត (Show score and grade)'
+                );
+              });
+            });
+
+            const onDocClick = (ev) => {
+              if (!menu.contains(ev.target) && ev.target !== baselineHeader) {
+                menu.remove();
+                document.removeEventListener('click', onDocClick);
+              }
+            };
+            setTimeout(() => {
+              document.addEventListener('click', onDocClick);
+            }, 0);
+          });
+        }
       }
     });
   },

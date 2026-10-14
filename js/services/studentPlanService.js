@@ -355,33 +355,45 @@ export const StudentPlanService = {
       const subName = sub.name || sub.nameKm || sub.nameEn || '';
 
       // Baseline: Beginning of year score (First Test)
-      let baseline = savedBaseline[subId];
-      if (baseline !== undefined && baseline !== null && String(baseline).trim() !== '') {
-        const strVal = String(baseline).trim();
-        if (/[A-F]$/i.test(strVal)) {
-          baseline = strVal;
+      let baselineScore = '0';
+      let baselineGrade = 'F';
+
+      let customBaseline = savedBaseline[subId];
+      if (customBaseline !== undefined && customBaseline !== null && String(customBaseline).trim() !== '') {
+        const strVal = String(customBaseline).trim();
+        const parts = strVal.split(/[,/ ]+/);
+        if (parts.length >= 2 && /[A-F]$/i.test(parts[parts.length - 1])) {
+          baselineGrade = parts[parts.length - 1].toUpperCase();
+          baselineScore = parts.slice(0, -1).join(' ').trim() || '0';
+        } else if (/[A-F]$/i.test(strVal)) {
+          baselineGrade = strVal.toUpperCase();
+          baselineScore = '0';
         } else {
+          baselineScore = strVal;
           const num = Number(strVal) || 0;
           const fullScore = SubjectService.getSubjectFullScore(sub, targetClass?.name || 'G7') || sub.fullScore || 50;
-          const grade = SubjectService.calculateGrade(num, fullScore).grade;
-          baseline = `${strVal} , ${grade}`;
+          baselineGrade = SubjectService.calculateGrade(num, fullScore).grade;
         }
       } else {
         const firstTestMatch = studentScores.find(s => isFirstTestPeriod(s) && matchSubject(sub, s));
         if (firstTestMatch) {
           const rawScore = getScoreValue(firstTestMatch);
           if (rawScore !== '') {
+            baselineScore = rawScore;
             const num = Number(rawScore) || 0;
             const fullScore = firstTestMatch.fullScore || SubjectService.getSubjectFullScore(sub, targetClass?.name || 'G7') || sub.fullScore || 50;
-            const grade = firstTestMatch.grade || SubjectService.calculateGrade(num, fullScore).grade;
-            baseline = `${rawScore} , ${grade}`;
+            baselineGrade = firstTestMatch.grade || SubjectService.calculateGrade(num, fullScore).grade;
           } else {
-            baseline = '0 , F';
+            baselineScore = '0';
+            baselineGrade = 'F';
           }
         } else {
-          baseline = '0 , F';
+          baselineScore = '0';
+          baselineGrade = 'F';
         }
       }
+
+      const baseline = `${baselineScore} , ${baselineGrade}`;
 
       const months = PLAN_MONTHS.map(m => {
         const targetVal = savedTargets[subId]?.[m.key] ?? '';
@@ -443,6 +455,8 @@ export const StudentPlanService = {
         code: sub.code || '',
         name: subName,
         baseline,
+        baselineScore,
+        baselineGrade,
         months,
         targetFinal,
         actualFinal
