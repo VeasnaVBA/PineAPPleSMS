@@ -864,7 +864,7 @@ export const ReportsPage = {
             </table>
 
             <!-- Signatures Footer -->
-            <div class="grid grid-cols-3 gap-2 text-center text-[9px] font-khmer mt-1 pt-1" style="border-top: 1px solid #000000; line-height: 1.2;">
+            <div class="grid grid-cols-3 gap-2 text-center text-[9px] font-khmer mt-2" style="line-height: 1.2;">
               <!-- Principal -->
               <div>
                 <p class="font-semibold text-[8px]">បានឃើញ និងឯកភាព</p>
