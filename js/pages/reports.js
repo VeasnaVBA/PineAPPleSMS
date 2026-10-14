@@ -393,8 +393,6 @@ export const ReportsPage = {
     const classes = this.state.classes;
     const isTeacher = authService.isTeacher();
 
-    let autoSaveTimer = null;
-
     await ReportViewer.open({
       reportKey: 'student_individual_plan',
       title: isKm ? 'ផែនការសិក្សារបស់សិស្ស (SEIP)' : 'Student Study Plan (SEIP)',
@@ -447,8 +445,6 @@ export const ReportsPage = {
               ${getIcon('slidersHorizontal', 'w-3.5 h-3.5 text-primary')}
               <span>មុខវិជ្ជា</span>
             </button>
-
-            <span id="rv-plan-save-indicator" class="text-emerald-600 dark:text-emerald-400 font-medium text-[11px] ml-1.5 whitespace-nowrap"></span>
           `;
 
           controlsContainer.querySelector('#rv-plan-filter-class')?.addEventListener('change', async (e) => {
@@ -640,18 +636,15 @@ export const ReportsPage = {
         // Dynamic height scaling to fit in exactly 1 single A4 Landscape page:
         // Default is 10 subjects. If user chooses more than 10, make table height shorter!
         let rowHeight = 18;
-        let inputHeight = 17;
         let cellFontSize = '8px';
         let scaleFontSize = '7.5px';
 
         if (subCount > 13) {
           rowHeight = 13;
-          inputHeight = 12;
           cellFontSize = '7px';
           scaleFontSize = '6.5px';
         } else if (subCount > 10) {
           rowHeight = 15;
-          inputHeight = 14;
           cellFontSize = '7.5px';
           scaleFontSize = '7px';
         }
@@ -686,17 +679,9 @@ export const ReportsPage = {
               .seip-score-table td {
                 height: ${rowHeight}px !important;
                 font-size: ${cellFontSize} !important;
-                padding: 0 !important;
+                padding: 0 1px !important;
                 line-height: 1.1 !important;
                 vertical-align: middle !important;
-              }
-              .seip-score-table input.rv-plan-cell {
-                height: ${inputHeight}px !important;
-                font-size: ${cellFontSize} !important;
-                line-height: 1 !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                border: none !important;
               }
             </style>
             <!-- Top Royal Header -->
@@ -817,29 +802,29 @@ export const ReportsPage = {
               <tbody>
                 ${subjects.map((sub, sIdx) => `
                   <tr style="border-bottom: 1px solid #9ca3af; height: ${rowHeight}px !important;" data-subject-id="${sub.id}">
-                    <td class="px-1 font-medium whitespace-nowrap" style="border-right: 1px solid #000000; font-size: ${cellFontSize}; height: ${rowHeight}px !important;">
+                    <td class="px-1 font-medium whitespace-nowrap" style="border-right: 1px solid #000000; font-size: ${cellFontSize}; height: ${rowHeight}px !important; vertical-align: middle;">
                       ${sub.name}
                     </td>
                     <!-- Baseline -->
-                    <td class="p-0 text-center" style="border-right: 1px solid #000000;">
-                      <input type="text" class="rv-plan-cell w-full text-center bg-transparent focus:bg-yellow-50 focus:outline-none" data-subject-id="${sub.id}" data-field="baseline" value="${escapeHtml(sub.baseline || '')}" style="height: ${inputHeight}px; font-size: ${cellFontSize};">
+                    <td class="p-0 text-center font-medium" style="border-right: 1px solid #000000; font-size: ${cellFontSize}; height: ${rowHeight}px !important; vertical-align: middle;">
+                      ${escapeHtml(sub.baseline || '')}
                     </td>
                     <!-- 10 Months -->
                     ${sub.months.map(m => `
-                      <td class="p-0 text-center" style="border-right: 1px solid #d1d5db;">
-                        <input type="text" class="rv-plan-cell w-full text-center bg-transparent focus:bg-yellow-50 focus:outline-none" data-subject-id="${sub.id}" data-field="target" data-month-key="${m.key}" value="${escapeHtml(m.target || '')}" style="height: ${inputHeight}px; font-size: ${cellFontSize};">
+                      <td class="p-0 text-center font-medium" style="border-right: 1px solid #d1d5db; font-size: ${cellFontSize}; height: ${rowHeight}px !important; vertical-align: middle;">
+                        ${escapeHtml(m.target || '')}
                       </td>
-                      <td class="p-0 text-center" style="border-right: 1px solid #000000; background-color: #fff1f2;">
-                        <input type="text" class="rv-plan-cell w-full text-center bg-transparent focus:bg-rose-100 focus:outline-none font-bold" data-subject-id="${sub.id}" data-field="actual" data-month-key="${m.key}" value="${escapeHtml(m.actual || '')}" style="height: ${inputHeight}px; font-size: ${cellFontSize}; color: #dc2626 !important;">
+                      <td class="p-0 text-center font-bold" style="border-right: 1px solid #000000; background-color: #fff1f2; font-size: ${cellFontSize}; color: #dc2626 !important; height: ${rowHeight}px !important; vertical-align: middle;">
+                        ${escapeHtml(m.actual || '')}
                       </td>
                     `).join('')}
                     <!-- End of year Target -->
-                    <td class="p-0 text-center" style="border-right: 1px solid #d1d5db;">
-                      <input type="text" class="rv-plan-cell w-full text-center bg-transparent focus:bg-yellow-50 focus:outline-none" data-subject-id="${sub.id}" data-field="targetFinal" value="${escapeHtml(sub.targetFinal || '')}" style="height: ${inputHeight}px; font-size: ${cellFontSize};">
+                    <td class="p-0 text-center font-medium" style="border-right: 1px solid #d1d5db; font-size: ${cellFontSize}; height: ${rowHeight}px !important; vertical-align: middle;">
+                      ${escapeHtml(sub.targetFinal || '')}
                     </td>
                     <!-- End of year Actual -->
-                    <td class="p-0 text-center" style="background-color: #fff1f2;">
-                      <input type="text" class="rv-plan-cell w-full text-center bg-transparent focus:bg-rose-100 focus:outline-none font-bold" data-subject-id="${sub.id}" data-field="actualFinal" value="${escapeHtml(sub.actualFinal || '')}" style="height: ${inputHeight}px; font-size: ${cellFontSize}; color: #dc2626 !important;">
+                    <td class="p-0 text-center font-bold" style="background-color: #fff1f2; font-size: ${cellFontSize}; color: #dc2626 !important; height: ${rowHeight}px !important; vertical-align: middle;">
+                      ${escapeHtml(sub.actualFinal || '')}
                     </td>
                   </tr>
                 `).join('')}
@@ -875,92 +860,6 @@ export const ReportsPage = {
             </div>
           </div>
         `;
-
-        // Gather and auto-save handler for inputs inside ReportViewer
-        const gatherViewerPayload = () => {
-          const familyStatus = student.familyStatus || '';
-          const schoolName = school.nameKm || '';
-          const province = school.province || '';
-          const fatherName = student.fatherName || '';
-          const fatherPhone = student.fatherPhone || '';
-          const motherName = student.motherName || '';
-          const motherPhone = student.motherPhone || '';
-          const parentName = [fatherName, motherName].filter(Boolean).join(' / ');
-          const parentPhone = fatherPhone || motherPhone || '';
-          const teacherName = teacher.name || '';
-          const teacherPhone = teacher.phone || '';
-
-          const baseline = {};
-          const targets = {};
-          const actuals = {};
-          const targetFinal = {};
-          const actualFinal = {};
-
-          paperContainer.querySelectorAll('input.rv-plan-cell').forEach(inp => {
-            const sId = inp.dataset.subjectId;
-            const f = inp.dataset.field;
-            const v = inp.value.trim();
-            if (!sId) return;
-
-            if (f === 'baseline') baseline[sId] = v;
-            else if (f === 'target') {
-              const mk = inp.dataset.monthKey;
-              if (!targets[sId]) targets[sId] = {};
-              targets[sId][mk] = v;
-            } else if (f === 'actual') {
-              const mk = inp.dataset.monthKey;
-              if (!actuals[sId]) actuals[sId] = {};
-              actuals[sId][mk] = v;
-            } else if (f === 'targetFinal') targetFinal[sId] = v;
-            else if (f === 'actualFinal') actualFinal[sId] = v;
-          });
-
-          return {
-            familyStatus,
-            schoolName,
-            province,
-            fatherName,
-            fatherPhone,
-            motherName,
-            motherPhone,
-            parentName,
-            parentPhone,
-            teacherName,
-            teacherPhone,
-            baseline,
-            targets,
-            actuals,
-            targetFinal,
-            actualFinal,
-            reportDate: planData?.reportDate || new Date().toISOString().split('T')[0]
-          };
-        };
-
-        const triggerAutoSave = () => {
-          const indicator = document.getElementById('rv-plan-save-indicator');
-          if (indicator) indicator.textContent = 'កំពុងរក្សាទុក...';
-          clearTimeout(autoSaveTimer);
-          autoSaveTimer = setTimeout(async () => {
-            try {
-              const payload = gatherViewerPayload();
-              await StudentPlanService.saveStudentPlan(currentClassId, currentStudentId, activeYear, payload);
-              if (indicator) {
-                indicator.textContent = 'បានរក្សាទុក';
-                setTimeout(() => {
-                  if (indicator.textContent === 'បានរក្សាទុក') indicator.textContent = '';
-                }, 2000);
-              }
-            } catch (err) {
-              console.warn('Auto save plan error:', err);
-              if (indicator) indicator.textContent = 'រក្សាទុកបរាជ័យ';
-            }
-          }, 500);
-        };
-
-        paperContainer.querySelectorAll('input.rv-plan-cell').forEach(inp => {
-          inp.addEventListener('input', triggerAutoSave);
-          inp.addEventListener('change', triggerAutoSave);
-        });
       }
     });
   },
