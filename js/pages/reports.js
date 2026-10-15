@@ -5,15 +5,15 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.84';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.84';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.85';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.85';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js?v=3.0.84';
+import { ReportViewer } from '../components/reportViewer.js?v=3.0.85';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -1757,14 +1757,16 @@ export const ReportsPage = {
                       <div>
                         <span>ឈ្មោះសិស្ស៖ </span>
                         <span class="font-khmer-muol text-[#1e3a8a] text-[9.5px]" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">${escapeHtml(studentName)}</span>
-                        <span class="ml-2">ភេទ៖ </span>
+                      </div>
+                      <div>
+                        <span>ភេទ៖ </span>
                         <span class="font-bold text-[#1e3a8a]" contenteditable="true" spellcheck="false">${escapeHtml(genderKm)}</span>
                       </div>
-                      <div class="text-center">
+                      <div>
                         <span>ថ្នាក់ទី៖ </span>
                         <span class="font-bold text-[#1e3a8a]" contenteditable="true" spellcheck="false">${escapeHtml(className)}</span>
                       </div>
-                      <div class="text-right">
+                      <div>
                         <span>ឆ្នាំសិក្សា៖ </span>
                         <span class="font-bold text-[#1e3a8a]" contenteditable="true" spellcheck="false">${escapeHtml(academicYear)}</span>
                       </div>
