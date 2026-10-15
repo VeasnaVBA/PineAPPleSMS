@@ -1598,6 +1598,7 @@ export const ScoresPage = {
     // 3. Compute grand total and totalMax
     let sum = 0;
     let maxTotal = 0;
+    let avgScore = 0;
 
     if (this.isSemesterPeriod()) {
       let monthlySum = 0;
