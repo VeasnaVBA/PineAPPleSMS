@@ -5,15 +5,15 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.79';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.79';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.80';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.80';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js?v=3.0.79';
+import { ReportViewer } from '../components/reportViewer.js?v=3.0.80';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -1851,10 +1851,12 @@ export const ReportsPage = {
                       <span>សាលា ៖ </span>
                       <span class="text-[#1e3a8a] font-semibold" contenteditable="true" spellcheck="false">${escapeHtml(data.schoolName || '')}</span>
                     </div>
-                    <div>
-                      <span>ចំនួនសិស្សក្នុងថ្នាក់ ៖ </span>
-                      <span class="font-mono font-bold text-[#1e3a8a]" contenteditable="true" spellcheck="false">${escapeHtml(String(data.totalStudents || ''))}</span>
-                      <span> នាក់</span>
+                    <div class="whitespace-nowrap">
+                      <span>ចំនួនសិស្សសរុបក្នុងថ្នាក់ ៖ </span>
+                      <span class="font-mono font-bold text-[#1e3a8a]" contenteditable="true" spellcheck="false">${escapeHtml(data.totalStudents !== undefined && data.totalStudents !== null ? String(data.totalStudents) : '')}</span>
+                      <span> នាក់ (ស្រី </span>
+                      <span class="font-mono font-bold text-[#1e3a8a]" contenteditable="true" spellcheck="false">${escapeHtml(data.femaleStudents !== undefined && data.femaleStudents !== null ? String(data.femaleStudents) : '')}</span>
+                      <span> នាក់)</span>
                     </div>
                   </div>
 

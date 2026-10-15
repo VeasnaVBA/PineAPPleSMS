@@ -544,12 +544,19 @@ export const StudentGradeBookService = {
       ? (currentSummary.annualOverall >= 25 ? 'ជាប់' : 'ធ្លាក់')
       : '';
 
+    const isFemale = (s) => {
+      const g = String(s?.gender || '').trim().toLowerCase();
+      return g === 'female' || g === 'f' || g === 'ស្រី' || g.includes('female') || g.includes('ស្រី');
+    };
+    const femaleStudents = classStudents.filter(isFemale).length;
+
     return {
       student: currentStudent,
       className: targetClass.name || targetClass.grade || '—',
       academicYear: academicYear || targetClass.academicYear || new Date().getFullYear(),
       schoolName: schoolNameKm,
       totalStudents: classStudents.length,
+      femaleStudents: femaleStudents,
       classStudents,
       allAvailableSubjects,
       hiddenSubjectIds,
