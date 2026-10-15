@@ -5,15 +5,15 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.82';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.82';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.83';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.83';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js?v=3.0.82';
+import { ReportViewer } from '../components/reportViewer.js?v=3.0.83';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -1530,6 +1530,7 @@ export const ReportsPage = {
         const student = data.student;
         const studentName = student.khmerName || student.fullName || student.englishName || '—';
         const className = data.className || '—';
+        const academicYear = data.academicYear || '—';
 
         const subjects = data.subjects || [];
         const summary = data.summary || {};
@@ -1745,15 +1746,19 @@ export const ReportsPage = {
               <div class="gradebook-page-box">
                 <div class="flex flex-col justify-between h-full">
                   <div>
-                    <!-- Top Header: Student Name & Class -->
-                    <div class="flex items-center justify-between font-bold text-[9px] mb-1 px-0.5 text-black" style="min-height: 5mm;">
+                    <!-- Top Header: Student Name, Class, Academic Year -->
+                    <div class="flex items-center justify-between font-bold text-[9px] mb-1 px-0.5 text-black whitespace-nowrap" style="min-height: 5mm;">
                       <div>
                         <span>ឈ្មោះសិស្ស៖ </span>
                         <span class="font-khmer-muol text-[#1e3a8a] text-[9.5px]" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">${escapeHtml(studentName)}</span>
                       </div>
-                      <div>
+                      <div class="text-center">
                         <span>ថ្នាក់ទី៖ </span>
-                        <span class="font-bold text-[#1e3a8a]">${escapeHtml(className)}</span>
+                        <span class="font-bold text-[#1e3a8a]" contenteditable="true" spellcheck="false">${escapeHtml(className)}</span>
+                      </div>
+                      <div class="text-right">
+                        <span>ឆ្នាំសិក្សា៖ </span>
+                        <span class="font-bold text-[#1e3a8a]" contenteditable="true" spellcheck="false">${escapeHtml(academicYear)}</span>
                       </div>
                     </div>
 
