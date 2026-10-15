@@ -5,15 +5,15 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.71';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.71';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.72';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.72';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js?v=3.0.71';
+import { ReportViewer } from '../components/reportViewer.js?v=3.0.72';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -1537,25 +1537,41 @@ export const ReportsPage = {
         const evalData = data.evaluation || {};
         const subCount = subjects.length;
 
-        // Dynamic compact row height and font scaling to fit inside single landscape page
-        let rowHeight = 15;
+        // Total body rows = selected subjects + 4 official summary rows
+        const tbodyRowsCount = subCount + 4;
+
+        // Exact available height for table body inside A4 landscape page box:
+        // A4 height = 210mm. Page top/bottom pad = 4mm x 2 = 8mm -> 202mm.
+        // Box border + pad = 6.8mm -> 195.2mm inner height.
+        // Top student line (~6.5mm) + Section 1 banner (~6.2mm) + thead 2 rows (~13mm) = ~25.7mm.
+        // Buffer = 2.5mm. Available for tbody = 167mm.
+        const calculatedRowHeightMm = Math.max(6.5, Math.min(18.0, Number((167 / tbodyRowsCount).toFixed(2))));
+
         let cellFontSize = '7.5px';
         let nameFontSize = '8px';
         let bannerPadding = '2px 4px';
         let bannerFontSize = '9px';
 
-        if (subCount > 13) {
-          rowHeight = 13.5;
-          cellFontSize = '7px';
-          nameFontSize = '7.5px';
-          bannerPadding = '1px 3px';
-          bannerFontSize = '8.5px';
-        } else if (subCount <= 10) {
-          rowHeight = 18;
-          cellFontSize = '8px';
-          nameFontSize = '8.5px';
+        if (calculatedRowHeightMm >= 13) {
+          cellFontSize = '10px';
+          nameFontSize = '10.5px';
+          bannerPadding = '3px 4px';
+          bannerFontSize = '10px';
+        } else if (calculatedRowHeightMm >= 10.5) {
+          cellFontSize = '9px';
+          nameFontSize = '9.5px';
           bannerPadding = '2.5px 4px';
           bannerFontSize = '9.5px';
+        } else if (calculatedRowHeightMm >= 8.5) {
+          cellFontSize = '8px';
+          nameFontSize = '8.5px';
+          bannerPadding = '2px 4px';
+          bannerFontSize = '9px';
+        } else {
+          cellFontSize = '7px';
+          nameFontSize = '7.5px';
+          bannerPadding = '1.5px 3px';
+          bannerFontSize = '8.5px';
         }
 
         contentContainer.innerHTML = `
@@ -1581,12 +1597,13 @@ export const ReportsPage = {
                 width: 50% !important;
                 height: 100% !important;
                 border: 1.5px solid #1e3a8a !important;
-                padding: 4px 6px !important;
+                padding: 3mm 3.5mm !important;
                 background-color: #ffffff !important;
                 box-sizing: border-box !important;
                 display: flex !important;
                 flex-direction: column !important;
                 justify-content: space-between !important;
+                overflow: hidden !important;
               }
               .gradebook-table {
                 width: 100% !important;
@@ -1594,32 +1611,42 @@ export const ReportsPage = {
                 font-size: ${cellFontSize} !important;
                 line-height: 1 !important;
                 table-layout: fixed !important;
-              }
-              .gradebook-table tr {
-                height: ${rowHeight}px !important;
-                max-height: ${rowHeight}px !important;
-              }
-              .gradebook-table th,
-              .gradebook-table td {
-                border: 1px solid #1e3a8a !important;
-                text-align: center !important;
-                vertical-align: middle !important;
-                padding: 0px 1.5px !important;
-                height: ${rowHeight}px !important;
-                max-height: ${rowHeight}px !important;
                 box-sizing: border-box !important;
-                overflow: hidden !important;
-                white-space: nowrap !important;
-                text-overflow: ellipsis !important;
               }
-              .gradebook-table th {
+              .gradebook-table thead tr {
+                height: 6.5mm !important;
+              }
+              .gradebook-table thead th {
+                height: 6.5mm !important;
                 background-color: #dbeafe !important;
                 color: #1e3a8a !important;
                 font-weight: bold !important;
                 font-size: ${cellFontSize} !important;
-                height: ${rowHeight}px !important;
+                border: 1px solid #1e3a8a !important;
+                text-align: center !important;
+                vertical-align: middle !important;
+                padding: 0 1px !important;
+                box-sizing: border-box !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+              }
+              .gradebook-table tr.gb-tbody-row {
+                height: ${calculatedRowHeightMm}mm !important;
+                max-height: ${calculatedRowHeightMm}mm !important;
+              }
+              .gradebook-table tbody td {
+                height: ${calculatedRowHeightMm}mm !important;
+                max-height: ${calculatedRowHeightMm}mm !important;
+                border: 1px solid #1e3a8a !important;
+                text-align: center !important;
+                vertical-align: middle !important;
+                padding: 0px 1.5px !important;
+                font-size: ${cellFontSize} !important;
+                line-height: 1.05 !important;
+                box-sizing: border-box !important;
+                overflow: hidden !important;
+                white-space: nowrap !important;
+                text-overflow: ellipsis !important;
               }
               .gradebook-banner {
                 background-color: #1e3a8a !important;
@@ -1642,9 +1669,9 @@ export const ReportsPage = {
                 }
                 .gradebook-page-box {
                   border: 1.5px solid #1e3a8a !important;
-                  padding: 4px 6px !important;
+                  padding: 3mm 3.5mm !important;
                 }
-                .gradebook-table th {
+                .gradebook-table thead th {
                   background-color: #dbeafe !important;
                   color: #1e3a8a !important;
                 }
@@ -1658,112 +1685,114 @@ export const ReportsPage = {
             <div class="gradebook-spread-row">
               <!-- ================= LEFT PAGE: Section 1 (Score Table) ================= -->
               <div class="gradebook-page-box">
-                <div>
-                  <!-- Top Header: Student Name & Class -->
-                  <div class="flex items-center justify-between font-bold text-[10px] mb-0.5 px-0.5 text-black">
-                    <div>
-                      <span>ឈ្មោះសិស្ស៖ </span>
-                      <span class="font-khmer-muol text-[#1e3a8a] text-[10.5px]" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">${escapeHtml(studentName)}</span>
+                <div class="flex flex-col justify-between h-full">
+                  <div>
+                    <!-- Top Header: Student Name & Class -->
+                    <div class="flex items-center justify-between font-bold text-[10px] mb-1 px-0.5 text-black">
+                      <div>
+                        <span>ឈ្មោះសិស្ស៖ </span>
+                        <span class="font-khmer-muol text-[#1e3a8a] text-[10.5px]" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">${escapeHtml(studentName)}</span>
+                      </div>
+                      <div>
+                        <span>ថ្នាក់ទី៖ </span>
+                        <span class="font-bold text-[#1e3a8a]">${escapeHtml(className)}</span>
+                      </div>
                     </div>
-                    <div>
-                      <span>ថ្នាក់ទី៖ </span>
-                      <span class="font-bold text-[#1e3a8a]">${escapeHtml(className)}</span>
+
+                    <!-- Section 1 Banner -->
+                    <div class="gradebook-banner mb-0">
+                      ១ / លទ្ធផលនៃការសិក្សា
                     </div>
-                  </div>
 
-                  <!-- Section 1 Banner -->
-                  <div class="gradebook-banner mb-0">
-                    ១ / លទ្ធផលនៃការសិក្សា
-                  </div>
-
-                  <!-- Main Score Table -->
-                  <table class="gradebook-table">
-                    <thead>
-                      <tr style="height: ${rowHeight}px !important;">
-                        <th rowspan="2" style="width: 24px;">ល.រ</th>
-                        <th rowspan="2" style="width: 110px;">មុខវិជ្ជា</th>
-                        <th colspan="2">ឆមាស១</th>
-                        <th colspan="2">ឆមាស២</th>
-                        <th colspan="2">ប្រចាំឆ្នាំ</th>
-                        <th rowspan="2" style="width: 86px;">មូលវិចារ ហត្ថលេខា<br>និងឈ្មោះគ្រូ</th>
-                      </tr>
-                      <tr style="height: ${rowHeight}px !important;">
-                        <th style="width: 34px;">ម.ភាគ</th>
-                        <th style="width: 28px;">ចំណាត់</th>
-                        <th style="width: 34px;">ម.ភាគ</th>
-                        <th style="width: 28px;">ចំណាត់</th>
-                        <th style="width: 34px;">ម.ភាគ</th>
-                        <th style="width: 28px;">ចំណាត់</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${subjects.map(s => `
-                        <tr style="height: ${rowHeight}px !important;">
-                          <td style="font-size: ${cellFontSize};">${s.indexKm}</td>
-                          <td style="text-align: left !important; padding-left: 3px !important; font-weight: 500; font-size: ${nameFontSize};">${escapeHtml(s.name)}</td>
-                          <td class="font-mono">${formatScoreNumber(s.sem1Score)}</td>
-                          <td class="font-mono font-semibold">${s.sem1Rank || ''}</td>
-                          <td class="font-mono">${formatScoreNumber(s.sem2Score)}</td>
-                          <td class="font-mono font-semibold">${s.sem2Rank || ''}</td>
-                          <td class="font-mono">${formatScoreNumber(s.annualScore)}</td>
-                          <td class="font-mono font-semibold">${s.annualRank || ''}</td>
-                          <td style="font-size: ${cellFontSize}; font-weight: 500;">${escapeHtml(s.remark || '')}</td>
+                    <!-- Main Score Table -->
+                    <table class="gradebook-table">
+                      <thead>
+                        <tr style="height: 6.5mm !important;">
+                          <th rowspan="2" style="width: 24px;">ល.រ</th>
+                          <th rowspan="2" style="width: 110px;">មុខវិជ្ជា</th>
+                          <th colspan="2">ឆមាស១</th>
+                          <th colspan="2">ឆមាស២</th>
+                          <th colspan="2">ប្រចាំឆ្នាំ</th>
+                          <th rowspan="2" style="width: 86px;">មូលវិចារ ហត្ថលេខា<br>និងឈ្មោះគ្រូ</th>
                         </tr>
-                      `).join('')}
+                        <tr style="height: 6.5mm !important;">
+                          <th style="width: 34px;">ម.ភាគ</th>
+                          <th style="width: 28px;">ចំណាត់</th>
+                          <th style="width: 34px;">ម.ភាគ</th>
+                          <th style="width: 28px;">ចំណាត់</th>
+                          <th style="width: 34px;">ម.ភាគ</th>
+                          <th style="width: 28px;">ចំណាត់</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${subjects.map(s => `
+                          <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
+                            <td style="font-size: ${cellFontSize};">${s.indexKm}</td>
+                            <td style="text-align: left !important; padding-left: 3px !important; font-weight: 500; font-size: ${nameFontSize};">${escapeHtml(s.name)}</td>
+                            <td class="font-mono">${formatScoreNumber(s.sem1Score)}</td>
+                            <td class="font-mono font-semibold">${s.sem1Rank || ''}</td>
+                            <td class="font-mono">${formatScoreNumber(s.sem2Score)}</td>
+                            <td class="font-mono font-semibold">${s.sem2Rank || ''}</td>
+                            <td class="font-mono">${formatScoreNumber(s.annualScore)}</td>
+                            <td class="font-mono font-semibold">${s.annualRank || ''}</td>
+                            <td style="font-size: ${cellFontSize}; font-weight: 500;">${escapeHtml(s.remark || '')}</td>
+                          </tr>
+                        `).join('')}
 
-                      <!-- Row 17: សរុបពិន្ទុរួមប្រឡងឆមាស -->
-                      <tr style="background-color: #f8fafc; font-weight: 600; height: ${rowHeight}px !important;">
-                        <td style="font-size: ${cellFontSize};">${summary.examTotal?.indexKm || ''}</td>
-                        <td style="text-align: left !important; padding-left: 3px !important; font-size: ${nameFontSize};">${summary.examTotal?.name || 'សរុបពិន្ទុរួមប្រឡងឆមាស'}</td>
-                        <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.sem1)}</td>
-                        <td></td>
-                        <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.sem2)}</td>
-                        <td></td>
-                        <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.annual)}</td>
-                        <td></td>
-                        <td></td>
-                      </tr>
+                        <!-- Row 17: សរុបពិន្ទុរួមប្រឡងឆមាស -->
+                        <tr class="gb-tbody-row" style="background-color: #f8fafc; font-weight: 600; height: ${calculatedRowHeightMm}mm !important;">
+                          <td style="font-size: ${cellFontSize};">${summary.examTotal?.indexKm || ''}</td>
+                          <td style="text-align: left !important; padding-left: 3px !important; font-size: ${nameFontSize};">${summary.examTotal?.name || 'សរុបពិន្ទុរួមប្រឡងឆមាស'}</td>
+                          <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.sem1)}</td>
+                          <td></td>
+                          <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.sem2)}</td>
+                          <td></td>
+                          <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.annual)}</td>
+                          <td></td>
+                          <td></td>
+                        </tr>
 
-                      <!-- Row 18: មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស -->
-                      <tr style="background-color: #f8fafc; font-weight: 600; height: ${rowHeight}px !important;">
-                        <td style="font-size: ${cellFontSize};">${summary.examAvg?.indexKm || ''}</td>
-                        <td style="text-align: left !important; padding-left: 3px !important; font-size: ${nameFontSize};">${summary.examAvg?.name || 'មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស'}</td>
-                        <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.sem1)}</td>
-                        <td class="font-mono font-bold text-blue-700">${summary.examAvg?.sem1Rank || ''}</td>
-                        <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.sem2)}</td>
-                        <td class="font-mono font-bold text-blue-700">${summary.examAvg?.sem2Rank || ''}</td>
-                        <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.annual)}</td>
-                        <td class="font-mono font-bold text-blue-700">${summary.examAvg?.annualRank || ''}</td>
-                        <td style="font-size: ${cellFontSize}; font-weight: 600; color: #1e3a8a;">${escapeHtml(summary.examAvg?.remark || '')}</td>
-                      </tr>
+                        <!-- Row 18: មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស -->
+                        <tr class="gb-tbody-row" style="background-color: #f8fafc; font-weight: 600; height: ${calculatedRowHeightMm}mm !important;">
+                          <td style="font-size: ${cellFontSize};">${summary.examAvg?.indexKm || ''}</td>
+                          <td style="text-align: left !important; padding-left: 3px !important; font-size: ${nameFontSize};">${summary.examAvg?.name || 'មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស'}</td>
+                          <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.sem1)}</td>
+                          <td class="font-mono font-bold text-blue-700">${summary.examAvg?.sem1Rank || ''}</td>
+                          <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.sem2)}</td>
+                          <td class="font-mono font-bold text-blue-700">${summary.examAvg?.sem2Rank || ''}</td>
+                          <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.annual)}</td>
+                          <td class="font-mono font-bold text-blue-700">${summary.examAvg?.annualRank || ''}</td>
+                          <td style="font-size: ${cellFontSize}; font-weight: 600; color: #1e3a8a;">${escapeHtml(summary.examAvg?.remark || '')}</td>
+                        </tr>
 
-                      <!-- Row 19: មធ្យមភាគពិន្ទុផ្ទៃក្នុងប្រចាំឆមាស -->
-                      <tr style="background-color: #f8fafc; font-weight: 600; height: ${rowHeight}px !important;">
-                        <td style="font-size: ${cellFontSize};">${summary.internalAvg?.indexKm || ''}</td>
-                        <td style="text-align: left !important; padding-left: 3px !important; font-size: ${nameFontSize};">${summary.internalAvg?.name || 'មធ្យមភាគពិន្ទុផ្ទៃក្នុងប្រចាំឆមាស'}</td>
-                        <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.sem1)}</td>
-                        <td></td>
-                        <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.sem2)}</td>
-                        <td></td>
-                        <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.annual)}</td>
-                        <td></td>
-                        <td></td>
-                      </tr>
+                        <!-- Row 19: មធ្យមភាគពិន្ទុផ្ទៃក្នុងប្រចាំឆមាស -->
+                        <tr class="gb-tbody-row" style="background-color: #f8fafc; font-weight: 600; height: ${calculatedRowHeightMm}mm !important;">
+                          <td style="font-size: ${cellFontSize};">${summary.internalAvg?.indexKm || ''}</td>
+                          <td style="text-align: left !important; padding-left: 3px !important; font-size: ${nameFontSize};">${summary.internalAvg?.name || 'មធ្យមភាគពិន្ទុផ្ទៃក្នុងប្រចាំឆមាស'}</td>
+                          <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.sem1)}</td>
+                          <td></td>
+                          <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.sem2)}</td>
+                          <td></td>
+                          <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.annual)}</td>
+                          <td></td>
+                          <td></td>
+                        </tr>
 
-                      <!-- Row 20: មធ្យមភាគប្រចាំឆមាស -->
-                      <tr style="background-color: #f8fafc; font-weight: 600; height: ${rowHeight}px !important;">
-                        <td style="font-size: ${cellFontSize};">${summary.overallAvg?.indexKm || ''}</td>
-                        <td style="text-align: left !important; padding-left: 3px !important; font-size: ${nameFontSize};">${summary.overallAvg?.name || 'មធ្យមភាគប្រចាំឆមាស'}</td>
-                        <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.sem1)}</td>
-                        <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.sem1Rank || ''}</td>
-                        <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.sem2)}</td>
-                        <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.sem2Rank || ''}</td>
-                        <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.annual)}</td>
-                        <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.annualRank || ''}</td>
-                        <td style="font-size: ${cellFontSize}; font-weight: 600; color: #1e3a8a;">${escapeHtml(summary.overallAvg?.remark || '')}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                        <!-- Row 20: មធ្យមភាគប្រចាំឆមាស -->
+                        <tr class="gb-tbody-row" style="background-color: #f8fafc; font-weight: 600; height: ${calculatedRowHeightMm}mm !important;">
+                          <td style="font-size: ${cellFontSize};">${summary.overallAvg?.indexKm || ''}</td>
+                          <td style="text-align: left !important; padding-left: 3px !important; font-size: ${nameFontSize};">${summary.overallAvg?.name || 'មធ្យមភាគប្រចាំឆមាស'}</td>
+                          <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.sem1)}</td>
+                          <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.sem1Rank || ''}</td>
+                          <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.sem2)}</td>
+                          <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.sem2Rank || ''}</td>
+                          <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.annual)}</td>
+                          <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.annualRank || ''}</td>
+                          <td style="font-size: ${cellFontSize}; font-weight: 600; color: #1e3a8a;">${escapeHtml(summary.overallAvg?.remark || '')}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
 

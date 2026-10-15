@@ -7,7 +7,7 @@ import { StudentService } from '../services/studentService.js';
 import { getIcon } from './icons.js';
 import { toast } from './toast.js';
 import { SearchModal } from './searchModal.js';
-import { NavbarSyncButtons } from './navbar.js?v=3.0.71';
+import { NavbarSyncButtons } from './navbar.js?v=3.0.72';
 import { ThemeColorModal } from './themeColorModal.js';
 import { Modal } from './modal.js';
 import { AdminDataService } from '../services/adminDataService.js';
