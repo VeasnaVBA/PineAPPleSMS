@@ -5,8 +5,8 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.68';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.68';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.69';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.69';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
@@ -1282,11 +1282,11 @@ export const ReportsPage = {
       reportKey: 'student_grade_book',
       title: isKm ? 'សៀវភៅសិក្ខាគារិក' : 'Student Grade Book',
       alwaysFresh: true,
-      defaultOrientation: 'portrait',
+      defaultOrientation: 'landscape',
       defaultPaperSize: 'A4',
-      defaultMargins: { top: 6, bottom: 6, left: 8, right: 8 },
+      defaultMargins: { top: 4, bottom: 4, left: 5, right: 5 },
       defaultFontFamily: 'Kantumruy Pro',
-      defaultFontSize: 9,
+      defaultFontSize: 8.5,
       renderHeaderControls: (controlsContainer, viewer) => {
         const updateControls = () => {
           const currIdx = studentsInClass.findIndex(s => s.studentId === currentStudentId || s.id === currentStudentId);
@@ -1391,21 +1391,35 @@ export const ReportsPage = {
         const subjects = data.subjects || [];
         const summary = data.summary || {};
         const att = data.attendance || {};
+        const evalData = data.evaluation || {};
 
         contentContainer.innerHTML = `
-          <div class="gradebook-document bg-white text-black font-khmer mx-auto p-4 select-none box-border" style="width: 100%; max-width: 794px; min-height: 1050px; font-family: 'Kantumruy Pro', 'Khmer OS Siemreap', sans-serif;">
+          <div class="gradebook-landscape-spread bg-white text-black font-khmer mx-auto p-2 select-none box-border" style="width: 100%; max-width: 1080px; font-family: 'Kantumruy Pro', 'Khmer OS Siemreap', sans-serif;">
             <style>
-              .gradebook-box {
-                border: 2px solid #1e3a8a !important;
-                padding: 12px 14px !important;
+              .gradebook-spread-row {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 8px !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+                background-color: #ffffff !important;
+              }
+              .gradebook-page-box {
+                flex: 1 1 50% !important;
+                width: 50% !important;
+                border: 1.5px solid #1e3a8a !important;
+                padding: 6px 8px !important;
                 background-color: #ffffff !important;
                 box-sizing: border-box !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
               }
               .gradebook-table {
                 width: 100% !important;
                 border-collapse: collapse !important;
-                font-size: 9.5px !important;
-                line-height: 1.2 !important;
+                font-size: 8px !important;
+                line-height: 1.15 !important;
                 table-layout: fixed !important;
               }
               .gradebook-table th,
@@ -1413,12 +1427,13 @@ export const ReportsPage = {
                 border: 1px solid #1e3a8a !important;
                 text-align: center !important;
                 vertical-align: middle !important;
-                padding: 2.5px 3px !important;
+                padding: 1.5px 2px !important;
               }
               .gradebook-table th {
                 background-color: #dbeafe !important;
                 color: #1e3a8a !important;
                 font-weight: bold !important;
+                font-size: 8px !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
               }
@@ -1427,16 +1442,23 @@ export const ReportsPage = {
                 color: #ffffff !important;
                 text-align: center !important;
                 font-weight: bold !important;
-                font-size: 11.5px !important;
-                padding: 4px 6px !important;
-                letter-spacing: 0.3px !important;
+                font-size: 9.5px !important;
+                padding: 2.5px 4px !important;
+                letter-spacing: 0.2px !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
               }
               @media print {
-                .gradebook-box {
-                  border: 2px solid #1e3a8a !important;
-                  padding: 10px 12px !important;
+                @page {
+                  size: A4 landscape !important;
+                  margin: 4mm 5mm !important;
+                }
+                .gradebook-spread-row {
+                  gap: 6px !important;
+                }
+                .gradebook-page-box {
+                  border: 1.5px solid #1e3a8a !important;
+                  padding: 5px 7px !important;
                 }
                 .gradebook-table th {
                   background-color: #dbeafe !important;
@@ -1449,143 +1471,275 @@ export const ReportsPage = {
               }
             </style>
 
-            <div class="gradebook-box">
-              <!-- Top Header: Student Name & Class -->
-              <div class="flex items-center justify-between font-bold text-xs sm:text-sm mb-2 px-1 text-black">
+            <div class="gradebook-spread-row">
+              <!-- ================= LEFT PAGE: Section 1 (Score Table) ================= -->
+              <div class="gradebook-page-box">
                 <div>
-                  <span class="font-bold">ឈ្មោះសិស្ស៖ </span>
-                  <span class="font-khmer-muol text-[#1e3a8a] text-[13px]" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">${escapeHtml(studentName)}</span>
+                  <!-- Top Header: Student Name & Class -->
+                  <div class="flex items-center justify-between font-bold text-[10.5px] mb-1 px-0.5 text-black">
+                    <div>
+                      <span>ឈ្មោះសិស្ស៖ </span>
+                      <span class="font-khmer-muol text-[#1e3a8a] text-[11px]" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">${escapeHtml(studentName)}</span>
+                    </div>
+                    <div>
+                      <span>ថ្នាក់ទី៖ </span>
+                      <span class="font-bold text-[#1e3a8a]">${escapeHtml(className)}</span>
+                    </div>
+                  </div>
+
+                  <!-- Section 1 Banner -->
+                  <div class="gradebook-banner mb-0">
+                    ១ / លទ្ធផលនៃការសិក្សា
+                  </div>
+
+                  <!-- Main Score Table -->
+                  <table class="gradebook-table">
+                    <thead>
+                      <tr>
+                        <th rowspan="2" style="width: 26px;">ល.រ</th>
+                        <th rowspan="2" style="width: 120px;">មុខវិជ្ជា</th>
+                        <th colspan="2">ឆមាស១</th>
+                        <th colspan="2">ឆមាស២</th>
+                        <th colspan="2">ប្រចាំឆ្នាំ</th>
+                        <th rowspan="2" style="width: 90px;">មូលវិចារ ហត្ថលេខា<br>និងឈ្មោះគ្រូ</th>
+                      </tr>
+                      <tr>
+                        <th style="width: 36px;">ម.ភាគ</th>
+                        <th style="width: 30px;">ចំណាត់</th>
+                        <th style="width: 36px;">ម.ភាគ</th>
+                        <th style="width: 30px;">ចំណាត់</th>
+                        <th style="width: 36px;">ម.ភាគ</th>
+                        <th style="width: 30px;">ចំណាត់</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${subjects.map(s => `
+                        <tr>
+                          <td style="font-size: 7.5px;">${s.indexKm}</td>
+                          <td style="text-align: left !important; padding-left: 4px !important; font-weight: 500;">${escapeHtml(s.name)}</td>
+                          <td class="font-mono">${formatScoreNumber(s.sem1Score)}</td>
+                          <td class="font-mono font-semibold">${s.sem1Rank || ''}</td>
+                          <td class="font-mono">${formatScoreNumber(s.sem2Score)}</td>
+                          <td class="font-mono font-semibold">${s.sem2Rank || ''}</td>
+                          <td class="font-mono">${formatScoreNumber(s.annualScore)}</td>
+                          <td class="font-mono font-semibold">${s.annualRank || ''}</td>
+                          <td style="font-size: 7.5px; font-weight: 500;">${escapeHtml(s.remark || '')}</td>
+                        </tr>
+                      `).join('')}
+
+                      <!-- Row 17: សរុបពិន្ទុរួមប្រឡងឆមាស -->
+                      <tr style="background-color: #f8fafc; font-weight: 600;">
+                        <td style="font-size: 7.5px;">${summary.examTotal?.indexKm || ''}</td>
+                        <td style="text-align: left !important; padding-left: 4px !important;">${summary.examTotal?.name || 'សរុបពិន្ទុរួមប្រឡងឆមាស'}</td>
+                        <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.sem1)}</td>
+                        <td></td>
+                        <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.sem2)}</td>
+                        <td></td>
+                        <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.annual)}</td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+
+                      <!-- Row 18: មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស -->
+                      <tr style="background-color: #f8fafc; font-weight: 600;">
+                        <td style="font-size: 7.5px;">${summary.examAvg?.indexKm || ''}</td>
+                        <td style="text-align: left !important; padding-left: 4px !important;">${summary.examAvg?.name || 'មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស'}</td>
+                        <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.sem1)}</td>
+                        <td class="font-mono font-bold text-blue-700">${summary.examAvg?.sem1Rank || ''}</td>
+                        <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.sem2)}</td>
+                        <td class="font-mono font-bold text-blue-700">${summary.examAvg?.sem2Rank || ''}</td>
+                        <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.annual)}</td>
+                        <td class="font-mono font-bold text-blue-700">${summary.examAvg?.annualRank || ''}</td>
+                        <td style="font-size: 7.5px; font-weight: 600; color: #1e3a8a;">${escapeHtml(summary.examAvg?.remark || '')}</td>
+                      </tr>
+
+                      <!-- Row 19: មធ្យមភាគពិន្ទុផ្ទៃក្នុងប្រចាំឆមាស -->
+                      <tr style="background-color: #f8fafc; font-weight: 600;">
+                        <td style="font-size: 7.5px;">${summary.internalAvg?.indexKm || ''}</td>
+                        <td style="text-align: left !important; padding-left: 4px !important;">${summary.internalAvg?.name || 'មធ្យមភាគពិន្ទុផ្ទៃក្នុងប្រចាំឆមាស'}</td>
+                        <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.sem1)}</td>
+                        <td></td>
+                        <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.sem2)}</td>
+                        <td></td>
+                        <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.annual)}</td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+
+                      <!-- Row 20: មធ្យមភាគប្រចាំឆមាស -->
+                      <tr style="background-color: #f8fafc; font-weight: 600;">
+                        <td style="font-size: 7.5px;">${summary.overallAvg?.indexKm || ''}</td>
+                        <td style="text-align: left !important; padding-left: 4px !important;">${summary.overallAvg?.name || 'មធ្យមភាគប្រចាំឆមាស'}</td>
+                        <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.sem1)}</td>
+                        <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.sem1Rank || ''}</td>
+                        <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.sem2)}</td>
+                        <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.sem2Rank || ''}</td>
+                        <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.annual)}</td>
+                        <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.annualRank || ''}</td>
+                        <td style="font-size: 7.5px; font-weight: 600; color: #1e3a8a;">${escapeHtml(summary.overallAvg?.remark || '')}</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
-                <div>
-                  <span class="font-bold">ថ្នាក់ទី៖ </span>
-                  <span class="font-bold text-[#1e3a8a]">${escapeHtml(className)}</span>
+              </div>
+
+              <!-- ================= RIGHT PAGE: Sections ខ, គ, ឃ, ង, ច ================= -->
+              <div class="gradebook-page-box">
+                <div class="flex flex-col justify-between h-full">
+                  <div>
+                    <!-- Top Line: School Name & Student Count in Class -->
+                    <div class="flex items-center justify-between text-[8.5px] font-bold mb-1 px-0.5 text-black leading-tight">
+                      <div>
+                        <span>វិទ្យាល័យ/សាលា ៖ </span>
+                        <span class="text-blue-900 font-semibold" contenteditable="true" spellcheck="false">${escapeHtml(data.schoolName || '...........................................')}</span>
+                      </div>
+                      <div>
+                        <span>ចំនួនសិស្សក្នុងថ្នាក់ ៖ </span>
+                        <span class="font-mono font-bold text-blue-900" contenteditable="true" spellcheck="false">${escapeHtml(String(data.totalStudents || '.....'))}</span>
+                        <span> នាក់</span>
+                      </div>
+                    </div>
+
+                    <!-- Section ខ Banner -->
+                    <div class="gradebook-banner mb-0">
+                      ខ / ចំនួនអវត្តមានក្នុងឆ្នាំសិក្សា
+                    </div>
+                    <!-- Section ខ Table -->
+                    <table class="gradebook-table mb-1.5">
+                      <thead>
+                        <tr>
+                          <th style="width: 34%;">អវត្តមាន</th>
+                          <th>ឆមាសទី១</th>
+                          <th>ឆមាសទី២</th>
+                          <th>ប្រចាំឆ្នាំ</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">-មានច្បាប់</td>
+                          <td class="font-mono font-medium">${formatTwoDigits(att.excusedSem1)}</td>
+                          <td class="font-mono font-medium">${formatTwoDigits(att.excusedSem2)}</td>
+                          <td class="font-mono font-medium">${formatTwoDigits(att.excusedYear)}</td>
+                        </tr>
+                        <tr>
+                          <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">-ឥតច្បាប់</td>
+                          <td class="font-mono font-medium">${formatTwoDigits(att.unexcusedSem1)}</td>
+                          <td class="font-mono font-medium">${formatTwoDigits(att.unexcusedSem2)}</td>
+                          <td class="font-mono font-medium">${formatTwoDigits(att.unexcusedYear)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <!-- Section គ Banner -->
+                    <div class="gradebook-banner mb-0">
+                      គ / ការវាយតម្លៃ
+                    </div>
+                    <!-- Section គ Table -->
+                    <table class="gradebook-table mb-1.5">
+                      <thead>
+                        <tr>
+                          <th style="width: 34%;">ផ្នែកទាំង៤</th>
+                          <th>ឆមាសទី១</th>
+                          <th>ឆមាសទី២</th>
+                          <th>ប្រចាំឆ្នាំ</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">១- ការសិក្សា</td>
+                          <td contenteditable="true" spellcheck="false" class="font-semibold text-blue-900">${escapeHtml(evalData.sem1 || '')}</td>
+                          <td contenteditable="true" spellcheck="false" class="font-semibold text-blue-900">${escapeHtml(evalData.sem2 || '')}</td>
+                          <td contenteditable="true" spellcheck="false" class="font-semibold text-blue-900">${escapeHtml(evalData.annual || '')}</td>
+                        </tr>
+                        <tr>
+                          <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">២- សីលធម៌រស់នៅ</td>
+                          <td contenteditable="true" spellcheck="false"></td>
+                          <td contenteditable="true" spellcheck="false"></td>
+                          <td contenteditable="true" spellcheck="false"></td>
+                        </tr>
+                        <tr>
+                          <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">៣- ពលកម្ម-បង្កបង្កើនផល</td>
+                          <td contenteditable="true" spellcheck="false"></td>
+                          <td contenteditable="true" spellcheck="false"></td>
+                          <td contenteditable="true" spellcheck="false"></td>
+                        </tr>
+                        <tr>
+                          <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">៤- សុខភាព-អនាម័យ</td>
+                          <td contenteditable="true" spellcheck="false"></td>
+                          <td contenteditable="true" spellcheck="false"></td>
+                          <td contenteditable="true" spellcheck="false"></td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <!-- Section ឃ Banner -->
+                    <div class="gradebook-banner mb-0">
+                      ឃ / ការសរសើរ
+                    </div>
+                    <!-- Section ឃ Table -->
+                    <table class="gradebook-table mb-1.5">
+                      <thead>
+                        <tr>
+                          <th style="width: 34%;">បានទទួលការសរសើរ</th>
+                          <th>ឆមាសទី១</th>
+                          <th>ឆមាសទី២</th>
+                          <th>ប្រចាំឆ្នាំ</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">-ប័ណ្ណសរសើរចំនួន</td>
+                          <td contenteditable="true" spellcheck="false"></td>
+                          <td contenteditable="true" spellcheck="false"></td>
+                          <td contenteditable="true" spellcheck="false"></td>
+                        </tr>
+                        <tr>
+                          <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">-លិខិតសរសើរ</td>
+                          <td contenteditable="true" spellcheck="false"></td>
+                          <td contenteditable="true" spellcheck="false"></td>
+                          <td contenteditable="true" spellcheck="false"></td>
+                        </tr>
+                        <tr>
+                          <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">-សេចក្តីបណ្ណលើកទឹកចិត្ត</td>
+                          <td contenteditable="true" spellcheck="false"></td>
+                          <td contenteditable="true" spellcheck="false"></td>
+                          <td contenteditable="true" spellcheck="false"></td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <!-- Section ង Banner -->
+                    <div class="gradebook-banner mb-0">
+                      ង / លទ្ធផលនៃការប្រឡងបញ្ចប់ភូមិសិក្សា (ជាប់ ឬ ធ្លាក់)
+                    </div>
+                    <div class="border border-[#1e3a8a] py-1 px-2 text-center text-[9px] font-bold bg-[#f8fafc] mb-1.5 flex items-center justify-center gap-2">
+                      <span class="text-muted-foreground">លទ្ធផល ៖</span>
+                      <span class="text-blue-900 font-bold text-[9.5px]" contenteditable="true" spellcheck="false">${data.graduationResult ? `${data.graduationResult}` : '...................................................'}</span>
+                    </div>
+                  </div>
+
+                  <!-- Section ច: មូលវិចារ -->
+                  <div class="border border-[#1e3a8a]">
+                    <div class="gradebook-banner mb-0 text-center font-bold text-[9px] border-b border-[#1e3a8a] py-0.5">
+                      ច / មូលវិចារ
+                    </div>
+                    <div class="grid grid-cols-2 divide-x divide-[#1e3a8a] text-[8.5px]">
+                      <!-- Left: នាយកសាលា -->
+                      <div class="p-1 flex flex-col justify-between text-center" style="min-height: 72px;">
+                        <p class="font-bold text-foreground">នាយកសាលា</p>
+                        <div style="height: 30px;"></div>
+                        <p class="text-[7.5px] text-muted-foreground">ថ្ងៃទី..........ខែ..........ឆ្នាំ២០.....</p>
+                      </div>
+                      <!-- Right: គ្រូទទួលបន្ទុកថ្នាក់ -->
+                      <div class="p-1 flex flex-col justify-between text-center" style="min-height: 72px;">
+                        <p class="font-bold text-foreground">គ្រូទទួលបន្ទុកថ្នាក់</p>
+                        <div style="height: 30px;"></div>
+                        <p class="text-[7.5px] text-muted-foreground">ថ្ងៃទី..........ខែ..........ឆ្នាំ២០.....</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              <!-- Section 1 Banner -->
-              <div class="gradebook-banner mb-0">
-                ១ / លទ្ធផលនៃការសិក្សា
-              </div>
-
-              <!-- Section 1 Main Table -->
-              <table class="gradebook-table mb-3">
-                <thead>
-                  <tr>
-                    <th rowspan="2" style="width: 34px;">ល.រ</th>
-                    <th rowspan="2" style="width: 145px;">មុខវិជ្ជា</th>
-                    <th colspan="2">ឆមាស១</th>
-                    <th colspan="2">ឆមាស២</th>
-                    <th colspan="2">ប្រចាំឆ្នាំ</th>
-                    <th rowspan="2" style="width: 125px;">មូលវិចារ ហត្ថលេខា<br>និងឈ្មោះគ្រូ</th>
-                  </tr>
-                  <tr>
-                    <th style="width: 46px;">ម.ភាគ</th>
-                    <th style="width: 42px;">ចំណាត់</th>
-                    <th style="width: 46px;">ម.ភាគ</th>
-                    <th style="width: 42px;">ចំណាត់</th>
-                    <th style="width: 46px;">ម.ភាគ</th>
-                    <th style="width: 42px;">ចំណាត់</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${subjects.map(s => `
-                    <tr>
-                      <td style="font-size: 9px;">${s.indexKm}</td>
-                      <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">${escapeHtml(s.name)}</td>
-                      <td class="font-mono">${formatScoreNumber(s.sem1Score)}</td>
-                      <td class="font-mono font-semibold">${s.sem1Rank || ''}</td>
-                      <td class="font-mono">${formatScoreNumber(s.sem2Score)}</td>
-                      <td class="font-mono font-semibold">${s.sem2Rank || ''}</td>
-                      <td class="font-mono">${formatScoreNumber(s.annualScore)}</td>
-                      <td class="font-mono font-semibold">${s.annualRank || ''}</td>
-                      <td style="font-size: 9px; font-weight: 500;">${escapeHtml(s.remark || '')}</td>
-                    </tr>
-                  `).join('')}
-
-                  <!-- Row 17: សរុបពិន្ទុរួមប្រឡងឆមាស -->
-                  <tr style="background-color: #f8fafc; font-weight: 600;">
-                    <td style="font-size: 9px;">${summary.examTotal?.indexKm || ''}</td>
-                    <td style="text-align: left !important; padding-left: 6px !important;">${summary.examTotal?.name || 'សរុបពិន្ទុរួមប្រឡងឆមាស'}</td>
-                    <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.sem1)}</td>
-                    <td></td>
-                    <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.sem2)}</td>
-                    <td></td>
-                    <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.annual)}</td>
-                    <td></td>
-                    <td></td>
-                  </tr>
-
-                  <!-- Row 18: មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស -->
-                  <tr style="background-color: #f8fafc; font-weight: 600;">
-                    <td style="font-size: 9px;">${summary.examAvg?.indexKm || ''}</td>
-                    <td style="text-align: left !important; padding-left: 6px !important;">${summary.examAvg?.name || 'មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស'}</td>
-                    <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.sem1)}</td>
-                    <td class="font-mono font-bold text-blue-700">${summary.examAvg?.sem1Rank || ''}</td>
-                    <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.sem2)}</td>
-                    <td class="font-mono font-bold text-blue-700">${summary.examAvg?.sem2Rank || ''}</td>
-                    <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.annual)}</td>
-                    <td class="font-mono font-bold text-blue-700">${summary.examAvg?.annualRank || ''}</td>
-                    <td style="font-size: 9px; font-weight: 600; color: #1e3a8a;">${escapeHtml(summary.examAvg?.remark || '')}</td>
-                  </tr>
-
-                  <!-- Row 19: មធ្យមភាគពិន្ទុផ្ទៃក្នុងប្រចាំឆមាស -->
-                  <tr style="background-color: #f8fafc; font-weight: 600;">
-                    <td style="font-size: 9px;">${summary.internalAvg?.indexKm || ''}</td>
-                    <td style="text-align: left !important; padding-left: 6px !important;">${summary.internalAvg?.name || 'មធ្យមភាគពិន្ទុផ្ទៃក្នុងប្រចាំឆមាស'}</td>
-                    <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.sem1)}</td>
-                    <td></td>
-                    <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.sem2)}</td>
-                    <td></td>
-                    <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.annual)}</td>
-                    <td></td>
-                    <td></td>
-                  </tr>
-
-                  <!-- Row 20: មធ្យមភាគប្រចាំឆមាស -->
-                  <tr style="background-color: #f8fafc; font-weight: 600;">
-                    <td style="font-size: 9px;">${summary.overallAvg?.indexKm || ''}</td>
-                    <td style="text-align: left !important; padding-left: 6px !important;">${summary.overallAvg?.name || 'មធ្យមភាគប្រចាំឆមាស'}</td>
-                    <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.sem1)}</td>
-                    <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.sem1Rank || ''}</td>
-                    <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.sem2)}</td>
-                    <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.sem2Rank || ''}</td>
-                    <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.annual)}</td>
-                    <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.annualRank || ''}</td>
-                    <td style="font-size: 9px; font-weight: 600; color: #1e3a8a;">${escapeHtml(summary.overallAvg?.remark || '')}</td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <!-- Section 2 Banner -->
-              <div class="gradebook-banner mb-0" style="margin-top: 14px;">
-                ២ / ចំនួនអវត្តមានក្នុងមួយឆ្នាំ
-              </div>
-
-              <!-- Section 2 Table -->
-              <table class="gradebook-table">
-                <thead>
-                  <tr>
-                    <th style="width: 179px;">អវត្តមាន</th>
-                    <th>ឆមាសទី ១</th>
-                    <th>ឆមាសទី ២</th>
-                    <th>ប្រចាំឆ្នាំ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td style="text-align: left !important; padding-left: 10px !important; font-weight: 600;">មានច្បាប់</td>
-                    <td class="font-mono font-medium">${formatTwoDigits(att.excusedSem1)}</td>
-                    <td class="font-mono font-medium">${formatTwoDigits(att.excusedSem2)}</td>
-                    <td class="font-mono font-medium">${formatTwoDigits(att.excusedYear)}</td>
-                  </tr>
-                  <tr>
-                    <td style="text-align: left !important; padding-left: 10px !important; font-weight: 600;">ឥតច្បាប់</td>
-                    <td class="font-mono font-medium">${formatTwoDigits(att.unexcusedSem1)}</td>
-                    <td class="font-mono font-medium">${formatTwoDigits(att.unexcusedSem2)}</td>
-                    <td class="font-mono font-medium">${formatTwoDigits(att.unexcusedYear)}</td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
           </div>
         `;

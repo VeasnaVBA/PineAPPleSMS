@@ -7,6 +7,8 @@
 
 import { db } from '../database/db.js';
 import { SubjectService } from './subjectService.js';
+import { SchoolService } from './schoolService.js';
+import { SettingsService } from './settingsService.js';
 import { normalizeStudentRecord } from './studentService.js';
 import { isStudentActive } from './scoreService.js';
 
@@ -84,11 +86,12 @@ export const StudentGradeBookService = {
    * Fetch complete grade book data structure for a student in a class
    */
   async getStudentGradeBook({ classId, studentId, academicYear }) {
-    const [classes, rawStudents, allScores, allAttendance] = await Promise.all([
+    const [classes, rawStudents, allScores, allAttendance, schoolCatalog] = await Promise.all([
       db.getAll('classes'),
       db.getAll('students'),
       db.getAll('scores').catch(() => []),
-      db.getAll('attendance').catch(() => [])
+      db.getAll('attendance').catch(() => []),
+      SchoolService.getAllSchools().catch(() => [])
     ]);
 
     const targetClass = (classes || []).find(c => c.id === classId) || { id: classId, name: '—' };
@@ -99,6 +102,16 @@ export const StudentGradeBookService = {
 
     const currentStudent = classStudents.find(s => s.studentId === studentId || s.id === studentId) || classStudents[0] || null;
     const subjects = await this.getGradeBookSubjects(targetClass);
+
+    let matchedSchool = null;
+    const allSchools = Array.isArray(schoolCatalog) ? schoolCatalog : [];
+    if (targetClass.schoolId) {
+      matchedSchool = allSchools.find(s => s.id === targetClass.schoolId);
+    }
+    if (!matchedSchool && allSchools.length > 0) {
+      matchedSchool = allSchools[0];
+    }
+    const schoolNameKm = matchedSchool?.name || matchedSchool?.nameKm || (await SettingsService.get('school_name_km')) || '';
 
     // Filter relevant scores for this class & year
     const classScores = (allScores || []).filter(sc => {
@@ -459,14 +472,36 @@ export const StudentGradeBookService = {
       unexcusedYear: unexcusedSem1 + unexcusedSem2
     };
 
+    const sem1Eval = currentSummary.sem1Overall !== null && currentSummary.sem1Overall !== undefined
+      ? (SubjectService.calculateGrade(currentSummary.sem1Overall, 50)?.labelKm || '')
+      : '';
+    const sem2Eval = currentSummary.sem2Overall !== null && currentSummary.sem2Overall !== undefined
+      ? (SubjectService.calculateGrade(currentSummary.sem2Overall, 50)?.labelKm || '')
+      : '';
+    const annualEval = currentSummary.annualOverall !== null && currentSummary.annualOverall !== undefined
+      ? (SubjectService.calculateGrade(currentSummary.annualOverall, 50)?.labelKm || '')
+      : '';
+
+    const graduationResult = currentSummary.annualOverall !== null && currentSummary.annualOverall !== undefined
+      ? (currentSummary.annualOverall >= 25 ? 'ជាប់' : 'ធ្លាក់')
+      : '';
+
     return {
       student: currentStudent,
       className: targetClass.name || targetClass.grade || '—',
       academicYear: academicYear || targetClass.academicYear || new Date().getFullYear(),
+      schoolName: schoolNameKm,
+      totalStudents: classStudents.length,
       classStudents,
       subjects: subjectRows,
       summary: summaryRows,
-      attendance: attendanceStats
+      attendance: attendanceStats,
+      evaluation: {
+        sem1: sem1Eval,
+        sem2: sem2Eval,
+        annual: annualEval
+      },
+      graduationResult
     };
   }
 };
