@@ -5,15 +5,15 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.81';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.81';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.82';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.82';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js?v=3.0.81';
+import { ReportViewer } from '../components/reportViewer.js?v=3.0.82';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -1588,9 +1588,18 @@ export const ReportsPage = {
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
               }
+              .gradebook-table,
+              .gradebook-table thead,
+              .gradebook-table tbody,
+              .gradebook-table tr,
+              .gradebook-table th,
+              .gradebook-table td {
+                border-color: #1e3a8a !important;
+              }
               .gradebook-table {
                 width: 100% !important;
                 border-collapse: collapse !important;
+                border: 1px solid #1e3a8a !important;
                 font-size: ${cellFontSize} !important;
                 line-height: 1.1 !important;
                 table-layout: fixed !important;
@@ -1598,6 +1607,7 @@ export const ReportsPage = {
               }
               .gradebook-table thead tr {
                 height: 6.5mm !important;
+                border-bottom: 1px solid #1e3a8a !important;
               }
               .gradebook-table thead th {
                 height: 6.5mm !important;
@@ -1606,6 +1616,7 @@ export const ReportsPage = {
                 font-weight: bold !important;
                 font-size: ${cellFontSize} !important;
                 border: 1px solid #1e3a8a !important;
+                border-bottom: 1px solid #1e3a8a !important;
                 text-align: center !important;
                 vertical-align: middle !important;
                 padding: 1px 2px !important;
@@ -1617,11 +1628,17 @@ export const ReportsPage = {
               .gradebook-table tbody tr {
                 height: ${calculatedRowHeightMm}mm !important;
                 max-height: ${calculatedRowHeightMm}mm !important;
+                border-bottom: 1px solid #1e3a8a !important;
+                border-color: #1e3a8a !important;
               }
               .gradebook-table tbody td {
                 height: ${calculatedRowHeightMm}mm !important;
                 max-height: ${calculatedRowHeightMm}mm !important;
                 border: 1px solid #1e3a8a !important;
+                border-top: 1px solid #1e3a8a !important;
+                border-bottom: 1px solid #1e3a8a !important;
+                border-left: 1px solid #1e3a8a !important;
+                border-right: 1px solid #1e3a8a !important;
                 text-align: center !important;
                 vertical-align: middle !important;
                 padding: 0 2px !important;
@@ -1700,9 +1717,21 @@ export const ReportsPage = {
                   page-break-inside: avoid !important;
                   break-inside: avoid !important;
                 }
+                .gradebook-table,
+                .gradebook-table thead,
+                .gradebook-table tbody,
+                .gradebook-table tr,
+                .gradebook-table th,
+                .gradebook-table td {
+                  border-color: #1e3a8a !important;
+                }
                 .gradebook-table thead th {
                   background-color: #dbeafe !important;
                   color: #1e3a8a !important;
+                  border: 1px solid #1e3a8a !important;
+                }
+                .gradebook-table tbody td {
+                  border: 1px solid #1e3a8a !important;
                 }
                 .gradebook-banner {
                   background-color: #1e3a8a !important;
@@ -1734,7 +1763,7 @@ export const ReportsPage = {
                     </div>
 
                     <!-- Main Score Table -->
-                    <table class="gradebook-table">
+                    <table class="gradebook-table no-shadcn">
                       <thead>
                         <tr style="height: 6.5mm !important;">
                           <th rowspan="2" style="width: 22px;">ល.រ</th>
@@ -1848,7 +1877,7 @@ export const ReportsPage = {
                     ខ / ចំនួនអវត្តមានក្នុងឆ្នាំសិក្សា
                   </div>
                   <!-- Section ខ Table -->
-                  <table class="gradebook-table mb-1">
+                  <table class="gradebook-table no-shadcn mb-1">
                     <thead>
                       <tr style="height: 6.5mm !important;">
                         <th style="width: 34%;">អវត្តមាន</th>
@@ -1878,7 +1907,7 @@ export const ReportsPage = {
                     គ / ការវាយតម្លៃ
                   </div>
                   <!-- Section គ Table -->
-                  <table class="gradebook-table mb-1">
+                  <table class="gradebook-table no-shadcn mb-1">
                     <thead>
                       <tr style="height: 6.5mm !important;">
                         <th style="width: 34%;">ផ្នែកទាំង៤</th>
@@ -1920,7 +1949,7 @@ export const ReportsPage = {
                     ឃ / ការសរសើរ
                   </div>
                   <!-- Section ឃ Table -->
-                  <table class="gradebook-table mb-1">
+                  <table class="gradebook-table no-shadcn mb-1">
                     <thead>
                       <tr style="height: 6.5mm !important;">
                         <th style="width: 34%;">បានទទួលការសរសើរ</th>

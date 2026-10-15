@@ -844,9 +844,9 @@ table th.text-right {
   text-align: right !important;
 }
 
-table:not(.no-shadcn):not(.seip-score-table) td,
-table:not(.no-shadcn):not(.seip-score-table) tbody tr > td,
-table:not(.no-shadcn):not(.seip-score-table) tbody tr > th {
+table:not(.no-shadcn):not(.seip-score-table):not(.gradebook-table) td,
+table:not(.no-shadcn):not(.seip-score-table):not(.gradebook-table) tbody tr > td,
+table:not(.no-shadcn):not(.seip-score-table):not(.gradebook-table) tbody tr > th {
   padding: 0.75rem 1rem;
   vertical-align: middle;
   border-bottom: 1px solid hsl(var(--border) / 0.4) !important;
@@ -871,8 +871,8 @@ table thead {
   z-index: 40 !important;
 }
 
-table:not(.no-shadcn) thead th,
-table thead th {
+table:not(.no-shadcn):not(.gradebook-table) thead th,
+table:not(.gradebook-table) thead th {
   position: sticky !important;
   top: 0 !important;
   z-index: 40 !important;
