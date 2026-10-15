@@ -5,15 +5,15 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.72';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.72';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.73';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.73';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js?v=3.0.72';
+import { ReportViewer } from '../components/reportViewer.js?v=3.0.73';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -1803,7 +1803,7 @@ export const ReportsPage = {
                     <!-- Top Line: School Name & Student Count in Class -->
                     <div class="flex items-center justify-between text-[8px] font-bold mb-0.5 px-0.5 text-black leading-tight">
                       <div>
-                        <span>វិទ្យាល័យ/សាលា ៖ </span>
+                        <span>សាលា ៖ </span>
                         <span class="text-blue-900 font-semibold" contenteditable="true" spellcheck="false">${escapeHtml(data.schoolName || '...........................................')}</span>
                       </div>
                       <div>
