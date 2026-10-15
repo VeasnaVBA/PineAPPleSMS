@@ -5,15 +5,15 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.83';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.83';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.84';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.84';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js?v=3.0.83';
+import { ReportViewer } from '../components/reportViewer.js?v=3.0.84';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -1532,6 +1532,12 @@ export const ReportsPage = {
         const className = data.className || '—';
         const academicYear = data.academicYear || '—';
 
+        let genderKm = 'ប្រុស';
+        if (student.gender) {
+          const g = String(student.gender).trim().toLowerCase();
+          genderKm = (g === 'female' || g === 'f' || g === 'ស្រី' || g.includes('female') || g.includes('ស្រី')) ? 'ស្រី' : 'ប្រុស';
+        }
+
         const subjects = data.subjects || [];
         const summary = data.summary || {};
         const att = data.attendance || {};
@@ -1746,11 +1752,13 @@ export const ReportsPage = {
               <div class="gradebook-page-box">
                 <div class="flex flex-col justify-between h-full">
                   <div>
-                    <!-- Top Header: Student Name, Class, Academic Year -->
+                    <!-- Top Header: Student Name, Gender, Class, Academic Year -->
                     <div class="flex items-center justify-between font-bold text-[9px] mb-1 px-0.5 text-black whitespace-nowrap" style="min-height: 5mm;">
                       <div>
                         <span>ឈ្មោះសិស្ស៖ </span>
                         <span class="font-khmer-muol text-[#1e3a8a] text-[9.5px]" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">${escapeHtml(studentName)}</span>
+                        <span class="ml-2">ភេទ៖ </span>
+                        <span class="font-bold text-[#1e3a8a]" contenteditable="true" spellcheck="false">${escapeHtml(genderKm)}</span>
                       </div>
                       <div class="text-center">
                         <span>ថ្នាក់ទី៖ </span>
