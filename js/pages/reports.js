@@ -5,15 +5,15 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.80';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.80';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.81';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.81';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js?v=3.0.80';
+import { ReportViewer } from '../components/reportViewer.js?v=3.0.81';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -1547,27 +1547,10 @@ export const ReportsPage = {
         // Right Page: 10 items (9 data rows + Section ង box) fit ~10.2mm max per item.
         const calculatedRowHeightMm = Math.max(7.0, Math.min(10.2, Number((168 / tbodyRowsCount).toFixed(2))));
 
-        let cellFontSize = '8px';
-        let nameFontSize = '8.5px';
-        let bannerPadding = '2px 4px';
-        let bannerFontSize = '9px';
-
-        if (calculatedRowHeightMm >= 9.8) {
-          cellFontSize = '8.5px';
-          nameFontSize = '9px';
-          bannerPadding = '2.5px 4px';
-          bannerFontSize = '9.5px';
-        } else if (calculatedRowHeightMm >= 8.5) {
-          cellFontSize = '8px';
-          nameFontSize = '8.5px';
-          bannerPadding = '2px 4px';
-          bannerFontSize = '9px';
-        } else {
-          cellFontSize = '7.5px';
-          nameFontSize = '8px';
-          bannerPadding = '1.5px 3px';
-          bannerFontSize = '8.5px';
-        }
+        const cellFontSize = '9px';
+        const nameFontSize = '9px';
+        const bannerPadding = '2px 4px';
+        const bannerFontSize = '9.5px';
 
         contentContainer.innerHTML = `
           <div class="report-explicit-page gradebook-landscape-spread bg-white text-black font-khmer mx-auto select-none box-border" style="width: 100%; height: 100%; max-width: 100%; font-family: 'Kantumruy Pro', 'Khmer OS Siemreap', sans-serif;">
@@ -1641,7 +1624,7 @@ export const ReportsPage = {
                 border: 1px solid #1e3a8a !important;
                 text-align: center !important;
                 vertical-align: middle !important;
-                padding: 1px 3px !important;
+                padding: 0 2px !important;
                 font-size: ${cellFontSize} !important;
                 line-height: 1.1 !important;
                 box-sizing: border-box !important;
@@ -1754,20 +1737,20 @@ export const ReportsPage = {
                     <table class="gradebook-table">
                       <thead>
                         <tr style="height: 6.5mm !important;">
-                          <th rowspan="2" style="width: 24px;">ល.រ</th>
-                          <th rowspan="2" style="width: 110px;">មុខវិជ្ជា</th>
+                          <th rowspan="2" style="width: 22px;">ល.រ</th>
+                          <th rowspan="2" style="width: 104px;">មុខវិជ្ជា</th>
                           <th colspan="2">ឆមាស១</th>
                           <th colspan="2">ឆមាស២</th>
                           <th colspan="2">ប្រចាំឆ្នាំ</th>
-                          <th rowspan="2" style="width: 86px;">មូលវិចារ ហត្ថលេខា<br>និងឈ្មោះគ្រូ</th>
+                          <th rowspan="2" style="width: 80px;">មូលវិចារ ហត្ថលេខា<br>និងឈ្មោះគ្រូ</th>
                         </tr>
                         <tr style="height: 6.5mm !important;">
-                          <th style="width: 30px;">ម.ភាគ</th>
-                          <th style="width: 32px;">ចំណាត់ថ្នាក់</th>
-                          <th style="width: 30px;">ម.ភាគ</th>
-                          <th style="width: 32px;">ចំណាត់ថ្នាក់</th>
-                          <th style="width: 30px;">ម.ភាគ</th>
-                          <th style="width: 32px;">ចំណាត់ថ្នាក់</th>
+                          <th style="width: 32px;">ម.ភាគ</th>
+                          <th style="width: 38px;">ចំណាត់ថ្នាក់</th>
+                          <th style="width: 32px;">ម.ភាគ</th>
+                          <th style="width: 38px;">ចំណាត់ថ្នាក់</th>
+                          <th style="width: 32px;">ម.ភាគ</th>
+                          <th style="width: 38px;">ចំណាត់ថ្នាក់</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1972,8 +1955,8 @@ export const ReportsPage = {
                   <div class="gradebook-banner mb-0">
                     ង / លទ្ធផលនៃការប្រឡងបញ្ចប់ភូមិសិក្សា (ជាប់ ឬ ធ្លាក់)
                   </div>
-                  <div class="border border-[#1e3a8a] py-0.5 px-2 text-center text-[8.5px] font-bold bg-[#f8fafc] mb-1 flex items-center justify-center gap-2" style="height: ${calculatedRowHeightMm}mm; box-sizing: border-box;">
-                    <span class="text-muted-foreground">លទ្ធផល ៖</span>
+                  <div class="border border-[#1e3a8a] py-0.5 px-2 text-center text-[9px] font-bold bg-[#f8fafc] mb-1 flex items-center justify-center gap-2" style="height: ${calculatedRowHeightMm}mm; box-sizing: border-box;">
+                    <span class="text-muted-foreground text-[9px]">លទ្ធផល ៖</span>
                     <span class="text-blue-900 font-bold text-[9px]" contenteditable="true" spellcheck="false">${data.graduationResult || ''}</span>
                   </div>
 
@@ -1982,18 +1965,18 @@ export const ReportsPage = {
                     <div class="gradebook-banner mb-0">
                       ច / មូលវិចារ
                     </div>
-                    <div class="grid grid-cols-2 divide-x divide-[#1e3a8a] text-[8px] flex-1 min-h-0">
+                    <div class="grid grid-cols-2 divide-x divide-[#1e3a8a] text-[9px] flex-1 min-h-0">
                       <!-- Left: នាយកសាលា -->
                       <div class="p-1.5 flex flex-col justify-between text-center h-full">
-                        <p class="font-bold text-foreground">នាយកសាលា</p>
+                        <p class="font-bold text-foreground text-[9px]">នាយកសាលា</p>
                         <div class="flex-1"></div>
-                        <p class="text-[7.5px] text-muted-foreground pb-0.5">ថ្ងៃទី &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ខែ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ឆ្នាំ២០</p>
+                        <p class="text-[8px] text-muted-foreground pb-0.5">ថ្ងៃទី &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ខែ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ឆ្នាំ២០</p>
                       </div>
                       <!-- Right: គ្រូទទួលបន្ទុកថ្នាក់ -->
                       <div class="p-1.5 flex flex-col justify-between text-center h-full">
-                        <p class="font-bold text-foreground">គ្រូទទួលបន្ទុកថ្នាក់</p>
+                        <p class="font-bold text-foreground text-[9px]">គ្រូទទួលបន្ទុកថ្នាក់</p>
                         <div class="flex-1"></div>
-                        <p class="text-[7.5px] text-muted-foreground pb-0.5">ថ្ងៃទី &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ខែ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ឆ្នាំ២០</p>
+                        <p class="text-[8px] text-muted-foreground pb-0.5">ថ្ងៃទី &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ខែ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ឆ្នាំ២០</p>
                       </div>
                     </div>
                   </div>
