@@ -5,15 +5,15 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.78';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.78';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.79';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.79';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js?v=3.0.78';
+import { ReportViewer } from '../components/reportViewer.js?v=3.0.79';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -1849,11 +1849,11 @@ export const ReportsPage = {
                   <div class="flex items-center justify-between text-[9px] font-bold mb-0.5 px-0.5 text-black" style="min-height: 5mm;">
                     <div>
                       <span>សាលា ៖ </span>
-                      <span class="text-[#1e3a8a] font-semibold" contenteditable="true" spellcheck="false">${escapeHtml(data.schoolName || '...........................................')}</span>
+                      <span class="text-[#1e3a8a] font-semibold" contenteditable="true" spellcheck="false">${escapeHtml(data.schoolName || '')}</span>
                     </div>
                     <div>
                       <span>ចំនួនសិស្សក្នុងថ្នាក់ ៖ </span>
-                      <span class="font-mono font-bold text-[#1e3a8a]" contenteditable="true" spellcheck="false">${escapeHtml(String(data.totalStudents || '.....'))}</span>
+                      <span class="font-mono font-bold text-[#1e3a8a]" contenteditable="true" spellcheck="false">${escapeHtml(String(data.totalStudents || ''))}</span>
                       <span> នាក់</span>
                     </div>
                   </div>
@@ -1972,7 +1972,7 @@ export const ReportsPage = {
                   </div>
                   <div class="border border-[#1e3a8a] py-0.5 px-2 text-center text-[8.5px] font-bold bg-[#f8fafc] mb-1 flex items-center justify-center gap-2" style="height: ${calculatedRowHeightMm}mm; box-sizing: border-box;">
                     <span class="text-muted-foreground">លទ្ធផល ៖</span>
-                    <span class="text-blue-900 font-bold text-[9px]" contenteditable="true" spellcheck="false">${data.graduationResult ? `${data.graduationResult}` : '...................................................'}</span>
+                    <span class="text-blue-900 font-bold text-[9px]" contenteditable="true" spellcheck="false">${data.graduationResult || ''}</span>
                   </div>
 
                   <!-- Section ច: មូលវិចារ -->
@@ -1984,22 +1984,14 @@ export const ReportsPage = {
                       <!-- Left: នាយកសាលា -->
                       <div class="p-1.5 flex flex-col justify-between text-center h-full">
                         <p class="font-bold text-foreground">នាយកសាលា</p>
-                        <div class="flex-1 flex flex-col justify-around py-1 px-3">
-                          <div class="border-b border-dashed border-[#1e3a8a]/20 w-full"></div>
-                          <div class="border-b border-dashed border-[#1e3a8a]/20 w-full"></div>
-                          <div class="border-b border-dashed border-[#1e3a8a]/20 w-full"></div>
-                        </div>
-                        <p class="text-[7.5px] text-muted-foreground pb-0.5">ថ្ងៃទី..........ខែ..........ឆ្នាំ២០.....</p>
+                        <div class="flex-1"></div>
+                        <p class="text-[7.5px] text-muted-foreground pb-0.5">ថ្ងៃទី &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ខែ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ឆ្នាំ២០</p>
                       </div>
                       <!-- Right: គ្រូទទួលបន្ទុកថ្នាក់ -->
                       <div class="p-1.5 flex flex-col justify-between text-center h-full">
                         <p class="font-bold text-foreground">គ្រូទទួលបន្ទុកថ្នាក់</p>
-                        <div class="flex-1 flex flex-col justify-around py-1 px-3">
-                          <div class="border-b border-dashed border-[#1e3a8a]/20 w-full"></div>
-                          <div class="border-b border-dashed border-[#1e3a8a]/20 w-full"></div>
-                          <div class="border-b border-dashed border-[#1e3a8a]/20 w-full"></div>
-                        </div>
-                        <p class="text-[7.5px] text-muted-foreground pb-0.5">ថ្ងៃទី..........ខែ..........ឆ្នាំ២០.....</p>
+                        <div class="flex-1"></div>
+                        <p class="text-[7.5px] text-muted-foreground pb-0.5">ថ្ងៃទី &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ខែ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ឆ្នាំ២០</p>
                       </div>
                     </div>
                   </div>
