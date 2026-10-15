@@ -32,6 +32,23 @@ export function formatScoreNumber(val) {
   return num.toFixed(2);
 }
 
+/**
+ * 4 Khmer Grades: ល្អ, ល្អបង្គួរ, មធ្យម, ខ្សោយ
+ * If subject full score is 100, < 50 is ខ្សោយ
+ */
+export function calculateKhmerGrade(score, fullScore = 50) {
+  if (score === null || score === undefined || score === '') return '';
+  const s = Number(score);
+  if (isNaN(s)) return '';
+  const fs = Number(fullScore) > 0 ? Number(fullScore) : 50;
+  const percentage = Math.max(0, (s / fs) * 100);
+
+  if (percentage >= 70) return 'ល្អ';
+  if (percentage >= 60) return 'ល្អបង្គួរ';
+  if (percentage >= 50) return 'មធ្យម';
+  return 'ខ្សោយ';
+}
+
 export const StudentGradeBookService = {
   /**
    * Get active students for a class
@@ -480,8 +497,7 @@ export const StudentGradeBookService = {
       let remark = '';
       if (ann !== null && ann !== undefined) {
         const fullScore = SubjectService.getSubjectFullScore(sub, targetClass?.name || 'G7');
-        const gradeInfo = SubjectService.calculateGrade(ann, fullScore);
-        remark = gradeInfo?.labelKm || '';
+        remark = calculateKhmerGrade(ann, fullScore);
       }
 
       return {
@@ -504,12 +520,12 @@ export const StudentGradeBookService = {
     const nextIdx = subjects.length + 1;
     let examAvgRemark = '';
     if (currentSummary.annualExamAvg !== null && currentSummary.annualExamAvg !== undefined) {
-      examAvgRemark = SubjectService.calculateGrade(currentSummary.annualExamAvg, 50)?.labelKm || '';
+      examAvgRemark = calculateKhmerGrade(currentSummary.annualExamAvg, 50);
     }
 
     let overallAvgRemark = '';
     if (currentSummary.annualOverall !== null && currentSummary.annualOverall !== undefined) {
-      overallAvgRemark = SubjectService.calculateGrade(currentSummary.annualOverall, 50)?.labelKm || '';
+      overallAvgRemark = calculateKhmerGrade(currentSummary.annualOverall, 50);
     }
 
     const summaryRows = {
