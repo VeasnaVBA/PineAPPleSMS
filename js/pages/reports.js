@@ -5,15 +5,15 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.77';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.77';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.78';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.78';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js?v=3.0.77';
+import { ReportViewer } from '../components/reportViewer.js?v=3.0.78';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -1844,156 +1844,162 @@ export const ReportsPage = {
 
               <!-- ================= RIGHT PAGE: Sections ខ, គ, ឃ, ង, ច ================= -->
               <div class="gradebook-page-box">
-                <div class="flex flex-col justify-between h-full">
-                  <div>
-                    <!-- Top Line: School Name & Student Count in Class -->
-                    <div class="flex items-center justify-between text-[9px] font-bold mb-1 px-0.5 text-black" style="min-height: 5mm;">
-                      <div>
-                        <span>សាលា ៖ </span>
-                        <span class="text-[#1e3a8a] font-semibold" contenteditable="true" spellcheck="false">${escapeHtml(data.schoolName || '...........................................')}</span>
-                      </div>
-                      <div>
-                        <span>ចំនួនសិស្សក្នុងថ្នាក់ ៖ </span>
-                        <span class="font-mono font-bold text-[#1e3a8a]" contenteditable="true" spellcheck="false">${escapeHtml(String(data.totalStudents || '.....'))}</span>
-                        <span> នាក់</span>
-                      </div>
+                <div class="flex flex-col h-full gap-1">
+                  <!-- Top Line: School Name & Student Count in Class -->
+                  <div class="flex items-center justify-between text-[9px] font-bold mb-0.5 px-0.5 text-black" style="min-height: 5mm;">
+                    <div>
+                      <span>សាលា ៖ </span>
+                      <span class="text-[#1e3a8a] font-semibold" contenteditable="true" spellcheck="false">${escapeHtml(data.schoolName || '...........................................')}</span>
                     </div>
-
-                    <!-- Section ខ Banner -->
-                    <div class="gradebook-banner mb-0">
-                      ខ / ចំនួនអវត្តមានក្នុងឆ្នាំសិក្សា
-                    </div>
-                    <!-- Section ខ Table -->
-                    <table class="gradebook-table mb-1">
-                      <thead>
-                        <tr style="height: 6.5mm !important;">
-                          <th style="width: 34%;">អវត្តមាន</th>
-                          <th>ឆមាសទី១</th>
-                          <th>ឆមាសទី២</th>
-                          <th>ប្រចាំឆ្នាំ</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
-                          <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">-មានច្បាប់</td>
-                          <td class="font-mono font-medium">${formatTwoDigits(att.excusedSem1)}</td>
-                          <td class="font-mono font-medium">${formatTwoDigits(att.excusedSem2)}</td>
-                          <td class="font-mono font-medium">${formatTwoDigits(att.excusedYear)}</td>
-                        </tr>
-                        <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
-                          <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">-ឥតច្បាប់</td>
-                          <td class="font-mono font-medium">${formatTwoDigits(att.unexcusedSem1)}</td>
-                          <td class="font-mono font-medium">${formatTwoDigits(att.unexcusedSem2)}</td>
-                          <td class="font-mono font-medium">${formatTwoDigits(att.unexcusedYear)}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-
-                    <!-- Section គ Banner -->
-                    <div class="gradebook-banner mb-0">
-                      គ / ការវាយតម្លៃ
-                    </div>
-                    <!-- Section គ Table -->
-                    <table class="gradebook-table mb-1">
-                      <thead>
-                        <tr style="height: 6.5mm !important;">
-                          <th style="width: 34%;">ផ្នែកទាំង៤</th>
-                          <th>ឆមាសទី១</th>
-                          <th>ឆមាសទី២</th>
-                          <th>ប្រចាំឆ្នាំ</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
-                          <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">១- ការសិក្សា</td>
-                          <td contenteditable="true" spellcheck="false" class="font-semibold text-blue-900">${escapeHtml(evalData.sem1 || '')}</td>
-                          <td contenteditable="true" spellcheck="false" class="font-semibold text-blue-900">${escapeHtml(evalData.sem2 || '')}</td>
-                          <td contenteditable="true" spellcheck="false" class="font-semibold text-blue-900">${escapeHtml(evalData.annual || '')}</td>
-                        </tr>
-                        <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
-                          <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">២- សីលធម៌រស់នៅ</td>
-                          <td contenteditable="true" spellcheck="false"></td>
-                          <td contenteditable="true" spellcheck="false"></td>
-                          <td contenteditable="true" spellcheck="false"></td>
-                        </tr>
-                        <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
-                          <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">៣- ពលកម្ម-បង្កបង្កើនផល</td>
-                          <td contenteditable="true" spellcheck="false"></td>
-                          <td contenteditable="true" spellcheck="false"></td>
-                          <td contenteditable="true" spellcheck="false"></td>
-                        </tr>
-                        <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
-                          <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">៤- សុខភាព-អនាម័យ</td>
-                          <td contenteditable="true" spellcheck="false"></td>
-                          <td contenteditable="true" spellcheck="false"></td>
-                          <td contenteditable="true" spellcheck="false"></td>
-                        </tr>
-                      </tbody>
-                    </table>
-
-                    <!-- Section ឃ Banner -->
-                    <div class="gradebook-banner mb-0">
-                      ឃ / ការសរសើរ
-                    </div>
-                    <!-- Section ឃ Table -->
-                    <table class="gradebook-table mb-1">
-                      <thead>
-                        <tr style="height: 6.5mm !important;">
-                          <th style="width: 34%;">បានទទួលការសរសើរ</th>
-                          <th>ឆមាសទី១</th>
-                          <th>ឆមាសទី២</th>
-                          <th>ប្រចាំឆ្នាំ</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
-                          <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">-ប័ណ្ណសរសើរចំនួន</td>
-                          <td contenteditable="true" spellcheck="false"></td>
-                          <td contenteditable="true" spellcheck="false"></td>
-                          <td contenteditable="true" spellcheck="false"></td>
-                        </tr>
-                        <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
-                          <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">-លិខិតសរសើរ</td>
-                          <td contenteditable="true" spellcheck="false"></td>
-                          <td contenteditable="true" spellcheck="false"></td>
-                          <td contenteditable="true" spellcheck="false"></td>
-                        </tr>
-                        <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
-                          <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">-សេចក្តីបណ្ណលើកទឹកចិត្ត</td>
-                          <td contenteditable="true" spellcheck="false"></td>
-                          <td contenteditable="true" spellcheck="false"></td>
-                          <td contenteditable="true" spellcheck="false"></td>
-                        </tr>
-                      </tbody>
-                    </table>
-
-                    <!-- Section ង Banner -->
-                    <div class="gradebook-banner mb-0">
-                      ង / លទ្ធផលនៃការប្រឡងបញ្ចប់ភូមិសិក្សា (ជាប់ ឬ ធ្លាក់)
-                    </div>
-                    <div class="border border-[#1e3a8a] py-0.5 px-2 text-center text-[8.5px] font-bold bg-[#f8fafc] mb-1 flex items-center justify-center gap-2" style="height: ${calculatedRowHeightMm}mm; box-sizing: border-box;">
-                      <span class="text-muted-foreground">លទ្ធផល ៖</span>
-                      <span class="text-blue-900 font-bold text-[9px]" contenteditable="true" spellcheck="false">${data.graduationResult ? `${data.graduationResult}` : '...................................................'}</span>
+                    <div>
+                      <span>ចំនួនសិស្សក្នុងថ្នាក់ ៖ </span>
+                      <span class="font-mono font-bold text-[#1e3a8a]" contenteditable="true" spellcheck="false">${escapeHtml(String(data.totalStudents || '.....'))}</span>
+                      <span> នាក់</span>
                     </div>
                   </div>
 
+                  <!-- Section ខ Banner -->
+                  <div class="gradebook-banner mb-0">
+                    ខ / ចំនួនអវត្តមានក្នុងឆ្នាំសិក្សា
+                  </div>
+                  <!-- Section ខ Table -->
+                  <table class="gradebook-table mb-1">
+                    <thead>
+                      <tr style="height: 6.5mm !important;">
+                        <th style="width: 34%;">អវត្តមាន</th>
+                        <th>ឆមាសទី១</th>
+                        <th>ឆមាសទី២</th>
+                        <th>ប្រចាំឆ្នាំ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
+                        <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">-មានច្បាប់</td>
+                        <td class="font-mono font-medium">${formatTwoDigits(att.excusedSem1)}</td>
+                        <td class="font-mono font-medium">${formatTwoDigits(att.excusedSem2)}</td>
+                        <td class="font-mono font-medium">${formatTwoDigits(att.excusedYear)}</td>
+                      </tr>
+                      <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
+                        <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">-ឥតច្បាប់</td>
+                        <td class="font-mono font-medium">${formatTwoDigits(att.unexcusedSem1)}</td>
+                        <td class="font-mono font-medium">${formatTwoDigits(att.unexcusedSem2)}</td>
+                        <td class="font-mono font-medium">${formatTwoDigits(att.unexcusedYear)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <!-- Section គ Banner -->
+                  <div class="gradebook-banner mb-0">
+                    គ / ការវាយតម្លៃ
+                  </div>
+                  <!-- Section គ Table -->
+                  <table class="gradebook-table mb-1">
+                    <thead>
+                      <tr style="height: 6.5mm !important;">
+                        <th style="width: 34%;">ផ្នែកទាំង៤</th>
+                        <th>ឆមាសទី១</th>
+                        <th>ឆមាសទី២</th>
+                        <th>ប្រចាំឆ្នាំ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
+                        <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">១- ការសិក្សា</td>
+                        <td contenteditable="true" spellcheck="false" class="font-semibold text-blue-900">${escapeHtml(evalData.sem1 || '')}</td>
+                        <td contenteditable="true" spellcheck="false" class="font-semibold text-blue-900">${escapeHtml(evalData.sem2 || '')}</td>
+                        <td contenteditable="true" spellcheck="false" class="font-semibold text-blue-900">${escapeHtml(evalData.annual || '')}</td>
+                      </tr>
+                      <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
+                        <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">២- សីលធម៌រស់នៅ</td>
+                        <td contenteditable="true" spellcheck="false"></td>
+                        <td contenteditable="true" spellcheck="false"></td>
+                        <td contenteditable="true" spellcheck="false"></td>
+                      </tr>
+                      <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
+                        <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">៣- ពលកម្ម-បង្កបង្កើនផល</td>
+                        <td contenteditable="true" spellcheck="false"></td>
+                        <td contenteditable="true" spellcheck="false"></td>
+                        <td contenteditable="true" spellcheck="false"></td>
+                      </tr>
+                      <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
+                        <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">៤- សុខភាព-អនាម័យ</td>
+                        <td contenteditable="true" spellcheck="false"></td>
+                        <td contenteditable="true" spellcheck="false"></td>
+                        <td contenteditable="true" spellcheck="false"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <!-- Section ឃ Banner -->
+                  <div class="gradebook-banner mb-0">
+                    ឃ / ការសរសើរ
+                  </div>
+                  <!-- Section ឃ Table -->
+                  <table class="gradebook-table mb-1">
+                    <thead>
+                      <tr style="height: 6.5mm !important;">
+                        <th style="width: 34%;">បានទទួលការសរសើរ</th>
+                        <th>ឆមាសទី១</th>
+                        <th>ឆមាសទី២</th>
+                        <th>ប្រចាំឆ្នាំ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
+                        <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">-ប័ណ្ណសរសើរចំនួន</td>
+                        <td contenteditable="true" spellcheck="false"></td>
+                        <td contenteditable="true" spellcheck="false"></td>
+                        <td contenteditable="true" spellcheck="false"></td>
+                      </tr>
+                      <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
+                        <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">-លិខិតសរសើរ</td>
+                        <td contenteditable="true" spellcheck="false"></td>
+                        <td contenteditable="true" spellcheck="false"></td>
+                        <td contenteditable="true" spellcheck="false"></td>
+                      </tr>
+                      <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
+                        <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">-សេចក្តីបណ្ណលើកទឹកចិត្ត</td>
+                        <td contenteditable="true" spellcheck="false"></td>
+                        <td contenteditable="true" spellcheck="false"></td>
+                        <td contenteditable="true" spellcheck="false"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <!-- Section ង Banner -->
+                  <div class="gradebook-banner mb-0">
+                    ង / លទ្ធផលនៃការប្រឡងបញ្ចប់ភូមិសិក្សា (ជាប់ ឬ ធ្លាក់)
+                  </div>
+                  <div class="border border-[#1e3a8a] py-0.5 px-2 text-center text-[8.5px] font-bold bg-[#f8fafc] mb-1 flex items-center justify-center gap-2" style="height: ${calculatedRowHeightMm}mm; box-sizing: border-box;">
+                    <span class="text-muted-foreground">លទ្ធផល ៖</span>
+                    <span class="text-blue-900 font-bold text-[9px]" contenteditable="true" spellcheck="false">${data.graduationResult ? `${data.graduationResult}` : '...................................................'}</span>
+                  </div>
+
                   <!-- Section ច: មូលវិចារ -->
-                  <div class="border border-[#1e3a8a]">
+                  <div class="border border-[#1e3a8a] flex-1 flex flex-col min-h-0">
                     <div class="gradebook-banner mb-0">
                       ច / មូលវិចារ
                     </div>
-                    <div class="grid grid-cols-2 divide-x divide-[#1e3a8a] text-[8px]">
+                    <div class="grid grid-cols-2 divide-x divide-[#1e3a8a] text-[8px] flex-1 min-h-0">
                       <!-- Left: នាយកសាលា -->
-                      <div class="p-1 flex flex-col justify-between text-center" style="min-height: 52px;">
+                      <div class="p-1.5 flex flex-col justify-between text-center h-full">
                         <p class="font-bold text-foreground">នាយកសាលា</p>
-                        <div style="height: 18px;"></div>
-                        <p class="text-[7.5px] text-muted-foreground">ថ្ងៃទី..........ខែ..........ឆ្នាំ២០.....</p>
+                        <div class="flex-1 flex flex-col justify-around py-1 px-3">
+                          <div class="border-b border-dashed border-[#1e3a8a]/20 w-full"></div>
+                          <div class="border-b border-dashed border-[#1e3a8a]/20 w-full"></div>
+                          <div class="border-b border-dashed border-[#1e3a8a]/20 w-full"></div>
+                        </div>
+                        <p class="text-[7.5px] text-muted-foreground pb-0.5">ថ្ងៃទី..........ខែ..........ឆ្នាំ២០.....</p>
                       </div>
                       <!-- Right: គ្រូទទួលបន្ទុកថ្នាក់ -->
-                      <div class="p-1 flex flex-col justify-between text-center" style="min-height: 52px;">
+                      <div class="p-1.5 flex flex-col justify-between text-center h-full">
                         <p class="font-bold text-foreground">គ្រូទទួលបន្ទុកថ្នាក់</p>
-                        <div style="height: 18px;"></div>
-                        <p class="text-[7.5px] text-muted-foreground">ថ្ងៃទី..........ខែ..........ឆ្នាំ២០.....</p>
+                        <div class="flex-1 flex flex-col justify-around py-1 px-3">
+                          <div class="border-b border-dashed border-[#1e3a8a]/20 w-full"></div>
+                          <div class="border-b border-dashed border-[#1e3a8a]/20 w-full"></div>
+                          <div class="border-b border-dashed border-[#1e3a8a]/20 w-full"></div>
+                        </div>
+                        <p class="text-[7.5px] text-muted-foreground pb-0.5">ថ្ងៃទី..........ខែ..........ឆ្នាំ២០.....</p>
                       </div>
                     </div>
                   </div>
