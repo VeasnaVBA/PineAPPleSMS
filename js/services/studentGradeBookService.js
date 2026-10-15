@@ -532,7 +532,7 @@ export const StudentGradeBookService = {
       examTotal: {
         index: nextIdx,
         indexKm: toKhmerNumerals(nextIdx),
-        name: 'សរុបពិន្ទុរួមប្រឡងឆមាស',
+        name: 'ពិន្ទុសរុប',
         sem1: currentSummary.sem1ExamTotal,
         sem2: currentSummary.sem2ExamTotal,
         annual: currentSummary.annualExamTotal
@@ -540,7 +540,7 @@ export const StudentGradeBookService = {
       examAvg: {
         index: nextIdx + 1,
         indexKm: toKhmerNumerals(nextIdx + 1),
-        name: 'មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស',
+        name: 'មធ្យមភាគប្រឡងឆមាស',
         sem1: currentSummary.sem1ExamAvg,
         sem1Rank: currentSummary.sem1ExamAvg !== null ? (sem1ExamAvgRanks.get(currentStuId) || '') : '',
         sem2: currentSummary.sem2ExamAvg,
@@ -552,7 +552,7 @@ export const StudentGradeBookService = {
       internalAvg: {
         index: nextIdx + 2,
         indexKm: toKhmerNumerals(nextIdx + 2),
-        name: 'មធ្យមភាគពិន្ទុផ្ទៃក្នុងប្រចាំឆមាស',
+        name: 'មធ្យមភាគខែប្រចាំឆមាស',
         sem1: currentSummary.sem1InternalAvg,
         sem2: currentSummary.sem2InternalAvg,
         annual: currentSummary.annualInternalAvg

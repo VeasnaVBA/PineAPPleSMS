@@ -5,15 +5,15 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.87';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber, calculateKhmerGrade } from '../services/studentGradeBookService.js?v=3.0.87';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.88';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber, calculateKhmerGrade } from '../services/studentGradeBookService.js?v=3.0.88';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js?v=3.0.87';
+import { ReportViewer } from '../components/reportViewer.js?v=3.0.88';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -1812,10 +1812,10 @@ export const ReportsPage = {
                           </tr>
                         `).join('')}
 
-                        <!-- Row 17: សរុបពិន្ទុរួមប្រឡងឆមាស -->
+                        <!-- Row 17: ពិន្ទុសរុប -->
                         <tr class="gb-tbody-row" style="background-color: #f8fafc; font-weight: 600; height: ${calculatedRowHeightMm}mm !important;">
                           <td style="font-size: ${cellFontSize};">${summary.examTotal?.indexKm || ''}</td>
-                          <td style="text-align: left !important; padding-left: 5px !important; font-size: ${nameFontSize};">${summary.examTotal?.name || 'សរុបពិន្ទុរួមប្រឡងឆមាស'}</td>
+                          <td style="text-align: left !important; padding-left: 5px !important; font-size: ${nameFontSize};">${summary.examTotal?.name || 'ពិន្ទុសរុប'}</td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.sem1)}</td>
                           <td></td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.sem2)}</td>
@@ -1825,10 +1825,10 @@ export const ReportsPage = {
                           <td></td>
                         </tr>
 
-                        <!-- Row 18: មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស -->
+                        <!-- Row 18: មធ្យមភាគប្រឡងឆមាស -->
                         <tr class="gb-tbody-row" style="background-color: #f8fafc; font-weight: 600; height: ${calculatedRowHeightMm}mm !important;">
                           <td style="font-size: ${cellFontSize};">${summary.examAvg?.indexKm || ''}</td>
-                          <td style="text-align: left !important; padding-left: 5px !important; font-size: ${nameFontSize};">${summary.examAvg?.name || 'មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស'}</td>
+                          <td style="text-align: left !important; padding-left: 5px !important; font-size: ${nameFontSize};">${summary.examAvg?.name || 'មធ្យមភាគប្រឡងឆមាស'}</td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.sem1)}</td>
                           <td class="font-mono font-bold text-red-600" style="color: #dc2626 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">${summary.examAvg?.sem1Rank || ''}</td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.sem2)}</td>
@@ -1838,10 +1838,10 @@ export const ReportsPage = {
                           <td style="font-size: ${cellFontSize}; font-weight: 600; color: #1e3a8a;">${escapeHtml(summary.examAvg?.remark || '')}</td>
                         </tr>
 
-                        <!-- Row 19: មធ្យមភាគពិន្ទុផ្ទៃក្នុងប្រចាំឆមាស -->
+                        <!-- Row 19: មធ្យមភាគខែប្រចាំឆមាស -->
                         <tr class="gb-tbody-row" style="background-color: #f8fafc; font-weight: 600; height: ${calculatedRowHeightMm}mm !important;">
                           <td style="font-size: ${cellFontSize};">${summary.internalAvg?.indexKm || ''}</td>
-                          <td style="text-align: left !important; padding-left: 5px !important; font-size: ${nameFontSize};">${summary.internalAvg?.name || 'មធ្យមភាគពិន្ទុផ្ទៃក្នុងប្រចាំឆមាស'}</td>
+                          <td style="text-align: left !important; padding-left: 5px !important; font-size: ${nameFontSize};">${summary.internalAvg?.name || 'មធ្យមភាគខែប្រចាំឆមាស'}</td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.sem1)}</td>
                           <td></td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.sem2)}</td>
