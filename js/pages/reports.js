@@ -5,8 +5,8 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.67';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.67';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.68';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.68';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
@@ -223,8 +223,8 @@ export const ReportsPage = {
     const exportCsvBtn = document.getElementById('btn-export-csv');
     const topActions = document.getElementById('rep-top-actions');
 
-    // Handle Student Individual Study Plan or Grade Book Tabs:
-    if (tab === 'studentPlan' || tab === 'studentGradeBook') {
+    // Handle Student Individual Study Plan Tab:
+    if (tab === 'studentPlan') {
       if (stdHeader) stdHeader.classList.add('hidden');
       if (stdFooter) stdFooter.classList.add('hidden');
       if (filtersBox) filtersBox.classList.add('hidden');
@@ -234,61 +234,57 @@ export const ReportsPage = {
 
       if (tableBox) {
         tableBox.innerHTML = `
-          <div class="py-8 sm:py-12 px-4 max-w-4xl mx-auto">
-            <div class="text-center mb-8">
-              <h2 class="text-xl sm:text-2xl font-bold font-khmer text-foreground mb-2">
-                របាយការណ៍សិស្សម្នាក់ៗ
-              </h2>
-              <p class="text-xs sm:text-sm text-muted-foreground font-khmer max-w-md mx-auto leading-relaxed">
-                ជ្រើសរើសរបាយការណ៍ដែលលោកអ្នកចង់ពិនិត្យមើល និងបោះពុម្ពជាទម្រង់ក្រដាសផ្លូវការ
-              </p>
+          <div class="py-12 sm:py-16 px-4 flex flex-col items-center justify-center text-center">
+            <div class="w-20 h-20 rounded-3xl bg-primary/10 text-primary flex items-center justify-center mb-5 shadow-xs border border-primary/20">
+              ${getIcon('clipboardList', 'w-10 h-10')}
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <!-- Card 1: ផែនការសិស្សម្នាក់ៗ -->
-              <div class="p-6 sm:p-7 rounded-2xl border ${tab === 'studentPlan' ? 'border-primary ring-2 ring-primary/20 shadow-md bg-card' : 'border-border bg-card/60 hover:border-primary/50'} flex flex-col items-center justify-between text-center transition-all">
-                <div class="flex flex-col items-center">
-                  <div class="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4 shadow-xs border border-primary/20">
-                    ${getIcon('clipboardList', 'w-8 h-8')}
-                  </div>
-                  <h3 class="text-base sm:text-lg font-bold font-khmer text-foreground mb-1.5">
-                    ${t('reports.studentPlanReport') || 'ផែនការសិស្សម្នាក់ៗ'}
-                  </h3>
-                  <p class="text-xs text-muted-foreground font-khmer mb-6 leading-relaxed">
-                    ពិនិត្យមើល កែប្រែពិន្ទុដៅ និងបោះពុម្ពតារាងផែនការសិក្សារបស់សិស្សម្នាក់ៗ ជាទម្រង់ក្រដាស A4 Landscape ផ្លូវការ
-                  </p>
-                </div>
-                <button id="btn-open-student-plan-modal" type="button" class="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
-                  ${getIcon('printer', 'w-4 h-4')}
-                  <span>ផែនការសិស្ស</span>
-                </button>
-              </div>
-
-              <!-- Card 2: សៀវភៅសិក្ខាគារិក -->
-              <div class="p-6 sm:p-7 rounded-2xl border ${tab === 'studentGradeBook' ? 'border-blue-600 ring-2 ring-blue-600/20 shadow-md bg-card' : 'border-border bg-card/60 hover:border-blue-500/50'} flex flex-col items-center justify-between text-center transition-all">
-                <div class="flex flex-col items-center">
-                  <div class="w-16 h-16 rounded-2xl bg-blue-600/10 text-blue-600 flex items-center justify-center mb-4 shadow-xs border border-blue-600/20">
-                    ${getIcon('bookOpen', 'w-8 h-8')}
-                  </div>
-                  <h3 class="text-base sm:text-lg font-bold font-khmer text-foreground mb-1.5">
-                    សៀវភៅសិក្ខាគារិក
-                  </h3>
-                  <p class="text-xs text-muted-foreground font-khmer mb-6 leading-relaxed">
-                    ពិនិត្យមើល និងបោះពុម្ពសៀវភៅសិក្ខាគារិក លទ្ធផលនៃការសិក្សា និងចំនួនអវត្តមានក្នុងមួយឆ្នាំរបស់សិស្សម្នាក់ៗ ជាទម្រង់ក្រដាស A4 Portrait ផ្លូវការ
-                  </p>
-                </div>
-                <button id="btn-open-student-gradebook-modal" type="button" class="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-xl bg-blue-600 text-white font-bold text-sm shadow-md hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
-                  ${getIcon('printer', 'w-4 h-4')}
-                  <span>សៀវភៅសិក្ខាគារិក</span>
-                </button>
-              </div>
-            </div>
+            <h2 class="text-xl sm:text-2xl font-bold font-khmer text-foreground mb-2">
+              ${t('reports.studentPlanReport') || 'ផែនការសិស្សម្នាក់ៗ'}
+            </h2>
+            <p class="text-xs sm:text-sm text-muted-foreground font-khmer max-w-md mb-8 leading-relaxed">
+              ពិនិត្យមើល កែប្រែពិន្ទុដៅ និងបោះពុម្ពតារាងផែនការសិក្សារបស់សិស្សម្នាក់ៗ ជាទម្រង់ក្រដាស A4 Landscape ផ្លូវការ
+            </p>
+            <button id="btn-open-student-plan-modal" type="button" class="inline-flex items-center gap-3 px-8 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm sm:text-base shadow-lg hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
+              ${getIcon('printer', 'w-5 h-5')}
+              <span>ផែនការសិស្ស</span>
+            </button>
           </div>
         `;
 
         document.getElementById('btn-open-student-plan-modal')?.addEventListener('click', () => {
           this.openStudentPlanViewer();
         });
+      }
+      return;
+    }
+
+    // Handle Student Grade Book Tab:
+    if (tab === 'studentGradeBook') {
+      if (stdHeader) stdHeader.classList.add('hidden');
+      if (stdFooter) stdFooter.classList.add('hidden');
+      if (filtersBox) filtersBox.classList.add('hidden');
+      if (topActions) topActions.classList.add('hidden');
+
+      if (counterBox) counterBox.textContent = '';
+
+      if (tableBox) {
+        tableBox.innerHTML = `
+          <div class="py-12 sm:py-16 px-4 flex flex-col items-center justify-center text-center">
+            <div class="w-20 h-20 rounded-3xl bg-blue-600/10 text-blue-600 flex items-center justify-center mb-5 shadow-xs border border-blue-600/20">
+              ${getIcon('bookOpen', 'w-10 h-10')}
+            </div>
+            <h2 class="text-xl sm:text-2xl font-bold font-khmer text-foreground mb-2">
+              សៀវភៅសិក្ខាគារិក
+            </h2>
+            <p class="text-xs sm:text-sm text-muted-foreground font-khmer max-w-md mb-8 leading-relaxed">
+              ពិនិត្យមើល និងបោះពុម្ពសៀវភៅសិក្ខាគារិក លទ្ធផលនៃការសិក្សា និងចំនួនអវត្តមានក្នុងមួយឆ្នាំរបស់សិស្សម្នាក់ៗ ជាទម្រង់ក្រដាស A4 Portrait ផ្លូវការ
+            </p>
+            <button id="btn-open-student-gradebook-modal" type="button" class="inline-flex items-center gap-3 px-8 py-3.5 rounded-xl bg-blue-600 text-white font-bold text-sm sm:text-base shadow-lg hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
+              ${getIcon('printer', 'w-5 h-5')}
+              <span>សៀវភៅសិក្ខាគារិក</span>
+            </button>
+          </div>
+        `;
 
         document.getElementById('btn-open-student-gradebook-modal')?.addEventListener('click', () => {
           this.openStudentGradeBookViewer();
