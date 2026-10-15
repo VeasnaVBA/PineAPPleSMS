@@ -94,6 +94,60 @@ export const ScoreService = {
     return period === 'Annual';
   },
 
+  getCorrespondingExamPeriod(period) {
+    if (period === 'Semester 1' || period === 'ឆមាសទី១' || period === 'ឆមាស១') return 'Semester 1 Exam';
+    if (period === 'Semester 2' || period === 'ឆមាសទី២' || period === 'ឆមាស២') return 'Semester 2 Exam';
+    return null;
+  },
+
+  /**
+   * Fetch active students' semester exam average for Semester 1 Exam or Semester 2 Exam.
+   * Returns a Map of studentId -> average.
+   */
+  async getStudentAveragesForExam(classId, academicYear, examPeriod) {
+    if (!examPeriod) return new Map();
+    try {
+      let periodId = examPeriod;
+      if (examPeriod === 'Semester 1') periodId = 'Semester 1 Exam';
+      if (examPeriod === 'Semester 2') periodId = 'Semester 2 Exam';
+
+      const sheet = await this.getMasterScoreSheet({ classId, academicYear, period: periodId });
+      const map = new Map();
+      (sheet.rows || []).forEach(r => {
+        const hasScores = Object.values(r.subjectScores || {}).some(v => v !== null && v !== undefined && v !== '');
+        if (hasScores && r.average !== null && r.average !== undefined && r.average !== '' && !isNaN(Number(r.average))) {
+          const val = Number(r.average);
+          map.set(r.studentId, val);
+          if (r.studentNumber) map.set(r.studentNumber, val);
+        } else {
+          map.set(r.studentId, null);
+          if (r.studentNumber) map.set(r.studentNumber, null);
+        }
+      });
+
+      // If no scores found under English ID, fallback to Khmer assessment names
+      const hasAnyScore = Array.from(map.values()).some(v => v !== null && v !== undefined);
+      if (!hasAnyScore) {
+        const altPeriod = (periodId === 'Semester 1 Exam') ? 'ប្រឡងឆមាសទី១' : ((periodId === 'Semester 2 Exam') ? 'ប្រឡងឆមាសទី២' : null);
+        if (altPeriod) {
+          const altSheet = await this.getMasterScoreSheet({ classId, academicYear, period: altPeriod });
+          (altSheet.rows || []).forEach(r => {
+            const hasScores = Object.values(r.subjectScores || {}).some(v => v !== null && v !== undefined && v !== '');
+            if (hasScores && r.average !== null && r.average !== undefined && r.average !== '' && !isNaN(Number(r.average))) {
+              const val = Number(r.average);
+              map.set(r.studentId, val);
+              if (r.studentNumber) map.set(r.studentNumber, val);
+            }
+          });
+        }
+      }
+      return map;
+    } catch (e) {
+      console.warn(`Failed to fetch student averages for exam ${examPeriod}:`, e);
+      return new Map();
+    }
+  },
+
   /**
    * Fetch active students' semester average for Semester 1 or Semester 2.
    * Returns a Map of studentId -> average.
@@ -350,11 +404,12 @@ export const ScoreService = {
 
     const periodCoeff = await this.getCoefficientForPeriod(period);
 
-    // If Semester 1 or Semester 2, pre-fetch live monthly averages for the chosen months
+    // If Semester 1 or Semester 2, pre-fetch live monthly averages for the chosen months and semester exam average
     const semesterMonthMaps = [];
+    let chosenMonths = null;
+    let examAvgMap = null;
     if (this.isSemesterPeriod(period)) {
       const semMonthsKey = `semester_months_${classId || 'default'}_${period}_${academicYear || 'default'}`;
-      let chosenMonths = null;
       try {
         const fromLocal = localStorage.getItem(semMonthsKey);
         if (fromLocal) chosenMonths = JSON.parse(fromLocal);
@@ -377,6 +432,11 @@ export const ScoreService = {
         } else {
           semesterMonthMaps[mIdx] = null;
         }
+      }
+
+      const examPeriod = this.getCorrespondingExamPeriod(period);
+      if (examPeriod) {
+        examAvgMap = await this.getStudentAveragesForExam(classId, academicYear, examPeriod);
       }
     }
 
@@ -438,27 +498,49 @@ export const ScoreService = {
       const monthScores = {};
       const annualScores = {};
       let monthlySum = 0;
+      let semesterMonthAvg = null;
+      let semesterExamAvg = null;
+      let semesterOverallAvg = null;
 
       if (this.isSemesterPeriod(period)) {
+        let countWithScore = 0;
         for (let mIdx = 0; mIdx < 6; mIdx++) {
           const avgMap = semesterMonthMaps[mIdx];
           let val = null;
           if (avgMap) {
-            const mVal = avgMap.get(stu.id);
+            const mVal = avgMap.get(stu.id) ?? (stu.studentId ? avgMap.get(stu.studentId) : null);
             val = (mVal !== undefined && mVal !== null) ? Number(mVal) : null;
           }
           if (val === null) {
-            const sc = scoreMap.get(`${stu.id}_sem_month_${mIdx}`);
+            const sc = scoreMap.get(`${stu.id}_sem_month_${mIdx}`) || (stu.studentId ? scoreMap.get(`${stu.studentId}_sem_month_${mIdx}`) : null);
             val = (sc !== undefined && sc !== null) 
               ? (Number(sc.totalScore ?? sc.examScore) || null) 
               : null;
           }
           monthScores[mIdx] = val;
-          if (val !== null && val !== undefined) {
+          if (val !== null && val !== undefined && val !== '') {
             monthlySum += Number(val);
+            countWithScore++;
           }
         }
-        total = Math.round(monthlySum * 100) / 100;
+        
+        // Divide by number of months chosen by user in this table (or fallback to months with score)
+        const numChosen = (Array.isArray(chosenMonths) ? chosenMonths.filter(Boolean).length : 0) || (countWithScore > 0 ? countWithScore : 1);
+        semesterMonthAvg = Math.round((monthlySum / numChosen) * 100) / 100;
+
+        // Auto-fetch semester exam average
+        const examVal = examAvgMap ? (examAvgMap.get(stu.id) ?? (stu.studentId ? examAvgMap.get(stu.studentId) : null)) : null;
+        semesterExamAvg = (examVal !== undefined && examVal !== null && !isNaN(Number(examVal))) ? Number(examVal) : null;
+
+        // Overall Semester Average = (Monthly Avg + Exam Avg) / 2
+        if (semesterExamAvg !== null) {
+          semesterOverallAvg = Math.round(((semesterMonthAvg + semesterExamAvg) / 2) * 100) / 100;
+        } else {
+          semesterOverallAvg = semesterMonthAvg;
+        }
+
+        total = semesterMonthAvg;
+        totalMax = 50;
       } else if (this.isAnnualPeriod(period)) {
         const s1 = sem1Map ? sem1Map.get(stu.id) : null;
         const s2 = sem2Map ? sem2Map.get(stu.id) : null;
@@ -483,7 +565,9 @@ export const ScoreService = {
       }
 
       let averageVal = 0;
-      if (this.isAnnualPeriod(period)) {
+      if (this.isSemesterPeriod(period)) {
+        averageVal = semesterOverallAvg || 0;
+      } else if (this.isAnnualPeriod(period)) {
         const s1 = annualScores.sem1;
         const s2 = annualScores.sem2;
         const count = (s1 !== null ? 1 : 0) + (s2 !== null ? 1 : 0);
@@ -520,6 +604,9 @@ export const ScoreService = {
         subjectScores,
         total,
         totalMax,
+        semesterMonthAvg,
+        semesterExamAvg,
+        semesterOverallAvg,
         average: roundedAvg,
         grade: gradeInfo.grade,
         gradeColor: gradeInfo.color,

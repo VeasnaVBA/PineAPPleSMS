@@ -127,6 +127,7 @@ export const ScoresPage = {
     subjectExtraCol: localStorage.getItem('scores_subject_extra_col') || 'none', // 'none' | 'rank' | 'grade' | 'both'
     semesterMonths: [null, null, null, null, null, null],
     _monthAveragesCache: {},
+    _semesterExamAveragesCache: new Map(),
     isAutoSaving: false,
     saveDebounceTimer: null
   },
@@ -489,9 +490,24 @@ export const ScoresPage = {
     }
   },
 
+  async prefetchSemesterExamAverages() {
+    const clsId = this.state.selectedClassId;
+    const yr = this.state.activeYear;
+    const period = this.state.selectedPeriod;
+    if (!clsId || !this.isSemesterPeriod(period)) return;
+
+    const examPeriod = ScoreService.getCorrespondingExamPeriod(period);
+    if (examPeriod) {
+      this.state._semesterExamAveragesCache = await ScoreService.getStudentAveragesForExam(clsId, yr, examPeriod);
+    } else {
+      this.state._semesterExamAveragesCache = new Map();
+    }
+  },
+
   populateSemesterMonthScores() {
     if (!this.isSemesterPeriod()) return;
     const cache = this.state._monthAveragesCache || {};
+    const examCache = this.state._semesterExamAveragesCache || new Map();
 
     this.state.rows.forEach(r => {
       if (!r.monthScores) r.monthScores = {};
@@ -499,12 +515,17 @@ export const ScoresPage = {
         const mId = this.state.semesterMonths[mIdx];
         if (mId) {
           // Always populate from the latest fresh monthly average!
-          const avgVal = cache[mId]?.get(r.studentId);
+          const avgVal = cache[mId]?.get(r.studentId) ?? (r.studentNumber ? cache[mId]?.get(r.studentNumber) : null);
           r.monthScores[mIdx] = (avgVal !== undefined && avgVal !== null) ? Number(avgVal) : null;
         } else {
           r.monthScores[mIdx] = null;
         }
       }
+
+      // Populate semester exam average from auto-fetched exam averages
+      const examVal = examCache.get(r.studentId) ?? (r.studentNumber ? examCache.get(r.studentNumber) : null);
+      r.semesterExamAvg = (examVal !== undefined && examVal !== null && !isNaN(Number(examVal))) ? Number(examVal) : null;
+
       this.recalculateRowData(r);
     });
     ScoreService.rankStudents(this.state.rows);
@@ -543,6 +564,7 @@ export const ScoresPage = {
     if (isSemester) {
       this.loadSemesterMonths();
       await this.prefetchSemesterMonthlyAverages();
+      await this.prefetchSemesterExamAverages();
     }
 
     const data = await ScoreService.getMasterScoreSheet({
@@ -636,8 +658,14 @@ export const ScoresPage = {
           ${showRank ? '<col style="width: 46px; min-width: 46px; max-width: 46px;">' : ''}
           ${showGrade ? '<col style="width: 46px; min-width: 46px; max-width: 46px;">' : ''}
         `).join(''))}
-        <col style="width: 64px; min-width: 64px; max-width: 64px;">
-        <col style="width: 68px; min-width: 68px; max-width: 68px;">
+        ${isSemester ? `
+          <col style="width: 82px; min-width: 82px; max-width: 82px;">
+          <col style="width: 82px; min-width: 82px; max-width: 82px;">
+          <col style="width: 82px; min-width: 82px; max-width: 82px;">
+        ` : `
+          <col style="width: 64px; min-width: 64px; max-width: 64px;">
+          <col style="width: 68px; min-width: 68px; max-width: 68px;">
+        `}
         <col style="width: 72px; min-width: 72px; max-width: 72px;">
         <col style="width: 52px; min-width: 52px; max-width: 52px;">
         <col style="width: 40px; min-width: 40px; max-width: 40px;">
@@ -697,16 +725,37 @@ export const ScoresPage = {
       }).join(''))}
 
       <!-- Result Columns (Centered in the middle) -->
-      <th class="score-result-th p-0 text-center font-bold font-mono col-total-th text-emerald-700 dark:text-emerald-300 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-        <div class="w-[64px] max-w-[64px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
-          <span class="font-khmer text-xs font-bold block text-emerald-700 dark:text-emerald-300 text-center">${isKm ? 'ពិន្ទុសរុប' : 'Total'}</span>
-        </div>
-      </th>
-      <th class="score-result-th p-0 text-center font-bold font-mono col-average-th text-primary bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
-        <div class="w-[68px] max-w-[68px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
-          <span class="font-khmer text-xs font-bold block text-primary text-center">${isKm ? 'មធ្យមភាគ' : 'Avg'}</span>
-        </div>
-      </th>
+      ${isSemester ? `
+        <th class="score-result-th p-0 text-center font-bold font-mono col-semester-month-avg-th text-emerald-700 dark:text-emerald-300 bg-slate-100 dark:bg-slate-800 select-none" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${isKm ? 'មធ្យមភាគខែប្រចាំឆមាស (ផលបូកពិន្ទុខែ ÷ ចំនួនខែដែលបានជ្រើសរើស)' : 'Semester Monthly Average'}">
+          <div class="w-[82px] max-w-[82px] h-full min-h-[96px] mx-auto flex flex-col items-center justify-center text-center px-1 bg-transparent font-khmer text-[11px] font-bold leading-snug">
+            <span>${isKm ? 'មធ្យមភាគខែ' : 'Monthly'}</span>
+            <span>${isKm ? 'ប្រចាំឆមាស' : 'Average'}</span>
+          </div>
+        </th>
+        <th class="score-result-th p-0 text-center font-bold font-mono col-semester-exam-avg-th text-blue-700 dark:text-blue-300 bg-slate-100 dark:bg-slate-800 select-none" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${isKm ? 'មធ្យមភាគប្រឡងឆមាស (ទាញយកពីតារាងប្រឡងឆមាស)' : 'Semester Exam Average (Auto-fetched)'}">
+          <div class="w-[82px] max-w-[82px] h-full min-h-[96px] mx-auto flex flex-col items-center justify-center text-center px-1 bg-transparent font-khmer text-[11px] font-bold leading-snug">
+            <span>${isKm ? 'មធ្យមភាគ' : 'Exam'}</span>
+            <span>${isKm ? 'ប្រឡងឆមាស' : 'Average'}</span>
+          </div>
+        </th>
+        <th class="score-result-th p-0 text-center font-bold font-mono col-semester-overall-avg-th text-primary bg-slate-100 dark:bg-slate-800 select-none" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;" title="${isKm ? 'មធ្យមភាគប្រចាំឆមាស = (មធ្យមភាគខែប្រចាំឆមាស + មធ្យមភាគប្រឡងឆមាស) ÷ ២' : 'Semester Average = (Monthly Avg + Exam Avg) / 2'}">
+          <div class="w-[82px] max-w-[82px] h-full min-h-[96px] mx-auto flex flex-col items-center justify-center text-center px-1 bg-transparent font-khmer text-[11px] font-bold leading-snug">
+            <span>${isKm ? 'មធ្យមភាគ' : 'Semester'}</span>
+            <span>${isKm ? 'ប្រចាំឆមាស' : 'Average'}</span>
+          </div>
+        </th>
+      ` : `
+        <th class="score-result-th p-0 text-center font-bold font-mono col-total-th text-emerald-700 dark:text-emerald-300 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+          <div class="w-[64px] max-w-[64px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
+            <span class="font-khmer text-xs font-bold block text-emerald-700 dark:text-emerald-300 text-center">${isKm ? 'ពិន្ទុសរុប' : 'Total'}</span>
+          </div>
+        </th>
+        <th class="score-result-th p-0 text-center font-bold font-mono col-average-th text-primary bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
+          <div class="w-[68px] max-w-[68px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
+            <span class="font-khmer text-xs font-bold block text-primary text-center">${isKm ? 'មធ្យមភាគ' : 'Avg'}</span>
+          </div>
+        </th>
+      `}
       <th class="score-result-th p-0 text-center font-bold font-mono col-rank-th text-orange-700 dark:text-orange-300 bg-slate-100 dark:bg-slate-800" style="z-index: 10 !important; isolation: isolate !important; vertical-align: middle !important;">
         <div class="w-[72px] max-w-[72px] h-full min-h-[96px] mx-auto flex items-center justify-center text-center px-1 bg-transparent">
           <span class="font-khmer text-xs font-bold block text-orange-700 dark:text-orange-300 text-center">${isKm ? 'ចំណាត់ថ្នាក់' : 'Rank'}</span>
@@ -1013,7 +1062,7 @@ export const ScoresPage = {
     if (rows.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="${4 + (isSemester ? 6 : (isAnnual ? 2 : (flatSubjects.length * (1 + extraColsPerSub)))) + 5}" class="py-16 text-center text-muted-foreground">
+          <td colspan="${4 + (isSemester ? 6 : (isAnnual ? 2 : (flatSubjects.length * (1 + extraColsPerSub)))) + (isSemester ? 6 : 5)}" class="py-16 text-center text-muted-foreground">
             <p class="text-xs ${isKm ? 'font-khmer' : ''}">
               ${isKm ? 'មិនមានសិស្សក្នុងថ្នាក់នេះទេ' : 'No students found in this class'}
             </p>
@@ -1147,15 +1196,32 @@ export const ScoresPage = {
             `;
           }).join(''))}
 
-          <!-- 6. Total -->
-          <td class="p-0 text-center font-bold font-mono text-foreground col-total bg-slate-50/60 dark:bg-slate-900/20">
-            <div class="w-[64px] max-w-[64px] truncate text-center py-1.5 px-1">${r.total !== undefined ? ((isSemester || isAnnual) ? (Number(r.total) || 0).toFixed(2) : r.total) : ((isSemester || isAnnual) ? '0.00' : 0)}</div>
-          </td>
+          ${isSemester ? `
+            <!-- មធ្យមភាគខែប្រចាំឆមាស -->
+            <td class="p-0 text-center font-bold font-mono text-emerald-700 dark:text-emerald-300 col-semester-month-avg col-total bg-slate-50/60 dark:bg-slate-900/20">
+              <div class="w-[82px] max-w-[82px] truncate text-center py-1.5 px-1">${r.semesterMonthAvg !== undefined && r.semesterMonthAvg !== null ? Number(r.semesterMonthAvg).toFixed(2) : (r.total !== undefined ? (Number(r.total) || 0).toFixed(2) : '0.00')}</div>
+            </td>
 
-          <!-- 7. Average -->
-          <td class="p-0 text-center font-bold font-mono text-primary col-average bg-slate-50/60 dark:bg-slate-900/20">
-            <div class="w-[68px] max-w-[68px] truncate text-center py-1.5 px-1">${(Number(r.average) || 0).toFixed(2)}</div>
-          </td>
+            <!-- មធ្យមភាគប្រឡងឆមាស -->
+            <td class="p-0 text-center font-bold font-mono text-blue-700 dark:text-blue-300 col-semester-exam-avg bg-slate-50/60 dark:bg-slate-900/20">
+              <div class="w-[82px] max-w-[82px] truncate text-center py-1.5 px-1" title="${isKm ? 'ទាញយកស្វ័យប្រវត្តពីការប្រឡងឆមាស' : 'Auto-fetched from Semester Exam'}">${(r.semesterExamAvg !== undefined && r.semesterExamAvg !== null) ? Number(r.semesterExamAvg).toFixed(2) : '<span class="text-muted-foreground/50 font-normal">—</span>'}</div>
+            </td>
+
+            <!-- មធ្យមភាគប្រចាំឆមាស -->
+            <td class="p-0 text-center font-bold font-mono text-primary col-semester-overall-avg col-average bg-slate-50/60 dark:bg-slate-900/20">
+              <div class="w-[82px] max-w-[82px] truncate text-center py-1.5 px-1">${r.semesterOverallAvg !== undefined && r.semesterOverallAvg !== null ? Number(r.semesterOverallAvg).toFixed(2) : (Number(r.average) || 0).toFixed(2)}</div>
+            </td>
+          ` : `
+            <!-- 6. Total -->
+            <td class="p-0 text-center font-bold font-mono text-foreground col-total bg-slate-50/60 dark:bg-slate-900/20">
+              <div class="w-[64px] max-w-[64px] truncate text-center py-1.5 px-1">${r.total !== undefined ? (isAnnual ? (Number(r.total) || 0).toFixed(2) : r.total) : (isAnnual ? '0.00' : 0)}</div>
+            </td>
+
+            <!-- 7. Average -->
+            <td class="p-0 text-center font-bold font-mono text-primary col-average bg-slate-50/60 dark:bg-slate-900/20">
+              <div class="w-[68px] max-w-[68px] truncate text-center py-1.5 px-1">${(Number(r.average) || 0).toFixed(2)}</div>
+            </td>
+          `}
 
           <!-- 8. Rank -->
           <td class="p-0 text-center font-bold font-mono col-rank">
@@ -1535,17 +1601,60 @@ export const ScoresPage = {
 
     if (this.isSemesterPeriod()) {
       let monthlySum = 0;
+      let countWithScore = 0;
+      const chosenMonths = (this.state.semesterMonths || []).filter(Boolean);
+      const chosenCount = chosenMonths.length;
+
       for (let mIdx = 0; mIdx < 6; mIdx++) {
-        if (rowData.monthScores) {
+        const mId = (this.state.semesterMonths || [])[mIdx];
+        if (mId && rowData.monthScores) {
           const mv = rowData.monthScores[mIdx];
           if (mv !== null && mv !== undefined && mv !== '') {
             monthlySum += Number(mv);
+            countWithScore++;
           }
         }
       }
-      sum = monthlySum;
-      rowData.total = Math.round(sum * 100) / 100;
-      rowData.totalMax = maxTotal;
+
+      // Column 1: មធ្យមភាគខែប្រចាំឆមាស
+      // Calculated from the monthly scores divided by number of chosen months in this table
+      const divisor = chosenCount > 0 ? chosenCount : (countWithScore > 0 ? countWithScore : 1);
+      const monthAvg = Math.round((monthlySum / divisor) * 100) / 100;
+      rowData.semesterMonthAvg = monthAvg;
+      rowData.total = monthAvg;
+      rowData.totalMax = 50;
+
+      // Column 2: មធ្យមភាគប្រឡងឆមាស (auto-fetched from Semester 1/2 Exam average)
+      let examAvg = null;
+      if (rowData.semesterExamAvg !== undefined && rowData.semesterExamAvg !== null && rowData.semesterExamAvg !== '') {
+        examAvg = Number(rowData.semesterExamAvg);
+      } else {
+        const examCache = this.state._semesterExamAveragesCache;
+        if (examCache && examCache.has(rowData.studentId)) {
+          const cv = examCache.get(rowData.studentId);
+          if (cv !== undefined && cv !== null && !isNaN(Number(cv))) {
+            examAvg = Number(cv);
+            rowData.semesterExamAvg = examAvg;
+          }
+        } else if (examCache && rowData.studentNumber && examCache.has(rowData.studentNumber)) {
+          const cv = examCache.get(rowData.studentNumber);
+          if (cv !== undefined && cv !== null && !isNaN(Number(cv))) {
+            examAvg = Number(cv);
+            rowData.semesterExamAvg = examAvg;
+          }
+        }
+      }
+
+      // Column 3: មធ្យមភាគប្រចាំឆមាស = (មធ្យមភាគខែប្រចាំឆមាស + មធ្យមភាគប្រឡងឆមាស) / 2
+      let overallAvg = 0;
+      if (examAvg !== null && !isNaN(examAvg)) {
+        overallAvg = Math.round(((monthAvg + examAvg) / 2) * 100) / 100;
+      } else {
+        overallAvg = monthAvg;
+      }
+      rowData.semesterOverallAvg = overallAvg;
+      sum = monthAvg;
+      avgScore = overallAvg;
     } else if (this.isAnnualPeriod()) {
       const s1 = rowData.annualScores?.sem1;
       const s2 = rowData.annualScores?.sem2;
@@ -1571,23 +1680,24 @@ export const ScoresPage = {
       rowData.totalMax = maxTotal;
     }
 
-    let avgScore = 0;
-    if (this.isAnnualPeriod()) {
-      const s1 = rowData.annualScores?.sem1;
-      const s2 = rowData.annualScores?.sem2;
-      const count = ((s1 !== null && s1 !== undefined && s1 !== '') ? 1 : 0) +
-                    ((s2 !== null && s2 !== undefined && s2 !== '') ? 1 : 0);
-      if (count === 2) {
-        const coeff = this.getCurrentPeriodCoefficient() || 2;
-        avgScore = sum / coeff;
-      } else if (count === 1) {
-        avgScore = (s1 !== null && s1 !== undefined && s1 !== '') ? Number(s1) : Number(s2);
+    if (!this.isSemesterPeriod()) {
+      if (this.isAnnualPeriod()) {
+        const s1 = rowData.annualScores?.sem1;
+        const s2 = rowData.annualScores?.sem2;
+        const count = ((s1 !== null && s1 !== undefined && s1 !== '') ? 1 : 0) +
+                      ((s2 !== null && s2 !== undefined && s2 !== '') ? 1 : 0);
+        if (count === 2) {
+          const coeff = this.getCurrentPeriodCoefficient() || 2;
+          avgScore = sum / coeff;
+        } else if (count === 1) {
+          avgScore = (s1 !== null && s1 !== undefined && s1 !== '') ? Number(s1) : Number(s2);
+        } else {
+          avgScore = 0;
+        }
       } else {
-        avgScore = 0;
+        const coeff = this.getCurrentPeriodCoefficient();
+        avgScore = coeff > 0 ? (sum / coeff) : sum;
       }
-    } else {
-      const coeff = this.getCurrentPeriodCoefficient();
-      avgScore = coeff > 0 ? (sum / coeff) : sum;
     }
     rowData.average = Math.round(avgScore * 100) / 100;
 
@@ -1614,12 +1724,29 @@ export const ScoresPage = {
 
     const trEl = this.container.querySelector(`tr[data-student-id="${rowData.studentId}"]`);
     if (trEl) {
-      const totEl = trEl.querySelector('.col-total div') || trEl.querySelector('.col-total');
-      if (totEl) {
-        totEl.textContent = (this.isSemesterPeriod() || this.isAnnualPeriod()) ? (Number(rowData.total) || 0).toFixed(2) : rowData.total;
+      if (this.isSemesterPeriod()) {
+        const mAvgEl = trEl.querySelector('.col-semester-month-avg div') || trEl.querySelector('.col-semester-month-avg');
+        if (mAvgEl) mAvgEl.textContent = (Number(rowData.semesterMonthAvg) || 0).toFixed(2);
+
+        const eAvgEl = trEl.querySelector('.col-semester-exam-avg div') || trEl.querySelector('.col-semester-exam-avg');
+        if (eAvgEl) {
+          if (rowData.semesterExamAvg !== null && rowData.semesterExamAvg !== undefined) {
+            eAvgEl.textContent = Number(rowData.semesterExamAvg).toFixed(2);
+          } else {
+            eAvgEl.innerHTML = '<span class="text-muted-foreground/50 font-normal">—</span>';
+          }
+        }
+
+        const oAvgEl = trEl.querySelector('.col-semester-overall-avg div') || trEl.querySelector('.col-semester-overall-avg');
+        if (oAvgEl) oAvgEl.textContent = (Number(rowData.semesterOverallAvg) || 0).toFixed(2);
+      } else {
+        const totEl = trEl.querySelector('.col-total div') || trEl.querySelector('.col-total');
+        if (totEl) {
+          totEl.textContent = (this.isAnnualPeriod()) ? (Number(rowData.total) || 0).toFixed(2) : rowData.total;
+        }
+        const avgEl = trEl.querySelector('.col-average div') || trEl.querySelector('.col-average');
+        if (avgEl) avgEl.textContent = (Number(rowData.average) || 0).toFixed(2);
       }
-      const avgEl = trEl.querySelector('.col-average div') || trEl.querySelector('.col-average');
-      if (avgEl) avgEl.textContent = (Number(rowData.average) || 0).toFixed(2);
       const gradeEl = trEl.querySelector('.col-grade');
       if (gradeEl) {
         gradeEl.textContent = rowData.grade;
@@ -2256,12 +2383,22 @@ export const ScoresPage = {
         });
       }
 
-      colMeta.push(
-        { key: 'total', header: isKm ? 'ពិន្ទុសរុប' : 'Total', width: 11, type: 'total' },
-        { key: 'average', header: isKm ? 'មធ្យមភាគ' : 'Avg', width: 11, type: 'average' },
-        { key: 'rank', header: isKm ? 'ចំណាត់ថ្នាក់' : 'Rank', width: 11, type: 'rank' },
-        { key: 'grade', header: isKm ? 'និទ្ទេស' : 'Grade', width: 9, type: 'grade' }
-      );
+      if (isSemester) {
+        colMeta.push(
+          { key: 'semester_month_avg', header: isKm ? 'មធ្យមភាគខែ\nប្រចាំឆមាស' : 'Monthly\nAverage', width: 14, type: 'sem_month_avg' },
+          { key: 'semester_exam_avg', header: isKm ? 'មធ្យមភាគ\nប្រឡងឆមាស' : 'Exam\nAverage', width: 14, type: 'sem_exam_avg' },
+          { key: 'semester_overall_avg', header: isKm ? 'មធ្យមភាគ\nប្រចាំឆមាស' : 'Semester\nAverage', width: 14, type: 'sem_overall_avg' },
+          { key: 'rank', header: isKm ? 'ចំណាត់ថ្នាក់' : 'Rank', width: 11, type: 'rank' },
+          { key: 'grade', header: isKm ? 'និទ្ទេស' : 'Grade', width: 9, type: 'grade' }
+        );
+      } else {
+        colMeta.push(
+          { key: 'total', header: isKm ? 'ពិន្ទុសរុប' : 'Total', width: 11, type: 'total' },
+          { key: 'average', header: isKm ? 'មធ្យមភាគ' : 'Avg', width: 11, type: 'average' },
+          { key: 'rank', header: isKm ? 'ចំណាត់ថ្នាក់' : 'Rank', width: 11, type: 'rank' },
+          { key: 'grade', header: isKm ? 'និទ្ទេស' : 'Grade', width: 9, type: 'grade' }
+        );
+      }
 
       const totalCols = colMeta.length;
 
@@ -2426,6 +2563,20 @@ export const ScoresPage = {
               const sg = r.subjectGrades ? r.subjectGrades[c.subject.id] : null;
               return sg || '—';
             }
+            case 'sem_month_avg': {
+              const v = r.semesterMonthAvg !== undefined && r.semesterMonthAvg !== null ? Number(r.semesterMonthAvg) : (Number(r.total) || 0);
+              return Number(v.toFixed(2));
+            }
+            case 'sem_exam_avg': {
+              if (r.semesterExamAvg !== undefined && r.semesterExamAvg !== null) {
+                return Number(Number(r.semesterExamAvg).toFixed(2));
+              }
+              return '—';
+            }
+            case 'sem_overall_avg': {
+              const v = r.semesterOverallAvg !== undefined && r.semesterOverallAvg !== null ? Number(r.semesterOverallAvg) : (Number(r.average) || 0);
+              return Number(v.toFixed(2));
+            }
             case 'total': {
               const tot = Number(r.total) || 0;
               return (isSemester || isAnnual) ? Number(tot.toFixed(2)) : tot;
@@ -2495,6 +2646,21 @@ export const ScoresPage = {
             bgArgb = gStyle.fill;
             fgArgb = gStyle.text;
             isBold = true;
+          } else if (c.type === 'sem_month_avg') {
+            bgArgb = 'FFF1F5F9';
+            fgArgb = 'FF047857';
+            isBold = true;
+            numFmt = '0.00';
+          } else if (c.type === 'sem_exam_avg') {
+            bgArgb = 'FFF1F5F9';
+            fgArgb = 'FF1D4ED8';
+            isBold = true;
+            if (typeof val === 'number') numFmt = '0.00';
+          } else if (c.type === 'sem_overall_avg') {
+            bgArgb = 'FFF1F5F9';
+            fgArgb = 'FF1D4ED8';
+            isBold = true;
+            numFmt = '0.00';
           } else if (c.type === 'total') {
             bgArgb = 'FFF1F5F9';
             isBold = true;
@@ -4743,28 +4909,40 @@ export const ScoresPage = {
             }
           }
 
+          const examPeriod = ScoreService.getCorrespondingExamPeriod(selectedPeriod);
+          const examMap = examPeriod ? await ScoreService.getStudentAveragesForExam(selectedClassId, selectedYear, examPeriod) : new Map();
+          const chosenCount = (Array.isArray(semMonths) ? semMonths.filter(Boolean).length : 0) || 1;
+
           rows.forEach(r => {
             if (!r.monthScores) r.monthScores = {};
+            let mSum = 0;
+            let mCount = 0;
             for (let i = 0; i < 6; i++) {
               const mId = semMonths[i];
-              if (mId && monthMaps[i] && monthMaps[i][r.studentId] !== undefined) {
-                r.monthScores[i] = monthMaps[i][r.studentId];
+              if (mId && monthMaps[i]) {
+                const val = monthMaps[i].get ? monthMaps[i].get(r.studentId) : monthMaps[i][r.studentId];
+                if (val !== undefined && val !== null && !isNaN(Number(val))) {
+                  r.monthScores[i] = Number(val);
+                  mSum += Number(val);
+                  mCount++;
+                }
               }
             }
-            const firstFive = [];
-            for (let i = 0; i < 5; i++) {
-              const v = r.monthScores[i];
-              if (v !== null && v !== undefined && v !== '' && !isNaN(Number(v))) {
-                firstFive.push(Number(v));
-              }
+
+            const divisor = chosenCount > 0 ? chosenCount : (mCount > 0 ? mCount : 1);
+            const mAvg = Math.round((mSum / divisor) * 100) / 100;
+            r.semesterMonthAvg = mAvg;
+            r.total = mAvg;
+
+            const examVal = examMap.get ? (examMap.get(r.studentId) ?? (r.studentNumber ? examMap.get(r.studentNumber) : null)) : null;
+            r.semesterExamAvg = (examVal !== undefined && examVal !== null && !isNaN(Number(examVal))) ? Number(examVal) : null;
+
+            if (r.semesterExamAvg !== null) {
+              r.semesterOverallAvg = Math.round(((mAvg + r.semesterExamAvg) / 2) * 100) / 100;
+            } else {
+              r.semesterOverallAvg = mAvg;
             }
-            const avg5 = firstFive.length > 0 ? firstFive.reduce((a, b) => a + b, 0) / firstFive.length : 0;
-            const examScore = (r.monthScores[5] !== null && r.monthScores[5] !== undefined && r.monthScores[5] !== '' && !isNaN(Number(r.monthScores[5])))
-              ? Number(r.monthScores[5])
-              : 0;
-            const hasAny = firstFive.length > 0 || (r.monthScores[5] !== null && r.monthScores[5] !== undefined && r.monthScores[5] !== '');
-            r.total = Math.round((avg5 + examScore) * 100) / 100;
-            r.average = hasAny ? Math.round(((avg5 + examScore) / 2) * 100) / 100 : 0;
+            r.average = r.semesterOverallAvg;
             r.grade = SubjectService.calculateGrade(r.average, 50).grade;
           });
           ScoreService.rankStudents(rows);
