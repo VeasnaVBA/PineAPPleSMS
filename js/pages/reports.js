@@ -5,15 +5,15 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.76';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.76';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.77';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.77';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js?v=3.0.76';
+import { ReportViewer } from '../components/reportViewer.js?v=3.0.77';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -1580,7 +1580,8 @@ export const ReportsPage = {
               .gradebook-spread-row {
                 display: flex !important;
                 flex-direction: row !important;
-                gap: 6px !important;
+                flex-wrap: nowrap !important;
+                gap: 4mm !important;
                 width: 100% !important;
                 height: 100% !important;
                 box-sizing: border-box !important;
@@ -1588,17 +1589,21 @@ export const ReportsPage = {
                 align-items: stretch !important;
               }
               .gradebook-page-box {
-                flex: 1 1 50% !important;
-                width: 50% !important;
+                flex: 0 0 calc(50% - 2mm) !important;
+                width: calc(50% - 2mm) !important;
+                max-width: calc(50% - 2mm) !important;
                 height: 100% !important;
+                max-height: 100% !important;
                 border: 1.5px solid #1e3a8a !important;
-                padding: 3mm 3.5mm !important;
+                padding: 2.5mm 3mm !important;
                 background-color: #ffffff !important;
                 box-sizing: border-box !important;
                 display: flex !important;
                 flex-direction: column !important;
                 justify-content: space-between !important;
                 overflow: hidden !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
               }
               .gradebook-table {
                 width: 100% !important;
@@ -1657,15 +1662,60 @@ export const ReportsPage = {
               }
               @media print {
                 @page {
-                  size: A4 landscape !important;
-                  margin: 4mm 5mm !important;
+                  size: A4 landscape;
+                  margin: 0;
+                }
+                html, body {
+                  width: 297mm !important;
+                  height: 210mm !important;
+                  max-height: 210mm !important;
+                  overflow: hidden !important;
+                  margin: 0 !important;
+                  padding: 0 !important;
+                }
+                .report-explicit-page,
+                .gradebook-landscape-spread,
+                .a4-sheet-page,
+                .report-viewer-sheet {
+                  width: 297mm !important;
+                  max-width: 297mm !important;
+                  height: 210mm !important;
+                  max-height: 210mm !important;
+                  min-height: 210mm !important;
+                  padding: 4mm 5mm !important;
+                  margin: 0 !important;
+                  box-sizing: border-box !important;
+                  overflow: hidden !important;
+                  page-break-before: avoid !important;
+                  page-break-after: avoid !important;
+                  page-break-inside: avoid !important;
+                  break-before: avoid !important;
+                  break-after: avoid !important;
+                  break-inside: avoid !important;
                 }
                 .gradebook-spread-row {
-                  gap: 5px !important;
+                  display: flex !important;
+                  flex-direction: row !important;
+                  flex-wrap: nowrap !important;
+                  gap: 4mm !important;
+                  width: 100% !important;
+                  height: 100% !important;
+                  max-height: 100% !important;
+                  box-sizing: border-box !important;
+                  page-break-inside: avoid !important;
+                  break-inside: avoid !important;
                 }
                 .gradebook-page-box {
+                  flex: 0 0 calc(50% - 2mm) !important;
+                  width: calc(50% - 2mm) !important;
+                  max-width: calc(50% - 2mm) !important;
+                  height: 100% !important;
+                  max-height: 100% !important;
                   border: 1.5px solid #1e3a8a !important;
-                  padding: 3mm 3.5mm !important;
+                  padding: 2.5mm 3mm !important;
+                  box-sizing: border-box !important;
+                  page-break-inside: avoid !important;
+                  break-inside: avoid !important;
                 }
                 .gradebook-table thead th {
                   background-color: #dbeafe !important;

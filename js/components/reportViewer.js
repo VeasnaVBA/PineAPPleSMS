@@ -1215,10 +1215,12 @@ export class ReportViewer {
           page-break-after: always !important;
           break-after: page !important;
         }
+        body.printing-report-viewer .a4-sheet-page:only-child,
+        body.printing-report-viewer .report-viewer-sheet:only-child,
         body.printing-report-viewer .a4-sheet-page:last-child,
         body.printing-report-viewer .report-viewer-sheet:last-child {
-          page-break-after: auto !important;
-          break-after: auto !important;
+          page-break-after: avoid !important;
+          break-after: avoid !important;
         }
         body.printing-report-viewer .rv-resizable-image {
           position: absolute !important;
