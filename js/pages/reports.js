@@ -5,15 +5,15 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.74';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.74';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.75';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.75';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js?v=3.0.74';
+import { ReportViewer } from '../components/reportViewer.js?v=3.0.75';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -1712,12 +1712,12 @@ export const ReportsPage = {
                           <th rowspan="2" style="width: 86px;">មូលវិចារ ហត្ថលេខា<br>និងឈ្មោះគ្រូ</th>
                         </tr>
                         <tr style="height: 6.5mm !important;">
-                          <th style="width: 34px;">ម.ភាគ</th>
-                          <th style="width: 28px;">ចំណាត់</th>
-                          <th style="width: 34px;">ម.ភាគ</th>
-                          <th style="width: 28px;">ចំណាត់</th>
-                          <th style="width: 34px;">ម.ភាគ</th>
-                          <th style="width: 28px;">ចំណាត់</th>
+                          <th style="width: 30px;">ម.ភាគ</th>
+                          <th style="width: 32px;">ចំណាត់ថ្នាក់</th>
+                          <th style="width: 30px;">ម.ភាគ</th>
+                          <th style="width: 32px;">ចំណាត់ថ្នាក់</th>
+                          <th style="width: 30px;">ម.ភាគ</th>
+                          <th style="width: 32px;">ចំណាត់ថ្នាក់</th>
                         </tr>
                       </thead>
                       <tbody>
