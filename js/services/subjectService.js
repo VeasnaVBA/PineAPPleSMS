@@ -263,16 +263,22 @@ export const SubjectService = {
     const fs = Number(fullScore) > 0 ? Number(fullScore) : 50;
     const percentage = Math.max(0, (s / fs) * 100);
 
+    if (percentage >= 85) {
+      return { grade: 'A', labelKm: 'ល្អប្រសើរ', labelEn: 'Excellent', color: 'emerald', percentage };
+    }
+    if (percentage >= 80) {
+      return { grade: 'B', labelKm: 'ល្អណាស់', labelEn: 'Very Good', color: 'blue', percentage };
+    }
     if (percentage >= 70) {
-      return { grade: 'A', labelKm: 'ល្អ', labelEn: 'Good', color: 'emerald', percentage };
+      return { grade: 'C', labelKm: 'ល្អ', labelEn: 'Good', color: 'indigo', percentage };
     }
     if (percentage >= 60) {
-      return { grade: 'B', labelKm: 'ល្អបង្គួរ', labelEn: 'Fair / Satisfactory', color: 'blue', percentage };
+      return { grade: 'D', labelKm: 'ល្អបង្គួរ', labelEn: 'Fair', color: 'amber', percentage };
     }
     if (percentage >= 50) {
-      return { grade: 'C', labelKm: 'មធ្យម', labelEn: 'Passing / Average', color: 'amber', percentage };
+      return { grade: 'E', labelKm: 'មធ្យម', labelEn: 'Passing / Average', color: 'orange', percentage };
     }
-    return { grade: 'D', labelKm: 'ខ្សោយ', labelEn: 'Needs Improvement / Fail', color: 'rose', percentage };
+    return { grade: 'F', labelKm: 'ខ្សោយ', labelEn: 'Needs Improvement / Fail', color: 'rose', percentage };
   },
 
   /**
@@ -283,10 +289,12 @@ export const SubjectService = {
     const round2 = num => Math.round(num * 100) / 100;
 
     return [
-      { grade: 'A', labelKm: 'ល្អ', labelEn: 'Good', percentRange: '70% - 100%', minScore: round2(fs * 0.70), maxScore: fs, color: 'emerald' },
-      { grade: 'B', labelKm: 'ល្អបង្គួរ', labelEn: 'Fair', percentRange: '60% - 69.9%', minScore: round2(fs * 0.60), maxScore: round2(fs * 0.6999), color: 'blue' },
-      { grade: 'C', labelKm: 'មធ្យម', labelEn: 'Passing', percentRange: '50% - 59.9%', minScore: round2(fs * 0.50), maxScore: round2(fs * 0.5999), color: 'amber' },
-      { grade: 'D', labelKm: 'ខ្សោយ', labelEn: 'Fail', percentRange: '< 50%', minScore: 0, maxScore: round2(fs * 0.4999), color: 'rose' }
+      { grade: 'A', labelKm: 'ល្អប្រសើរ', labelEn: 'Excellent', percentRange: '85% – 100%', minScore: round2(fs * 0.85), maxScore: fs, color: 'emerald' },
+      { grade: 'B', labelKm: 'ល្អណាស់', labelEn: 'Very Good', percentRange: '80% – 84.9%', minScore: round2(fs * 0.80), maxScore: round2(fs * 0.8499), color: 'blue' },
+      { grade: 'C', labelKm: 'ល្អ', labelEn: 'Good', percentRange: '70% – 79.9%', minScore: round2(fs * 0.70), maxScore: round2(fs * 0.7999), color: 'indigo' },
+      { grade: 'D', labelKm: 'ល្អបង្គួរ', labelEn: 'Fair', percentRange: '60% – 69.9%', minScore: round2(fs * 0.60), maxScore: round2(fs * 0.6999), color: 'amber' },
+      { grade: 'E', labelKm: 'មធ្យម', labelEn: 'Passing', percentRange: '50% – 59.9%', minScore: round2(fs * 0.50), maxScore: round2(fs * 0.5999), color: 'orange' },
+      { grade: 'F', labelKm: 'ខ្សោយ', labelEn: 'Fail', percentRange: '< 50%', minScore: 0, maxScore: round2(fs * 0.4999), color: 'rose' }
     ];
   },
 

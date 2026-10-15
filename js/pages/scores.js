@@ -1654,7 +1654,8 @@ export const ScoresPage = {
         overallAvg = monthAvg;
       }
       rowData.semesterOverallAvg = overallAvg;
-      sum = monthAvg;
+      rowData.total = overallAvg;
+      sum = overallAvg;
       avgScore = overallAvg;
     } else if (this.isAnnualPeriod()) {
       const s1 = rowData.annualScores?.sem1;
@@ -1702,8 +1703,9 @@ export const ScoresPage = {
     }
     rowData.average = Math.round(avgScore * 100) / 100;
 
-    // Use average to calculate the grade, where full average is 50.00 (< 25 is F)
-    const gradeInfo = SubjectService.calculateGrade(rowData.average, 50);
+    // Use overall semester average in semester periods (or general average) to calculate the grade, where full average is 50.00 (< 25 is F)
+    const targetScoreForGrade = this.isSemesterPeriod() ? rowData.semesterOverallAvg : rowData.average;
+    const gradeInfo = SubjectService.calculateGrade(targetScoreForGrade, 50);
     rowData.grade = gradeInfo.grade;
     rowData.gradeColor = gradeInfo.color;
 

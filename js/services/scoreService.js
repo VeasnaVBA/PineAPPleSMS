@@ -294,13 +294,29 @@ export const ScoreService = {
   },
 
   /**
-   * Calculate rank for students based on total marks
+   * Calculate rank for students based on total marks or average
    */
   rankStudents(studentRows) {
-    const sorted = [...studentRows].sort((a, b) => (b.total || 0) - (a.total || 0));
+    const sorted = [...studentRows].sort((a, b) => {
+      const valA = (a.average !== undefined && a.average !== null && !isNaN(Number(a.average)))
+        ? Number(a.average)
+        : (Number(a.total) || 0);
+      const valB = (b.average !== undefined && b.average !== null && !isNaN(Number(b.average)))
+        ? Number(b.average)
+        : (Number(b.total) || 0);
+      return valB - valA;
+    });
     let currentRank = 1;
     for (let i = 0; i < sorted.length; i++) {
-      if (i > 0 && sorted[i].total < sorted[i - 1].total) {
+      const scoreI = (sorted[i].average !== undefined && sorted[i].average !== null && !isNaN(Number(sorted[i].average)))
+        ? Number(sorted[i].average)
+        : (Number(sorted[i].total) || 0);
+      const scorePrev = i > 0
+        ? ((sorted[i - 1].average !== undefined && sorted[i - 1].average !== null && !isNaN(Number(sorted[i - 1].average)))
+          ? Number(sorted[i - 1].average)
+          : (Number(sorted[i - 1].total) || 0))
+        : null;
+      if (i > 0 && scoreI < scorePrev) {
         currentRank = i + 1;
       }
       sorted[i].rank = currentRank;
@@ -539,7 +555,7 @@ export const ScoreService = {
           semesterOverallAvg = semesterMonthAvg;
         }
 
-        total = semesterMonthAvg;
+        total = semesterOverallAvg;
         totalMax = 50;
       } else if (this.isAnnualPeriod(period)) {
         const s1 = sem1Map ? sem1Map.get(stu.id) : null;
