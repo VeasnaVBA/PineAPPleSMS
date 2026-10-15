@@ -5,15 +5,15 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.73';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.73';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.74';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.74';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js?v=3.0.73';
+import { ReportViewer } from '../components/reportViewer.js?v=3.0.74';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -1543,23 +1543,18 @@ export const ReportsPage = {
         // Exact available height for table body inside A4 landscape page box:
         // A4 height = 210mm. Page top/bottom pad = 4mm x 2 = 8mm -> 202mm.
         // Box border + pad = 6.8mm -> 195.2mm inner height.
-        // Top student line (~6.5mm) + Section 1 banner (~6.2mm) + thead 2 rows (~13mm) = ~25.7mm.
-        // Buffer = 2.5mm. Available for tbody = 167mm.
-        const calculatedRowHeightMm = Math.max(6.5, Math.min(18.0, Number((167 / tbodyRowsCount).toFixed(2))));
+        // Left Page: Top line (6.5mm) + Banner 1 (5.5mm) + thead 2 rows (13mm) = 25mm.
+        // Right Page: 10 items (9 data rows + Section ង box) fit ~10.2mm max per item.
+        const calculatedRowHeightMm = Math.max(7.0, Math.min(10.2, Number((168 / tbodyRowsCount).toFixed(2))));
 
-        let cellFontSize = '7.5px';
-        let nameFontSize = '8px';
+        let cellFontSize = '8px';
+        let nameFontSize = '8.5px';
         let bannerPadding = '2px 4px';
         let bannerFontSize = '9px';
 
-        if (calculatedRowHeightMm >= 13) {
-          cellFontSize = '10px';
-          nameFontSize = '10.5px';
-          bannerPadding = '3px 4px';
-          bannerFontSize = '10px';
-        } else if (calculatedRowHeightMm >= 10.5) {
-          cellFontSize = '9px';
-          nameFontSize = '9.5px';
+        if (calculatedRowHeightMm >= 9.8) {
+          cellFontSize = '8.5px';
+          nameFontSize = '9px';
           bannerPadding = '2.5px 4px';
           bannerFontSize = '9.5px';
         } else if (calculatedRowHeightMm >= 8.5) {
@@ -1568,8 +1563,8 @@ export const ReportsPage = {
           bannerPadding = '2px 4px';
           bannerFontSize = '9px';
         } else {
-          cellFontSize = '7px';
-          nameFontSize = '7.5px';
+          cellFontSize = '7.5px';
+          nameFontSize = '8px';
           bannerPadding = '1.5px 3px';
           bannerFontSize = '8.5px';
         }
@@ -1609,7 +1604,7 @@ export const ReportsPage = {
                 width: 100% !important;
                 border-collapse: collapse !important;
                 font-size: ${cellFontSize} !important;
-                line-height: 1 !important;
+                line-height: 1.1 !important;
                 table-layout: fixed !important;
                 box-sizing: border-box !important;
               }
@@ -1625,12 +1620,13 @@ export const ReportsPage = {
                 border: 1px solid #1e3a8a !important;
                 text-align: center !important;
                 vertical-align: middle !important;
-                padding: 0 1px !important;
+                padding: 1px 2px !important;
                 box-sizing: border-box !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
               }
-              .gradebook-table tr.gb-tbody-row {
+              .gradebook-table tr.gb-tbody-row,
+              .gradebook-table tbody tr {
                 height: ${calculatedRowHeightMm}mm !important;
                 max-height: ${calculatedRowHeightMm}mm !important;
               }
@@ -1640,9 +1636,9 @@ export const ReportsPage = {
                 border: 1px solid #1e3a8a !important;
                 text-align: center !important;
                 vertical-align: middle !important;
-                padding: 0px 1.5px !important;
+                padding: 1px 3px !important;
                 font-size: ${cellFontSize} !important;
-                line-height: 1.05 !important;
+                line-height: 1.1 !important;
                 box-sizing: border-box !important;
                 overflow: hidden !important;
                 white-space: nowrap !important;
@@ -1688,10 +1684,10 @@ export const ReportsPage = {
                 <div class="flex flex-col justify-between h-full">
                   <div>
                     <!-- Top Header: Student Name & Class -->
-                    <div class="flex items-center justify-between font-bold text-[10px] mb-1 px-0.5 text-black">
+                    <div class="flex items-center justify-between font-bold text-[9px] mb-1 px-0.5 text-black" style="min-height: 5mm;">
                       <div>
                         <span>ឈ្មោះសិស្ស៖ </span>
-                        <span class="font-khmer-muol text-[#1e3a8a] text-[10.5px]" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">${escapeHtml(studentName)}</span>
+                        <span class="font-khmer-muol text-[#1e3a8a] text-[9.5px]" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">${escapeHtml(studentName)}</span>
                       </div>
                       <div>
                         <span>ថ្នាក់ទី៖ </span>
@@ -1728,7 +1724,7 @@ export const ReportsPage = {
                         ${subjects.map(s => `
                           <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
                             <td style="font-size: ${cellFontSize};">${s.indexKm}</td>
-                            <td style="text-align: left !important; padding-left: 3px !important; font-weight: 500; font-size: ${nameFontSize};">${escapeHtml(s.name)}</td>
+                            <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500; font-size: ${nameFontSize};">${escapeHtml(s.name)}</td>
                             <td class="font-mono">${formatScoreNumber(s.sem1Score)}</td>
                             <td class="font-mono font-semibold">${s.sem1Rank || ''}</td>
                             <td class="font-mono">${formatScoreNumber(s.sem2Score)}</td>
@@ -1742,7 +1738,7 @@ export const ReportsPage = {
                         <!-- Row 17: សរុបពិន្ទុរួមប្រឡងឆមាស -->
                         <tr class="gb-tbody-row" style="background-color: #f8fafc; font-weight: 600; height: ${calculatedRowHeightMm}mm !important;">
                           <td style="font-size: ${cellFontSize};">${summary.examTotal?.indexKm || ''}</td>
-                          <td style="text-align: left !important; padding-left: 3px !important; font-size: ${nameFontSize};">${summary.examTotal?.name || 'សរុបពិន្ទុរួមប្រឡងឆមាស'}</td>
+                          <td style="text-align: left !important; padding-left: 5px !important; font-size: ${nameFontSize};">${summary.examTotal?.name || 'សរុបពិន្ទុរួមប្រឡងឆមាស'}</td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.sem1)}</td>
                           <td></td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.sem2)}</td>
@@ -1755,7 +1751,7 @@ export const ReportsPage = {
                         <!-- Row 18: មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស -->
                         <tr class="gb-tbody-row" style="background-color: #f8fafc; font-weight: 600; height: ${calculatedRowHeightMm}mm !important;">
                           <td style="font-size: ${cellFontSize};">${summary.examAvg?.indexKm || ''}</td>
-                          <td style="text-align: left !important; padding-left: 3px !important; font-size: ${nameFontSize};">${summary.examAvg?.name || 'មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស'}</td>
+                          <td style="text-align: left !important; padding-left: 5px !important; font-size: ${nameFontSize};">${summary.examAvg?.name || 'មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស'}</td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.sem1)}</td>
                           <td class="font-mono font-bold text-blue-700">${summary.examAvg?.sem1Rank || ''}</td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.sem2)}</td>
@@ -1768,7 +1764,7 @@ export const ReportsPage = {
                         <!-- Row 19: មធ្យមភាគពិន្ទុផ្ទៃក្នុងប្រចាំឆមាស -->
                         <tr class="gb-tbody-row" style="background-color: #f8fafc; font-weight: 600; height: ${calculatedRowHeightMm}mm !important;">
                           <td style="font-size: ${cellFontSize};">${summary.internalAvg?.indexKm || ''}</td>
-                          <td style="text-align: left !important; padding-left: 3px !important; font-size: ${nameFontSize};">${summary.internalAvg?.name || 'មធ្យមភាគពិន្ទុផ្ទៃក្នុងប្រចាំឆមាស'}</td>
+                          <td style="text-align: left !important; padding-left: 5px !important; font-size: ${nameFontSize};">${summary.internalAvg?.name || 'មធ្យមភាគពិន្ទុផ្ទៃក្នុងប្រចាំឆមាស'}</td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.sem1)}</td>
                           <td></td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.sem2)}</td>
@@ -1781,7 +1777,7 @@ export const ReportsPage = {
                         <!-- Row 20: មធ្យមភាគប្រចាំឆមាស -->
                         <tr class="gb-tbody-row" style="background-color: #f8fafc; font-weight: 600; height: ${calculatedRowHeightMm}mm !important;">
                           <td style="font-size: ${cellFontSize};">${summary.overallAvg?.indexKm || ''}</td>
-                          <td style="text-align: left !important; padding-left: 3px !important; font-size: ${nameFontSize};">${summary.overallAvg?.name || 'មធ្យមភាគប្រចាំឆមាស'}</td>
+                          <td style="text-align: left !important; padding-left: 5px !important; font-size: ${nameFontSize};">${summary.overallAvg?.name || 'មធ្យមភាគប្រចាំឆមាស'}</td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.sem1)}</td>
                           <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.sem1Rank || ''}</td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.sem2)}</td>
@@ -1801,14 +1797,14 @@ export const ReportsPage = {
                 <div class="flex flex-col justify-between h-full">
                   <div>
                     <!-- Top Line: School Name & Student Count in Class -->
-                    <div class="flex items-center justify-between text-[8px] font-bold mb-0.5 px-0.5 text-black leading-tight">
+                    <div class="flex items-center justify-between text-[9px] font-bold mb-1 px-0.5 text-black" style="min-height: 5mm;">
                       <div>
                         <span>សាលា ៖ </span>
-                        <span class="text-blue-900 font-semibold" contenteditable="true" spellcheck="false">${escapeHtml(data.schoolName || '...........................................')}</span>
+                        <span class="text-[#1e3a8a] font-semibold" contenteditable="true" spellcheck="false">${escapeHtml(data.schoolName || '...........................................')}</span>
                       </div>
                       <div>
                         <span>ចំនួនសិស្សក្នុងថ្នាក់ ៖ </span>
-                        <span class="font-mono font-bold text-blue-900" contenteditable="true" spellcheck="false">${escapeHtml(String(data.totalStudents || '.....'))}</span>
+                        <span class="font-mono font-bold text-[#1e3a8a]" contenteditable="true" spellcheck="false">${escapeHtml(String(data.totalStudents || '.....'))}</span>
                         <span> នាក់</span>
                       </div>
                     </div>
@@ -1820,7 +1816,7 @@ export const ReportsPage = {
                     <!-- Section ខ Table -->
                     <table class="gradebook-table mb-1">
                       <thead>
-                        <tr>
+                        <tr style="height: 6.5mm !important;">
                           <th style="width: 34%;">អវត្តមាន</th>
                           <th>ឆមាសទី១</th>
                           <th>ឆមាសទី២</th>
@@ -1828,14 +1824,14 @@ export const ReportsPage = {
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">-មានច្បាប់</td>
+                        <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
+                          <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">-មានច្បាប់</td>
                           <td class="font-mono font-medium">${formatTwoDigits(att.excusedSem1)}</td>
                           <td class="font-mono font-medium">${formatTwoDigits(att.excusedSem2)}</td>
                           <td class="font-mono font-medium">${formatTwoDigits(att.excusedYear)}</td>
                         </tr>
-                        <tr>
-                          <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">-ឥតច្បាប់</td>
+                        <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
+                          <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">-ឥតច្បាប់</td>
                           <td class="font-mono font-medium">${formatTwoDigits(att.unexcusedSem1)}</td>
                           <td class="font-mono font-medium">${formatTwoDigits(att.unexcusedSem2)}</td>
                           <td class="font-mono font-medium">${formatTwoDigits(att.unexcusedYear)}</td>
@@ -1850,7 +1846,7 @@ export const ReportsPage = {
                     <!-- Section គ Table -->
                     <table class="gradebook-table mb-1">
                       <thead>
-                        <tr>
+                        <tr style="height: 6.5mm !important;">
                           <th style="width: 34%;">ផ្នែកទាំង៤</th>
                           <th>ឆមាសទី១</th>
                           <th>ឆមាសទី២</th>
@@ -1858,26 +1854,26 @@ export const ReportsPage = {
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">១- ការសិក្សា</td>
+                        <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
+                          <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">១- ការសិក្សា</td>
                           <td contenteditable="true" spellcheck="false" class="font-semibold text-blue-900">${escapeHtml(evalData.sem1 || '')}</td>
                           <td contenteditable="true" spellcheck="false" class="font-semibold text-blue-900">${escapeHtml(evalData.sem2 || '')}</td>
                           <td contenteditable="true" spellcheck="false" class="font-semibold text-blue-900">${escapeHtml(evalData.annual || '')}</td>
                         </tr>
-                        <tr>
-                          <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">២- សីលធម៌រស់នៅ</td>
+                        <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
+                          <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">២- សីលធម៌រស់នៅ</td>
                           <td contenteditable="true" spellcheck="false"></td>
                           <td contenteditable="true" spellcheck="false"></td>
                           <td contenteditable="true" spellcheck="false"></td>
                         </tr>
-                        <tr>
-                          <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">៣- ពលកម្ម-បង្កបង្កើនផល</td>
+                        <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
+                          <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">៣- ពលកម្ម-បង្កបង្កើនផល</td>
                           <td contenteditable="true" spellcheck="false"></td>
                           <td contenteditable="true" spellcheck="false"></td>
                           <td contenteditable="true" spellcheck="false"></td>
                         </tr>
-                        <tr>
-                          <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">៤- សុខភាព-អនាម័យ</td>
+                        <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
+                          <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">៤- សុខភាព-អនាម័យ</td>
                           <td contenteditable="true" spellcheck="false"></td>
                           <td contenteditable="true" spellcheck="false"></td>
                           <td contenteditable="true" spellcheck="false"></td>
@@ -1892,7 +1888,7 @@ export const ReportsPage = {
                     <!-- Section ឃ Table -->
                     <table class="gradebook-table mb-1">
                       <thead>
-                        <tr>
+                        <tr style="height: 6.5mm !important;">
                           <th style="width: 34%;">បានទទួលការសរសើរ</th>
                           <th>ឆមាសទី១</th>
                           <th>ឆមាសទី២</th>
@@ -1900,20 +1896,20 @@ export const ReportsPage = {
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">-ប័ណ្ណសរសើរចំនួន</td>
+                        <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
+                          <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">-ប័ណ្ណសរសើរចំនួន</td>
                           <td contenteditable="true" spellcheck="false"></td>
                           <td contenteditable="true" spellcheck="false"></td>
                           <td contenteditable="true" spellcheck="false"></td>
                         </tr>
-                        <tr>
-                          <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">-លិខិតសរសើរ</td>
+                        <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
+                          <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">-លិខិតសរសើរ</td>
                           <td contenteditable="true" spellcheck="false"></td>
                           <td contenteditable="true" spellcheck="false"></td>
                           <td contenteditable="true" spellcheck="false"></td>
                         </tr>
-                        <tr>
-                          <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">-សេចក្តីបណ្ណលើកទឹកចិត្ត</td>
+                        <tr class="gb-tbody-row" style="height: ${calculatedRowHeightMm}mm !important;">
+                          <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500;">-សេចក្តីបណ្ណលើកទឹកចិត្ត</td>
                           <td contenteditable="true" spellcheck="false"></td>
                           <td contenteditable="true" spellcheck="false"></td>
                           <td contenteditable="true" spellcheck="false"></td>
@@ -1925,7 +1921,7 @@ export const ReportsPage = {
                     <div class="gradebook-banner mb-0">
                       ង / លទ្ធផលនៃការប្រឡងបញ្ចប់ភូមិសិក្សា (ជាប់ ឬ ធ្លាក់)
                     </div>
-                    <div class="border border-[#1e3a8a] py-0.5 px-2 text-center text-[8.5px] font-bold bg-[#f8fafc] mb-1 flex items-center justify-center gap-2">
+                    <div class="border border-[#1e3a8a] py-0.5 px-2 text-center text-[8.5px] font-bold bg-[#f8fafc] mb-1 flex items-center justify-center gap-2" style="height: ${calculatedRowHeightMm}mm; box-sizing: border-box;">
                       <span class="text-muted-foreground">លទ្ធផល ៖</span>
                       <span class="text-blue-900 font-bold text-[9px]" contenteditable="true" spellcheck="false">${data.graduationResult ? `${data.graduationResult}` : '...................................................'}</span>
                     </div>
@@ -1933,20 +1929,20 @@ export const ReportsPage = {
 
                   <!-- Section ច: មូលវិចារ -->
                   <div class="border border-[#1e3a8a]">
-                    <div class="gradebook-banner mb-0 text-center font-bold text-[8.5px] border-b border-[#1e3a8a] py-0.5">
+                    <div class="gradebook-banner mb-0">
                       ច / មូលវិចារ
                     </div>
                     <div class="grid grid-cols-2 divide-x divide-[#1e3a8a] text-[8px]">
                       <!-- Left: នាយកសាលា -->
-                      <div class="p-1 flex flex-col justify-between text-center" style="min-height: 56px;">
+                      <div class="p-1 flex flex-col justify-between text-center" style="min-height: 52px;">
                         <p class="font-bold text-foreground">នាយកសាលា</p>
-                        <div style="height: 20px;"></div>
+                        <div style="height: 18px;"></div>
                         <p class="text-[7.5px] text-muted-foreground">ថ្ងៃទី..........ខែ..........ឆ្នាំ២០.....</p>
                       </div>
                       <!-- Right: គ្រូទទួលបន្ទុកថ្នាក់ -->
-                      <div class="p-1 flex flex-col justify-between text-center" style="min-height: 56px;">
+                      <div class="p-1 flex flex-col justify-between text-center" style="min-height: 52px;">
                         <p class="font-bold text-foreground">គ្រូទទួលបន្ទុកថ្នាក់</p>
-                        <div style="height: 20px;"></div>
+                        <div style="height: 18px;"></div>
                         <p class="text-[7.5px] text-muted-foreground">ថ្ងៃទី..........ខែ..........ឆ្នាំ២០.....</p>
                       </div>
                     </div>
