@@ -5,7 +5,8 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.66';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.67';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.67';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
@@ -103,6 +104,9 @@ export const ReportsPage = {
         <div class="no-print p-1.5 rounded-xl border border-border bg-card shadow-sm flex items-center gap-1.5 overflow-x-auto text-xs font-medium">
           <button class="rep-tab-btn px-4 py-2 rounded-lg transition-all ${this.state.activeTab === 'studentPlan' ? 'bg-primary text-primary-foreground font-bold shadow-sm' : 'text-muted-foreground hover:text-foreground'}" data-tab="studentPlan">
             ${t('reports.studentPlanReport') || 'ផែនការសិស្សម្នាក់ៗ'}
+          </button>
+          <button class="rep-tab-btn px-4 py-2 rounded-lg transition-all ${this.state.activeTab === 'studentGradeBook' ? 'bg-primary text-primary-foreground font-bold shadow-sm' : 'text-muted-foreground hover:text-foreground'}" data-tab="studentGradeBook">
+            សៀវភៅសិក្ខាគារិក
           </button>
           <button class="rep-tab-btn px-4 py-2 rounded-lg transition-all ${this.state.activeTab === 'students' ? 'bg-primary text-primary-foreground font-bold shadow-sm' : 'text-muted-foreground hover:text-foreground'}" data-tab="students">
             ${t('reports.studentReport')}
@@ -219,9 +223,8 @@ export const ReportsPage = {
     const exportCsvBtn = document.getElementById('btn-export-csv');
     const topActions = document.getElementById('rep-top-actions');
 
-    // Handle Student Individual Study Plan Tab:
-    // Show only the "ផែនការសិស្ស" button card that opens full A4 Landscape ReportViewer!
-    if (tab === 'studentPlan') {
+    // Handle Student Individual Study Plan or Grade Book Tabs:
+    if (tab === 'studentPlan' || tab === 'studentGradeBook') {
       if (stdHeader) stdHeader.classList.add('hidden');
       if (stdFooter) stdFooter.classList.add('hidden');
       if (filtersBox) filtersBox.classList.add('hidden');
@@ -231,25 +234,64 @@ export const ReportsPage = {
 
       if (tableBox) {
         tableBox.innerHTML = `
-          <div class="py-12 sm:py-16 px-4 flex flex-col items-center justify-center text-center">
-            <div class="w-20 h-20 rounded-3xl bg-primary/10 text-primary flex items-center justify-center mb-5 shadow-xs border border-primary/20">
-              ${getIcon('clipboardList', 'w-10 h-10')}
+          <div class="py-8 sm:py-12 px-4 max-w-4xl mx-auto">
+            <div class="text-center mb-8">
+              <h2 class="text-xl sm:text-2xl font-bold font-khmer text-foreground mb-2">
+                របាយការណ៍សិស្សម្នាក់ៗ
+              </h2>
+              <p class="text-xs sm:text-sm text-muted-foreground font-khmer max-w-md mx-auto leading-relaxed">
+                ជ្រើសរើសរបាយការណ៍ដែលលោកអ្នកចង់ពិនិត្យមើល និងបោះពុម្ពជាទម្រង់ក្រដាសផ្លូវការ
+              </p>
             </div>
-            <h2 class="text-xl sm:text-2xl font-bold font-khmer text-foreground mb-2">
-              ${t('reports.studentPlanReport') || 'ផែនការសិស្សម្នាក់ៗ'}
-            </h2>
-            <p class="text-xs sm:text-sm text-muted-foreground font-khmer max-w-md mb-8 leading-relaxed">
-              ពិនិត្យមើល កែប្រែពិន្ទុដៅ និងបោះពុម្ពតារាងផែនការសិក្សារបស់សិស្សម្នាក់ៗ ជាទម្រង់ក្រដាស A4 Landscape ផ្លូវការ
-            </p>
-            <button id="btn-open-student-plan-modal" type="button" class="inline-flex items-center gap-3 px-8 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm sm:text-base shadow-lg hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
-              ${getIcon('printer', 'w-5 h-5')}
-              <span>ផែនការសិស្ស</span>
-            </button>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Card 1: ផែនការសិស្សម្នាក់ៗ -->
+              <div class="p-6 sm:p-7 rounded-2xl border ${tab === 'studentPlan' ? 'border-primary ring-2 ring-primary/20 shadow-md bg-card' : 'border-border bg-card/60 hover:border-primary/50'} flex flex-col items-center justify-between text-center transition-all">
+                <div class="flex flex-col items-center">
+                  <div class="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4 shadow-xs border border-primary/20">
+                    ${getIcon('clipboardList', 'w-8 h-8')}
+                  </div>
+                  <h3 class="text-base sm:text-lg font-bold font-khmer text-foreground mb-1.5">
+                    ${t('reports.studentPlanReport') || 'ផែនការសិស្សម្នាក់ៗ'}
+                  </h3>
+                  <p class="text-xs text-muted-foreground font-khmer mb-6 leading-relaxed">
+                    ពិនិត្យមើល កែប្រែពិន្ទុដៅ និងបោះពុម្ពតារាងផែនការសិក្សារបស់សិស្សម្នាក់ៗ ជាទម្រង់ក្រដាស A4 Landscape ផ្លូវការ
+                  </p>
+                </div>
+                <button id="btn-open-student-plan-modal" type="button" class="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
+                  ${getIcon('printer', 'w-4 h-4')}
+                  <span>ផែនការសិស្ស</span>
+                </button>
+              </div>
+
+              <!-- Card 2: សៀវភៅសិក្ខាគារិក -->
+              <div class="p-6 sm:p-7 rounded-2xl border ${tab === 'studentGradeBook' ? 'border-blue-600 ring-2 ring-blue-600/20 shadow-md bg-card' : 'border-border bg-card/60 hover:border-blue-500/50'} flex flex-col items-center justify-between text-center transition-all">
+                <div class="flex flex-col items-center">
+                  <div class="w-16 h-16 rounded-2xl bg-blue-600/10 text-blue-600 flex items-center justify-center mb-4 shadow-xs border border-blue-600/20">
+                    ${getIcon('bookOpen', 'w-8 h-8')}
+                  </div>
+                  <h3 class="text-base sm:text-lg font-bold font-khmer text-foreground mb-1.5">
+                    សៀវភៅសិក្ខាគារិក
+                  </h3>
+                  <p class="text-xs text-muted-foreground font-khmer mb-6 leading-relaxed">
+                    ពិនិត្យមើល និងបោះពុម្ពសៀវភៅសិក្ខាគារិក លទ្ធផលនៃការសិក្សា និងចំនួនអវត្តមានក្នុងមួយឆ្នាំរបស់សិស្សម្នាក់ៗ ជាទម្រង់ក្រដាស A4 Portrait ផ្លូវការ
+                  </p>
+                </div>
+                <button id="btn-open-student-gradebook-modal" type="button" class="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-xl bg-blue-600 text-white font-bold text-sm shadow-md hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
+                  ${getIcon('printer', 'w-4 h-4')}
+                  <span>សៀវភៅសិក្ខាគារិក</span>
+                </button>
+              </div>
+            </div>
           </div>
         `;
 
         document.getElementById('btn-open-student-plan-modal')?.addEventListener('click', () => {
           this.openStudentPlanViewer();
+        });
+
+        document.getElementById('btn-open-student-gradebook-modal')?.addEventListener('click', () => {
+          this.openStudentGradeBookViewer();
         });
       }
       return;
@@ -1219,6 +1261,342 @@ export const ReportsPage = {
     });
   },
 
+  /**
+   * Opens the full A4 Portrait Report Viewer for Student Grade Book (សៀវភៅសិក្ខាគារិក)
+   */
+  async openStudentGradeBookViewer() {
+    let currentClassId = this.state.selectedClassId;
+    if (!currentClassId || currentClassId === 'all') {
+      const assignedId = authService.getAssignedClassId();
+      if (assignedId && this.state.classes.some(c => c.id === assignedId)) {
+        currentClassId = assignedId;
+      } else {
+        currentClassId = this.state.classes[0]?.id || null;
+      }
+    }
+
+    let studentsInClass = await StudentGradeBookService.getClassStudents(currentClassId);
+    let currentStudentId = this.state.selectedStudentId || studentsInClass[0]?.studentId || null;
+    const activeYear = this.state.activeYear;
+    const isKm = (localStorage.getItem('school_lang') || 'km') === 'km';
+    const classes = this.state.classes;
+    const isTeacher = authService.isTeacher();
+
+    await ReportViewer.open({
+      reportKey: 'student_grade_book',
+      title: isKm ? 'សៀវភៅសិក្ខាគារិក' : 'Student Grade Book',
+      alwaysFresh: true,
+      defaultOrientation: 'portrait',
+      defaultPaperSize: 'A4',
+      defaultMargins: { top: 6, bottom: 6, left: 8, right: 8 },
+      defaultFontFamily: 'Kantumruy Pro',
+      defaultFontSize: 9,
+      renderHeaderControls: (controlsContainer, viewer) => {
+        const updateControls = () => {
+          const currIdx = studentsInClass.findIndex(s => s.studentId === currentStudentId || s.id === currentStudentId);
+          controlsContainer.className = 'flex items-center gap-2 sm:gap-3 flex-wrap font-khmer text-xs';
+          controlsContainer.innerHTML = `
+            <!-- Class Filter -->
+            <div class="flex items-center gap-1.5">
+              <span class="text-muted-foreground whitespace-nowrap">${t('reports.filterClass') || 'ថ្នាក់រៀន:'}</span>
+              ${isTeacher && classes.length <= 1 ? `
+                <span class="font-semibold px-2 py-1 rounded bg-primary/10 text-primary">${classes[0]?.name || ''}</span>
+              ` : `
+                <select id="rv-gb-filter-class" class="h-8 py-0 px-2 rounded-md border border-input bg-card text-xs text-foreground cursor-pointer shadow-xs">
+                  ${classes.map(c => `<option value="${c.id}" ${c.id === currentClassId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
+                </select>
+              `}
+            </div>
+
+            <!-- Student Filter with Prev/Next -->
+            <div class="flex items-center gap-1">
+              <span class="text-muted-foreground whitespace-nowrap">${t('reports.filterStudent') || 'សិស្ស:'}</span>
+              <button type="button" id="rv-gb-btn-prev" class="h-8 w-8 flex items-center justify-center rounded-md border border-input bg-card hover:bg-muted text-foreground cursor-pointer shadow-xs disabled:opacity-40" ${currIdx <= 0 ? 'disabled' : ''} title="សិស្សមុន">
+                ${getIcon('chevronLeft', 'w-3.5 h-3.5')}
+              </button>
+              <select id="rv-gb-filter-student" class="h-8 py-0 px-2 rounded-md border border-input bg-card text-xs text-foreground cursor-pointer shadow-xs max-w-[170px] sm:max-w-[210px]">
+                ${studentsInClass.map((s, idx) => `
+                  <option value="${s.studentId}" ${s.studentId === currentStudentId ? 'selected' : ''}>
+                    ${idx + 1}. ${escapeHtml(s.khmerName || s.englishName)} (${s.studentId})
+                  </option>
+                `).join('')}
+              </select>
+              <button type="button" id="rv-gb-btn-next" class="h-8 w-8 flex items-center justify-center rounded-md border border-input bg-card hover:bg-muted text-foreground cursor-pointer shadow-xs disabled:opacity-40" ${currIdx >= studentsInClass.length - 1 ? 'disabled' : ''} title="សិស្សបន្ទាប់">
+                ${getIcon('chevronRight', 'w-3.5 h-3.5')}
+              </button>
+              <span class="text-muted-foreground text-[11px] whitespace-nowrap ml-1">
+                (${currIdx >= 0 ? currIdx + 1 : 0}/${studentsInClass.length})
+              </span>
+            </div>
+          `;
+
+          controlsContainer.querySelector('#rv-gb-filter-class')?.addEventListener('change', async (e) => {
+            currentClassId = e.target.value;
+            studentsInClass = await StudentGradeBookService.getClassStudents(currentClassId);
+            currentStudentId = studentsInClass[0]?.studentId || null;
+            updateControls();
+            await viewer.refreshContent(true);
+          });
+
+          controlsContainer.querySelector('#rv-gb-filter-student')?.addEventListener('change', async (e) => {
+            currentStudentId = e.target.value;
+            updateControls();
+            await viewer.refreshContent(true);
+          });
+
+          controlsContainer.querySelector('#rv-gb-btn-prev')?.addEventListener('click', async () => {
+            const idx = studentsInClass.findIndex(s => s.studentId === currentStudentId || s.id === currentStudentId);
+            if (idx > 0) {
+              currentStudentId = studentsInClass[idx - 1].studentId;
+              updateControls();
+              await viewer.refreshContent(true);
+            }
+          });
+
+          controlsContainer.querySelector('#rv-gb-btn-next')?.addEventListener('click', async () => {
+            const idx = studentsInClass.findIndex(s => s.studentId === currentStudentId || s.id === currentStudentId);
+            if (idx >= 0 && idx < studentsInClass.length - 1) {
+              currentStudentId = studentsInClass[idx + 1].studentId;
+              updateControls();
+              await viewer.refreshContent(true);
+            }
+          });
+        };
+
+        updateControls();
+      },
+      renderContent: async (contentContainer, viewer) => {
+        contentContainer.innerHTML = `
+          <div class="py-12 flex items-center justify-center gap-2 text-muted-foreground text-xs font-khmer">
+            <div class="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+            <span>កំពុងទាញយកទិន្នន័យសៀវភៅសិក្ខាគារិក...</span>
+          </div>
+        `;
+
+        const data = await StudentGradeBookService.getStudentGradeBook({
+          classId: currentClassId,
+          studentId: currentStudentId,
+          academicYear: activeYear
+        });
+
+        if (!data || !data.student) {
+          contentContainer.innerHTML = `
+            <div class="p-8 text-center text-muted-foreground text-xs font-khmer">
+              មិនមានទិន្នន័យសិស្សសម្រាប់ថ្នាក់នេះឡើយ។
+            </div>
+          `;
+          return;
+        }
+
+        const student = data.student;
+        const studentName = student.khmerName || student.fullName || student.englishName || '—';
+        const className = data.className || '—';
+
+        const subjects = data.subjects || [];
+        const summary = data.summary || {};
+        const att = data.attendance || {};
+
+        contentContainer.innerHTML = `
+          <div class="gradebook-document bg-white text-black font-khmer mx-auto p-4 select-none box-border" style="width: 100%; max-width: 794px; min-height: 1050px; font-family: 'Kantumruy Pro', 'Khmer OS Siemreap', sans-serif;">
+            <style>
+              .gradebook-box {
+                border: 2px solid #1e3a8a !important;
+                padding: 12px 14px !important;
+                background-color: #ffffff !important;
+                box-sizing: border-box !important;
+              }
+              .gradebook-table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                font-size: 9.5px !important;
+                line-height: 1.2 !important;
+                table-layout: fixed !important;
+              }
+              .gradebook-table th,
+              .gradebook-table td {
+                border: 1px solid #1e3a8a !important;
+                text-align: center !important;
+                vertical-align: middle !important;
+                padding: 2.5px 3px !important;
+              }
+              .gradebook-table th {
+                background-color: #dbeafe !important;
+                color: #1e3a8a !important;
+                font-weight: bold !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              .gradebook-banner {
+                background-color: #1e3a8a !important;
+                color: #ffffff !important;
+                text-align: center !important;
+                font-weight: bold !important;
+                font-size: 11.5px !important;
+                padding: 4px 6px !important;
+                letter-spacing: 0.3px !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              @media print {
+                .gradebook-box {
+                  border: 2px solid #1e3a8a !important;
+                  padding: 10px 12px !important;
+                }
+                .gradebook-table th {
+                  background-color: #dbeafe !important;
+                  color: #1e3a8a !important;
+                }
+                .gradebook-banner {
+                  background-color: #1e3a8a !important;
+                  color: #ffffff !important;
+                }
+              }
+            </style>
+
+            <div class="gradebook-box">
+              <!-- Top Header: Student Name & Class -->
+              <div class="flex items-center justify-between font-bold text-xs sm:text-sm mb-2 px-1 text-black">
+                <div>
+                  <span class="font-bold">ឈ្មោះសិស្ស៖ </span>
+                  <span class="font-khmer-muol text-[#1e3a8a] text-[13px]" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">${escapeHtml(studentName)}</span>
+                </div>
+                <div>
+                  <span class="font-bold">ថ្នាក់ទី៖ </span>
+                  <span class="font-bold text-[#1e3a8a]">${escapeHtml(className)}</span>
+                </div>
+              </div>
+
+              <!-- Section 1 Banner -->
+              <div class="gradebook-banner mb-0">
+                ១ / លទ្ធផលនៃការសិក្សា
+              </div>
+
+              <!-- Section 1 Main Table -->
+              <table class="gradebook-table mb-3">
+                <thead>
+                  <tr>
+                    <th rowspan="2" style="width: 34px;">ល.រ</th>
+                    <th rowspan="2" style="width: 145px;">មុខវិជ្ជា</th>
+                    <th colspan="2">ឆមាស១</th>
+                    <th colspan="2">ឆមាស២</th>
+                    <th colspan="2">ប្រចាំឆ្នាំ</th>
+                    <th rowspan="2" style="width: 125px;">មូលវិចារ ហត្ថលេខា<br>និងឈ្មោះគ្រូ</th>
+                  </tr>
+                  <tr>
+                    <th style="width: 46px;">ម.ភាគ</th>
+                    <th style="width: 42px;">ចំណាត់</th>
+                    <th style="width: 46px;">ម.ភាគ</th>
+                    <th style="width: 42px;">ចំណាត់</th>
+                    <th style="width: 46px;">ម.ភាគ</th>
+                    <th style="width: 42px;">ចំណាត់</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${subjects.map(s => `
+                    <tr>
+                      <td style="font-size: 9px;">${s.indexKm}</td>
+                      <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">${escapeHtml(s.name)}</td>
+                      <td class="font-mono">${formatScoreNumber(s.sem1Score)}</td>
+                      <td class="font-mono font-semibold">${s.sem1Rank || ''}</td>
+                      <td class="font-mono">${formatScoreNumber(s.sem2Score)}</td>
+                      <td class="font-mono font-semibold">${s.sem2Rank || ''}</td>
+                      <td class="font-mono">${formatScoreNumber(s.annualScore)}</td>
+                      <td class="font-mono font-semibold">${s.annualRank || ''}</td>
+                      <td style="font-size: 9px; font-weight: 500;">${escapeHtml(s.remark || '')}</td>
+                    </tr>
+                  `).join('')}
+
+                  <!-- Row 17: សរុបពិន្ទុរួមប្រឡងឆមាស -->
+                  <tr style="background-color: #f8fafc; font-weight: 600;">
+                    <td style="font-size: 9px;">${summary.examTotal?.indexKm || ''}</td>
+                    <td style="text-align: left !important; padding-left: 6px !important;">${summary.examTotal?.name || 'សរុបពិន្ទុរួមប្រឡងឆមាស'}</td>
+                    <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.sem1)}</td>
+                    <td></td>
+                    <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.sem2)}</td>
+                    <td></td>
+                    <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.annual)}</td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+
+                  <!-- Row 18: មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស -->
+                  <tr style="background-color: #f8fafc; font-weight: 600;">
+                    <td style="font-size: 9px;">${summary.examAvg?.indexKm || ''}</td>
+                    <td style="text-align: left !important; padding-left: 6px !important;">${summary.examAvg?.name || 'មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស'}</td>
+                    <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.sem1)}</td>
+                    <td class="font-mono font-bold text-blue-700">${summary.examAvg?.sem1Rank || ''}</td>
+                    <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.sem2)}</td>
+                    <td class="font-mono font-bold text-blue-700">${summary.examAvg?.sem2Rank || ''}</td>
+                    <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.annual)}</td>
+                    <td class="font-mono font-bold text-blue-700">${summary.examAvg?.annualRank || ''}</td>
+                    <td style="font-size: 9px; font-weight: 600; color: #1e3a8a;">${escapeHtml(summary.examAvg?.remark || '')}</td>
+                  </tr>
+
+                  <!-- Row 19: មធ្យមភាគពិន្ទុផ្ទៃក្នុងប្រចាំឆមាស -->
+                  <tr style="background-color: #f8fafc; font-weight: 600;">
+                    <td style="font-size: 9px;">${summary.internalAvg?.indexKm || ''}</td>
+                    <td style="text-align: left !important; padding-left: 6px !important;">${summary.internalAvg?.name || 'មធ្យមភាគពិន្ទុផ្ទៃក្នុងប្រចាំឆមាស'}</td>
+                    <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.sem1)}</td>
+                    <td></td>
+                    <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.sem2)}</td>
+                    <td></td>
+                    <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.annual)}</td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+
+                  <!-- Row 20: មធ្យមភាគប្រចាំឆមាស -->
+                  <tr style="background-color: #f8fafc; font-weight: 600;">
+                    <td style="font-size: 9px;">${summary.overallAvg?.indexKm || ''}</td>
+                    <td style="text-align: left !important; padding-left: 6px !important;">${summary.overallAvg?.name || 'មធ្យមភាគប្រចាំឆមាស'}</td>
+                    <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.sem1)}</td>
+                    <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.sem1Rank || ''}</td>
+                    <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.sem2)}</td>
+                    <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.sem2Rank || ''}</td>
+                    <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.annual)}</td>
+                    <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.annualRank || ''}</td>
+                    <td style="font-size: 9px; font-weight: 600; color: #1e3a8a;">${escapeHtml(summary.overallAvg?.remark || '')}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- Section 2 Banner -->
+              <div class="gradebook-banner mb-0" style="margin-top: 14px;">
+                ២ / ចំនួនអវត្តមានក្នុងមួយឆ្នាំ
+              </div>
+
+              <!-- Section 2 Table -->
+              <table class="gradebook-table">
+                <thead>
+                  <tr>
+                    <th style="width: 179px;">អវត្តមាន</th>
+                    <th>ឆមាសទី ១</th>
+                    <th>ឆមាសទី ២</th>
+                    <th>ប្រចាំឆ្នាំ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="text-align: left !important; padding-left: 10px !important; font-weight: 600;">មានច្បាប់</td>
+                    <td class="font-mono font-medium">${formatTwoDigits(att.excusedSem1)}</td>
+                    <td class="font-mono font-medium">${formatTwoDigits(att.excusedSem2)}</td>
+                    <td class="font-mono font-medium">${formatTwoDigits(att.excusedYear)}</td>
+                  </tr>
+                  <tr>
+                    <td style="text-align: left !important; padding-left: 10px !important; font-weight: 600;">ឥតច្បាប់</td>
+                    <td class="font-mono font-medium">${formatTwoDigits(att.unexcusedSem1)}</td>
+                    <td class="font-mono font-medium">${formatTwoDigits(att.unexcusedSem2)}</td>
+                    <td class="font-mono font-medium">${formatTwoDigits(att.unexcusedYear)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+    });
+  },
+
   bindStaticEvents() {
     // Switch tabs
     this.container.querySelectorAll('.rep-tab-btn').forEach(btn => {
@@ -1234,7 +1612,7 @@ export const ReportsPage = {
         if (this.state.activeTab === 'teachers' || this.state.activeTab === 'classes') {
           classFilterBox?.classList.add('hidden');
           statusFilterBox?.classList.add('hidden');
-        } else if (this.state.activeTab === 'studentPlan') {
+        } else if (this.state.activeTab === 'studentPlan' || this.state.activeTab === 'studentGradeBook') {
           classFilterBox?.classList.add('hidden');
           statusFilterBox?.classList.add('hidden');
         } else {
@@ -1266,6 +1644,10 @@ export const ReportsPage = {
     document.getElementById('btn-print-report')?.addEventListener('click', () => {
       if (this.state.activeTab === 'studentPlan') {
         this.openStudentPlanViewer();
+        return;
+      }
+      if (this.state.activeTab === 'studentGradeBook') {
+        this.openStudentGradeBookViewer();
         return;
       }
       window.print();
