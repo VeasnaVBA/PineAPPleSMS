@@ -5,15 +5,15 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.75';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.75';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.76';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.76';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js?v=3.0.75';
+import { ReportViewer } from '../components/reportViewer.js?v=3.0.76';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -1726,11 +1726,11 @@ export const ReportsPage = {
                             <td style="font-size: ${cellFontSize};">${s.indexKm}</td>
                             <td style="text-align: left !important; padding-left: 5px !important; font-weight: 500; font-size: ${nameFontSize};">${escapeHtml(s.name)}</td>
                             <td class="font-mono">${formatScoreNumber(s.sem1Score)}</td>
-                            <td class="font-mono font-semibold">${s.sem1Rank || ''}</td>
+                            <td class="font-mono font-semibold text-red-600" style="color: #dc2626 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">${s.sem1Rank || ''}</td>
                             <td class="font-mono">${formatScoreNumber(s.sem2Score)}</td>
-                            <td class="font-mono font-semibold">${s.sem2Rank || ''}</td>
+                            <td class="font-mono font-semibold text-red-600" style="color: #dc2626 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">${s.sem2Rank || ''}</td>
                             <td class="font-mono">${formatScoreNumber(s.annualScore)}</td>
-                            <td class="font-mono font-semibold">${s.annualRank || ''}</td>
+                            <td class="font-mono font-semibold text-red-600" style="color: #dc2626 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">${s.annualRank || ''}</td>
                             <td style="font-size: ${cellFontSize}; font-weight: 500;">${escapeHtml(s.remark || '')}</td>
                           </tr>
                         `).join('')}
@@ -1753,11 +1753,11 @@ export const ReportsPage = {
                           <td style="font-size: ${cellFontSize};">${summary.examAvg?.indexKm || ''}</td>
                           <td style="text-align: left !important; padding-left: 5px !important; font-size: ${nameFontSize};">${summary.examAvg?.name || 'មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស'}</td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.sem1)}</td>
-                          <td class="font-mono font-bold text-blue-700">${summary.examAvg?.sem1Rank || ''}</td>
+                          <td class="font-mono font-bold text-red-600" style="color: #dc2626 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">${summary.examAvg?.sem1Rank || ''}</td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.sem2)}</td>
-                          <td class="font-mono font-bold text-blue-700">${summary.examAvg?.sem2Rank || ''}</td>
+                          <td class="font-mono font-bold text-red-600" style="color: #dc2626 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">${summary.examAvg?.sem2Rank || ''}</td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.annual)}</td>
-                          <td class="font-mono font-bold text-blue-700">${summary.examAvg?.annualRank || ''}</td>
+                          <td class="font-mono font-bold text-red-600" style="color: #dc2626 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">${summary.examAvg?.annualRank || ''}</td>
                           <td style="font-size: ${cellFontSize}; font-weight: 600; color: #1e3a8a;">${escapeHtml(summary.examAvg?.remark || '')}</td>
                         </tr>
 
@@ -1779,11 +1779,11 @@ export const ReportsPage = {
                           <td style="font-size: ${cellFontSize};">${summary.overallAvg?.indexKm || ''}</td>
                           <td style="text-align: left !important; padding-left: 5px !important; font-size: ${nameFontSize};">${summary.overallAvg?.name || 'មធ្យមភាគប្រចាំឆមាស'}</td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.sem1)}</td>
-                          <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.sem1Rank || ''}</td>
+                          <td class="font-mono font-bold text-red-600" style="color: #dc2626 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">${summary.overallAvg?.sem1Rank || ''}</td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.sem2)}</td>
-                          <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.sem2Rank || ''}</td>
+                          <td class="font-mono font-bold text-red-600" style="color: #dc2626 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">${summary.overallAvg?.sem2Rank || ''}</td>
                           <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.annual)}</td>
-                          <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.annualRank || ''}</td>
+                          <td class="font-mono font-bold text-red-600" style="color: #dc2626 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">${summary.overallAvg?.annualRank || ''}</td>
                           <td style="font-size: ${cellFontSize}; font-weight: 600; color: #1e3a8a;">${escapeHtml(summary.overallAvg?.remark || '')}</td>
                         </tr>
                       </tbody>
