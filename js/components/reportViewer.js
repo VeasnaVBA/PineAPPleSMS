@@ -63,6 +63,7 @@ export class ReportViewer {
       reportKey: options.reportKey || 'default_report',
       title: options.title || t('reportViewer.title') || 'Report Viewer',
       defaultOrientation: options.defaultOrientation || 'portrait',
+      forceOrientation: options.forceOrientation || null,
       defaultPaperSize: options.defaultPaperSize || 'A4',
       defaultMargins: options.defaultMargins || { top: 15, bottom: 15, left: 15, right: 15 },
       defaultFontFamily: options.defaultFontFamily || 'Kantumruy Pro',
@@ -77,7 +78,7 @@ export class ReportViewer {
       paperSize: (this.options.defaultPaperSize || 'A4').toUpperCase(),
       padding: { ...this.options.defaultMargins },
       margins: { ...this.options.defaultMargins },
-      orientation: this.options.defaultOrientation,
+      orientation: this.options.forceOrientation || this.options.defaultOrientation,
       zoom: 100,
       defaultFontFamily: this.options.defaultFontFamily,
       defaultFontSize: this.options.defaultFontSize || 10
@@ -3790,7 +3791,7 @@ export class ReportViewer {
       this.settings.paperSize = (this.options.defaultPaperSize || 'A4').toUpperCase();
       this.settings.padding = { ...this.options.defaultMargins };
       this.settings.margins = { ...this.options.defaultMargins };
-      this.settings.orientation = this.options.defaultOrientation;
+      this.settings.orientation = this.options.forceOrientation || this.options.defaultOrientation;
       this.settings.zoom = 100;
       this.settings.defaultFontFamily = this.options.defaultFontFamily;
       this.settings.defaultFontSize = this.options.defaultFontSize;

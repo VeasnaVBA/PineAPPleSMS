@@ -5,15 +5,15 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.69';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.69';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.70';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.70';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js';
+import { ReportViewer } from '../components/reportViewer.js?v=3.0.70';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -277,7 +277,7 @@ export const ReportsPage = {
               សៀវភៅសិក្ខាគារិក
             </h2>
             <p class="text-xs sm:text-sm text-muted-foreground font-khmer max-w-md mb-8 leading-relaxed">
-              ពិនិត្យមើល និងបោះពុម្ពសៀវភៅសិក្ខាគារិក លទ្ធផលនៃការសិក្សា និងចំនួនអវត្តមានក្នុងមួយឆ្នាំរបស់សិស្សម្នាក់ៗ ជាទម្រង់ក្រដាស A4 Portrait ផ្លូវការ
+              ពិនិត្យមើល និងបោះពុម្ពសៀវភៅសិក្ខាគារិក លទ្ធផលនៃការសិក្សា និងចំនួនអវត្តមានក្នុងមួយឆ្នាំរបស់សិស្សម្នាក់ៗ ជាទម្រង់ក្រដាស A4 Landscape ផ្លូវការ
             </p>
             <button id="btn-open-student-gradebook-modal" type="button" class="inline-flex items-center gap-3 px-8 py-3.5 rounded-xl bg-blue-600 text-white font-bold text-sm sm:text-base shadow-lg hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
               ${getIcon('printer', 'w-5 h-5')}
@@ -1282,6 +1282,7 @@ export const ReportsPage = {
       reportKey: 'student_grade_book',
       title: isKm ? 'សៀវភៅសិក្ខាគារិក' : 'Student Grade Book',
       alwaysFresh: true,
+      forceOrientation: 'landscape',
       defaultOrientation: 'landscape',
       defaultPaperSize: 'A4',
       defaultMargins: { top: 4, bottom: 4, left: 5, right: 5 },
@@ -1394,15 +1395,22 @@ export const ReportsPage = {
         const evalData = data.evaluation || {};
 
         contentContainer.innerHTML = `
-          <div class="gradebook-landscape-spread bg-white text-black font-khmer mx-auto p-2 select-none box-border" style="width: 100%; max-width: 1080px; font-family: 'Kantumruy Pro', 'Khmer OS Siemreap', sans-serif;">
+          <div class="report-explicit-page gradebook-landscape-spread bg-white text-black font-khmer mx-auto select-none box-border" style="width: 100%; height: 100%; max-width: 100%; font-family: 'Kantumruy Pro', 'Khmer OS Siemreap', sans-serif;">
             <style>
+              .gradebook-landscape-spread {
+                width: 100% !important;
+                height: 100% !important;
+                box-sizing: border-box !important;
+              }
               .gradebook-spread-row {
                 display: flex !important;
                 flex-direction: row !important;
                 gap: 8px !important;
                 width: 100% !important;
+                height: 100% !important;
                 box-sizing: border-box !important;
                 background-color: #ffffff !important;
+                align-items: stretch !important;
               }
               .gradebook-page-box {
                 flex: 1 1 50% !important;
