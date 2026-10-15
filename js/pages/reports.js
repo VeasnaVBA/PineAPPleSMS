@@ -5,15 +5,15 @@
  * (ផែនការសិស្សម្នាក់ៗ - MoEYS / SEIP standard template in A4 Landscape).
  */
 import { ReportService } from '../services/reportService.js';
-import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.70';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.70';
+import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.71';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber } from '../services/studentGradeBookService.js?v=3.0.71';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js?v=3.0.70';
+import { ReportViewer } from '../components/reportViewer.js?v=3.0.71';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -1325,6 +1325,12 @@ export const ReportsPage = {
                 (${currIdx >= 0 ? currIdx + 1 : 0}/${studentsInClass.length})
               </span>
             </div>
+
+            <!-- Subject Visibility Filter Button -->
+            <button type="button" id="rv-gb-btn-toggle-subjects" class="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-md border border-input bg-card hover:bg-muted text-xs font-semibold text-foreground cursor-pointer shadow-xs whitespace-nowrap active:scale-95 transition-all" title="ជ្រើសរើសមុខវិជ្ជាបង្ហាញ/លាក់">
+              ${getIcon('slidersHorizontal', 'w-3.5 h-3.5 text-blue-600')}
+              <span>មុខវិជ្ជា</span>
+            </button>
           `;
 
           controlsContainer.querySelector('#rv-gb-filter-class')?.addEventListener('change', async (e) => {
@@ -1357,6 +1363,142 @@ export const ReportsPage = {
               updateControls();
               await viewer.refreshContent(true);
             }
+          });
+
+          controlsContainer.querySelector('#rv-gb-btn-toggle-subjects')?.addEventListener('click', async () => {
+            await openGradeBookSubjectSelectionModal();
+          });
+        };
+
+        const openGradeBookSubjectSelectionModal = async () => {
+          const targetClass = classes.find(c => c.id === currentClassId) || { id: currentClassId, name: '—' };
+          const allSubs = await StudentGradeBookService.getGradeBookSubjects(targetClass);
+          const hiddenList = await StudentGradeBookService.getHiddenSubjectIds(currentClassId);
+          const hiddenSet = new Set(hiddenList);
+
+          document.getElementById('modal-rv-gb-subjects')?.remove();
+
+          const modalEl = document.createElement('div');
+          modalEl.id = 'modal-rv-gb-subjects';
+          modalEl.className = 'fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-sm animate-fade-in font-khmer select-none';
+
+          modalEl.innerHTML = `
+            <div class="w-full max-w-md sm:max-w-lg bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] text-foreground animate-scale-in">
+              <!-- Header -->
+              <div class="px-5 py-4 border-b border-border flex items-center justify-between bg-muted/30">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-lg bg-blue-600/10 text-blue-600 flex items-center justify-center">
+                    ${getIcon('slidersHorizontal', 'w-4 h-4')}
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-sm sm:text-base text-foreground leading-tight">កំណត់ការបង្ហាញមុខវិជ្ជា</h3>
+                    <p class="text-[11px] text-muted-foreground mt-0.5">ជ្រើសរើសមុខវិជ្ជាដែលត្រូវបង្ហាញក្នុងសៀវភៅសិក្ខាគារិក</p>
+                  </div>
+                </div>
+                <button type="button" id="btn-close-gb-sub-modal" class="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer transition-colors">
+                  ${getIcon('x', 'w-4 h-4')}
+                </button>
+              </div>
+
+              <!-- Quick action bar -->
+              <div class="px-4 py-2.5 border-b border-border/80 bg-muted/10 flex items-center justify-between gap-2 text-xs">
+                <div class="flex items-center gap-1.5">
+                  <button type="button" id="btn-select-all-gb-subs" class="px-2.5 py-1 rounded-md border border-input bg-card hover:bg-muted font-medium text-[11px] transition-colors cursor-pointer shadow-xs">
+                    ជ្រើសទាំងអស់
+                  </button>
+                  <button type="button" id="btn-deselect-all-gb-subs" class="px-2.5 py-1 rounded-md border border-input bg-card hover:bg-muted font-medium text-[11px] transition-colors cursor-pointer shadow-xs">
+                    ដោះទាំងអស់
+                  </button>
+                </div>
+                <span id="gb-sub-modal-selected-counter" class="text-xs text-muted-foreground font-medium"></span>
+              </div>
+
+              <!-- Subject Checkboxes List -->
+              <div class="p-3 sm:p-4 overflow-y-auto flex-1 space-y-1.5 divide-y divide-border/40" id="gb-sub-modal-list">
+                ${allSubs.map((sub, idx) => {
+                  const sId = sub.id || sub.code || sub.name;
+                  const isChecked = !hiddenSet.has(sId) && !hiddenSet.has(sub.id) && !hiddenSet.has(sub.code);
+                  return `
+                    <label class="flex items-center justify-between gap-3 p-2.5 rounded-xl hover:bg-muted/50 cursor-pointer transition-colors select-none group border border-transparent hover:border-border/40">
+                      <div class="flex items-center gap-2.5 min-w-0">
+                        <input type="checkbox" class="gb-sub-checkbox w-4 h-4 rounded text-blue-600 focus:ring-blue-600 cursor-pointer accent-blue-600" data-subject-id="${escapeHtml(sId)}" ${isChecked ? 'checked' : ''}>
+                        <div class="min-w-0">
+                          <div class="font-semibold text-xs sm:text-sm text-foreground truncate group-hover:text-blue-600 transition-colors">
+                            ${idx + 1}. ${escapeHtml(sub.name || sub.nameKm || '')}
+                          </div>
+                        </div>
+                      </div>
+                      <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground shrink-0">
+                        ${escapeHtml(sub.code || 'SUB')}
+                      </span>
+                    </label>
+                  `;
+                }).join('')}
+              </div>
+
+              <!-- Footer -->
+              <div class="px-5 py-3.5 border-t border-border bg-muted/20 flex items-center justify-end gap-2">
+                <button type="button" id="btn-cancel-gb-sub-modal" class="px-4 py-2 rounded-xl border border-input bg-card hover:bg-muted text-xs font-semibold text-foreground cursor-pointer transition-colors">
+                  បោះបង់
+                </button>
+                <button type="button" id="btn-save-gb-sub-modal" class="px-5 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 cursor-pointer transition-colors shadow-sm">
+                  រក្សាទុក & អនុវត្ត
+                </button>
+              </div>
+            </div>
+          `;
+
+          document.body.appendChild(modalEl);
+
+          const updateCounter = () => {
+            const total = modalEl.querySelectorAll('.gb-sub-checkbox').length;
+            const checked = modalEl.querySelectorAll('.gb-sub-checkbox:checked').length;
+            const counterEl = modalEl.querySelector('#gb-sub-modal-selected-counter');
+            if (counterEl) {
+              counterEl.textContent = `បានជ្រើស ${checked}/${total} មុខវិជ្ជា`;
+            }
+          };
+          updateCounter();
+
+          modalEl.querySelectorAll('.gb-sub-checkbox').forEach(cb => {
+            cb.addEventListener('change', updateCounter);
+          });
+
+          modalEl.querySelector('#btn-select-all-gb-subs')?.addEventListener('click', () => {
+            modalEl.querySelectorAll('.gb-sub-checkbox').forEach(cb => { cb.checked = true; });
+            updateCounter();
+          });
+
+          modalEl.querySelector('#btn-deselect-all-gb-subs')?.addEventListener('click', () => {
+            modalEl.querySelectorAll('.gb-sub-checkbox').forEach(cb => { cb.checked = false; });
+            updateCounter();
+          });
+
+          const closeModal = () => modalEl.remove();
+
+          modalEl.querySelector('#btn-close-gb-sub-modal')?.addEventListener('click', closeModal);
+          modalEl.querySelector('#btn-cancel-gb-sub-modal')?.addEventListener('click', closeModal);
+          modalEl.addEventListener('click', (e) => {
+            if (e.target === modalEl) closeModal();
+          });
+
+          modalEl.querySelector('#btn-save-gb-sub-modal')?.addEventListener('click', async () => {
+            const checkedBoxes = modalEl.querySelectorAll('.gb-sub-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+              toast.error('សូមជ្រើសរើសយ៉ាងហោចណាស់ ១ មុខវិជ្ជា');
+              return;
+            }
+
+            const newHidden = [];
+            modalEl.querySelectorAll('.gb-sub-checkbox:not(:checked)').forEach(cb => {
+              const sId = cb.getAttribute('data-subject-id');
+              if (sId) newHidden.push(sId);
+            });
+
+            await StudentGradeBookService.saveHiddenSubjectIds(currentClassId, newHidden);
+            closeModal();
+            toast.success('បានរក្សាទុកការកំណត់មុខវិជ្ជាជោគជ័យ');
+            await viewer.refreshContent(true);
           });
         };
 
@@ -1393,6 +1535,28 @@ export const ReportsPage = {
         const summary = data.summary || {};
         const att = data.attendance || {};
         const evalData = data.evaluation || {};
+        const subCount = subjects.length;
+
+        // Dynamic compact row height and font scaling to fit inside single landscape page
+        let rowHeight = 15;
+        let cellFontSize = '7.5px';
+        let nameFontSize = '8px';
+        let bannerPadding = '2px 4px';
+        let bannerFontSize = '9px';
+
+        if (subCount > 13) {
+          rowHeight = 13.5;
+          cellFontSize = '7px';
+          nameFontSize = '7.5px';
+          bannerPadding = '1px 3px';
+          bannerFontSize = '8.5px';
+        } else if (subCount <= 10) {
+          rowHeight = 18;
+          cellFontSize = '8px';
+          nameFontSize = '8.5px';
+          bannerPadding = '2.5px 4px';
+          bannerFontSize = '9.5px';
+        }
 
         contentContainer.innerHTML = `
           <div class="report-explicit-page gradebook-landscape-spread bg-white text-black font-khmer mx-auto select-none box-border" style="width: 100%; height: 100%; max-width: 100%; font-family: 'Kantumruy Pro', 'Khmer OS Siemreap', sans-serif;">
@@ -1405,7 +1569,7 @@ export const ReportsPage = {
               .gradebook-spread-row {
                 display: flex !important;
                 flex-direction: row !important;
-                gap: 8px !important;
+                gap: 6px !important;
                 width: 100% !important;
                 height: 100% !important;
                 box-sizing: border-box !important;
@@ -1415,8 +1579,9 @@ export const ReportsPage = {
               .gradebook-page-box {
                 flex: 1 1 50% !important;
                 width: 50% !important;
+                height: 100% !important;
                 border: 1.5px solid #1e3a8a !important;
-                padding: 6px 8px !important;
+                padding: 4px 6px !important;
                 background-color: #ffffff !important;
                 box-sizing: border-box !important;
                 display: flex !important;
@@ -1426,22 +1591,33 @@ export const ReportsPage = {
               .gradebook-table {
                 width: 100% !important;
                 border-collapse: collapse !important;
-                font-size: 8px !important;
-                line-height: 1.15 !important;
+                font-size: ${cellFontSize} !important;
+                line-height: 1 !important;
                 table-layout: fixed !important;
+              }
+              .gradebook-table tr {
+                height: ${rowHeight}px !important;
+                max-height: ${rowHeight}px !important;
               }
               .gradebook-table th,
               .gradebook-table td {
                 border: 1px solid #1e3a8a !important;
                 text-align: center !important;
                 vertical-align: middle !important;
-                padding: 1.5px 2px !important;
+                padding: 0px 1.5px !important;
+                height: ${rowHeight}px !important;
+                max-height: ${rowHeight}px !important;
+                box-sizing: border-box !important;
+                overflow: hidden !important;
+                white-space: nowrap !important;
+                text-overflow: ellipsis !important;
               }
               .gradebook-table th {
                 background-color: #dbeafe !important;
                 color: #1e3a8a !important;
                 font-weight: bold !important;
-                font-size: 8px !important;
+                font-size: ${cellFontSize} !important;
+                height: ${rowHeight}px !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
               }
@@ -1450,8 +1626,8 @@ export const ReportsPage = {
                 color: #ffffff !important;
                 text-align: center !important;
                 font-weight: bold !important;
-                font-size: 9.5px !important;
-                padding: 2.5px 4px !important;
+                font-size: ${bannerFontSize} !important;
+                padding: ${bannerPadding} !important;
                 letter-spacing: 0.2px !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
@@ -1462,11 +1638,11 @@ export const ReportsPage = {
                   margin: 4mm 5mm !important;
                 }
                 .gradebook-spread-row {
-                  gap: 6px !important;
+                  gap: 5px !important;
                 }
                 .gradebook-page-box {
                   border: 1.5px solid #1e3a8a !important;
-                  padding: 5px 7px !important;
+                  padding: 4px 6px !important;
                 }
                 .gradebook-table th {
                   background-color: #dbeafe !important;
@@ -1484,10 +1660,10 @@ export const ReportsPage = {
               <div class="gradebook-page-box">
                 <div>
                   <!-- Top Header: Student Name & Class -->
-                  <div class="flex items-center justify-between font-bold text-[10.5px] mb-1 px-0.5 text-black">
+                  <div class="flex items-center justify-between font-bold text-[10px] mb-0.5 px-0.5 text-black">
                     <div>
                       <span>ឈ្មោះសិស្ស៖ </span>
-                      <span class="font-khmer-muol text-[#1e3a8a] text-[11px]" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">${escapeHtml(studentName)}</span>
+                      <span class="font-khmer-muol text-[#1e3a8a] text-[10.5px]" style="font-family: 'Khmer OS Muol Light', 'Moul', cursive, sans-serif;">${escapeHtml(studentName)}</span>
                     </div>
                     <div>
                       <span>ថ្នាក់ទី៖ </span>
@@ -1503,42 +1679,42 @@ export const ReportsPage = {
                   <!-- Main Score Table -->
                   <table class="gradebook-table">
                     <thead>
-                      <tr>
-                        <th rowspan="2" style="width: 26px;">ល.រ</th>
-                        <th rowspan="2" style="width: 120px;">មុខវិជ្ជា</th>
+                      <tr style="height: ${rowHeight}px !important;">
+                        <th rowspan="2" style="width: 24px;">ល.រ</th>
+                        <th rowspan="2" style="width: 110px;">មុខវិជ្ជា</th>
                         <th colspan="2">ឆមាស១</th>
                         <th colspan="2">ឆមាស២</th>
                         <th colspan="2">ប្រចាំឆ្នាំ</th>
-                        <th rowspan="2" style="width: 90px;">មូលវិចារ ហត្ថលេខា<br>និងឈ្មោះគ្រូ</th>
+                        <th rowspan="2" style="width: 86px;">មូលវិចារ ហត្ថលេខា<br>និងឈ្មោះគ្រូ</th>
                       </tr>
-                      <tr>
-                        <th style="width: 36px;">ម.ភាគ</th>
-                        <th style="width: 30px;">ចំណាត់</th>
-                        <th style="width: 36px;">ម.ភាគ</th>
-                        <th style="width: 30px;">ចំណាត់</th>
-                        <th style="width: 36px;">ម.ភាគ</th>
-                        <th style="width: 30px;">ចំណាត់</th>
+                      <tr style="height: ${rowHeight}px !important;">
+                        <th style="width: 34px;">ម.ភាគ</th>
+                        <th style="width: 28px;">ចំណាត់</th>
+                        <th style="width: 34px;">ម.ភាគ</th>
+                        <th style="width: 28px;">ចំណាត់</th>
+                        <th style="width: 34px;">ម.ភាគ</th>
+                        <th style="width: 28px;">ចំណាត់</th>
                       </tr>
                     </thead>
                     <tbody>
                       ${subjects.map(s => `
-                        <tr>
-                          <td style="font-size: 7.5px;">${s.indexKm}</td>
-                          <td style="text-align: left !important; padding-left: 4px !important; font-weight: 500;">${escapeHtml(s.name)}</td>
+                        <tr style="height: ${rowHeight}px !important;">
+                          <td style="font-size: ${cellFontSize};">${s.indexKm}</td>
+                          <td style="text-align: left !important; padding-left: 3px !important; font-weight: 500; font-size: ${nameFontSize};">${escapeHtml(s.name)}</td>
                           <td class="font-mono">${formatScoreNumber(s.sem1Score)}</td>
                           <td class="font-mono font-semibold">${s.sem1Rank || ''}</td>
                           <td class="font-mono">${formatScoreNumber(s.sem2Score)}</td>
                           <td class="font-mono font-semibold">${s.sem2Rank || ''}</td>
                           <td class="font-mono">${formatScoreNumber(s.annualScore)}</td>
                           <td class="font-mono font-semibold">${s.annualRank || ''}</td>
-                          <td style="font-size: 7.5px; font-weight: 500;">${escapeHtml(s.remark || '')}</td>
+                          <td style="font-size: ${cellFontSize}; font-weight: 500;">${escapeHtml(s.remark || '')}</td>
                         </tr>
                       `).join('')}
 
                       <!-- Row 17: សរុបពិន្ទុរួមប្រឡងឆមាស -->
-                      <tr style="background-color: #f8fafc; font-weight: 600;">
-                        <td style="font-size: 7.5px;">${summary.examTotal?.indexKm || ''}</td>
-                        <td style="text-align: left !important; padding-left: 4px !important;">${summary.examTotal?.name || 'សរុបពិន្ទុរួមប្រឡងឆមាស'}</td>
+                      <tr style="background-color: #f8fafc; font-weight: 600; height: ${rowHeight}px !important;">
+                        <td style="font-size: ${cellFontSize};">${summary.examTotal?.indexKm || ''}</td>
+                        <td style="text-align: left !important; padding-left: 3px !important; font-size: ${nameFontSize};">${summary.examTotal?.name || 'សរុបពិន្ទុរួមប្រឡងឆមាស'}</td>
                         <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.sem1)}</td>
                         <td></td>
                         <td class="font-mono font-bold">${formatScoreNumber(summary.examTotal?.sem2)}</td>
@@ -1549,22 +1725,22 @@ export const ReportsPage = {
                       </tr>
 
                       <!-- Row 18: មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស -->
-                      <tr style="background-color: #f8fafc; font-weight: 600;">
-                        <td style="font-size: 7.5px;">${summary.examAvg?.indexKm || ''}</td>
-                        <td style="text-align: left !important; padding-left: 4px !important;">${summary.examAvg?.name || 'មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស'}</td>
+                      <tr style="background-color: #f8fafc; font-weight: 600; height: ${rowHeight}px !important;">
+                        <td style="font-size: ${cellFontSize};">${summary.examAvg?.indexKm || ''}</td>
+                        <td style="text-align: left !important; padding-left: 3px !important; font-size: ${nameFontSize};">${summary.examAvg?.name || 'មធ្យមភាគពិន្ទុរួមប្រឡងឆមាស'}</td>
                         <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.sem1)}</td>
                         <td class="font-mono font-bold text-blue-700">${summary.examAvg?.sem1Rank || ''}</td>
                         <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.sem2)}</td>
                         <td class="font-mono font-bold text-blue-700">${summary.examAvg?.sem2Rank || ''}</td>
                         <td class="font-mono font-bold">${formatScoreNumber(summary.examAvg?.annual)}</td>
                         <td class="font-mono font-bold text-blue-700">${summary.examAvg?.annualRank || ''}</td>
-                        <td style="font-size: 7.5px; font-weight: 600; color: #1e3a8a;">${escapeHtml(summary.examAvg?.remark || '')}</td>
+                        <td style="font-size: ${cellFontSize}; font-weight: 600; color: #1e3a8a;">${escapeHtml(summary.examAvg?.remark || '')}</td>
                       </tr>
 
                       <!-- Row 19: មធ្យមភាគពិន្ទុផ្ទៃក្នុងប្រចាំឆមាស -->
-                      <tr style="background-color: #f8fafc; font-weight: 600;">
-                        <td style="font-size: 7.5px;">${summary.internalAvg?.indexKm || ''}</td>
-                        <td style="text-align: left !important; padding-left: 4px !important;">${summary.internalAvg?.name || 'មធ្យមភាគពិន្ទុផ្ទៃក្នុងប្រចាំឆមាស'}</td>
+                      <tr style="background-color: #f8fafc; font-weight: 600; height: ${rowHeight}px !important;">
+                        <td style="font-size: ${cellFontSize};">${summary.internalAvg?.indexKm || ''}</td>
+                        <td style="text-align: left !important; padding-left: 3px !important; font-size: ${nameFontSize};">${summary.internalAvg?.name || 'មធ្យមភាគពិន្ទុផ្ទៃក្នុងប្រចាំឆមាស'}</td>
                         <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.sem1)}</td>
                         <td></td>
                         <td class="font-mono font-bold">${formatScoreNumber(summary.internalAvg?.sem2)}</td>
@@ -1575,16 +1751,16 @@ export const ReportsPage = {
                       </tr>
 
                       <!-- Row 20: មធ្យមភាគប្រចាំឆមាស -->
-                      <tr style="background-color: #f8fafc; font-weight: 600;">
-                        <td style="font-size: 7.5px;">${summary.overallAvg?.indexKm || ''}</td>
-                        <td style="text-align: left !important; padding-left: 4px !important;">${summary.overallAvg?.name || 'មធ្យមភាគប្រចាំឆមាស'}</td>
+                      <tr style="background-color: #f8fafc; font-weight: 600; height: ${rowHeight}px !important;">
+                        <td style="font-size: ${cellFontSize};">${summary.overallAvg?.indexKm || ''}</td>
+                        <td style="text-align: left !important; padding-left: 3px !important; font-size: ${nameFontSize};">${summary.overallAvg?.name || 'មធ្យមភាគប្រចាំឆមាស'}</td>
                         <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.sem1)}</td>
                         <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.sem1Rank || ''}</td>
                         <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.sem2)}</td>
                         <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.sem2Rank || ''}</td>
                         <td class="font-mono font-bold">${formatScoreNumber(summary.overallAvg?.annual)}</td>
                         <td class="font-mono font-bold text-blue-700">${summary.overallAvg?.annualRank || ''}</td>
-                        <td style="font-size: 7.5px; font-weight: 600; color: #1e3a8a;">${escapeHtml(summary.overallAvg?.remark || '')}</td>
+                        <td style="font-size: ${cellFontSize}; font-weight: 600; color: #1e3a8a;">${escapeHtml(summary.overallAvg?.remark || '')}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -1596,7 +1772,7 @@ export const ReportsPage = {
                 <div class="flex flex-col justify-between h-full">
                   <div>
                     <!-- Top Line: School Name & Student Count in Class -->
-                    <div class="flex items-center justify-between text-[8.5px] font-bold mb-1 px-0.5 text-black leading-tight">
+                    <div class="flex items-center justify-between text-[8px] font-bold mb-0.5 px-0.5 text-black leading-tight">
                       <div>
                         <span>វិទ្យាល័យ/សាលា ៖ </span>
                         <span class="text-blue-900 font-semibold" contenteditable="true" spellcheck="false">${escapeHtml(data.schoolName || '...........................................')}</span>
@@ -1613,7 +1789,7 @@ export const ReportsPage = {
                       ខ / ចំនួនអវត្តមានក្នុងឆ្នាំសិក្សា
                     </div>
                     <!-- Section ខ Table -->
-                    <table class="gradebook-table mb-1.5">
+                    <table class="gradebook-table mb-1">
                       <thead>
                         <tr>
                           <th style="width: 34%;">អវត្តមាន</th>
@@ -1643,7 +1819,7 @@ export const ReportsPage = {
                       គ / ការវាយតម្លៃ
                     </div>
                     <!-- Section គ Table -->
-                    <table class="gradebook-table mb-1.5">
+                    <table class="gradebook-table mb-1">
                       <thead>
                         <tr>
                           <th style="width: 34%;">ផ្នែកទាំង៤</th>
@@ -1685,7 +1861,7 @@ export const ReportsPage = {
                       ឃ / ការសរសើរ
                     </div>
                     <!-- Section ឃ Table -->
-                    <table class="gradebook-table mb-1.5">
+                    <table class="gradebook-table mb-1">
                       <thead>
                         <tr>
                           <th style="width: 34%;">បានទទួលការសរសើរ</th>
@@ -1720,28 +1896,28 @@ export const ReportsPage = {
                     <div class="gradebook-banner mb-0">
                       ង / លទ្ធផលនៃការប្រឡងបញ្ចប់ភូមិសិក្សា (ជាប់ ឬ ធ្លាក់)
                     </div>
-                    <div class="border border-[#1e3a8a] py-1 px-2 text-center text-[9px] font-bold bg-[#f8fafc] mb-1.5 flex items-center justify-center gap-2">
+                    <div class="border border-[#1e3a8a] py-0.5 px-2 text-center text-[8.5px] font-bold bg-[#f8fafc] mb-1 flex items-center justify-center gap-2">
                       <span class="text-muted-foreground">លទ្ធផល ៖</span>
-                      <span class="text-blue-900 font-bold text-[9.5px]" contenteditable="true" spellcheck="false">${data.graduationResult ? `${data.graduationResult}` : '...................................................'}</span>
+                      <span class="text-blue-900 font-bold text-[9px]" contenteditable="true" spellcheck="false">${data.graduationResult ? `${data.graduationResult}` : '...................................................'}</span>
                     </div>
                   </div>
 
                   <!-- Section ច: មូលវិចារ -->
                   <div class="border border-[#1e3a8a]">
-                    <div class="gradebook-banner mb-0 text-center font-bold text-[9px] border-b border-[#1e3a8a] py-0.5">
+                    <div class="gradebook-banner mb-0 text-center font-bold text-[8.5px] border-b border-[#1e3a8a] py-0.5">
                       ច / មូលវិចារ
                     </div>
-                    <div class="grid grid-cols-2 divide-x divide-[#1e3a8a] text-[8.5px]">
+                    <div class="grid grid-cols-2 divide-x divide-[#1e3a8a] text-[8px]">
                       <!-- Left: នាយកសាលា -->
-                      <div class="p-1 flex flex-col justify-between text-center" style="min-height: 72px;">
+                      <div class="p-1 flex flex-col justify-between text-center" style="min-height: 56px;">
                         <p class="font-bold text-foreground">នាយកសាលា</p>
-                        <div style="height: 30px;"></div>
+                        <div style="height: 20px;"></div>
                         <p class="text-[7.5px] text-muted-foreground">ថ្ងៃទី..........ខែ..........ឆ្នាំ២០.....</p>
                       </div>
                       <!-- Right: គ្រូទទួលបន្ទុកថ្នាក់ -->
-                      <div class="p-1 flex flex-col justify-between text-center" style="min-height: 72px;">
+                      <div class="p-1 flex flex-col justify-between text-center" style="min-height: 56px;">
                         <p class="font-bold text-foreground">គ្រូទទួលបន្ទុកថ្នាក់</p>
-                        <div style="height: 30px;"></div>
+                        <div style="height: 20px;"></div>
                         <p class="text-[7.5px] text-muted-foreground">ថ្ងៃទី..........ខែ..........ឆ្នាំ២០.....</p>
                       </div>
                     </div>

@@ -47,6 +47,54 @@ export const StudentGradeBookService = {
 
   /**
    * Resolve subjects for the grade book
+  /**
+   * Get list of hidden subject IDs for grade book
+   */
+  async getHiddenSubjectIds(classId) {
+    if (!classId) return [];
+    try {
+      const rec = await db.get('report_settings', `student_gradebook_hidden_subjects_${classId}`);
+      if (rec && rec.value) {
+        const parsed = typeof rec.value === 'string' ? JSON.parse(rec.value) : rec.value;
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (_) {}
+    try {
+      const raw = localStorage.getItem(`student_gradebook_hidden_subjects_${classId}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (_) {}
+    return [];
+  },
+
+  /**
+   * Save hidden subject IDs for grade book
+   */
+  async saveHiddenSubjectIds(classId, hiddenIds) {
+    if (!classId) return [];
+    const key = `student_gradebook_hidden_subjects_${classId}`;
+    const payload = Array.isArray(hiddenIds) ? hiddenIds : [];
+    try {
+      await db.put('report_settings', {
+        id: key,
+        key: key,
+        type: 'gradebook_hidden_subjects',
+        value: JSON.stringify(payload),
+        updatedAt: new Date().toISOString()
+      });
+    } catch (err) {
+      console.warn('Failed to save gradebook hidden subjects to DB:', err);
+    }
+    try {
+      localStorage.setItem(key, JSON.stringify(payload));
+    } catch (_) {}
+    return payload;
+  },
+
+  /**
+   * Resolve subjects for the grade book
    */
   async getGradeBookSubjects(targetClass) {
     try {
@@ -101,7 +149,17 @@ export const StudentGradeBookService = {
       .sort((a, b) => (a.khmerName || '').localeCompare(b.khmerName || '', 'km'));
 
     const currentStudent = classStudents.find(s => s.studentId === studentId || s.id === studentId) || classStudents[0] || null;
-    const subjects = await this.getGradeBookSubjects(targetClass);
+    const allAvailableSubjects = await this.getGradeBookSubjects(targetClass);
+    const hiddenSubjectIds = await this.getHiddenSubjectIds(classId);
+    const hiddenSet = new Set(hiddenSubjectIds);
+    let subjects = allAvailableSubjects.filter(sub => {
+      const sId = sub.id || sub.code || sub.name;
+      return !hiddenSet.has(sId) && !hiddenSet.has(sub.id) && !hiddenSet.has(sub.code);
+    });
+    // Fallback if all subjects were hidden: show all
+    if (subjects.length === 0) {
+      subjects = allAvailableSubjects;
+    }
 
     let matchedSchool = null;
     const allSchools = Array.isArray(schoolCatalog) ? schoolCatalog : [];
@@ -493,6 +551,8 @@ export const StudentGradeBookService = {
       schoolName: schoolNameKm,
       totalStudents: classStudents.length,
       classStudents,
+      allAvailableSubjects,
+      hiddenSubjectIds,
       subjects: subjectRows,
       summary: summaryRows,
       attendance: attendanceStats,
