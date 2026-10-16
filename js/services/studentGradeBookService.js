@@ -246,12 +246,12 @@ export const StudentGradeBookService = {
       const sem1ExamAvg = (s1Exam && s1Exam.average !== null && s1Exam.average !== undefined && !isNaN(Number(s1Exam.average)))
         ? Number(s1Exam.average)
         : null;
-      const sem1ExamRank = s1Exam?.rank || '';
+      const sem1ExamRank = (sem1ExamAvg !== null && s1Exam?.rank) ? s1Exam.rank : '';
 
       const sem2ExamAvg = (s2Exam && s2Exam.average !== null && s2Exam.average !== undefined && !isNaN(Number(s2Exam.average)))
         ? Number(s2Exam.average)
         : null;
-      const sem2ExamRank = s2Exam?.rank || '';
+      const sem2ExamRank = (sem2ExamAvg !== null && s2Exam?.rank) ? s2Exam.rank : '';
 
       let annualExamAvg = null;
       if (sem1ExamAvg !== null && sem2ExamAvg !== null) {
@@ -279,12 +279,12 @@ export const StudentGradeBookService = {
       const sem1Overall = (s1SheetRow && s1SheetRow.semesterOverallAvg !== null && s1SheetRow.semesterOverallAvg !== undefined && !isNaN(Number(s1SheetRow.semesterOverallAvg)))
         ? Number(s1SheetRow.semesterOverallAvg)
         : null;
-      const sem1OverallRank = s1SheetRow?.rank || '';
+      const sem1OverallRank = (sem1Overall !== null && s1SheetRow?.rank) ? s1SheetRow.rank : '';
 
       const sem2Overall = (s2SheetRow && s2SheetRow.semesterOverallAvg !== null && s2SheetRow.semesterOverallAvg !== undefined && !isNaN(Number(s2SheetRow.semesterOverallAvg)))
         ? Number(s2SheetRow.semesterOverallAvg)
         : null;
-      const sem2OverallRank = s2SheetRow?.rank || '';
+      const sem2OverallRank = (sem2Overall !== null && s2SheetRow?.rank) ? s2SheetRow.rank : '';
 
       let annualOverall = null;
       if (sem1Overall !== null && sem2Overall !== null) {
@@ -442,7 +442,7 @@ export const StudentGradeBookService = {
         sem2: currentSummary.sem2ExamAvg ?? null,
         sem2Rank: currentSummary.sem2ExamRank || '',
         annual: currentSummary.annualExamAvg ?? null,
-        annualRank: annualExamRanks.get(curStuId) || annualExamRanks.get(currentAltId) || '',
+        annualRank: currentSummary.annualExamAvg !== null ? (annualExamRanks.get(curStuId) || annualExamRanks.get(currentAltId) || '') : '',
         remark: examAvgRemark
       },
       internalAvg: {
@@ -462,7 +462,7 @@ export const StudentGradeBookService = {
         sem2: currentSummary.sem2Overall ?? null,
         sem2Rank: currentSummary.sem2OverallRank || '',
         annual: currentSummary.annualOverall ?? null,
-        annualRank: annualOverallRanks.get(curStuId) || annualOverallRanks.get(currentAltId) || '',
+        annualRank: currentSummary.annualOverall !== null ? (annualOverallRanks.get(curStuId) || annualOverallRanks.get(currentAltId) || '') : '',
         remark: overallAvgRemark
       }
     };
