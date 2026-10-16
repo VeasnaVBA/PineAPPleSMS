@@ -412,10 +412,29 @@ export const ScoreService = {
     });
 
     const allScores = await db.getAll('scores');
+    const normYear = (y) => String(y || '').replace(/[\u2010\u2011\u2012\u2013\u2014\u2015-]/g, '-').trim();
+    const targetYear = normYear(academicYear);
+    const matchesPeriod = (m, at, p) => {
+      if (m === p || at === p) return true;
+      if (p === 'Semester 1' || p === 'ឆមាសទី១' || p === 'ឆមាស១') {
+        return m === 'Semester 1' || at === 'Semester 1' || m === 'ឆមាសទី១' || at === 'ឆមាសទី១' || m === 'ឆមាស១' || at === 'ឆមាស១';
+      }
+      if (p === 'Semester 2' || p === 'ឆមាសទី២' || p === 'ឆមាស២') {
+        return m === 'Semester 2' || at === 'Semester 2' || m === 'ឆមាសទី២' || at === 'ឆមាសទី២' || m === 'ឆមាស២' || at === 'ឆមាស២';
+      }
+      if (p === 'Semester 1 Exam' || p === 'ប្រឡងឆមាសទី១' || p === 'ប្រឡងឆមាស១') {
+        return m === 'Semester 1 Exam' || at === 'Semester 1 Exam' || m === 'ប្រឡងឆមាសទី១' || at === 'ប្រឡងឆមាសទី១' || m === 'ប្រឡងឆមាស១' || at === 'ប្រឡងឆមាស១';
+      }
+      if (p === 'Semester 2 Exam' || p === 'ប្រឡងឆមាសទី២' || p === 'ប្រឡងឆមាស២') {
+        return m === 'Semester 2 Exam' || at === 'Semester 2 Exam' || m === 'ប្រឡងឆមាសទី២' || at === 'ប្រឡងឆមាសទី២' || m === 'ប្រឡងឆមាស២' || at === 'ប្រឡងឆមាស២';
+      }
+      return false;
+    };
+
     const existingScores = allScores.filter(s => 
       s.classId === classId && 
-      s.academicYear === academicYear && 
-      (s.month === period || s.assessmentType === period)
+      (!targetYear || !s.academicYear || normYear(s.academicYear) === targetYear) && 
+      matchesPeriod(s.month, s.assessmentType, period)
     );
 
     const scoreMap = new Map();
