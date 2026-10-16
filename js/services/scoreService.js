@@ -94,6 +94,11 @@ export const ScoreService = {
     return period === 'Annual';
   },
 
+  isSemesterExamPeriod(period) {
+    return period === 'Semester 1 Exam' || period === 'Semester 2 Exam' ||
+           period === 'ប្រឡងឆមាសទី១' || period === 'ប្រឡងឆមាសទី២';
+  },
+
   getCorrespondingExamPeriod(period) {
     if (period === 'Semester 1' || period === 'ឆមាសទី១' || period === 'ឆមាស១') return 'Semester 1 Exam';
     if (period === 'Semester 2' || period === 'ឆមាសទី២' || period === 'ឆមាស២') return 'Semester 2 Exam';

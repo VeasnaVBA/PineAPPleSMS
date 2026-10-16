@@ -331,6 +331,18 @@ export const ScoresPage = {
             </p>
           </div>
 
+          <!-- Advisory Message Banner for Semester Exam 1 and 2 -->
+          <div id="score-semester-exam-banner" class="${(!this.state.selectedPeriod || !this.isSemesterExamPeriod()) ? 'hidden' : ''} px-4 py-3 bg-amber-500/10 dark:bg-amber-950/25 border-b border-amber-500/20 flex items-start sm:items-center gap-3 print:hidden">
+            <span class="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5 sm:mt-0">
+              ${getIcon('alertTriangle', 'w-4 h-4')}
+            </span>
+            <p class="text-xs font-semibold text-amber-900 dark:text-amber-200 leading-relaxed font-khmer">
+              ${isKm 
+                ? 'មុនបញ្ចូលពិន្ទុ សូមពិនិត្យមើលសៀវភៅសិក្ខាគារិកសិស្សរបស់ថ្នាក់អ្នក ជាមុនសិន។ ត្រូវប្រាកដថា ពិន្ទុមុខវិជ្ជាដែលអ្នកបញ្ចូល ដូចទៅនឹងមុខវិជ្ជាក្នុងសៀវភៅសិក្ខាគារិក។' 
+                : 'Before entering scores, please check your class student record book first. Make sure that the subject scores you enter match the subjects in the student record book.'}
+            </p>
+          </div>
+
           <div id="master-score-table-wrapper" class="score-table-container max-h-[72vh] overflow-auto w-full max-w-full ${!this.state.selectedPeriod ? 'hidden' : ''}">
             <table class="score-table no-shadcn text-left text-xs border-separate" id="master-score-table">
               <colgroup id="score-table-colgroup"></colgroup>
@@ -436,6 +448,10 @@ export const ScoresPage = {
 
   isAnnualPeriod(period = this.state.selectedPeriod) {
     return ScoreService.isAnnualPeriod(period);
+  },
+
+  isSemesterExamPeriod(period = this.state.selectedPeriod) {
+    return ScoreService.isSemesterExamPeriod(period);
   },
 
   getSemesterStorageKey(semester = this.state.selectedPeriod) {
@@ -551,9 +567,11 @@ export const ScoresPage = {
     const hasPeriod = Boolean(this.state.selectedPeriod);
     const isSemester = this.isSemesterPeriod();
     const isAnnual = this.isAnnualPeriod();
+    const isSemesterExam = this.isSemesterExamPeriod();
 
     document.getElementById('score-empty-period-state')?.classList.toggle('hidden', hasPeriod);
     document.getElementById('master-score-table-wrapper')?.classList.toggle('hidden', !hasPeriod);
+    document.getElementById('score-semester-exam-banner')?.classList.toggle('hidden', !hasPeriod || !isSemesterExam);
 
     if (!hasPeriod) {
       this.state.rows = [];
