@@ -172,7 +172,8 @@ export const StudentGradeBookService = {
       .sort((a, b) => (a.khmerName || '').localeCompare(b.khmerName || '', 'km'));
 
     const currentStudent = classStudents.find(s => s.studentId === studentId || s.id === studentId) || classStudents[0] || null;
-    const curStuId = currentStudent?.id || '';
+    const currentStuId = currentStudent?.id || '';
+    const curStuId = currentStuId;
     const currentAltId = currentStudent?.studentId || '';
 
     const allAvailableSubjects = await this.getGradeBookSubjects(targetClass);
