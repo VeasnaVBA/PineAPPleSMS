@@ -1196,9 +1196,13 @@ export const AttendancePage = {
       defaultFontSize: 9.5,
       renderHeaderControls: (controlsContainer, viewer) => {
         const renderToolbar = () => {
+          const matchedCls = classes.find(c => String(c.id).trim() === String(selectedClassId).trim()) || classes[0];
+          const classDisplayName = matchedCls?.name || matchedCls?.grade || (isKm ? 'ថ្នាក់រៀន' : 'Class');
+          const effectiveClassId = matchedCls?.id || selectedClassId;
+
           const classOptionsHtml = isTeacher && teacherClassId
-            ? `<option value="${selectedClassId}">${escapeHtml(classes.find(c => String(c.id).trim() === String(selectedClassId).trim())?.name || selectedClassId)}</option>`
-            : classes.map(c => `<option value="${c.id}" ${c.id === selectedClassId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('');
+            ? `<option value="${effectiveClassId}">${escapeHtml(classDisplayName)}</option>`
+            : classes.map(c => `<option value="${c.id}" ${c.id === effectiveClassId ? 'selected' : ''}>${escapeHtml(c.name || c.grade || (isKm ? 'ថ្នាក់រៀន' : 'Class'))}</option>`).join('');
 
           const yearOptionsHtml = availableYears.map(y => `
             <option value="${y}" ${String(selectedYear) === String(y) ? 'selected' : ''}>ឆ្នាំ ${y}</option>

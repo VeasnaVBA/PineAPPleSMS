@@ -155,14 +155,15 @@ export const ScoresPage = {
 
       if (authService.isTeacher()) {
         let teacherClassId = authService.getAssignedClassId();
-        if (!teacherClassId && this.state.classes.length > 0) {
+        const classExists = teacherClassId && this.state.classes.some(c => String(c.id).trim() === String(teacherClassId).trim());
+        if (!classExists && this.state.classes.length > 0) {
           teacherClassId = this.state.classes[0].id;
           authService.setAssignedClassId(teacherClassId);
         }
         if (teacherClassId) {
           this.state.selectedClassId = teacherClassId;
         }
-      } else if (this.state.classes.length > 0 && !this.state.selectedClassId) {
+      } else if (this.state.classes.length > 0 && (!this.state.selectedClassId || !this.state.classes.some(c => String(c.id).trim() === String(this.state.selectedClassId).trim()))) {
         this.state.selectedClassId = this.state.classes[0].id;
       }
 
@@ -234,7 +235,7 @@ export const ScoresPage = {
                 return assignedCls ? `
                   <div class="score-toolbar-item score-assigned-class-badge h-9 px-3 rounded-lg border border-primary/30 bg-primary/10 text-xs font-bold text-primary flex items-center gap-1.5">
                     ${getIcon('classes', 'w-3.5 h-3.5')}
-                    <span>${assignedCls.name}</span>
+                    <span>${assignedCls.name || assignedCls.grade || (isKm ? 'ថ្នាក់រៀន' : 'Class')}</span>
                   </div>
                 ` : `
                   <a href="#classes" class="score-toolbar-item h-9 px-3 rounded-lg border border-dashed border-amber-500/40 bg-amber-500/10 text-xs font-medium text-amber-700 flex items-center gap-1.5">
@@ -245,7 +246,7 @@ export const ScoresPage = {
                 <select id="select-score-class" class="score-toolbar-item h-9 px-3 pr-8 rounded-lg border border-input bg-card text-xs font-bold text-foreground focus:ring-1 focus:ring-primary shadow-2xs cursor-pointer">
                   ${classes.length === 0 ? `<option value="">${isKm ? 'គ្មានថ្នាក់រៀន' : 'No classes'}</option>` : ''}
                   ${classes.map(c => `
-                    <option value="${c.id}" ${this.state.selectedClassId === c.id ? 'selected' : ''}>${c.name}</option>
+                    <option value="${c.id}" ${this.state.selectedClassId === c.id ? 'selected' : ''}>${c.name || c.grade || (isKm ? 'ថ្នាក់រៀន' : 'Class')}</option>
                   `).join('')}
                 </select>
               `}
@@ -3423,7 +3424,15 @@ export const ScoresPage = {
     schoolName = defaultSchoolName;
     schoolProvince = matchedSchool?.province || currentUser?.province || 'សៀមរាប';
 
-    let selectedClassId = this.state.selectedClassId || (isTeacher ? (teacherClassId || classes[0]?.id) : (classes[0]?.id || ''));
+    let selectedClassId = this.state.selectedClassId;
+    if (!selectedClassId || !classes.some(c => String(c.id).trim() === String(selectedClassId).trim())) {
+      selectedClassId = isTeacher
+        ? (teacherClassId && classes.some(c => String(c.id).trim() === String(teacherClassId).trim()) ? teacherClassId : classes[0]?.id)
+        : (classes[0]?.id || '');
+    }
+    if (!selectedClassId && classes.length > 0) {
+      selectedClassId = classes[0].id;
+    }
     let selectedYear = this.state.activeYear || (typeof academicYears[0] === 'string' ? academicYears[0] : (academicYears[0]?.name || '2024–2025'));
     let selectedPeriod = this.state.selectedPeriod || 'October';
     let selectedReportDate = new Date();
@@ -3488,9 +3497,13 @@ export const ScoresPage = {
           return `<option value="${escapeHtml(s.name)}" ${isSel ? 'selected' : ''}>${escapeHtml(s.name)}</option>`;
         }).join('');
 
+        const matchedCls = classes.find(c => String(c.id).trim() === String(selectedClassId).trim()) || classes[0];
+        const classDisplayName = matchedCls?.name || matchedCls?.grade || (isKm ? 'ថ្នាក់រៀន' : 'Class');
+        const effectiveClassId = matchedCls?.id || selectedClassId;
+
         const classOptionsHtml = isTeacher && teacherClassId
-          ? `<option value="${selectedClassId}">${escapeHtml(classes.find(c => String(c.id).trim() === String(selectedClassId).trim())?.name || selectedClassId)}</option>`
-          : classes.map(c => `<option value="${c.id}" ${c.id === selectedClassId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('');
+          ? `<option value="${effectiveClassId}">${escapeHtml(classDisplayName)}</option>`
+          : classes.map(c => `<option value="${c.id}" ${c.id === effectiveClassId ? 'selected' : ''}>${escapeHtml(c.name || c.grade || (isKm ? 'ថ្នាក់រៀន' : 'Class'))}</option>`).join('');
 
         controlsContainer.className = 'flex items-center gap-2 sm:gap-3 flex-wrap font-khmer';
         controlsContainer.innerHTML = `
@@ -3913,8 +3926,8 @@ export const ScoresPage = {
         `;
 
         // 1. Fetch Class Details
-        const foundClass = classes.find(c => String(c.id).trim() === String(selectedClassId).trim());
-        currentClassName = foundClass ? (foundClass.name || foundClass.grade || '—') : (selectedClassId || '—');
+        const foundClass = classes.find(c => String(c.id).trim() === String(selectedClassId).trim()) || classes[0];
+        currentClassName = foundClass ? (foundClass.name || foundClass.grade || '—') : (isKm ? 'ថ្នាក់រៀន' : 'Class');
         const periodDisplayName = getPeriodDisplayName(selectedPeriod) || '.........................';
         const reportTitleText = getResultReportTitle(selectedPeriod);
 
@@ -4374,7 +4387,15 @@ export const ScoresPage = {
     let schoolEnglishName = localStorage.getItem('honor_roll_school_en') || 'SAI School';
     let schoolLogoDataUrl = localStorage.getItem('honor_roll_school_logo') || '';
 
-    let selectedClassId = this.state.selectedClassId || (isTeacher ? (teacherClassId || classes[0]?.id) : (classes[0]?.id || ''));
+    let selectedClassId = this.state.selectedClassId;
+    if (!selectedClassId || !classes.some(c => String(c.id).trim() === String(selectedClassId).trim())) {
+      selectedClassId = isTeacher
+        ? (teacherClassId && classes.some(c => String(c.id).trim() === String(teacherClassId).trim()) ? teacherClassId : classes[0]?.id)
+        : (classes[0]?.id || '');
+    }
+    if (!selectedClassId && classes.length > 0) {
+      selectedClassId = classes[0].id;
+    }
     let selectedYear = this.state.activeYear || (typeof academicYears[0] === 'string' ? academicYears[0] : (academicYears[0]?.name || '2025–2026'));
     let selectedPeriod = this.state.selectedPeriod || 'November';
     let selectedReportDate = new Date();
@@ -4623,9 +4644,13 @@ export const ScoresPage = {
           return `<option value="${escapeHtml(s.name)}" ${isSel ? 'selected' : ''}>${escapeHtml(s.name)}</option>`;
         }).join('');
 
+        const matchedCls = classes.find(c => String(c.id).trim() === String(selectedClassId).trim()) || classes[0];
+        const classDisplayName = matchedCls?.name || matchedCls?.grade || (isKm ? 'ថ្នាក់រៀន' : 'Class');
+        const effectiveClassId = matchedCls?.id || selectedClassId;
+
         const classOptionsHtml = isTeacher && teacherClassId
-          ? `<option value="${selectedClassId}">${escapeHtml(classes.find(c => String(c.id).trim() === String(selectedClassId).trim())?.name || selectedClassId)}</option>`
-          : classes.map(c => `<option value="${c.id}" ${c.id === selectedClassId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('');
+          ? `<option value="${effectiveClassId}">${escapeHtml(classDisplayName)}</option>`
+          : classes.map(c => `<option value="${c.id}" ${c.id === effectiveClassId ? 'selected' : ''}>${escapeHtml(c.name || c.grade || (isKm ? 'ថ្នាក់រៀន' : 'Class'))}</option>`).join('');
 
         controlsContainer.className = 'flex items-center gap-2 sm:gap-3 flex-wrap font-khmer';
         controlsContainer.innerHTML = `

@@ -3854,10 +3854,14 @@ export const StudentsPage = {
           return `<option value="${escapeHtml(s.name)}" ${isSel ? 'selected' : ''}>${escapeHtml(s.name)}</option>`;
         }).join('');
 
+        const matchedCls = classes.find(c => String(c.id).trim() === String(selectedClassId).trim()) || (selectedClassId !== 'all' ? classes[0] : null);
+        const classDisplayName = matchedCls ? (matchedCls.name || matchedCls.grade || (isKm ? 'ថ្នាក់រៀន' : 'Class')) : (isKm ? 'ថ្នាក់រៀន' : 'Class');
+        const effectiveClassId = matchedCls ? matchedCls.id : selectedClassId;
+
         const classOptionsHtml = isTeacher
-          ? `<option value="${selectedClassId}">${escapeHtml(classes.find(c => String(c.id).trim() === String(selectedClassId).trim())?.name || selectedClassId)}</option>`
+          ? `<option value="${effectiveClassId}">${escapeHtml(classDisplayName)}</option>`
           : `<option value="all">${isKm ? 'គ្រប់ថ្នាក់ទាំងអស់' : 'All Classes'}</option>` +
-            classes.map(c => `<option value="${c.id}" ${c.id === selectedClassId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('');
+            classes.map(c => `<option value="${c.id}" ${c.id === effectiveClassId ? 'selected' : ''}>${escapeHtml(c.name || c.grade || (isKm ? 'ថ្នាក់រៀន' : 'Class'))}</option>`).join('');
 
         controlsContainer.className = 'flex items-center gap-2 sm:gap-3 flex-wrap font-khmer';
         controlsContainer.innerHTML = `

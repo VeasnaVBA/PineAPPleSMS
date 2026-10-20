@@ -39,8 +39,11 @@ export const ClassesPage = {
     }
 
     this.state.classes = await ClassService.getClassesWithDetails();
-    if (currentUser && currentUser.role === 'TEACHER' && this.state.classes.length > 0 && !authService.getAssignedClassId()) {
-      await authService.setAssignedClassId(this.state.classes[0].id);
+    if (currentUser && currentUser.role === 'TEACHER' && this.state.classes.length > 0) {
+      const assignedId = authService.getAssignedClassId();
+      if (!assignedId || !this.state.classes.some(c => String(c.id).trim() === String(assignedId).trim())) {
+        await authService.setAssignedClassId(this.state.classes[0].id);
+      }
     }
     this.state.teachers = await TeacherService.getAll();
     this.state.activeYear = await SettingsService.getActiveAcademicYear();
