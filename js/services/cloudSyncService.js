@@ -146,14 +146,10 @@ export const CloudSyncService = {
         const clean = { ...norm };
         if (clean.photoBlob instanceof Blob) {
           try {
-            clean.photo = await photoService.blobToOptimizedDataUrl(clean.photoBlob, 200, 250, 0.7);
+            clean.photo = await photoService.blobToDataUrl(clean.photoBlob);
           } catch (_) {
             if (!clean.photo || clean.photo === '(Photo attached)') clean.photo = '';
           }
-        } else if (clean.photo && clean.photo.startsWith('data:') && clean.photo.length > 45000) {
-          try {
-            clean.photo = await photoService.blobToOptimizedDataUrl(clean.photo, 200, 250, 0.7);
-          } catch (_) {}
         } else if (clean.photo === '(Photo attached)') {
           clean.photo = '';
         }
@@ -180,14 +176,10 @@ export const CloudSyncService = {
         const clean = { ...norm };
         if (clean.photoBlob instanceof Blob) {
           try {
-            clean.photo = await photoService.blobToOptimizedDataUrl(clean.photoBlob, 200, 250, 0.7);
+            clean.photo = await photoService.blobToDataUrl(clean.photoBlob);
           } catch (_) {
             if (!clean.photo || clean.photo === '(Photo attached)') clean.photo = '';
           }
-        } else if (clean.photo && clean.photo.startsWith('data:') && clean.photo.length > 45000) {
-          try {
-            clean.photo = await photoService.blobToOptimizedDataUrl(clean.photo, 200, 250, 0.7);
-          } catch (_) {}
         } else if (clean.photo === '(Photo attached)') {
           clean.photo = '';
         }
@@ -205,7 +197,7 @@ export const CloudSyncService = {
         const clean = { ...r };
         if (clean.photoBlob instanceof Blob) {
           try {
-            clean.photo = await photoService.blobToOptimizedDataUrl(clean.photoBlob, 200, 250, 0.7);
+            clean.photo = await photoService.blobToDataUrl(clean.photoBlob);
           } catch (_) {}
         } else if (clean.photo === '(Photo attached)') {
           clean.photo = '';

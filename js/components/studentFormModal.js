@@ -1124,7 +1124,7 @@ export const StudentFormModal = {
       let photoDataUrl = '';
       if (tempBlob) {
         try {
-          photoDataUrl = await photoService.blobToOptimizedDataUrl(tempBlob);
+          photoDataUrl = await photoService.blobToDataUrl(tempBlob);
         } catch (_) {
           photoDataUrl = student?.photo || '';
         }

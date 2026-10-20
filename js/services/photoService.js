@@ -10,7 +10,8 @@ class PhotoService {
   }
 
   /**
-   * Converts a user-uploaded File to an optimized Blob (e.g. max 400x500, quality 0.82)
+   * Converts a user-uploaded File to a high-resolution portrait Blob targeting ~100KB
+   * (e.g. max 500x650, quality 0.85) perfect for crisp ID cards, dossiers, and Google Drive storage.
    */
   async processImageFile(file, options = {}) {
     return new Promise((resolve, reject) => {
@@ -28,9 +29,9 @@ class PhotoService {
       };
 
       img.onload = () => {
-        const maxWidth = options.maxWidth || 400;
-        const maxHeight = options.maxHeight || 500;
-        const quality = options.quality !== undefined ? options.quality : 0.82;
+        const maxWidth = options.maxWidth || 500;
+        const maxHeight = options.maxHeight || 650;
+        const quality = options.quality !== undefined ? options.quality : 0.85;
 
         let width = img.width;
         let height = img.height;

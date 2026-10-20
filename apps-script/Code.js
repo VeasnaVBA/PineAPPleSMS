@@ -769,9 +769,96 @@ function handleCreateUserWorkspace(fileName, username) {
   });
 }
 
+function getOrCreatePhotosFolder(username) {
+  var folderName = 'SchoolPhotos_' + (username || 'default');
+  var folders = DriveApp.getFoldersByName(folderName);
+  if (folders.hasNext()) {
+    return folders.next();
+  }
+  return DriveApp.createFolder(folderName);
+}
+
+function savePhotoFileToDrive(folder, filename, photoData) {
+  if (!photoData || typeof photoData !== 'string') return '';
+  if (photoData.indexOf('http://') === 0 || photoData.indexOf('https://') === 0) {
+    return photoData;
+  }
+  if (photoData.indexOf('data:image/') !== 0 && photoData.indexOf('base64,') === -1) {
+    return photoData;
+  }
+
+  try {
+    var parts = photoData.split(',');
+    var base64 = parts.length > 1 ? parts[1] : parts[0];
+    var mime = 'image/jpeg';
+    if (photoData.indexOf('data:') === 0 && photoData.indexOf(';') > 5) {
+      mime = photoData.substring(5, photoData.indexOf(';'));
+    }
+
+    var bytes = Utilities.base64Decode(base64);
+    var blob = Utilities.newBlob(bytes, mime, filename);
+
+    var existingFiles = folder.getFilesByName(filename);
+    var file;
+    if (existingFiles.hasNext()) {
+      file = existingFiles.next();
+      file.setContent(blob.getBytes());
+    } else {
+      file = folder.createFile(blob);
+    }
+
+    try {
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    } catch (_) {}
+
+    return file.getUrl();
+  } catch (err) {
+    Logger.log('Error saving photo file: ' + err);
+    return '';
+  }
+}
+
 function handlePullToDrive(fileName, username, data) {
   var fileInfo = getOrCreateUserSpreadsheet(fileName, username);
   var spreadsheet = fileInfo.spreadsheet;
+
+  var photoFolder = getOrCreatePhotosFolder(username);
+
+  // Save student photos to Drive folder (size ~100KB) and put Drive link in sheet
+  if (Array.isArray(data.students)) {
+    for (var s = 0; s < data.students.length; s++) {
+      var std = data.students[s];
+      if (std.photo && typeof std.photo === 'string' && (std.photo.indexOf('data:image/') === 0 || std.photo.indexOf('base64,') > -1)) {
+        var sId = String(std.studentId || std.id || ('std_' + s)).replace(/[^a-zA-Z0-9_-]/g, '_');
+        var sUrl = savePhotoFileToDrive(photoFolder, 'student_' + sId + '.jpg', std.photo);
+        if (sUrl) std.photo = sUrl;
+      }
+    }
+  }
+
+  // Save teacher photos to Drive folder
+  if (Array.isArray(data.teachers)) {
+    for (var t = 0; t < data.teachers.length; t++) {
+      var tch = data.teachers[t];
+      if (tch.photo && typeof tch.photo === 'string' && (tch.photo.indexOf('data:image/') === 0 || tch.photo.indexOf('base64,') > -1)) {
+        var tId = String(tch.teacherId || tch.id || ('tch_' + t)).replace(/[^a-zA-Z0-9_-]/g, '_');
+        var tUrl = savePhotoFileToDrive(photoFolder, 'teacher_' + tId + '.jpg', tch.photo);
+        if (tUrl) tch.photo = tUrl;
+      }
+    }
+  }
+
+  // Save registration photos to Drive folder
+  if (Array.isArray(data.registration_queue)) {
+    for (var q = 0; q < data.registration_queue.length; q++) {
+      var reg = data.registration_queue[q];
+      if (reg.photo && typeof reg.photo === 'string' && (reg.photo.indexOf('data:image/') === 0 || reg.photo.indexOf('base64,') > -1)) {
+        var qId = String(reg.tempStudentId || reg.studentId || reg.id || ('reg_' + q)).replace(/[^a-zA-Z0-9_-]/g, '_');
+        var qUrl = savePhotoFileToDrive(photoFolder, 'registration_' + qId + '.jpg', reg.photo);
+        if (qUrl) reg.photo = qUrl;
+      }
+    }
+  }
   
   var sheetsDef = [
     { name: 'students', data: data.students || [] },
@@ -907,6 +994,61 @@ function handlePushToApp(fileName, username) {
       }
     }
     resultData[sheetName] = items;
+  }
+
+  // Load photo files from SchoolPhotos_<username> folder to restore full-res 100KB photos
+  try {
+    var photoFolder = getOrCreatePhotosFolder(username);
+    var photoMap = {};
+    var pFiles = photoFolder.getFiles();
+    while (pFiles.hasNext()) {
+      var pf = pFiles.next();
+      photoMap[pf.getName()] = pf;
+    }
+
+    if (Array.isArray(resultData.students)) {
+      for (var si = 0; si < resultData.students.length; si++) {
+        var sItem = resultData.students[si];
+        var sId = String(sItem.studentId || sItem.id || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+        var sFile = photoMap['student_' + sId + '.jpg'] || (sItem.id ? photoMap['student_' + String(sItem.id).replace(/[^a-zA-Z0-9_-]/g, '_') + '.jpg'] : null);
+        if (sFile) {
+          try {
+            sItem.photo = 'data:image/jpeg;base64,' + Utilities.base64Encode(sFile.getBlob().getBytes());
+            sItem.drivePhotoUrl = sFile.getUrl();
+          } catch (_) {}
+        }
+      }
+    }
+
+    if (Array.isArray(resultData.teachers)) {
+      for (var ti = 0; ti < resultData.teachers.length; ti++) {
+        var tItem = resultData.teachers[ti];
+        var tId = String(tItem.teacherId || tItem.id || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+        var tFile = photoMap['teacher_' + tId + '.jpg'] || (tItem.id ? photoMap['teacher_' + String(tItem.id).replace(/[^a-zA-Z0-9_-]/g, '_') + '.jpg'] : null);
+        if (tFile) {
+          try {
+            tItem.photo = 'data:image/jpeg;base64,' + Utilities.base64Encode(tFile.getBlob().getBytes());
+            tItem.drivePhotoUrl = tFile.getUrl();
+          } catch (_) {}
+        }
+      }
+    }
+
+    if (Array.isArray(resultData.registration_queue)) {
+      for (var qi = 0; qi < resultData.registration_queue.length; qi++) {
+        var qItem = resultData.registration_queue[qi];
+        var qId = String(qItem.tempStudentId || qItem.studentId || qItem.id || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+        var qFile = photoMap['registration_' + qId + '.jpg'] || (qItem.id ? photoMap['registration_' + String(qItem.id).replace(/[^a-zA-Z0-9_-]/g, '_') + '.jpg'] : null);
+        if (qFile) {
+          try {
+            qItem.photo = 'data:image/jpeg;base64,' + Utilities.base64Encode(qFile.getBlob().getBytes());
+            qItem.drivePhotoUrl = qFile.getUrl();
+          } catch (_) {}
+        }
+      }
+    }
+  } catch (err) {
+    Logger.log('Error attaching photos in handlePushToApp: ' + err);
   }
   
   return jsonResponse({

@@ -1009,7 +1009,7 @@ export const TeacherFormModal = {
         email: modal.element.querySelector('#form-t-email')?.value.trim(),
         notes: modal.element.querySelector('#form-t-notes')?.value.trim(),
         photoBlob: tempBlob,
-        photo: (tempBlob ? (await photoService.blobToOptimizedDataUrl(tempBlob).catch(() => '(Photo attached)')) : '')
+        photo: (tempBlob ? (await photoService.blobToDataUrl(tempBlob).catch(() => '(Photo attached)')) : '')
       };
 
       try {
