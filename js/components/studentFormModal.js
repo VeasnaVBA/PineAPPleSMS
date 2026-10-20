@@ -85,7 +85,12 @@ export const StudentFormModal = {
 
     // Photo state
     let tempBlob = student?.photoBlob || null;
-    let previewUrl = tempBlob ? photoService.getUrlForBlob(tempBlob) : (student?.photo && student.photo.startsWith('data:') ? student.photo : null);
+    if (!tempBlob && student?.photo && student.photo.startsWith('data:')) {
+      try {
+        tempBlob = await photoService.dataUrlToBlob(student.photo);
+      } catch (_) {}
+    }
+    let previewUrl = photoService.getUrlForBlob(tempBlob || student?.photo);
 
     const classes = await ClassService.getAll();
     const activeYear = await SettingsService.getActiveAcademicYear();
@@ -1072,7 +1077,7 @@ export const StudentFormModal = {
     });
 
     // Collect all 29 fields from form
-    const collectFormData = () => {
+    const collectFormData = async () => {
       const getVal = (id) => (modal.element.querySelector(`#${id}`)?.value || '').trim();
 
       const studentId = getVal('form-studentId');
@@ -1115,6 +1120,15 @@ export const StudentFormModal = {
 
       const khmerName = [lastNameKh, firstNameKh].filter(Boolean).join(' ');
       const englishName = [lastNameLatin, firstNameLatin].filter(Boolean).join(' ');
+
+      let photoDataUrl = '';
+      if (tempBlob) {
+        try {
+          photoDataUrl = await photoService.blobToOptimizedDataUrl(tempBlob);
+        } catch (_) {
+          photoDataUrl = student?.photo || '';
+        }
+      }
 
       const record = {
         studentId,
@@ -1159,7 +1173,7 @@ export const StudentFormModal = {
         guardianPhone,
         notes,
         photoBlob: tempBlob,
-        photo: tempBlob ? '(Photo attached)' : (student?.photo || ''),
+        photo: photoDataUrl || (tempBlob ? '(Photo attached)' : ''),
         dropoutDate: status === 'Inactive' ? (dropoutData.dropoutDate || new Date().toISOString().split('T')[0]) : null,
         dropoutSemester: status === 'Inactive' ? (dropoutData.dropoutSemester || 'ឆមាសទី១') : null,
         dropoutReason: status === 'Inactive' ? (dropoutData.dropoutReason || 'បោះបង់ការសិក្សា') : null,
@@ -1177,7 +1191,7 @@ export const StudentFormModal = {
 
     // Save button click
     modal.element.querySelector('#btn-save-student')?.addEventListener('click', async () => {
-      const data = collectFormData();
+      const data = await collectFormData();
 
       if (!data.studentId) {
         toast.error({ message: t('registration.studentIdRequiredError') || 'Student ID is required.' });
@@ -1201,7 +1215,7 @@ export const StudentFormModal = {
 
     // Push to School button click (Admissions mode)
     modal.element.querySelector('#btn-enroll-push')?.addEventListener('click', async () => {
-      const data = collectFormData();
+      const data = await collectFormData();
 
       if (!data.studentId) {
         toast.error({ message: t('registration.studentIdRequiredError') });

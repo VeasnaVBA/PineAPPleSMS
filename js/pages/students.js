@@ -1114,7 +1114,7 @@ export const StudentsPage = {
 
       // Gender representation
       const genderLabel = student.gender === 'Female' ? t('common.female') : t('common.male');
-      const photoUrl = student.photoBlob ? photoService.getUrlForBlob(student.photoBlob) : null;
+      const photoUrl = student.photoBlob ? photoService.getUrlForBlob(student.photoBlob) : (student.photo && student.photo.startsWith('data:') ? student.photo : null);
       const initialLetter = student.firstNameLatin ? student.firstNameLatin.charAt(0).toUpperCase() : (student.firstNameKh ? student.firstNameKh.charAt(0) : 'S');
 
       return `
@@ -2001,7 +2001,7 @@ export const StudentsPage = {
     const isKm = i18n.getLocale() === 'km';
     const classObj = this.state.classes.find(c => c.id === student.classId);
     const className = classObj ? classObj.name : student.classId || '—';
-    const photoUrl = student.photoBlob ? photoService.getUrlForBlob(student.photoBlob) : null;
+    const photoUrl = student.photoBlob ? photoService.getUrlForBlob(student.photoBlob) : (student.photo && student.photo.startsWith('data:') ? student.photo : null);
     const genderLabel = student.gender === 'Female' ? t('common.female') : t('common.male');
     const initialLetter = student.firstNameLatin ? student.firstNameLatin.charAt(0).toUpperCase() : (student.firstNameKh ? student.firstNameKh.charAt(0) : 'S');
     const normDash = (str) => String(str || '').replace(/[–—−]/g, '-').trim().toLowerCase();

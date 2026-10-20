@@ -24,6 +24,7 @@ import {
 } from '../config/cloudSync.js';
 import { StudentsPage } from '../pages/students.js';
 import { syncStateManager } from './syncStateManager.js';
+import { photoService } from './photoService.js';
 
 export const CloudSyncService = {
   /**
@@ -140,13 +141,25 @@ export const CloudSyncService = {
     try {
       // 4. Read all stores from active user's isolated IndexedDB
       const rawStudents = await db.getAll('students');
-      const students = rawStudents.map(s => {
+      const students = await Promise.all(rawStudents.map(async (s) => {
         const norm = normalizeStudentRecord(s);
-        // Exclude raw heavy local blobs if any, retain clean strings
         const clean = { ...norm };
+        if (clean.photoBlob instanceof Blob) {
+          try {
+            clean.photo = await photoService.blobToOptimizedDataUrl(clean.photoBlob, 200, 250, 0.7);
+          } catch (_) {
+            if (!clean.photo || clean.photo === '(Photo attached)') clean.photo = '';
+          }
+        } else if (clean.photo && clean.photo.startsWith('data:') && clean.photo.length > 45000) {
+          try {
+            clean.photo = await photoService.blobToOptimizedDataUrl(clean.photo, 200, 250, 0.7);
+          } catch (_) {}
+        } else if (clean.photo === '(Photo attached)') {
+          clean.photo = '';
+        }
         delete clean.photoBlob;
         return clean;
-      });
+      }));
 
       const rawSchools = await db.getAll('schools');
       const schools = rawSchools.map(sch => ({
@@ -162,12 +175,25 @@ export const CloudSyncService = {
 
       const classes = await db.getAll('classes');
       const rawTeachers = await db.getAll('teachers');
-      const teachers = rawTeachers.map(t => {
+      const teachers = await Promise.all(rawTeachers.map(async (t) => {
         const norm = normalizeTeacherRecord(t);
         const clean = { ...norm };
+        if (clean.photoBlob instanceof Blob) {
+          try {
+            clean.photo = await photoService.blobToOptimizedDataUrl(clean.photoBlob, 200, 250, 0.7);
+          } catch (_) {
+            if (!clean.photo || clean.photo === '(Photo attached)') clean.photo = '';
+          }
+        } else if (clean.photo && clean.photo.startsWith('data:') && clean.photo.length > 45000) {
+          try {
+            clean.photo = await photoService.blobToOptimizedDataUrl(clean.photo, 200, 250, 0.7);
+          } catch (_) {}
+        } else if (clean.photo === '(Photo attached)') {
+          clean.photo = '';
+        }
         delete clean.photoBlob;
         return clean;
-      });
+      }));
       const attendance = await db.getAll('attendance');
       const scores = await db.getAll('scores');
       const academicYears = await db.getAll('academicYears');
@@ -175,11 +201,18 @@ export const CloudSyncService = {
       const groups = await db.getAll('groups');
       const report_settings = await db.getAll('report_settings');
       const rawRegs = await db.getAll('registration_queue');
-      const registration_queue = rawRegs.map(r => {
+      const registration_queue = await Promise.all(rawRegs.map(async (r) => {
         const clean = { ...r };
+        if (clean.photoBlob instanceof Blob) {
+          try {
+            clean.photo = await photoService.blobToOptimizedDataUrl(clean.photoBlob, 200, 250, 0.7);
+          } catch (_) {}
+        } else if (clean.photo === '(Photo attached)') {
+          clean.photo = '';
+        }
         delete clean.photoBlob;
         return clean;
-      });
+      }));
       const settings = await db.getAll('settings');
 
       // 5. Construct payload matching specification
@@ -396,6 +429,16 @@ export const CloudSyncService = {
 
       // 1. Students (Sync exact state from Drive sheet)
       if (Array.isArray(data.students)) {
+        // Collect existing local student photo blobs so we NEVER discard local photos
+        const existingStudents = await db.getAll('students');
+        const existingStudentPhotoMap = new Map();
+        for (const s of existingStudents) {
+          if (s.photoBlob instanceof Blob) {
+            existingStudentPhotoMap.set(s.id, s.photoBlob);
+            if (s.studentId) existingStudentPhotoMap.set(s.studentId, s.photoBlob);
+          }
+        }
+
         await db.clear('students');
         for (const item of data.students) {
           if (!item.id && !item.studentId) continue;
@@ -403,11 +446,24 @@ export const CloudSyncService = {
           if (dob && typeof dob === 'string' && dob.includes('T')) {
             dob = dob.split('T')[0];
           }
+
+          let restoredBlob = null;
+          if (item.photo && typeof item.photo === 'string' && item.photo.startsWith('data:image/')) {
+            try {
+              restoredBlob = await photoService.dataUrlToBlob(item.photo);
+            } catch (_) {}
+          }
+          if (!restoredBlob && (existingStudentPhotoMap.has(item.id) || existingStudentPhotoMap.has(item.studentId))) {
+            restoredBlob = existingStudentPhotoMap.get(item.id) || existingStudentPhotoMap.get(item.studentId);
+          }
+
           const cleanItem = normalizeStudentRecord({
             ...item,
             id: item.id ? String(item.id).trim() : `std-${item.studentId || Date.now()}`,
             studentId: item.studentId ? String(item.studentId).trim() : '',
-            dateOfBirth: dob || ''
+            dateOfBirth: dob || '',
+            photoBlob: restoredBlob || null,
+            photo: (item.photo && item.photo.startsWith('data:')) ? item.photo : (restoredBlob ? '(Photo attached)' : '')
           });
           await db.put('students', cleanItem);
           studentCount++;
@@ -451,10 +507,35 @@ export const CloudSyncService = {
 
       // 4. Teachers
       if (Array.isArray(data.teachers)) {
+        // Collect existing local teacher photo blobs so we NEVER discard local photos
+        const existingTeachers = await db.getAll('teachers');
+        const existingTeacherPhotoMap = new Map();
+        for (const t of existingTeachers) {
+          if (t.photoBlob instanceof Blob) {
+            existingTeacherPhotoMap.set(t.id, t.photoBlob);
+            if (t.teacherId) existingTeacherPhotoMap.set(t.teacherId, t.photoBlob);
+          }
+        }
+
         await db.clear('teachers');
         for (const item of data.teachers) {
           if (!item.id && !item.teacherId && !item.khmerName && !item.lastNameKhmer) continue;
-          const cleanItem = normalizeTeacherRecord(item);
+
+          let restoredBlob = null;
+          if (item.photo && typeof item.photo === 'string' && item.photo.startsWith('data:image/')) {
+            try {
+              restoredBlob = await photoService.dataUrlToBlob(item.photo);
+            } catch (_) {}
+          }
+          if (!restoredBlob && (existingTeacherPhotoMap.has(item.id) || existingTeacherPhotoMap.has(item.teacherId))) {
+            restoredBlob = existingTeacherPhotoMap.get(item.id) || existingTeacherPhotoMap.get(item.teacherId);
+          }
+
+          const cleanItem = normalizeTeacherRecord({
+            ...item,
+            photoBlob: restoredBlob || null,
+            photo: (item.photo && item.photo.startsWith('data:')) ? item.photo : (restoredBlob ? '(Photo attached)' : '')
+          });
           await db.put('teachers', cleanItem);
           teacherCount++;
         }
@@ -553,11 +634,32 @@ export const CloudSyncService = {
 
       // 11. Registration Queue (Director module: New Student Admissions / Staging)
       if (Array.isArray(data.registration_queue)) {
+        const existingRegs = await db.getAll('registration_queue');
+        const existingRegPhotoMap = new Map();
+        for (const r of existingRegs) {
+          if (r.photoBlob instanceof Blob) {
+            existingRegPhotoMap.set(r.id, r.photoBlob);
+            if (r.tempStudentId) existingRegPhotoMap.set(r.tempStudentId, r.photoBlob);
+          }
+        }
+
         for (const item of data.registration_queue) {
           if (!item.id && !item.tempStudentId && !item.name && !item.khmerName) continue;
+          let restoredBlob = null;
+          if (item.photo && typeof item.photo === 'string' && item.photo.startsWith('data:image/')) {
+            try {
+              restoredBlob = await photoService.dataUrlToBlob(item.photo);
+            } catch (_) {}
+          }
+          if (!restoredBlob && (existingRegPhotoMap.has(item.id) || existingRegPhotoMap.has(item.tempStudentId))) {
+            restoredBlob = existingRegPhotoMap.get(item.id) || existingRegPhotoMap.get(item.tempStudentId);
+          }
+
           const cleanItem = {
             ...item,
-            id: item.id ? String(item.id).trim() : `reg-${Date.now()}_${Math.random().toString(36).substr(2, 4)}`
+            id: item.id ? String(item.id).trim() : `reg-${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+            photoBlob: restoredBlob || null,
+            photo: (item.photo && item.photo.startsWith('data:')) ? item.photo : (restoredBlob ? '(Photo attached)' : '')
           };
           await db.put('registration_queue', cleanItem);
           registrationCount++;

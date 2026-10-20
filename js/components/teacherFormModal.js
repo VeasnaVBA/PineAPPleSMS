@@ -66,7 +66,12 @@ export const TeacherFormModal = {
     const title = isEdit ? (isKm ? 'កែប្រែព័ត៌មានគ្រូបង្រៀន' : 'Edit Teacher Profile') : (isKm ? 'បន្ថែមគ្រូបង្រៀនថ្មី' : 'Add New Teacher');
 
     let tempBlob = teacher?.photoBlob || null;
-    let previewUrl = tempBlob ? photoService.getUrlForBlob(tempBlob) : (teacher?.photo && teacher.photo.startsWith('data:') ? teacher.photo : null);
+    if (!tempBlob && teacher?.photo && teacher.photo.startsWith('data:')) {
+      try {
+        tempBlob = await photoService.dataUrlToBlob(teacher.photo);
+      } catch (_) {}
+    }
+    let previewUrl = photoService.getUrlForBlob(tempBlob || teacher?.photo);
 
     // Harvest existing locations and teacher catalogs
     try {
@@ -1003,7 +1008,8 @@ export const TeacherFormModal = {
         telegram: modal.element.querySelector('#form-t-telegram')?.value.trim(),
         email: modal.element.querySelector('#form-t-email')?.value.trim(),
         notes: modal.element.querySelector('#form-t-notes')?.value.trim(),
-        photoBlob: tempBlob
+        photoBlob: tempBlob,
+        photo: (tempBlob ? (await photoService.blobToOptimizedDataUrl(tempBlob).catch(() => '(Photo attached)')) : '')
       };
 
       try {

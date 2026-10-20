@@ -721,14 +721,14 @@ function getOrCreateUserSpreadsheet(fileName, username) {
     students: ['id', 'studentId', 'name', 'latinName', 'gender', 'dateOfBirth', 'classId', 'grade', 'academicYear', 'photo', 'parentPhone', 'phone', 'address', 'status', 'createdAt', 'updatedAt'],
     schools: ['id', 'code', 'name', 'nameEn', 'address', 'director', 'phone', 'notes', 'updatedAt'],
     classes: ['id', 'name', 'grade', 'academicYear', 'room', 'teacherId', 'capacity', 'shift', 'status', 'createdAt', 'updatedAt'],
-    teachers: ['id', 'teacherId', 'name', 'gender', 'phone', 'email', 'subject', 'role', 'status', 'createdAt', 'updatedAt'],
+    teachers: ['id', 'teacherId', 'name', 'gender', 'phone', 'email', 'subject', 'role', 'status', 'photo', 'createdAt', 'updatedAt'],
     attendance: ['id', 'studentId', 'classId', 'date', 'status', 'reason', 'session', 'academicYear', 'createdAt', 'updatedAt'],
     scores: ['id', 'studentId', 'classId', 'subjectId', 'examType', 'semester', 'academicYear', 'score', 'maxScore', 'grade', 'evaluation', 'date', 'createdAt', 'updatedAt'],
     academicYears: ['id', 'name', 'startDate', 'endDate', 'isActive', 'status', 'createdAt', 'updatedAt'],
     subjects: ['id', 'code', 'name', 'nameEn', 'coefficient', 'passingScore', 'type', 'status', 'createdAt', 'updatedAt'],
     groups: ['id', 'name', 'classId', 'academicYear', 'leaderStudentId', 'members', 'description', 'status', 'createdAt', 'updatedAt'],
     report_settings: ['id', 'key', 'value', 'type', 'description', 'updatedAt'],
-    registration_queue: ['id', 'studentId', 'name', 'gender', 'dateOfBirth', 'grade', 'appliedDate', 'status', 'notes', 'createdAt', 'updatedAt'],
+    registration_queue: ['id', 'studentId', 'name', 'gender', 'dateOfBirth', 'grade', 'appliedDate', 'status', 'photo', 'notes', 'createdAt', 'updatedAt'],
     settings: ['id', 'key', 'value', 'category', 'updatedAt']
   };
 
@@ -802,7 +802,17 @@ function handlePullToDrive(fileName, username, data) {
     counts[def.name] = rows.length;
     
     if (rows && rows.length > 0) {
-      var headers = Object.keys(rows[0]);
+      // Collect union of keys across all rows so fields like photo are never dropped
+      var headerMap = {};
+      var headers = [];
+      for (var r = 0; r < rows.length; r++) {
+        for (var k in rows[r]) {
+          if (!headerMap[k]) {
+            headerMap[k] = true;
+            headers.push(k);
+          }
+        }
+      }
       var matrix = [headers];
       for (var r = 0; r < rows.length; r++) {
         var rowObj = rows[r];
