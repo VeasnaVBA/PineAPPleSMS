@@ -571,7 +571,7 @@ export const TeacherClassStatsService = {
               <tbody>
                 <tr>
                   <td style="text-align: left !important; padding-left: 6px !important; width: 56%; font-weight: 500;">ឈ្មោះជាអក្សរខ្មែរ</td>
-                  <td style="font-weight: bold; width: 44%;" contenteditable="true">${data.teacherInfo.name}</td>
+                  <td class="font-khmer-muol" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 8.5px; width: 44%; line-height: 1.5;" contenteditable="true">${data.teacherInfo.name}</td>
                 </tr>
                 <tr>
                   <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">ភេទ(សូមគូសរង្វង់)</td>
@@ -703,7 +703,7 @@ export const TeacherClassStatsService = {
               <div>ធ្វើនៅ ${data.dates.location} ${data.dates.solarText}</div>
               <div style="margin-top: 6px; display: flex; justify-content: space-between; align-items: baseline; padding: 0 4px;">
                 <span>ហត្ថលេខាគ្រូទទួលបន្ទុក</span>
-                <span style="font-weight: bold; min-width: 80px; border-bottom: 1px dotted #94a3b8; display: inline-block;" contenteditable="true">${data.teacherInfo.name}</span>
+                <span class="font-khmer-muol" style="min-width: 80px; border-bottom: 1px dotted #94a3b8; display: inline-block; font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 8.5px; line-height: 1.5;" contenteditable="true">${data.teacherInfo.name}</span>
               </div>
             </div>
 
