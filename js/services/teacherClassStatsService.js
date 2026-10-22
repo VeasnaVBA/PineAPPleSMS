@@ -422,32 +422,59 @@ export const TeacherClassStatsService = {
     return `
       <div class="report-explicit-page teacher-class-stats-page bg-white text-black font-khmer mx-auto select-none box-border relative" style="width: 100%; max-width: 210mm; min-height: 297mm; padding: 8mm 9mm; font-family: 'Kantumruy Pro', 'Khmer OS Siemreap', sans-serif; font-size: 8px; line-height: 1.25; color: #000000; background: #ffffff;">
         <style>
-          .teacher-class-stats-page {
+          .teacher-class-stats-page,
+          .dark .teacher-class-stats-page {
             box-sizing: border-box !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+            background-color: #ffffff !important;
+            color: #000000 !important;
           }
-          .stats-tbl {
+          .stats-tbl,
+          .dark .stats-tbl,
+          .teacher-class-stats-page table,
+          .dark .teacher-class-stats-page table {
             width: 100% !important;
             border-collapse: collapse !important;
             border: 1.2px solid #1e3a8a !important;
             font-size: 8px !important;
             color: #000000 !important;
+            background-color: #ffffff !important;
           }
-          .stats-tbl th, .stats-tbl td {
+          .stats-tbl th,
+          .stats-tbl td,
+          .dark .stats-tbl th,
+          .dark .stats-tbl td,
+          .teacher-class-stats-page table th,
+          .teacher-class-stats-page table td,
+          .dark .teacher-class-stats-page table th,
+          .dark .teacher-class-stats-page table td,
+          .dark table.stats-tbl thead th,
+          .dark table.stats-tbl tbody td {
             border: 1px solid #1e3a8a !important;
             padding: 1.5px 2px !important;
             height: 17px !important;
             box-sizing: border-box !important;
             vertical-align: middle !important;
             text-align: center !important;
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            position: static !important;
+            text-transform: none !important;
+            letter-spacing: normal !important;
           }
           .stats-tbl td[contenteditable="true"]:focus {
             outline: 2px solid #2563eb !important;
             background-color: #eff6ff !important;
           }
-          .stats-shaded {
+          .stats-tbl tr.stats-shaded,
+          .stats-tbl tr.stats-shaded td,
+          .dark .stats-tbl tr.stats-shaded,
+          .dark .stats-tbl tr.stats-shaded td,
+          .dark .teacher-class-stats-page tr.stats-shaded,
+          .dark .teacher-class-stats-page tr.stats-shaded td {
             background-color: #cbd5e1 !important;
+            color: #000000 !important;
             font-weight: bold !important;
           }
           @media print {
@@ -455,6 +482,8 @@ export const TeacherClassStatsService = {
               padding: 5mm 6mm !important;
               max-width: 100% !important;
               width: 100% !important;
+              background-color: #ffffff !important;
+              color: #000000 !important;
             }
           }
         </style>
@@ -510,7 +539,7 @@ export const TeacherClassStatsService = {
             </div>
 
             <!-- Section 1 Table -->
-            <table class="stats-tbl">
+            <table class="stats-tbl no-shadcn">
               <tbody>
                 <tr>
                   <td style="text-align: left !important; padding-left: 6px !important; width: 56%; font-weight: 500;">ឈ្មោះជាអក្សរខ្មែរ</td>
@@ -552,7 +581,7 @@ export const TeacherClassStatsService = {
             </div>
 
             <!-- Section 2.(ខ) Table -->
-            <table class="stats-tbl">
+            <table class="stats-tbl no-shadcn">
               <thead>
                 <tr>
                   <th rowspan="3" style="width: 14%; font-weight: bold;">អាយុ<br>ឆ្នាំ</th>
@@ -605,7 +634,7 @@ export const TeacherClassStatsService = {
             </div>
 
             <!-- Section 4 Table -->
-            <table class="stats-tbl">
+            <table class="stats-tbl no-shadcn">
               <thead>
                 <tr>
                   <th rowspan="2" style="width: 44%; font-weight: bold;">ក្រុមអាយុ</th>
@@ -664,7 +693,7 @@ export const TeacherClassStatsService = {
             </div>
 
             <!-- Section 2.(ក) Table -->
-            <table class="stats-tbl">
+            <table class="stats-tbl no-shadcn">
               <thead>
                 <tr>
                   <th rowspan="3" style="width: 38%; font-weight: bold;">ប្រភេទ</th>
@@ -707,7 +736,7 @@ export const TeacherClassStatsService = {
             </div>
 
             <!-- Section 3 Table -->
-            <table class="stats-tbl">
+            <table class="stats-tbl no-shadcn">
               <thead>
                 <tr>
                   <th colspan="2" style="width: 66%; font-weight: bold;">បរិយាយ</th>

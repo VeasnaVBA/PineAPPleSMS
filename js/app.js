@@ -13,7 +13,7 @@ import { seedInitialData } from './database/seed.js';
 import { WorkspaceSetupService } from './services/workspaceSetupService.js';
 import { Sidebar } from './components/sidebar.js';
 import { Topbar } from './components/topbar.js?v=3.0.88';
-import { Router } from './router.js?v=3.1.05';
+import { Router } from './router.js?v=3.1.06';
 import { LoginPage } from './pages/login.js';
 import { syncStateManager } from './services/syncStateManager.js';
 import { AdminDataService } from './services/adminDataService.js';
