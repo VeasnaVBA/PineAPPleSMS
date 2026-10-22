@@ -45,9 +45,28 @@ class ThemeService {
     this.listeners = new Set();
   }
 
-  init() {
+  async init() {
     this.apply();
     this.applyPrimaryColor(this.primaryColor);
+
+    // Read stored theme from database if different from localStorage
+    try {
+      const { db } = await import('../database/db.js');
+      const [savedTheme, savedPrimary] = await Promise.all([
+        db.get('settings', 'theme').catch(() => null),
+        db.get('settings', 'primaryColor').catch(() => null)
+      ]);
+      if (savedTheme?.value && (savedTheme.value === 'dark' || savedTheme.value === 'light')) {
+        if (this.theme !== savedTheme.value) {
+          this.setTheme(savedTheme.value, { skipSync: true });
+        }
+      }
+      if (savedPrimary?.value !== undefined && savedPrimary.value !== null) {
+        if (this.primaryColor !== savedPrimary.value) {
+          this.setPrimaryColor(savedPrimary.value || null, { skipSync: true });
+        }
+      }
+    } catch (_) {}
   }
 
   getTheme() {
@@ -58,7 +77,7 @@ class ThemeService {
     return this.theme === 'dark' || (typeof document !== 'undefined' && document.documentElement.classList.contains('dark'));
   }
 
-  setTheme(theme) {
+  setTheme(theme, options = {}) {
     const cleanTheme = theme === 'dark' ? 'dark' : 'light';
     this.theme = cleanTheme;
     try {
@@ -67,7 +86,31 @@ class ThemeService {
     this.apply();
     this.applyPrimaryColor(this.primaryColor);
     this.notify();
+
+    // Persist to IndexedDB and sync to Google Drive
+    if (options.skipSync !== true) {
+      this.persistAndSyncTheme(cleanTheme);
+    }
+
     return cleanTheme;
+  }
+
+  async persistAndSyncTheme(cleanTheme) {
+    try {
+      const { db } = await import('../database/db.js');
+      await db.put('settings', { key: 'theme', value: cleanTheme });
+    } catch (_) {}
+
+    try {
+      const { syncStateManager } = await import('./syncStateManager.js');
+      syncStateManager.markDirty('theme.change');
+      syncStateManager.scheduleAutoSync(500);
+    } catch (_) {}
+
+    try {
+      const { AdminDataService } = await import('./adminDataService.js');
+      AdminDataService.queueAutoSync();
+    } catch (_) {}
   }
 
   toggle() {
@@ -94,9 +137,9 @@ class ThemeService {
     return this.isDark() ? '#ffffff' : '#18181b';
   }
 
-  setPrimaryColor(hex) {
+  setPrimaryColor(hex, options = {}) {
     if (!hex) {
-      return this.resetPrimaryColor();
+      return this.resetPrimaryColor(options);
     }
     this.primaryColor = hex;
     try {
@@ -105,10 +148,15 @@ class ThemeService {
     } catch (_) {}
     this.applyPrimaryColor(hex);
     this.notify();
+
+    if (options.skipSync !== true) {
+      this.persistAndSyncPrimaryColor(hex);
+    }
+
     return hex;
   }
 
-  resetPrimaryColor() {
+  resetPrimaryColor(options = {}) {
     this.primaryColor = null;
     try {
       localStorage.removeItem('main_btn_color');
@@ -116,7 +164,30 @@ class ThemeService {
     } catch (_) {}
     this.applyPrimaryColor(null);
     this.notify();
+
+    if (options.skipSync !== true) {
+      this.persistAndSyncPrimaryColor('');
+    }
+
     return this.getEffectivePrimaryColor();
+  }
+
+  async persistAndSyncPrimaryColor(hex) {
+    try {
+      const { db } = await import('../database/db.js');
+      await db.put('settings', { key: 'primaryColor', value: hex || '' });
+    } catch (_) {}
+
+    try {
+      const { syncStateManager } = await import('./syncStateManager.js');
+      syncStateManager.markDirty('theme.primaryColor');
+      syncStateManager.scheduleAutoSync(500);
+    } catch (_) {}
+
+    try {
+      const { AdminDataService } = await import('./adminDataService.js');
+      AdminDataService.queueAutoSync();
+    } catch (_) {}
   }
 
   applyPrimaryColor(hex) {

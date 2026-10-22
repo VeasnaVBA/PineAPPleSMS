@@ -320,14 +320,14 @@ export const AdminDataService = {
     if (settings && typeof settings === 'object') {
       if (settings.theme && (settings.theme === 'light' || settings.theme === 'dark' || settings.theme === 'system')) {
         if (themeService.getTheme() !== settings.theme) {
-          themeService.setTheme(settings.theme);
+          themeService.setTheme(settings.theme, { skipSync: true });
           settingsUpdated++;
         }
       }
       if (settings.primaryColor !== undefined) {
         const nextPrimary = settings.primaryColor || null;
         if (themeService.getPrimaryColor() !== nextPrimary) {
-          themeService.setPrimaryColor(nextPrimary);
+          themeService.setPrimaryColor(nextPrimary, { skipSync: true });
           settingsUpdated++;
         }
       }

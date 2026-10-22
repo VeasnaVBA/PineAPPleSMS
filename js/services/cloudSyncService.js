@@ -752,6 +752,24 @@ export const CloudSyncService = {
           };
           await db.put('settings', cleanItem);
           settingCount++;
+
+          // Apply incoming theme or primary color from Google Drive
+          if (cleanItem.key === 'theme' && (cleanItem.value === 'dark' || cleanItem.value === 'light')) {
+            try {
+              const { themeService } = await import('./themeService.js');
+              if (themeService.getTheme() !== cleanItem.value) {
+                themeService.setTheme(cleanItem.value, { skipSync: true });
+              }
+            } catch (_) {}
+          }
+          if (cleanItem.key === 'primaryColor' && cleanItem.value) {
+            try {
+              const { themeService } = await import('./themeService.js');
+              if (themeService.getPrimaryColor() !== cleanItem.value) {
+                themeService.setPrimaryColor(cleanItem.value, { skipSync: true });
+              }
+            } catch (_) {}
+          }
         }
       }
 
