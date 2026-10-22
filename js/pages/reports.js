@@ -110,7 +110,7 @@ export const ReportsPage = {
             សៀវភៅសិក្ខាគារិក
           </button>
           <button class="rep-tab-btn px-4 py-2 rounded-lg transition-all ${this.state.activeTab === 'teacherClassStats' ? 'bg-primary text-primary-foreground font-bold shadow-sm' : 'text-muted-foreground hover:text-foreground'}" data-tab="teacherClassStats">
-            ${t('reports.teacherClassStatsReport') || 'ស្ថិតិសិស្សតាមថ្នាក់'}
+            ${t('reports.teacherClassStatsReport') || 'តារាង SEC'}
           </button>
           <button class="rep-tab-btn px-4 py-2 rounded-lg transition-all ${this.state.activeTab === 'students' ? 'bg-primary text-primary-foreground font-bold shadow-sm' : 'text-muted-foreground hover:text-foreground'}" data-tab="students">
             ${t('reports.studentReport')}
@@ -305,7 +305,7 @@ export const ReportsPage = {
             </p>
             <button id="btn-open-teacher-class-stats-modal" type="button" class="inline-flex items-center gap-3 px-8 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm sm:text-base shadow-lg hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
               ${getIcon('printer', 'w-5 h-5')}
-              <span>បើកតារាងចំនួនសិស្សតាមថ្នាក់</span>
+              <span>តារាង SEC</span>
             </button>
           </div>
         `;
