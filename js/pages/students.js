@@ -2473,18 +2473,16 @@ export const StudentsPage = {
           <!-- Filter by Class: Strictly from classes table, with 'all' option supported -->
           <div class="flex items-center gap-1.5 text-xs font-khmer">
             <span class="text-muted-foreground">ថ្នាក់រៀន:</span>
-            ${isTeacher ? `
-              <span class="h-8 py-0 leading-[30px] px-3 rounded-md border border-primary/30 bg-primary/10 text-xs font-semibold text-primary flex items-center box-border">
-                ${classes.find(c => c.id === teacherClassId)?.name || 'Assigned Class'}
-              </span>
-            ` : `
-              <select id="rv-moeys-filter-class" class="h-8 py-0 leading-[30px] px-2.5 rounded-md border border-input bg-card text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary shadow-xs truncate max-w-[140px] cursor-pointer box-border">
+            <select id="rv-moeys-filter-class" class="h-8 py-0 leading-[30px] px-2.5 rounded-md border border-input bg-card text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary shadow-xs truncate max-w-[140px] cursor-pointer box-border">
+              ${isTeacher ? `
+                <option value="${teacherClassId || (classes[0]?.id || '')}">${escapeHtml(classes.find(c => c.id === teacherClassId)?.name || classes[0]?.name || (isKm ? 'ថ្នាក់រៀន' : 'Assigned Class'))}</option>
+              ` : `
                 <option value="all" ${selectedClassId === 'all' ? 'selected' : ''}>${isKm ? 'គ្រប់ថ្នាក់ទាំងអស់' : 'All Classes'}</option>
                 ${classes.map(c => `
                   <option value="${c.id}" ${String(selectedClassId).trim() === String(c.id).trim() ? 'selected' : ''}>${escapeHtml(c.name)}</option>
                 `).join('')}
-              </select>
-            `}
+              `}
+            </select>
           </div>
 
           <!-- Choose Academic Year (Interactive Dropdown with Add & Delete) -->

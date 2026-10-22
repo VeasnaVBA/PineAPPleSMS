@@ -132,27 +132,12 @@ export const ReportsPage = {
           <div class="flex items-center gap-3 flex-wrap">
             <div class="flex items-center gap-2" id="filter-rep-class-box">
               <span class="text-muted-foreground">${t('reports.filterClass')}</span>
-              ${authService.isTeacher() && this.state.classes.length <= 1 ? (() => {
-                const assignedCls = this.state.classes.find(c => c.id === this.state.selectedClassId) || 
-                                    this.state.classes.find(c => c.id === authService.getAssignedClassId()) || 
-                                    this.state.classes[0];
-                return assignedCls ? `
-                  <div class="h-9 px-3 py-1.5 rounded-md border border-primary/30 bg-primary/10 text-xs font-semibold text-primary flex items-center box-border">
-                    ${assignedCls.name || assignedCls.grade || '—'}
-                  </div>
-                ` : `
-                  <div class="h-9 px-3 py-1.5 rounded-md border border-dashed border-amber-500/40 bg-amber-500/10 text-xs text-amber-700 dark:text-amber-300 flex items-center box-border">
-                    ${t('classes.emptyList')}
-                  </div>
-                `;
-              })() : `
-                <select id="select-rep-class" class="h-9 px-2.5 py-1.5 pr-8 rounded-md border border-input bg-card text-foreground box-border shadow-xs">
-                  ${authService.isTeacher() ? '' : `<option value="all">${t('common.all')}</option>`}
-                  ${this.state.classes.map(c => `
-                    <option value="${c.id}" ${this.state.selectedClassId === c.id ? 'selected' : ''}>${c.name || c.grade || '—'}</option>
-                  `).join('')}
-                </select>
-              `}
+              <select id="select-rep-class" class="h-9 px-2.5 py-1.5 pr-8 rounded-md border border-input bg-card text-foreground box-border shadow-xs">
+                ${authService.isTeacher() ? '' : `<option value="all">${t('common.all')}</option>`}
+                ${this.state.classes.length === 0 ? `<option value="">${t('classes.emptyList')}</option>` : this.state.classes.map(c => `
+                  <option value="${c.id}" ${this.state.selectedClassId === c.id ? 'selected' : ''}>${c.name || c.grade || '—'}</option>
+                `).join('')}
+              </select>
             </div>
 
             <!-- Status Filter -->
@@ -700,13 +685,9 @@ export const ReportsPage = {
             <!-- Class Filter -->
             <div class="flex items-center gap-1.5">
               <span class="text-muted-foreground whitespace-nowrap">${t('reports.filterClass') || 'ថ្នាក់រៀន:'}</span>
-              ${isTeacher && classes.length <= 1 ? `
-                <span class="font-semibold px-2 py-1 rounded bg-primary/10 text-primary">${classes[0]?.name || classes[0]?.grade || '—'}</span>
-              ` : `
-                <select id="rv-plan-filter-class" class="h-8 py-0 px-2 rounded-md border border-input bg-card text-xs text-foreground cursor-pointer shadow-xs">
-                  ${classes.map(c => `<option value="${c.id}" ${c.id === currentClassId ? 'selected' : ''}>${escapeHtml(c.name || c.grade || '—')}</option>`).join('')}
-                </select>
-              `}
+              <select id="rv-plan-filter-class" class="h-8 py-0 px-2 rounded-md border border-input bg-card text-xs text-foreground cursor-pointer shadow-xs">
+                ${classes.length === 0 ? `<option value="">—</option>` : classes.map(c => `<option value="${c.id}" ${c.id === currentClassId ? 'selected' : ''}>${escapeHtml(c.name || c.grade || '—')}</option>`).join('')}
+              </select>
             </div>
 
             <!-- Student Filter with Prev/Next -->
@@ -1296,13 +1277,9 @@ export const ReportsPage = {
             <!-- Class Filter -->
             <div class="flex items-center gap-1.5">
               <span class="text-muted-foreground whitespace-nowrap">${t('reports.filterClass') || 'ថ្នាក់រៀន:'}</span>
-              ${isTeacher && classes.length <= 1 ? `
-                <span class="font-semibold px-2 py-1 rounded bg-primary/10 text-primary">${classes[0]?.name || classes[0]?.grade || '—'}</span>
-              ` : `
-                <select id="rv-gb-filter-class" class="h-8 py-0 px-2 rounded-md border border-input bg-card text-xs text-foreground cursor-pointer shadow-xs">
-                  ${classes.map(c => `<option value="${c.id}" ${c.id === currentClassId ? 'selected' : ''}>${escapeHtml(c.name || c.grade || '—')}</option>`).join('')}
-                </select>
-              `}
+              <select id="rv-gb-filter-class" class="h-8 py-0 px-2 rounded-md border border-input bg-card text-xs text-foreground cursor-pointer shadow-xs">
+                ${classes.length === 0 ? `<option value="">—</option>` : classes.map(c => `<option value="${c.id}" ${c.id === currentClassId ? 'selected' : ''}>${escapeHtml(c.name || c.grade || '—')}</option>`).join('')}
+              </select>
             </div>
 
             <!-- Student Filter with Prev/Next -->
