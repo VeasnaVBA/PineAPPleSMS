@@ -23,6 +23,87 @@ export const SettingsService = {
     let years = await db.getAll('academicYears');
     const isTeacher = authService.isTeacher();
 
+    if (isTeacher) {
+      // Teacher account rule: Study year is derived from the teacher's class in 'classes' table
+      try {
+        const currentUser = authService.getCurrentUser();
+        const allClasses = await db.getAll('classes');
+        let teacherClass = null;
+        if (currentUser) {
+          const teacherProfileIds = await db.getAll('teachers')
+            .then(teachers => (teachers || []).filter(t => t.userId === currentUser.id || t.accountId === currentUser.id).map(t => t.id))
+            .catch(() => []);
+          teacherClass = allClasses.find(cls => {
+            if (currentUser.classId && cls.id === currentUser.classId) return true;
+            if (currentUser.assignedClassId && cls.id === currentUser.assignedClassId) return true;
+            if (cls.userId && (cls.userId === currentUser.id || cls.accountId === currentUser.id)) return true;
+            if (cls.teacherId && (cls.teacherId === currentUser.id || teacherProfileIds.includes(cls.teacherId))) return true;
+            return false;
+          });
+        }
+        if (!teacherClass && allClasses.length === 1) {
+          teacherClass = allClasses[0];
+        }
+
+        if (teacherClass && teacherClass.academicYear && teacherClass.academicYear.trim()) {
+          const clsYear = teacherClass.academicYear.trim();
+          const cleanSlug = clsYear.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+          const singleYear = {
+            id: cleanSlug ? `ay-${cleanSlug}` : 'ay-teacher-class',
+            name: clsYear,
+            isActive: true,
+            startDate: '2024-09-01',
+            endDate: '2025-06-30'
+          };
+          // Keep DB strictly clean with just this single academic year for teacher
+          if (!years || years.length !== 1 || years[0].name !== clsYear) {
+            if (years && years.length > 0) {
+              for (const y of years) {
+                await db.delete('academicYears', y.id);
+              }
+            }
+            await db.put('academicYears', singleYear);
+            await this.set('active_academic_year', clsYear);
+          }
+          return [singleYear];
+        }
+      } catch (err) {
+        console.warn('Error reading class academic year for teacher:', err);
+      }
+
+      // If teacher has no class created yet, ensure strictly 1 academic year exists
+      if (!years || years.length === 0) {
+        const defaultYear = {
+          id: 'ay-2024-2025',
+          name: '2024–2025',
+          isActive: true,
+          startDate: '2024-09-01',
+          endDate: '2025-06-30'
+        };
+        await db.put('academicYears', defaultYear);
+        await this.set('active_academic_year', '2024–2025');
+        return [defaultYear];
+      }
+
+      if (years.length > 1) {
+        const activeName = (await this.get('active_academic_year')) || years[0].name;
+        const normDash = (str) => String(str || '').replace(/[–—−]/g, '-').trim().toLowerCase();
+        const primaryIdx = years.findIndex(y => y.isActive || normDash(y.name) === normDash(activeName));
+        const keep = years[primaryIdx >= 0 ? primaryIdx : 0];
+        keep.isActive = true;
+        for (const y of years) {
+          if (y.id !== keep.id) {
+            await db.delete('academicYears', y.id);
+          }
+        }
+        await db.put('academicYears', keep);
+        return [keep];
+      }
+
+      return years;
+    }
+
+    // DIRECTOR / ADMIN: Can have and manage multiple study years
     if (!years || years.length === 0) {
       const defaultYear = {
         id: 'ay-2024-2025',
@@ -36,26 +117,41 @@ export const SettingsService = {
       return [defaultYear];
     }
 
-    // Teacher account rule: Teacher accounts must have strictly ONE study year
-    if (isTeacher && years.length > 1) {
-      const activeName = await this.getActiveAcademicYear().catch(() => '');
-      const normDash = (str) => String(str || '').replace(/[–—−]/g, '-').trim().toLowerCase();
-      const primaryIdx = years.findIndex(y => y.isActive || normDash(y.name) === normDash(activeName));
-      const keep = years[primaryIdx >= 0 ? primaryIdx : 0];
-      keep.isActive = true;
-      for (const y of years) {
-        if (y.id !== keep.id) {
-          await db.delete('academicYears', y.id);
-        }
-      }
-      await db.put('academicYears', keep);
-      return [keep];
-    }
-
     return years;
   },
 
   async getActiveAcademicYear() {
+    const isTeacher = authService.isTeacher();
+    if (isTeacher) {
+      try {
+        const currentUser = authService.getCurrentUser();
+        const allClasses = await db.getAll('classes');
+        let teacherClass = null;
+        if (currentUser) {
+          const teacherProfileIds = await db.getAll('teachers')
+            .then(teachers => (teachers || []).filter(t => t.userId === currentUser.id || t.accountId === currentUser.id).map(t => t.id))
+            .catch(() => []);
+          teacherClass = allClasses.find(cls => {
+            if (currentUser.classId && cls.id === currentUser.classId) return true;
+            if (currentUser.assignedClassId && cls.id === currentUser.assignedClassId) return true;
+            if (cls.userId && (cls.userId === currentUser.id || cls.accountId === currentUser.id)) return true;
+            if (cls.teacherId && (cls.teacherId === currentUser.id || teacherProfileIds.includes(cls.teacherId))) return true;
+            return false;
+          });
+        }
+        if (!teacherClass && allClasses.length === 1) {
+          teacherClass = allClasses[0];
+        }
+        if (teacherClass && teacherClass.academicYear && teacherClass.academicYear.trim()) {
+          const yr = teacherClass.academicYear.trim();
+          await this.set('active_academic_year', yr);
+          return yr;
+        }
+      } catch (err) {
+        console.warn('Could not derive teacher study year from classes:', err);
+      }
+    }
+
     const years = await this.getAcademicYears();
     const active = years.find(y => y.isActive);
     if (active) return active.name;

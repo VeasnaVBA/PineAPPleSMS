@@ -2,6 +2,7 @@ import { db } from '../database/db.js';
 import { authService } from './authService.js';
 import { syncStateManager } from './syncStateManager.js';
 import { WorkspaceSetupService } from './workspaceSetupService.js';
+import { SettingsService } from './settingsService.js';
 
 export const ClassService = {
   /**
@@ -138,6 +139,15 @@ export const ClassService = {
       } catch (err) {
         console.warn('Could not sync teacher classId:', err);
       }
+
+      // Sync study year from class table for teacher account
+      if (cls.academicYear && cls.academicYear.trim()) {
+        try {
+          await SettingsService.setTeacherStudyYear(cls.academicYear.trim());
+        } catch (err) {
+          console.warn('Could not sync teacher study year from class creation:', err);
+        }
+      }
     }
 
     return cls;
@@ -186,6 +196,15 @@ export const ClassService = {
         await authService.setAssignedClassId(id);
       } catch (err) {
         console.warn('Could not sync teacher classId:', err);
+      }
+
+      // Sync study year from class table for teacher account
+      if (updated.academicYear && updated.academicYear.trim()) {
+        try {
+          await SettingsService.setTeacherStudyYear(updated.academicYear.trim());
+        } catch (err) {
+          console.warn('Could not sync teacher study year from class update:', err);
+        }
       }
     }
 

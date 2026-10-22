@@ -4817,15 +4817,26 @@ export const StudentsPage = {
     const activeYear = this.state.activeYear || (await SettingsService.getActiveAcademicYear()) || '2024–2025';
     const teacherClassId = authService.getAssignedClassId();
 
+    // Determine initial target class & study year from class table
+    let initialClass = null;
+    if (isTeacher) {
+      initialClass = classes.find(c => c.id === teacherClassId) || classes[0] || null;
+    } else if (classes.length > 0) {
+      initialClass = classes[0];
+    }
+    const initialClassYear = initialClass?.academicYear?.trim() || activeYear;
+
     const classOptionsHtml = isTeacher
-      ? classes.map(c => `<option value="${c.id}" ${c.id === teacherClassId ? 'selected' : ''}>${c.name} (${c.grade || ''})</option>`).join('')
+      ? classes.map(c => `<option value="${c.id}" ${c.id === (initialClass?.id || teacherClassId) ? 'selected' : ''}>${c.name} (${c.grade || ''})</option>`).join('')
       : `<option value="">${t('students.keepFromFile')}</option>` + classes.map(c => `<option value="${c.id}">${c.name} (${c.grade || ''})</option>`).join('');
 
-    const yearOptionsHtml = academicYears.map(y => {
-      const yName = typeof y === 'string' ? y : y.name;
-      const isSelected = yName === activeYear;
-      return `<option value="${yName}" ${isSelected ? 'selected' : ''}>${yName}</option>`;
-    }).join('');
+    const yearOptionsHtml = isTeacher
+      ? `<option value="${initialClassYear}" selected>${initialClassYear}</option>`
+      : academicYears.map(y => {
+          const yName = typeof y === 'string' ? y : y.name;
+          const isSelected = yName === initialClassYear;
+          return `<option value="${yName}" ${isSelected ? 'selected' : ''}>${yName}</option>`;
+        }).join('');
 
     const content = `
       <div class="space-y-4 text-xs sm:text-sm">
@@ -4864,9 +4875,21 @@ export const StudentsPage = {
               <label for="excel-target-year" class="block text-[11px] font-medium text-foreground mb-1">
                 ${t('students.targetStudyYear')} <span class="text-destructive">*</span>
               </label>
-              <select id="excel-target-year" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground text-xs font-medium focus:ring-1 focus:ring-primary focus:border-primary">
-                ${yearOptionsHtml}
-              </select>
+              ${isTeacher ? `
+                <select id="excel-target-year" disabled class="w-full px-3 py-2 rounded-lg border border-border bg-muted/40 text-foreground text-xs font-medium cursor-not-allowed">
+                  ${yearOptionsHtml}
+                </select>
+                <p class="text-[10px] text-muted-foreground mt-1 font-khmer">
+                  ${isKm ? 'ឆ្នាំសិក្សាទទួលបានពីតារាងថ្នាក់រៀនដោយស្វ័យប្រវត្តិ' : 'Auto-synced from classroom'}
+                </p>
+              ` : `
+                <select id="excel-target-year" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground text-xs font-medium focus:ring-1 focus:ring-primary focus:border-primary">
+                  ${yearOptionsHtml}
+                </select>
+                <p class="text-[10px] text-muted-foreground mt-1 font-khmer">
+                  ${isKm ? 'នាយកអាចជ្រើសរើសឆ្នាំសិក្សា ឬបង្កើតច្រើនឆ្នាំសិក្សាបាន' : 'Directors can select or manage multiple academic years'}
+                </p>
+              `}
             </div>
           </div>
         </div>
@@ -5079,6 +5102,41 @@ export const StudentsPage = {
       }
     };
 
+    // Dynamic study year sync when target classroom is changed
+    const targetClassSelect = modal.element.querySelector('#excel-target-class');
+    const targetYearSelect = modal.element.querySelector('#excel-target-year');
+
+    targetClassSelect?.addEventListener('change', (e) => {
+      const selectedId = e.target.value;
+      const matchedCls = classes.find(c => c.id === selectedId);
+      if (matchedCls && matchedCls.academicYear && matchedCls.academicYear.trim()) {
+        const clsYear = matchedCls.academicYear.trim();
+        if (isTeacher) {
+          if (targetYearSelect) {
+            targetYearSelect.innerHTML = `<option value="${clsYear}" selected>${clsYear}</option>`;
+          }
+        } else {
+          if (targetYearSelect) {
+            let found = false;
+            for (let i = 0; i < targetYearSelect.options.length; i++) {
+              if (targetYearSelect.options[i].value === clsYear) {
+                targetYearSelect.selectedIndex = i;
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              const opt = document.createElement('option');
+              opt.value = clsYear;
+              opt.textContent = clsYear;
+              opt.selected = true;
+              targetYearSelect.appendChild(opt);
+            }
+          }
+        }
+      }
+    });
+
     // Cancel Button
     cancelBtn?.addEventListener('click', () => modal.close());
 
@@ -5089,10 +5147,11 @@ export const StudentsPage = {
         return;
       }
 
-      const targetClassSelect = modal.element.querySelector('#excel-target-class');
-      const targetYearSelect = modal.element.querySelector('#excel-target-year');
-      const targetClassId = targetClassSelect?.value || (isTeacher ? teacherClassId : '');
-      const targetAcademicYear = targetYearSelect?.value || activeYear;
+      const targetClassId = targetClassSelect?.value || (isTeacher ? (initialClass?.id || teacherClassId) : '');
+      const selectedClass = classes.find(c => c.id === targetClassId);
+      const targetAcademicYear = (isTeacher && selectedClass?.academicYear?.trim())
+        ? selectedClass.academicYear.trim()
+        : (targetYearSelect?.value || selectedClass?.academicYear?.trim() || activeYear);
 
       if (isTeacher && !targetClassId) {
         toast.warning(isKm ? 'សូមជ្រើសរើស និងបញ្ជាក់ថ្នាក់រៀនគោលដៅជាមុនសិន។' : 'Please select and confirm a target classroom.');
@@ -5152,15 +5211,26 @@ export const StudentsPage = {
     const activeYear = this.state.activeYear || (await SettingsService.getActiveAcademicYear()) || '2024–2025';
     const teacherClassId = authService.getAssignedClassId();
 
+    // Determine initial target class & study year from class table
+    let initialClass = null;
+    if (isTeacher) {
+      initialClass = classes.find(c => c.id === teacherClassId) || classes[0] || null;
+    } else if (classes.length > 0) {
+      initialClass = classes[0];
+    }
+    const initialClassYear = initialClass?.academicYear?.trim() || activeYear;
+
     const classOptionsHtml = isTeacher
-      ? classes.map(c => `<option value="${c.id}" ${c.id === teacherClassId ? 'selected' : ''}>${c.name} (${c.grade || ''})</option>`).join('')
+      ? classes.map(c => `<option value="${c.id}" ${c.id === (initialClass?.id || teacherClassId) ? 'selected' : ''}>${c.name} (${c.grade || ''})</option>`).join('')
       : `<option value="">${t('students.keepFromFile')}</option>` + classes.map(c => `<option value="${c.id}">${c.name} (${c.grade || ''})</option>`).join('');
 
-    const yearOptionsHtml = academicYears.map(y => {
-      const yName = typeof y === 'string' ? y : y.name;
-      const isSelected = yName === activeYear;
-      return `<option value="${yName}" ${isSelected ? 'selected' : ''}>${yName}</option>`;
-    }).join('');
+    const yearOptionsHtml = isTeacher
+      ? `<option value="${initialClassYear}" selected>${initialClassYear}</option>`
+      : academicYears.map(y => {
+          const yName = typeof y === 'string' ? y : y.name;
+          const isSelected = yName === initialClassYear;
+          return `<option value="${yName}" ${isSelected ? 'selected' : ''}>${yName}</option>`;
+        }).join('');
 
     const previewRows = parsedStudents.slice(0, 10);
 
@@ -5214,9 +5284,21 @@ export const StudentsPage = {
               <label for="json-target-year" class="block text-[11px] font-medium text-foreground mb-1">
                 ${t('students.targetStudyYear')} <span class="text-destructive">*</span>
               </label>
-              <select id="json-target-year" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground text-xs font-medium focus:ring-1 focus:ring-primary focus:border-primary">
-                ${yearOptionsHtml}
-              </select>
+              ${isTeacher ? `
+                <select id="json-target-year" disabled class="w-full px-3 py-2 rounded-lg border border-border bg-muted/40 text-foreground text-xs font-medium cursor-not-allowed">
+                  ${yearOptionsHtml}
+                </select>
+                <p class="text-[10px] text-muted-foreground mt-1 font-khmer">
+                  ${isKm ? 'ឆ្នាំសិក្សាទទួលបានពីតារាងថ្នាក់រៀនដោយស្វ័យប្រវត្តិ' : 'Auto-synced from classroom'}
+                </p>
+              ` : `
+                <select id="json-target-year" class="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground text-xs font-medium focus:ring-1 focus:ring-primary focus:border-primary">
+                  ${yearOptionsHtml}
+                </select>
+                <p class="text-[10px] text-muted-foreground mt-1 font-khmer">
+                  ${isKm ? 'នាយកអាចជ្រើសរើសឆ្នាំសិក្សា ឬបង្កើតច្រើនឆ្នាំសិក្សាបាន' : 'Directors can select or manage multiple academic years'}
+                </p>
+              `}
             </div>
           </div>
         </div>
@@ -5279,14 +5361,50 @@ export const StudentsPage = {
       maxWidth: 'max-w-2xl'
     });
 
+    // Dynamic study year sync when target classroom is changed
+    const targetClassSelect = modal.element.querySelector('#json-target-class');
+    const targetYearSelect = modal.element.querySelector('#json-target-year');
+
+    targetClassSelect?.addEventListener('change', (e) => {
+      const selectedId = e.target.value;
+      const matchedCls = classes.find(c => c.id === selectedId);
+      if (matchedCls && matchedCls.academicYear && matchedCls.academicYear.trim()) {
+        const clsYear = matchedCls.academicYear.trim();
+        if (isTeacher) {
+          if (targetYearSelect) {
+            targetYearSelect.innerHTML = `<option value="${clsYear}" selected>${clsYear}</option>`;
+          }
+        } else {
+          if (targetYearSelect) {
+            let found = false;
+            for (let i = 0; i < targetYearSelect.options.length; i++) {
+              if (targetYearSelect.options[i].value === clsYear) {
+                targetYearSelect.selectedIndex = i;
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              const opt = document.createElement('option');
+              opt.value = clsYear;
+              opt.textContent = clsYear;
+              opt.selected = true;
+              targetYearSelect.appendChild(opt);
+            }
+          }
+        }
+      }
+    });
+
     modal.element.querySelector('#btn-cancel-json-import')?.addEventListener('click', () => modal.close());
 
     const confirmBtn = modal.element.querySelector('#btn-confirm-json-import');
     confirmBtn?.addEventListener('click', async () => {
-      const targetClassSelect = modal.element.querySelector('#json-target-class');
-      const targetYearSelect = modal.element.querySelector('#json-target-year');
-      const targetClassId = targetClassSelect?.value || (isTeacher ? teacherClassId : '');
-      const targetAcademicYear = targetYearSelect?.value || activeYear;
+      const targetClassId = targetClassSelect?.value || (isTeacher ? (initialClass?.id || teacherClassId) : '');
+      const selectedClass = classes.find(c => c.id === targetClassId);
+      const targetAcademicYear = (isTeacher && selectedClass?.academicYear?.trim())
+        ? selectedClass.academicYear.trim()
+        : (targetYearSelect?.value || selectedClass?.academicYear?.trim() || activeYear);
 
       if (isTeacher && !targetClassId) {
         toast.warning(isKm ? 'សូមជ្រើសរើស និងបញ្ជាក់ថ្នាក់រៀនគោលដៅជាមុនសិន។' : 'Please select and confirm a target classroom.');
