@@ -7,6 +7,7 @@
 import { ReportService } from '../services/reportService.js';
 import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.88';
 import { StudentGradeBookService, formatTwoDigits, formatScoreNumber, calculateKhmerGrade } from '../services/studentGradeBookService.js?v=3.1.02';
+import { TeacherClassStatsService } from '../services/teacherClassStatsService.js?v=3.1.03';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
@@ -107,6 +108,9 @@ export const ReportsPage = {
           </button>
           <button class="rep-tab-btn px-4 py-2 rounded-lg transition-all ${this.state.activeTab === 'studentGradeBook' ? 'bg-primary text-primary-foreground font-bold shadow-sm' : 'text-muted-foreground hover:text-foreground'}" data-tab="studentGradeBook">
             សៀវភៅសិក្ខាគារិក
+          </button>
+          <button class="rep-tab-btn px-4 py-2 rounded-lg transition-all ${this.state.activeTab === 'teacherClassStats' ? 'bg-primary text-primary-foreground font-bold shadow-sm' : 'text-muted-foreground hover:text-foreground'}" data-tab="teacherClassStats">
+            ${t('reports.teacherClassStatsReport') || 'ស្ថិតិសិស្សតាមថ្នាក់'}
           </button>
           <button class="rep-tab-btn px-4 py-2 rounded-lg transition-all ${this.state.activeTab === 'students' ? 'bg-primary text-primary-foreground font-bold shadow-sm' : 'text-muted-foreground hover:text-foreground'}" data-tab="students">
             ${t('reports.studentReport')}
@@ -273,6 +277,41 @@ export const ReportsPage = {
 
         document.getElementById('btn-open-student-gradebook-modal')?.addEventListener('click', () => {
           this.openStudentGradeBookViewer();
+        });
+      }
+      return;
+    }
+
+    // Handle Teacher Class Statistics Tab:
+    if (tab === 'teacherClassStats') {
+      if (stdHeader) stdHeader.classList.add('hidden');
+      if (stdFooter) stdFooter.classList.add('hidden');
+      if (filtersBox) filtersBox.classList.add('hidden');
+      if (topActions) topActions.classList.add('hidden');
+
+      if (counterBox) counterBox.textContent = '';
+
+      if (tableBox) {
+        tableBox.innerHTML = `
+          <div class="py-12 sm:py-16 px-4 flex flex-col items-center justify-center text-center">
+            <div class="w-20 h-20 rounded-3xl bg-primary/10 text-primary flex items-center justify-center mb-5 shadow-xs border border-primary/20">
+              ${getIcon('table', 'w-10 h-10')}
+            </div>
+            <h2 class="text-xl sm:text-2xl font-bold font-khmer text-foreground mb-2">
+              តារាងចំនួនសិស្សតាមថ្នាក់(សម្រាប់គ្រូ)
+            </h2>
+            <p class="text-xs sm:text-sm text-muted-foreground font-khmer max-w-md mb-8 leading-relaxed">
+              ពិនិត្យមើល និងបោះពុម្ពតារាងស្ថិតិសិស្សតាមថ្នាក់ (កម្រិតអាយុ សិស្សត្រួតថ្នាក់ មត្តេយ្យ សិស្សពិការ និងជនជាតិភាគតិច) ជាទម្រង់ក្រដាស A4 Portrait ផ្លូវការ (PRI)
+            </p>
+            <button id="btn-open-teacher-class-stats-modal" type="button" class="inline-flex items-center gap-3 px-8 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm sm:text-base shadow-lg hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
+              ${getIcon('printer', 'w-5 h-5')}
+              <span>បើកតារាងចំនួនសិស្សតាមថ្នាក់</span>
+            </button>
+          </div>
+        `;
+
+        document.getElementById('btn-open-teacher-class-stats-modal')?.addEventListener('click', () => {
+          this.openTeacherClassStatsViewer();
         });
       }
       return;
@@ -2241,6 +2280,73 @@ export const ReportsPage = {
     });
   },
 
+  /**
+   * Opens the full A4 Portrait Report Viewer for Teacher Class Statistics (តារាងចំនួនសិស្សតាមថ្នាក់)
+   */
+  async openTeacherClassStatsViewer() {
+    let currentClassId = this.state.selectedClassId;
+    if (!currentClassId || currentClassId === 'all') {
+      const assignedId = authService.getAssignedClassId();
+      if (assignedId && this.state.classes.some(c => c.id === assignedId)) {
+        currentClassId = assignedId;
+      } else {
+        currentClassId = this.state.classes[0]?.id || null;
+      }
+    }
+
+    const activeYear = this.state.activeYear;
+    const isKm = (localStorage.getItem('school_lang') || 'km') === 'km';
+    const classes = this.state.classes;
+
+    await ReportViewer.open({
+      reportKey: 'teacher_class_stats',
+      title: isKm ? 'តារាងចំនួនសិស្សតាមថ្នាក់(សម្រាប់គ្រូ)' : 'Teacher Class Statistics (PRI)',
+      alwaysFresh: true,
+      forceOrientation: 'portrait',
+      defaultOrientation: 'portrait',
+      defaultPaperSize: 'A4',
+      defaultMargins: { top: 8, bottom: 8, left: 8, right: 8 },
+      defaultFontFamily: 'Kantumruy Pro',
+      defaultFontSize: 8,
+      renderHeaderControls: (controlsContainer, viewer) => {
+        const updateControls = () => {
+          controlsContainer.className = 'flex items-center gap-2 sm:gap-3 flex-wrap font-khmer text-xs';
+          controlsContainer.innerHTML = `
+            <!-- Class Filter -->
+            <div class="flex items-center gap-1.5">
+              <span class="text-muted-foreground whitespace-nowrap">${t('reports.filterClass') || 'ថ្នាក់រៀន:'}</span>
+              <select id="rv-tcs-filter-class" class="h-8 py-0 px-2 rounded-md border border-input bg-card text-xs text-foreground cursor-pointer shadow-xs">
+                ${classes.length === 0 ? `<option value="">—</option>` : classes.map(c => `<option value="${c.id}" ${c.id === currentClassId ? 'selected' : ''}>${escapeHtml(c.name || c.grade || '—')}</option>`).join('')}
+              </select>
+            </div>
+          `;
+
+          controlsContainer.querySelector('#rv-tcs-filter-class')?.addEventListener('change', async (e) => {
+            currentClassId = e.target.value;
+            await viewer.refreshContent(true);
+          });
+        };
+
+        updateControls();
+      },
+      renderContent: async (contentContainer, viewer) => {
+        contentContainer.innerHTML = `
+          <div class="py-12 flex items-center justify-center gap-2 text-muted-foreground text-xs font-khmer">
+            <div class="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+            <span>កំពុងរៀបចំទិន្នន័យតារាងចំនួនសិស្សតាមថ្នាក់...</span>
+          </div>
+        `;
+
+        const data = await TeacherClassStatsService.getClassStatsReportData({
+          classId: currentClassId,
+          academicYear: activeYear
+        });
+
+        contentContainer.innerHTML = TeacherClassStatsService.generateReportHtml(data);
+      }
+    });
+  },
+
   bindStaticEvents() {
     // Switch tabs
     this.container.querySelectorAll('.rep-tab-btn').forEach(btn => {
@@ -2256,7 +2362,7 @@ export const ReportsPage = {
         if (this.state.activeTab === 'teachers' || this.state.activeTab === 'classes') {
           classFilterBox?.classList.add('hidden');
           statusFilterBox?.classList.add('hidden');
-        } else if (this.state.activeTab === 'studentPlan' || this.state.activeTab === 'studentGradeBook') {
+        } else if (this.state.activeTab === 'studentPlan' || this.state.activeTab === 'studentGradeBook' || this.state.activeTab === 'teacherClassStats') {
           classFilterBox?.classList.add('hidden');
           statusFilterBox?.classList.add('hidden');
         } else {

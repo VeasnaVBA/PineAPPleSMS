@@ -637,6 +637,7 @@ export const en = {
     attendanceReport: "Attendance Ledger",
     rankingReport: "Student Rankings",
     studentPlanReport: "Individual Student Plan",
+    teacherClassStatsReport: "Teacher Class Statistics (PRI)",
     filterStudent: "Select Student:",
     prevStudent: "Previous Student",
     nextStudent: "Next Student",
