@@ -7,7 +7,7 @@
 import { ReportService } from '../services/reportService.js';
 import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.88';
 import { StudentGradeBookService, formatTwoDigits, formatScoreNumber, calculateKhmerGrade } from '../services/studentGradeBookService.js?v=3.1.02';
-import { TeacherClassStatsService } from '../services/teacherClassStatsService.js?v=3.1.10';
+import { TeacherClassStatsService } from '../services/teacherClassStatsService.js?v=3.1.11';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';

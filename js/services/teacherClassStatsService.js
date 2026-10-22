@@ -15,7 +15,7 @@ import { SettingsService } from './settingsService.js';
 import { SchoolService } from './schoolService.js';
 import { authService } from './authService.js';
 import { normalizeStudentRecord } from './studentService.js';
-import { normalizeTeacherRecord } from './teacherService.js';
+import { normalizeTeacherRecord } from './teacherService.js?v=3.1.11';
 import { isStudentActive } from './scoreService.js';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
@@ -130,17 +130,33 @@ export const TeacherClassStatsService = {
     if (!teacher && authService.isTeacher()) {
       const curUser = authService.getCurrentUser();
       if (curUser) {
-        teacher = normalizedTeachers.find(t => t.userId === curUser.id || t.id === curUser.id) || {
-          khmerName: curUser.name || curUser.username,
-          gender: curUser.gender || 'Male'
-        };
+        teacher = normalizedTeachers.find(t => t.userId === curUser.id || t.id === curUser.id || t.accountId === curUser.id);
+        if (!teacher) {
+          const userLastNameKh = (curUser.lastNameKhmer || curUser.lastNameKh || '').trim();
+          const userFirstNameKh = (curUser.firstNameKhmer || curUser.firstNameKh || '').trim();
+          const userKhName = (userLastNameKh || userFirstNameKh)
+            ? `${userLastNameKh} ${userFirstNameKh}`.trim()
+            : (curUser.khmerName || curUser.displayName || curUser.name || curUser.username);
+          teacher = {
+            lastNameKhmer: userLastNameKh,
+            firstNameKhmer: userFirstNameKh,
+            khmerName: userKhName,
+            gender: curUser.gender || 'Male'
+          };
+        }
       }
     }
     if (!teacher && normalizedTeachers.length > 0) {
       teacher = normalizedTeachers[0];
     }
 
-    const teacherName = teacher?.khmerName || teacher?.name || 'សេត ពុទ្ធី';
+    // Official MoEYS Khmer name format: Khmer Surname + Khmer First Name (ត្រកូល + នាមខ្លួន)
+    const teacherKhmerFullName = [
+      teacher?.lastNameKhmer || teacher?.lastNameKh,
+      teacher?.firstNameKhmer || teacher?.firstNameKh
+    ].filter(Boolean).join(' ').trim();
+
+    const teacherName = teacherKhmerFullName || teacher?.khmerName || teacher?.name || 'សេត ពុទ្ធី';
     const teacherGender = teacher?.gender === 'Female' || teacher?.gender === 'ស្រី' ? 'ស្រី' : 'ប្រុស';
     const teacherAge = teacher?.age ? `${toKhmerNumerals(teacher.age)} ឆ្នាំ` : '២៦ ឆ្នាំ';
     const teacherIsEthnicMinority = teacher?.isEthnicMinority || teacher?.ethnicMinority ? 'ពិតមែន' : 'ទេ';

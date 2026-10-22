@@ -20,10 +20,12 @@ export function normalizeTeacherRecord(raw = {}) {
   const lastNameKhmer = (raw.lastNameKhmer || raw.lastNameKh || '').trim();
   const firstNameKhmer = (raw.firstNameKhmer || raw.firstNameKh || '').trim();
   
-  let khmerName = (raw.khmerName || '').trim();
-  if (!khmerName && (lastNameKhmer || firstNameKhmer)) {
-    khmerName = `${lastNameKhmer} ${firstNameKhmer}`.trim();
-  } else if (khmerName && (!lastNameKhmer && !firstNameKhmer)) {
+  // Official Khmer name format: Khmer Surname + Khmer First Name (ត្រកូល + នាមខ្លួន)
+  let khmerName = (lastNameKhmer || firstNameKhmer)
+    ? `${lastNameKhmer} ${firstNameKhmer}`.trim()
+    : (raw.khmerName || '').trim();
+
+  if (khmerName && (!lastNameKhmer && !firstNameKhmer)) {
     const parts = khmerName.split(/\s+/);
     // Best-effort extraction
     if (parts.length > 1) {
@@ -36,10 +38,9 @@ export function normalizeTeacherRecord(raw = {}) {
 
   const lastNameLatin = (raw.lastNameLatin || '').trim();
   const firstNameLatin = (raw.firstNameLatin || '').trim();
-  let englishName = (raw.englishName || raw.latinName || '').trim();
-  if (!englishName && (lastNameLatin || firstNameLatin)) {
-    englishName = `${lastNameLatin} ${firstNameLatin}`.trim();
-  }
+  let englishName = (lastNameLatin || firstNameLatin)
+    ? `${lastNameLatin} ${firstNameLatin}`.trim()
+    : (raw.englishName || raw.latinName || '').trim();
 
   const dob = (raw.dob || raw.dateOfBirth || '').trim();
   const computedAge = dob ? calculateAge(dob) : (raw.age || '');
@@ -57,8 +58,8 @@ export function normalizeTeacherRecord(raw = {}) {
     firstNameKhmer: (raw.firstNameKhmer || firstNameKhmer || '').trim(),
     lastNameLatin: (raw.lastNameLatin || lastNameLatin || '').trim(),
     firstNameLatin: (raw.firstNameLatin || firstNameLatin || '').trim(),
-    khmerName: khmerName || `${lastNameKhmer} ${firstNameKhmer}`.trim(),
-    englishName: englishName || `${lastNameLatin} ${firstNameLatin}`.trim(),
+    khmerName: (lastNameKhmer || firstNameKhmer) ? `${lastNameKhmer} ${firstNameKhmer}`.trim() : (khmerName || '').trim(),
+    englishName: (lastNameLatin || firstNameLatin) ? `${lastNameLatin} ${firstNameLatin}`.trim() : (englishName || '').trim(),
     gender: raw.gender || 'Male',
     dob,
     dateOfBirth: dob,
