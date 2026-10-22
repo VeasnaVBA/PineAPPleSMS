@@ -82,22 +82,15 @@ class SchoolApp {
         await initUserDatabase(user.id);
       }
 
-      // If returning to an existing session online, pull latest data from Google Drive before rendering setup checks
-      if (typeof navigator !== 'undefined' && navigator.onLine && user && user.role !== 'ADMIN') {
-        try {
-          const { CloudSyncService } = await import('./services/cloudSyncService.js');
-          await CloudSyncService.checkAndSyncOnStartup(user);
-        } catch (cloudErr) {
-          console.warn('Startup workspace sync notice:', cloudErr);
-        }
-      }
-
+      // Render the App Shell immediately from local IndexedDB for instant load (<100ms)
       this.showAppShell();
 
-      // Background admin sync
-      if (typeof navigator !== 'undefined' && navigator.onLine) {
-        import('./services/adminDataService.js').then(({ AdminDataService }) => {
-          AdminDataService.checkAndSyncOnStartup();
+      // Background check for latest Google Drive workspace data (non-blocking)
+      if (typeof navigator !== 'undefined' && navigator.onLine && user && user.role !== 'ADMIN') {
+        import('./services/cloudSyncService.js').then(({ CloudSyncService }) => {
+          CloudSyncService.checkAndSyncOnStartup(user).catch(cloudErr => {
+            console.warn('Startup workspace sync notice:', cloudErr);
+          });
         }).catch(() => {});
       }
     } else {
