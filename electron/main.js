@@ -11,7 +11,7 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 700,
     show: false,
-    title: 'SchoolFlow — Offline School Management System',
+    title: 'PineAPPleSMS',
     backgroundColor: '#090d16',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
