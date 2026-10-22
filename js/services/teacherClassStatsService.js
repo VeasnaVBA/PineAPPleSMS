@@ -441,12 +441,24 @@ export const TeacherClassStatsService = {
             color: #000000 !important;
             background-color: #ffffff !important;
           }
+          .stats-tbl thead,
+          .stats-tbl tbody,
+          .stats-tbl tr,
           .stats-tbl th,
           .stats-tbl td,
+          .dark .stats-tbl thead,
+          .dark .stats-tbl tbody,
+          .dark .stats-tbl tr,
           .dark .stats-tbl th,
           .dark .stats-tbl td,
+          .teacher-class-stats-page table thead,
+          .teacher-class-stats-page table tbody,
+          .teacher-class-stats-page table tr,
           .teacher-class-stats-page table th,
           .teacher-class-stats-page table td,
+          .dark .teacher-class-stats-page table thead,
+          .dark .teacher-class-stats-page table tbody,
+          .dark .teacher-class-stats-page table tr,
           .dark .teacher-class-stats-page table th,
           .dark .teacher-class-stats-page table td,
           .dark table.stats-tbl thead th,
@@ -581,24 +593,24 @@ export const TeacherClassStatsService = {
             </div>
 
             <!-- Section 2.(ខ) Table -->
-            <table class="stats-tbl no-shadcn">
-              <thead>
-                <tr>
-                  <th rowspan="3" style="width: 14%; font-weight: bold;">អាយុ<br>ឆ្នាំ</th>
-                  <th colspan="6" style="font-weight: bold;">ចំនួនសិស្ស</th>
+            <table class="stats-tbl no-shadcn" style="background-color: #ffffff !important;">
+              <thead style="background-color: #ffffff !important; color: #000000 !important;">
+                <tr style="background-color: #ffffff !important; color: #000000 !important;">
+                  <th rowspan="3" style="width: 14%; font-weight: bold; background-color: #ffffff !important; color: #000000 !important;">អាយុ<br>ឆ្នាំ</th>
+                  <th colspan="6" style="font-weight: bold; background-color: #ffffff !important; color: #000000 !important;">ចំនួនសិស្ស</th>
                 </tr>
-                <tr>
-                  <th colspan="2" style="width: 28%; font-weight: bold;">សិស្សថ្មី</th>
-                  <th colspan="2" style="width: 28%; font-weight: bold;">សិស្សត្រួតថ្នាក់</th>
-                  <th colspan="2" style="width: 30%; font-weight: bold;">សរុប</th>
+                <tr style="background-color: #ffffff !important; color: #000000 !important;">
+                  <th colspan="2" style="width: 28%; font-weight: bold; background-color: #ffffff !important; color: #000000 !important;">សិស្សថ្មី</th>
+                  <th colspan="2" style="width: 28%; font-weight: bold; background-color: #ffffff !important; color: #000000 !important;">សិស្សត្រួតថ្នាក់</th>
+                  <th colspan="2" style="width: 30%; font-weight: bold; background-color: #ffffff !important; color: #000000 !important;">សរុប</th>
                 </tr>
-                <tr>
-                  <th style="font-weight: 500; font-size: 7.5px;">សរុប</th>
-                  <th style="font-weight: 500; font-size: 7.5px;">ស្រី</th>
-                  <th style="font-weight: 500; font-size: 7.5px;">សរុប</th>
-                  <th style="font-weight: 500; font-size: 7.5px;">ស្រី</th>
-                  <th style="font-weight: 500; font-size: 7.5px;">សរុប</th>
-                  <th style="font-weight: 500; font-size: 7.5px;">ស្រី</th>
+                <tr style="background-color: #ffffff !important; color: #000000 !important;">
+                  <th style="font-weight: 500; font-size: 7.5px; background-color: #ffffff !important; color: #000000 !important;">សរុប</th>
+                  <th style="font-weight: 500; font-size: 7.5px; background-color: #ffffff !important; color: #000000 !important;">ស្រី</th>
+                  <th style="font-weight: 500; font-size: 7.5px; background-color: #ffffff !important; color: #000000 !important;">សរុប</th>
+                  <th style="font-weight: 500; font-size: 7.5px; background-color: #ffffff !important; color: #000000 !important;">ស្រី</th>
+                  <th style="font-weight: 500; font-size: 7.5px; background-color: #ffffff !important; color: #000000 !important;">សរុប</th>
+                  <th style="font-weight: 500; font-size: 7.5px; background-color: #ffffff !important; color: #000000 !important;">ស្រី</th>
                 </tr>
               </thead>
               <tbody>
@@ -634,15 +646,15 @@ export const TeacherClassStatsService = {
             </div>
 
             <!-- Section 4 Table -->
-            <table class="stats-tbl no-shadcn">
-              <thead>
-                <tr>
-                  <th rowspan="2" style="width: 44%; font-weight: bold;">ក្រុមអាយុ</th>
-                  <th colspan="2" style="font-weight: bold;">សិស្សជនជាតិដើមភាគតិច</th>
+            <table class="stats-tbl no-shadcn" style="background-color: #ffffff !important;">
+              <thead style="background-color: #ffffff !important; color: #000000 !important;">
+                <tr style="background-color: #ffffff !important; color: #000000 !important;">
+                  <th rowspan="2" style="width: 44%; font-weight: bold; background-color: #ffffff !important; color: #000000 !important;">ក្រុមអាយុ</th>
+                  <th colspan="2" style="font-weight: bold; background-color: #ffffff !important; color: #000000 !important;">សិស្សជនជាតិដើមភាគតិច</th>
                 </tr>
-                <tr>
-                  <th style="width: 28%; font-weight: 500; font-size: 7.5px;">សរុប</th>
-                  <th style="width: 28%; font-weight: 500; font-size: 7.5px;">ស្រី</th>
+                <tr style="background-color: #ffffff !important; color: #000000 !important;">
+                  <th style="width: 28%; font-weight: 500; font-size: 7.5px; background-color: #ffffff !important; color: #000000 !important;">សរុប</th>
+                  <th style="width: 28%; font-weight: 500; font-size: 7.5px; background-color: #ffffff !important; color: #000000 !important;">ស្រី</th>
                 </tr>
               </thead>
               <tbody>
@@ -693,21 +705,21 @@ export const TeacherClassStatsService = {
             </div>
 
             <!-- Section 2.(ក) Table -->
-            <table class="stats-tbl no-shadcn">
-              <thead>
-                <tr>
-                  <th rowspan="3" style="width: 38%; font-weight: bold;">ប្រភេទ</th>
-                  <th colspan="4" style="font-weight: bold;">ថ្នាក់ទី១ (សិស្សម្នាក់អាចរាប់អានបានតែមួយដង)</th>
+            <table class="stats-tbl no-shadcn" style="background-color: #ffffff !important;">
+              <thead style="background-color: #ffffff !important; color: #000000 !important;">
+                <tr style="background-color: #ffffff !important; color: #000000 !important;">
+                  <th rowspan="3" style="width: 38%; font-weight: bold; background-color: #ffffff !important; color: #000000 !important;">ប្រភេទ</th>
+                  <th colspan="4" style="font-weight: bold; background-color: #ffffff !important; color: #000000 !important;">ថ្នាក់ទី១ (សិស្សម្នាក់អាចរាប់អានបានតែមួយដង)</th>
                 </tr>
-                <tr>
-                  <th colspan="2" style="width: 31%; font-weight: bold;">សិស្សថ្មី</th>
-                  <th colspan="2" style="width: 31%; font-weight: bold;">សិស្សត្រួតថ្នាក់</th>
+                <tr style="background-color: #ffffff !important; color: #000000 !important;">
+                  <th colspan="2" style="width: 31%; font-weight: bold; background-color: #ffffff !important; color: #000000 !important;">សិស្សថ្មី</th>
+                  <th colspan="2" style="width: 31%; font-weight: bold; background-color: #ffffff !important; color: #000000 !important;">សិស្សត្រួតថ្នាក់</th>
                 </tr>
-                <tr>
-                  <th style="font-weight: 500; font-size: 7.5px;">សរុប</th>
-                  <th style="font-weight: 500; font-size: 7.5px;">ស្រី</th>
-                  <th style="font-weight: 500; font-size: 7.5px;">សរុប</th>
-                  <th style="font-weight: 500; font-size: 7.5px;">ស្រី</th>
+                <tr style="background-color: #ffffff !important; color: #000000 !important;">
+                  <th style="font-weight: 500; font-size: 7.5px; background-color: #ffffff !important; color: #000000 !important;">សរុប</th>
+                  <th style="font-weight: 500; font-size: 7.5px; background-color: #ffffff !important; color: #000000 !important;">ស្រី</th>
+                  <th style="font-weight: 500; font-size: 7.5px; background-color: #ffffff !important; color: #000000 !important;">សរុប</th>
+                  <th style="font-weight: 500; font-size: 7.5px; background-color: #ffffff !important; color: #000000 !important;">ស្រី</th>
                 </tr>
               </thead>
               <tbody>
@@ -736,16 +748,16 @@ export const TeacherClassStatsService = {
             </div>
 
             <!-- Section 3 Table -->
-            <table class="stats-tbl no-shadcn">
-              <thead>
-                <tr>
-                  <th colspan="2" style="width: 66%; font-weight: bold;">បរិយាយ</th>
-                  <th colspan="2" style="width: 34%; font-weight: bold;">ចំណុចជួបការលំបាក</th>
+            <table class="stats-tbl no-shadcn" style="background-color: #ffffff !important;">
+              <thead style="background-color: #ffffff !important; color: #000000 !important;">
+                <tr style="background-color: #ffffff !important; color: #000000 !important;">
+                  <th colspan="2" style="width: 66%; font-weight: bold; background-color: #ffffff !important; color: #000000 !important;">បរិយាយ</th>
+                  <th colspan="2" style="width: 34%; font-weight: bold; background-color: #ffffff !important; color: #000000 !important;">ចំណុចជួបការលំបាក</th>
                 </tr>
-                <tr>
+                <tr style="background-color: #ffffff !important; color: #000000 !important;">
                   <th colspan="2" style="display: none;"></th>
-                  <th style="width: 17%; font-weight: 500; font-size: 7.5px;">សរុប</th>
-                  <th style="width: 17%; font-weight: 500; font-size: 7.5px;">ស្រី</th>
+                  <th style="width: 17%; font-weight: 500; font-size: 7.5px; background-color: #ffffff !important; color: #000000 !important;">សរុប</th>
+                  <th style="width: 17%; font-weight: 500; font-size: 7.5px; background-color: #ffffff !important; color: #000000 !important;">ស្រី</th>
                 </tr>
               </thead>
               <tbody>

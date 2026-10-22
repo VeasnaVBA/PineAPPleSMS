@@ -877,8 +877,7 @@ table thead {
   z-index: 40 !important;
 }
 
-table:not(.no-shadcn):not(.gradebook-table):not(.seip-score-table):not(.moeys-table):not(.score-sheet-table):not(.score-result-2row-table) thead th,
-table:not(.gradebook-table):not(.seip-score-table):not(.moeys-table):not(.score-sheet-table):not(.score-result-2row-table) thead th {
+table:not(.no-shadcn):not(.stats-tbl):not(.gradebook-table):not(.seip-score-table):not(.moeys-table):not(.score-sheet-table):not(.score-result-2row-table) thead th {
   position: sticky !important;
   top: 0 !important;
   z-index: 40 !important;
@@ -931,8 +930,7 @@ table tbody td:last-child.sticky {
   z-index: 40 !important;
 }
 
-.dark table:not(.no-shadcn):not(.gradebook-table):not(.seip-score-table):not(.moeys-table):not(.score-sheet-table):not(.score-result-2row-table):not(.stats-tbl) thead th,
-.dark table:not(.gradebook-table):not(.seip-score-table):not(.moeys-table):not(.score-sheet-table):not(.score-result-2row-table):not(.stats-tbl) thead th {
+.dark table:not(.no-shadcn):not(.stats-tbl):not(.gradebook-table):not(.seip-score-table):not(.moeys-table):not(.score-sheet-table):not(.score-result-2row-table) thead th {
   position: sticky !important;
   top: 0 !important;
   z-index: 40 !important;
@@ -1302,14 +1300,29 @@ html[lang="km"] select {
   border-color: #1e3a8a !important;
 }
 
+.teacher-class-stats-page table thead,
+.teacher-class-stats-page table tbody,
+.teacher-class-stats-page table tr,
 .teacher-class-stats-page table th,
 .teacher-class-stats-page table td,
+.teacher-class-stats-page table.stats-tbl thead,
+.teacher-class-stats-page table.stats-tbl tbody,
+.teacher-class-stats-page table.stats-tbl tr,
 .teacher-class-stats-page table.stats-tbl th,
 .teacher-class-stats-page table.stats-tbl td,
+.dark .teacher-class-stats-page table thead,
+.dark .teacher-class-stats-page table tbody,
+.dark .teacher-class-stats-page table tr,
 .dark .teacher-class-stats-page table th,
 .dark .teacher-class-stats-page table td,
+.dark .teacher-class-stats-page table.stats-tbl thead,
+.dark .teacher-class-stats-page table.stats-tbl tbody,
+.dark .teacher-class-stats-page table.stats-tbl tr,
 .dark .teacher-class-stats-page table.stats-tbl th,
 .dark .teacher-class-stats-page table.stats-tbl td,
+.dark table.stats-tbl thead,
+.dark table.stats-tbl tbody,
+.dark table.stats-tbl tr,
 .dark table.stats-tbl thead th,
 .dark table.stats-tbl tbody td,
 .dark table.stats-tbl th,

@@ -302,12 +302,34 @@ export class ReportViewer {
           z-index: auto !important;
         }
         .report-viewer-overlay .seip-score-table thead th,
-        .report-viewer-overlay .moeys-table thead th {
+        .report-viewer-overlay .moeys-table thead th,
+        .report-viewer-overlay .stats-tbl,
+        .report-viewer-overlay .stats-tbl thead,
+        .report-viewer-overlay .stats-tbl tbody,
+        .report-viewer-overlay .stats-tbl tr,
+        .report-viewer-overlay .stats-tbl th,
+        .report-viewer-overlay .stats-tbl td,
+        .report-viewer-overlay .teacher-class-stats-page,
+        .report-viewer-overlay .teacher-class-stats-page table,
+        .report-viewer-overlay .teacher-class-stats-page thead,
+        .report-viewer-overlay .teacher-class-stats-page tbody,
+        .report-viewer-overlay .teacher-class-stats-page tr,
+        .report-viewer-overlay .teacher-class-stats-page th,
+        .report-viewer-overlay .teacher-class-stats-page td,
+        .report-viewer-overlay .report-explicit-page thead th {
           background-color: #ffffff !important;
           color: #000000 !important;
           position: static !important;
           top: auto !important;
           z-index: auto !important;
+        }
+        .report-viewer-overlay .stats-tbl tr.stats-shaded,
+        .report-viewer-overlay .stats-tbl tr.stats-shaded td,
+        .report-viewer-overlay .teacher-class-stats-page tr.stats-shaded,
+        .report-viewer-overlay .teacher-class-stats-page tr.stats-shaded td {
+          background-color: #cbd5e1 !important;
+          color: #000000 !important;
+          font-weight: bold !important;
         }
         .report-viewer-overlay .report-viewer-sheet table thead th,
         .report-viewer-overlay .a4-sheet-page table thead th {

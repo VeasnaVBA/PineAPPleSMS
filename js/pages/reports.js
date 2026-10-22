@@ -7,14 +7,14 @@
 import { ReportService } from '../services/reportService.js';
 import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.88';
 import { StudentGradeBookService, formatTwoDigits, formatScoreNumber, calculateKhmerGrade } from '../services/studentGradeBookService.js?v=3.1.02';
-import { TeacherClassStatsService } from '../services/teacherClassStatsService.js?v=3.1.06';
+import { TeacherClassStatsService } from '../services/teacherClassStatsService.js?v=3.1.07';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js?v=3.1.01';
+import { ReportViewer } from '../components/reportViewer.js?v=3.1.07';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
