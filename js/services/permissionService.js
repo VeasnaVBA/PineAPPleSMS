@@ -127,12 +127,16 @@ class PermissionService {
       if (record && record.value) {
         this.customPermissions = record.value;
         if (this.customPermissions.TEACHER) {
-          if (this.customPermissions.TEACHER.schools === undefined) this.customPermissions.TEACHER.schools = true;
-          if (this.customPermissions.TEACHER.teachers === undefined) this.customPermissions.TEACHER.teachers = true;
+          if (!this.customPermissions.TEACHER.schools) this.customPermissions.TEACHER.schools = true;
+          if (!this.customPermissions.TEACHER.teachers) this.customPermissions.TEACHER.teachers = true;
+          if (!this.customPermissions.TEACHER.classes) this.customPermissions.TEACHER.classes = true;
+          if (!this.customPermissions.TEACHER.dashboard) this.customPermissions.TEACHER.dashboard = true;
         }
         if (this.customPermissions.DIRECTOR) {
-          if (this.customPermissions.DIRECTOR.schools === undefined) this.customPermissions.DIRECTOR.schools = true;
-          if (this.customPermissions.DIRECTOR.teachers === undefined) this.customPermissions.DIRECTOR.teachers = true;
+          if (!this.customPermissions.DIRECTOR.schools) this.customPermissions.DIRECTOR.schools = true;
+          if (!this.customPermissions.DIRECTOR.teachers) this.customPermissions.DIRECTOR.teachers = true;
+          if (!this.customPermissions.DIRECTOR.classes) this.customPermissions.DIRECTOR.classes = true;
+          if (!this.customPermissions.DIRECTOR.dashboard) this.customPermissions.DIRECTOR.dashboard = true;
         }
       } else {
         this.customPermissions = JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS));
@@ -191,8 +195,9 @@ class PermissionService {
       return role === 'DIRECTOR';
     }
 
-    // Teachers and Directors always have access to Schools module
-    if ((role === 'TEACHER' || role === 'DIRECTOR') && routeKey === 'schools') {
+    // Teachers and Directors always have access to core setup and operational modules
+    if ((role === 'TEACHER' || role === 'DIRECTOR') &&
+        (routeKey === 'schools' || routeKey === 'teachers' || routeKey === 'classes' || routeKey === 'dashboard')) {
       return true;
     }
 

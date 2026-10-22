@@ -34,9 +34,12 @@ class AuthService {
     this.sessionKey = 'school_current_user';
     this.listeners = [];
 
-    // Re-notify whenever permissions change
+    // Re-notify whenever permissions change, but only if an active user session exists
     permissionService.subscribe(() => {
-      this.notify(this.getCurrentUser());
+      const curUser = this.getCurrentUser();
+      if (curUser) {
+        this.notify(curUser);
+      }
     });
   }
 
@@ -160,15 +163,6 @@ class AuthService {
       }
     } catch (e) {
       console.warn('Error clearing CacheStorage:', e);
-    }
-
-    // 2. Purge sessionStorage
-    try {
-      if (typeof sessionStorage !== 'undefined') {
-        sessionStorage.clear();
-      }
-    } catch (e) {
-      console.warn('Error clearing sessionStorage:', e);
     }
   }
 

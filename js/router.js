@@ -95,8 +95,10 @@ export class Router {
 
     // Automatic redirect if user does not have permission to access this route
     if (currentUser && !authService.canAccessRoute(route)) {
-      window.location.hash = `#${defaultRoute}`;
-      return;
+      if (!WorkspaceSetupService.isSetupAllowedRoute(route)) {
+        window.location.hash = `#${defaultRoute}`;
+        return;
+      }
     }
 
     // Check mandatory initial setup for Director & Teacher accounts
@@ -122,8 +124,10 @@ export class Router {
 
     // Automatic redirect if user does not have permission to access this route
     if (currentUser && !authService.canAccessRoute(routeKey)) {
-      window.location.hash = `#${defaultRoute}`;
-      return;
+      if (!WorkspaceSetupService.isSetupAllowedRoute(routeKey)) {
+        window.location.hash = `#${defaultRoute}`;
+        return;
+      }
     }
 
     // Check mandatory initial setup for Director & Teacher accounts
@@ -150,8 +154,8 @@ export class Router {
 
     if (!this.container) return;
 
-    // Enforce Route-level Permission Guard
-    if (!authService.canAccessRoute(routeKey)) {
+    // Enforce Route-level Permission Guard (setup routes always allowed)
+    if (!WorkspaceSetupService.isSetupAllowedRoute(routeKey) && !authService.canAccessRoute(routeKey)) {
       const isKm = i18n.getLocale() === 'km';
       const backHref = currentUser?.role === 'ADMIN' ? '#users' : '#dashboard';
       const backLabel = currentUser?.role === 'ADMIN'
