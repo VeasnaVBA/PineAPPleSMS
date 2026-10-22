@@ -250,6 +250,79 @@ export class ReportViewer {
           background-color: #2563eb !important;
           color: #ffffff !important;
         }
+        /* Ensure all report sheets & table cells remain physical paper white in dark mode */
+        .report-viewer-overlay .report-viewer-sheet,
+        .report-viewer-overlay .a4-sheet-page,
+        .report-viewer-overlay .report-explicit-page,
+        .report-viewer-overlay .gradebook-page-box,
+        .report-viewer-overlay .student-plan-sheet {
+          background-color: #ffffff !important;
+          color: #000000 !important;
+        }
+        .report-viewer-overlay .report-viewer-sheet table,
+        .report-viewer-overlay .a4-sheet-page table,
+        .report-viewer-overlay .report-explicit-page table,
+        .report-viewer-overlay .gradebook-table,
+        .report-viewer-overlay .seip-score-table,
+        .report-viewer-overlay .moeys-table,
+        .report-viewer-overlay .score-sheet-table,
+        .report-viewer-overlay .score-result-2row-table {
+          background-color: #ffffff !important;
+          color: #000000 !important;
+        }
+        .report-viewer-overlay .report-viewer-sheet table td,
+        .report-viewer-overlay .a4-sheet-page table td,
+        .report-viewer-overlay .report-explicit-page table td,
+        .report-viewer-overlay .gradebook-table td,
+        .report-viewer-overlay .seip-score-table td,
+        .report-viewer-overlay .moeys-table td,
+        .report-viewer-overlay .score-sheet-table td,
+        .report-viewer-overlay .score-result-2row-table td {
+          background-color: #ffffff !important;
+          color: #000000 !important;
+        }
+        .report-viewer-overlay .gradebook-table thead th {
+          background-color: #dbeafe !important;
+          color: #1e3a8a !important;
+          border: 1px solid #1e3a8a !important;
+          position: static !important;
+          top: auto !important;
+          z-index: auto !important;
+        }
+        .report-viewer-overlay .gradebook-banner {
+          background-color: #1e3a8a !important;
+          color: #ffffff !important;
+        }
+        .report-viewer-overlay .score-sheet-table thead th,
+        .report-viewer-overlay .score-result-2row-table thead th {
+          background-color: #0045ff !important;
+          color: #ffffff !important;
+          position: static !important;
+          top: auto !important;
+          z-index: auto !important;
+        }
+        .report-viewer-overlay .seip-score-table thead th,
+        .report-viewer-overlay .moeys-table thead th {
+          background-color: #ffffff !important;
+          color: #000000 !important;
+          position: static !important;
+          top: auto !important;
+          z-index: auto !important;
+        }
+        .report-viewer-overlay .report-viewer-sheet table thead th,
+        .report-viewer-overlay .a4-sheet-page table thead th {
+          position: static !important;
+          top: auto !important;
+          z-index: auto !important;
+        }
+        .report-viewer-overlay .report-viewer-sheet table tr:hover,
+        .report-viewer-overlay .report-viewer-sheet table tr:hover > td,
+        .report-viewer-overlay .a4-sheet-page table tr:hover,
+        .report-viewer-overlay .a4-sheet-page table tr:hover > td,
+        .report-viewer-overlay .gradebook-table tr:hover,
+        .report-viewer-overlay .gradebook-table tr:hover > td {
+          background-color: inherit !important;
+        }
         /* Strict Toolbar Height Normalization: All tools match Save Preset button (32px / h-8) */
         .report-viewer-toolbar {
           min-height: 44px !important;

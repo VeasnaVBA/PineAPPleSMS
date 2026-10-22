@@ -13,7 +13,7 @@ import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js?v=3.0.88';
+import { ReportViewer } from '../components/reportViewer.js?v=3.1.00';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -1008,16 +1008,22 @@ export const ReportsPage = {
                 text-align: center !important;
                 vertical-align: middle !important;
                 line-height: 1 !important;
+                background-color: #ffffff !important;
+                color: #000000 !important;
               }
               .seip-score-table th {
                 font-size: ${cellFontSize} !important;
                 padding: 1px 1px !important;
+                position: static !important;
+                top: auto !important;
               }
               .seip-score-table td {
                 height: ${rowHeight}px !important;
                 max-height: ${rowHeight}px !important;
                 font-size: ${cellFontSize} !important;
                 padding: 0 1px !important;
+                background-color: #ffffff !important;
+                color: #000000 !important;
               }
               table.seip-score-table,
               table.seip-score-table *,
@@ -1584,6 +1590,8 @@ export const ReportsPage = {
                 width: 100% !important;
                 border-collapse: collapse !important;
                 border: 1px solid #1e3a8a !important;
+                background-color: #ffffff !important;
+                color: #000000 !important;
                 font-size: ${cellFontSize} !important;
                 line-height: 1.1 !important;
                 table-layout: fixed !important;
@@ -1592,8 +1600,10 @@ export const ReportsPage = {
               .gradebook-table thead tr {
                 height: 6.5mm !important;
                 border-bottom: 1px solid #1e3a8a !important;
+                background-color: #dbeafe !important;
               }
-              .gradebook-table thead th {
+              .gradebook-table thead th,
+              .dark .gradebook-table thead th {
                 height: 6.5mm !important;
                 background-color: #dbeafe !important;
                 color: #1e3a8a !important;
@@ -1605,6 +1615,9 @@ export const ReportsPage = {
                 vertical-align: middle !important;
                 padding: 1px 2px !important;
                 box-sizing: border-box !important;
+                position: static !important;
+                top: auto !important;
+                z-index: auto !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
               }
@@ -1614,8 +1627,10 @@ export const ReportsPage = {
                 max-height: ${calculatedRowHeightMm}mm !important;
                 border-bottom: 1px solid #1e3a8a !important;
                 border-color: #1e3a8a !important;
+                background-color: #ffffff !important;
               }
-              .gradebook-table tbody td {
+              .gradebook-table tbody td,
+              .dark .gradebook-table tbody td {
                 height: ${calculatedRowHeightMm}mm !important;
                 max-height: ${calculatedRowHeightMm}mm !important;
                 border: 1px solid #1e3a8a !important;
@@ -1632,8 +1647,24 @@ export const ReportsPage = {
                 overflow: hidden !important;
                 white-space: nowrap !important;
                 text-overflow: ellipsis !important;
+                background-color: #ffffff !important;
+                color: #000000 !important;
               }
-              .gradebook-banner {
+              .gradebook-table tbody tr:hover,
+              .gradebook-table tbody tr:hover > td,
+              .dark .gradebook-table tbody tr:hover,
+              .dark .gradebook-table tbody tr:hover > td {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+              }
+              .gradebook-table tr.gb-tbody-row[style*="background-color"],
+              .gradebook-table tr.gb-tbody-row[style*="background-color"] td,
+              .dark .gradebook-table tr.gb-tbody-row[style*="background-color"],
+              .dark .gradebook-table tr.gb-tbody-row[style*="background-color"] td {
+                background-color: #f8fafc !important;
+              }
+              .gradebook-banner,
+              .dark .gradebook-banner {
                 background-color: #1e3a8a !important;
                 color: #ffffff !important;
                 text-align: center !important;
@@ -1643,6 +1674,11 @@ export const ReportsPage = {
                 letter-spacing: 0.2px !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+              }
+              .gradebook-page-box,
+              .dark .gradebook-page-box {
+                background-color: #ffffff !important;
+                color: #000000 !important;
               }
               @media print {
                 @page {
@@ -1713,9 +1749,17 @@ export const ReportsPage = {
                   background-color: #dbeafe !important;
                   color: #1e3a8a !important;
                   border: 1px solid #1e3a8a !important;
+                  position: static !important;
+                  top: auto !important;
                 }
                 .gradebook-table tbody td {
                   border: 1px solid #1e3a8a !important;
+                  background-color: #ffffff !important;
+                  color: #000000 !important;
+                }
+                .gradebook-page-box {
+                  background-color: #ffffff !important;
+                  color: #000000 !important;
                 }
                 .gradebook-banner {
                   background-color: #1e3a8a !important;

@@ -871,8 +871,8 @@ table thead {
   z-index: 40 !important;
 }
 
-table:not(.no-shadcn):not(.gradebook-table) thead th,
-table:not(.gradebook-table) thead th {
+table:not(.no-shadcn):not(.gradebook-table):not(.seip-score-table):not(.moeys-table):not(.score-sheet-table):not(.score-result-2row-table) thead th,
+table:not(.gradebook-table):not(.seip-score-table):not(.moeys-table):not(.score-sheet-table):not(.score-result-2row-table) thead th {
   position: sticky !important;
   top: 0 !important;
   z-index: 40 !important;
@@ -925,8 +925,8 @@ table tbody td:last-child.sticky {
   z-index: 40 !important;
 }
 
-.dark table:not(.no-shadcn) thead th,
-.dark table thead th {
+.dark table:not(.no-shadcn):not(.gradebook-table):not(.seip-score-table):not(.moeys-table):not(.score-sheet-table):not(.score-result-2row-table) thead th,
+.dark table:not(.gradebook-table):not(.seip-score-table):not(.moeys-table):not(.score-sheet-table):not(.score-result-2row-table) thead th {
   position: sticky !important;
   top: 0 !important;
   z-index: 40 !important;
@@ -1140,6 +1140,141 @@ html[lang="km"] select {
 [style*="background-color"] {
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;
+}
+
+/* Ensure report sheets & printable table cells remain pristine paper white in Dark Mode */
+.report-viewer-sheet,
+.a4-sheet-page,
+.report-explicit-page,
+.gradebook-page-box,
+.student-plan-sheet,
+.dark .report-viewer-sheet,
+.dark .a4-sheet-page,
+.dark .report-explicit-page,
+.dark .gradebook-page-box,
+.dark .student-plan-sheet {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.report-viewer-sheet table,
+.a4-sheet-page table,
+.report-explicit-page table,
+.gradebook-table,
+.seip-score-table,
+.moeys-table,
+.score-sheet-table,
+.score-result-2row-table,
+.dark .report-viewer-sheet table,
+.dark .a4-sheet-page table,
+.dark .report-explicit-page table,
+.dark .gradebook-table,
+.dark .seip-score-table,
+.dark .moeys-table,
+.dark .score-sheet-table,
+.dark .score-result-2row-table {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.report-viewer-sheet table td,
+.a4-sheet-page table td,
+.report-explicit-page table td,
+.gradebook-table td,
+.seip-score-table td,
+.moeys-table td,
+.score-sheet-table td,
+.score-result-2row-table td,
+.dark .report-viewer-sheet table td,
+.dark .a4-sheet-page table td,
+.dark .report-explicit-page table td,
+.dark .gradebook-table td,
+.dark .seip-score-table td,
+.dark .moeys-table td,
+.dark .score-sheet-table td,
+.dark .score-result-2row-table td {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* Neutral summary & special rows in report tables */
+.gradebook-table tr.gb-tbody-row[style*="#f8fafc"],
+.gradebook-table tr.gb-tbody-row[style*="#f8fafc"] td,
+.dark .gradebook-table tr.gb-tbody-row[style*="#f8fafc"],
+.dark .gradebook-table tr.gb-tbody-row[style*="#f8fafc"] td {
+  background-color: #f8fafc !important;
+  color: #000000 !important;
+}
+
+/* Explicit table header colors preserved in dark mode */
+.gradebook-table thead th,
+.dark .gradebook-table thead th {
+  background-color: #dbeafe !important;
+  color: #1e3a8a !important;
+  border: 1px solid #1e3a8a !important;
+  position: static !important;
+  top: auto !important;
+  z-index: auto !important;
+}
+
+.gradebook-banner,
+.dark .gradebook-banner {
+  background-color: #1e3a8a !important;
+  color: #ffffff !important;
+}
+
+.score-sheet-table thead th,
+.score-result-2row-table thead th,
+.dark .score-sheet-table thead th,
+.dark .score-result-2row-table thead th {
+  background-color: #0045ff !important;
+  color: #ffffff !important;
+  position: static !important;
+  top: auto !important;
+  z-index: auto !important;
+}
+
+.seip-score-table thead th,
+.dark .seip-score-table thead th,
+.moeys-table thead th,
+.dark .moeys-table thead th {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  position: static !important;
+  top: auto !important;
+  z-index: auto !important;
+}
+
+/* Reset sticky thead th inside all report sheets */
+.report-viewer-sheet table thead th,
+.a4-sheet-page table thead th,
+.report-explicit-page table thead th,
+.dark .report-viewer-sheet table thead th,
+.dark .a4-sheet-page table thead th,
+.dark .report-explicit-page table thead th {
+  position: static !important;
+  top: auto !important;
+  z-index: auto !important;
+}
+
+/* Prevent any dark mode table row hover on report sheets */
+.report-viewer-sheet table tr:hover,
+.report-viewer-sheet table tr:hover > td,
+.a4-sheet-page table tr:hover,
+.a4-sheet-page table tr:hover > td,
+.gradebook-table tr:hover,
+.gradebook-table tr:hover > td,
+.seip-score-table tr:hover,
+.seip-score-table tr:hover > td,
+.dark .report-viewer-sheet table tr:hover,
+.dark .report-viewer-sheet table tr:hover > td,
+.dark .a4-sheet-page table tr:hover,
+.dark .a4-sheet-page table tr:hover > td,
+.dark .gradebook-table tr:hover,
+.dark .gradebook-table tr:hover > td,
+.dark .seip-score-table tr:hover,
+.dark .seip-score-table tr:hover > td {
+  background-color: inherit !important;
 }
 
 @media print {
