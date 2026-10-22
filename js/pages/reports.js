@@ -298,7 +298,7 @@ export const ReportsPage = {
               ${getIcon('table', 'w-10 h-10')}
             </div>
             <h2 class="text-xl sm:text-2xl font-bold font-khmer text-foreground mb-2">
-              តារាងចំនួនសិស្សតាមថ្នាក់(សម្រាប់គ្រូ)
+              តារាង SEC
             </h2>
             <p class="text-xs sm:text-sm text-muted-foreground font-khmer max-w-md mb-8 leading-relaxed">
               ពិនិត្យមើល និងបោះពុម្ពតារាងស្ថិតិសិស្សតាមថ្នាក់ (កម្រិតអាយុ សិស្សត្រួតថ្នាក់ មត្តេយ្យ សិស្សពិការ និងជនជាតិភាគតិច) ជាទម្រង់ក្រដាស A4 Portrait ផ្លូវការ (PRI)
@@ -2300,7 +2300,7 @@ export const ReportsPage = {
 
     await ReportViewer.open({
       reportKey: 'teacher_class_stats',
-      title: isKm ? 'តារាងចំនួនសិស្សតាមថ្នាក់(សម្រាប់គ្រូ)' : 'Teacher Class Statistics (PRI)',
+      title: isKm ? 'តារាង SEC' : 'SEC Table',
       alwaysFresh: true,
       forceOrientation: 'portrait',
       defaultOrientation: 'portrait',
@@ -2333,7 +2333,7 @@ export const ReportsPage = {
         contentContainer.innerHTML = `
           <div class="py-12 flex items-center justify-center gap-2 text-muted-foreground text-xs font-khmer">
             <div class="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
-            <span>កំពុងរៀបចំទិន្នន័យតារាងចំនួនសិស្សតាមថ្នាក់...</span>
+            <span>កំពុងរៀបចំទិន្នន័យតារាង SEC...</span>
           </div>
         `;
 
