@@ -13,7 +13,7 @@ import { authService } from '../services/authService.js';
 import { t } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
-import { ReportViewer } from '../components/reportViewer.js?v=3.1.00';
+import { ReportViewer } from '../components/reportViewer.js?v=3.1.01';
 import { formatKhmerLunarDate, formatKhmerSolarDate, toKhmerNumerals } from '../utils/khmerLunar.js';
 
 function escapeHtml(str) {
@@ -255,7 +255,7 @@ export const ReportsPage = {
       if (tableBox) {
         tableBox.innerHTML = `
           <div class="py-12 sm:py-16 px-4 flex flex-col items-center justify-center text-center">
-            <div class="w-20 h-20 rounded-3xl bg-blue-600/10 text-blue-600 flex items-center justify-center mb-5 shadow-xs border border-blue-600/20">
+            <div class="w-20 h-20 rounded-3xl bg-primary/10 text-primary flex items-center justify-center mb-5 shadow-xs border border-primary/20">
               ${getIcon('bookOpen', 'w-10 h-10')}
             </div>
             <h2 class="text-xl sm:text-2xl font-bold font-khmer text-foreground mb-2">
@@ -264,7 +264,7 @@ export const ReportsPage = {
             <p class="text-xs sm:text-sm text-muted-foreground font-khmer max-w-md mb-8 leading-relaxed">
               ពិនិត្យមើល និងបោះពុម្ពសៀវភៅសិក្ខាគារិក លទ្ធផលនៃការសិក្សា និងចំនួនអវត្តមានក្នុងមួយឆ្នាំរបស់សិស្សម្នាក់ៗ ជាទម្រង់ក្រដាស A4 Landscape ផ្លូវការ
             </p>
-            <button id="btn-open-student-gradebook-modal" type="button" class="inline-flex items-center gap-3 px-8 py-3.5 rounded-xl bg-blue-600 text-white font-bold text-sm sm:text-base shadow-lg hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
+            <button id="btn-open-student-gradebook-modal" type="button" class="inline-flex items-center gap-3 px-8 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm sm:text-base shadow-lg hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
               ${getIcon('printer', 'w-5 h-5')}
               <span>សៀវភៅសិក្ខាគារិក</span>
             </button>
@@ -808,7 +808,7 @@ export const ReportsPage = {
                   return `
                     <label class="flex items-center justify-between gap-3 p-2.5 rounded-xl hover:bg-muted/50 cursor-pointer transition-colors select-none group border border-transparent hover:border-border/40">
                       <div class="flex items-center gap-2.5 min-w-0">
-                        <input type="checkbox" class="sub-checkbox w-4 h-4 rounded text-primary focus:ring-primary cursor-pointer accent-primary" data-subject-id="${escapeHtml(sId)}" ${isChecked ? 'checked' : ''}>
+                        <input type="checkbox" class="sub-checkbox w-4 h-4 rounded text-primary focus:ring-primary cursor-pointer accent-primary" style="accent-color: hsl(var(--primary));" data-subject-id="${escapeHtml(sId)}" ${isChecked ? 'checked' : ''}>
                         <div class="min-w-0">
                           <div class="font-semibold text-xs sm:text-sm text-foreground truncate group-hover:text-primary transition-colors">
                             ${idx + 1}. ${escapeHtml(sub.name || sub.nameKm || '')}
@@ -1311,7 +1311,7 @@ export const ReportsPage = {
 
             <!-- Subject Visibility Filter Button -->
             <button type="button" id="rv-gb-btn-toggle-subjects" class="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-md border border-input bg-card hover:bg-muted text-xs font-semibold text-foreground cursor-pointer shadow-xs whitespace-nowrap active:scale-95 transition-all" title="ជ្រើសរើសមុខវិជ្ជាបង្ហាញ/លាក់">
-              ${getIcon('slidersHorizontal', 'w-3.5 h-3.5 text-blue-600')}
+              ${getIcon('slidersHorizontal', 'w-3.5 h-3.5 text-primary')}
               <span>មុខវិជ្ជា</span>
             </button>
           `;
@@ -1370,7 +1370,7 @@ export const ReportsPage = {
               <!-- Header -->
               <div class="px-5 py-4 border-b border-border flex items-center justify-between bg-muted/30">
                 <div class="flex items-center gap-2.5">
-                  <div class="w-8 h-8 rounded-lg bg-blue-600/10 text-blue-600 flex items-center justify-center">
+                  <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
                     ${getIcon('slidersHorizontal', 'w-4 h-4')}
                   </div>
                   <div>
@@ -1404,9 +1404,9 @@ export const ReportsPage = {
                   return `
                     <label class="flex items-center justify-between gap-3 p-2.5 rounded-xl hover:bg-muted/50 cursor-pointer transition-colors select-none group border border-transparent hover:border-border/40">
                       <div class="flex items-center gap-2.5 min-w-0">
-                        <input type="checkbox" class="gb-sub-checkbox w-4 h-4 rounded text-blue-600 focus:ring-blue-600 cursor-pointer accent-blue-600" data-subject-id="${escapeHtml(sId)}" ${isChecked ? 'checked' : ''}>
+                        <input type="checkbox" class="gb-sub-checkbox w-4 h-4 rounded text-primary focus:ring-primary cursor-pointer accent-primary" style="accent-color: hsl(var(--primary));" data-subject-id="${escapeHtml(sId)}" ${isChecked ? 'checked' : ''}>
                         <div class="min-w-0">
-                          <div class="font-semibold text-xs sm:text-sm text-foreground truncate group-hover:text-blue-600 transition-colors">
+                          <div class="font-semibold text-xs sm:text-sm text-foreground truncate group-hover:text-primary transition-colors">
                             ${idx + 1}. ${escapeHtml(sub.name || sub.nameKm || '')}
                           </div>
                         </div>
@@ -1424,7 +1424,7 @@ export const ReportsPage = {
                 <button type="button" id="btn-cancel-gb-sub-modal" class="px-4 py-2 rounded-xl border border-input bg-card hover:bg-muted text-xs font-semibold text-foreground cursor-pointer transition-colors">
                   បោះបង់
                 </button>
-                <button type="button" id="btn-save-gb-sub-modal" class="px-5 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 cursor-pointer transition-colors shadow-sm">
+                <button type="button" id="btn-save-gb-sub-modal" class="px-5 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 cursor-pointer transition-colors shadow-sm">
                   រក្សាទុក & អនុវត្ត
                 </button>
               </div>

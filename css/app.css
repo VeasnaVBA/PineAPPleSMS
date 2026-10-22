@@ -263,6 +263,12 @@ input, select, textarea, button {
   line-height: inherit;
 }
 
+/* Dynamic Theme Accent Color for Form Checkboxes & Radio Controls */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: hsl(var(--primary)) !important;
+}
+
 /* Ensure wide tables retain horizontal & vertical scroll containment within card */
 .table-container, [data-table-container], .overflow-x-auto {
   overflow: auto;
