@@ -102,18 +102,19 @@ export const TeachersPage = {
                   <span>${t('teachers.excel')}</span>
                   ${getIcon('chevronDown', 'w-3.5 h-3.5 text-muted-foreground ml-0.5')}
                 </button>
-                <div id="excel-dropdown-menu" class="hidden absolute right-0 sm:left-0 sm:right-auto mt-1.5 w-60 rounded-lg border border-border bg-card/95 backdrop-blur-md text-foreground shadow-lg shadow-black/10 dark:shadow-black/60 z-50 p-1 text-xs sm:text-sm animate-in fade-in-0 zoom-in-95">
+                <div id="excel-dropdown-menu" class="hidden absolute right-0 sm:left-0 sm:right-auto mt-1.5 w-64 rounded-lg border border-border bg-card/95 backdrop-blur-md text-foreground shadow-lg shadow-black/10 dark:shadow-black/60 z-50 p-1 text-xs sm:text-sm animate-in fade-in-0 zoom-in-95">
                   <button id="btn-export-excel" type="button" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
-                    ${getIcon('download', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
+                    ${getIcon('download', 'w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400')}
                     <span>${t('teachers.exportExcel')}</span>
                   </button>
-                  <button id="btn-export-blank-excel" type="button" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
-                    ${getIcon('fileSpreadsheet', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
-                    <span>${t('teachers.exportBlankExcel')}</span>
-                  </button>
                   <button id="btn-import-excel" type="button" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
-                    ${getIcon('upload', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
+                    ${getIcon('upload', 'w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400')}
                     <span>${t('teachers.importExcel')}</span>
+                  </button>
+                  <div class="my-1 border-t border-border"></div>
+                  <button id="btn-export-blank-excel" type="button" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
+                    ${getIcon('fileSpreadsheet', 'w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400')}
+                    <span>${t('teachers.exportBlankExcel')}</span>
                   </button>
                 </div>
               </div>
