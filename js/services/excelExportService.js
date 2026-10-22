@@ -454,6 +454,53 @@ export const ExcelExportService = {
   },
 
   /**
+   * Generate and export blank 44-column Excel Template with ONLY headers (no data rows)
+   */
+  async downloadBlankTemplate(lang = 'km') {
+    const ExcelJS = this.getExcelJS();
+    const headers = this.getHeaders(lang);
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'SmartSchool Management System';
+    workbook.lastModifiedBy = 'SmartSchool';
+    workbook.created = new Date();
+    workbook.modified = new Date();
+
+    const sheetName = lang === 'km' ? 'បញ្ជីគ្រូបង្រៀន' : 'Teachers';
+    const worksheet = workbook.addWorksheet(sheetName, {
+      views: [{ showGridLines: true }]
+    });
+
+    const headerRow = worksheet.addRow(headers);
+    headerRow.height = 30;
+    headerRow.eachCell((cell) => {
+      cell.font = { name: 'Khmer OS Siemreap', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E40AF' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF94A3B8' } },
+        left: { style: 'thin', color: { argb: 'FF94A3B8' } },
+        bottom: { style: 'thin', color: { argb: 'FF94A3B8' } },
+        right: { style: 'thin', color: { argb: 'FF94A3B8' } }
+      };
+    });
+
+    worksheet.columns.forEach((column, i) => {
+      const headerText = headers[i] || '';
+      const minWidth = Math.max(headerText.length * 1.5, 14);
+      column.width = Math.min(Math.max(minWidth, 14), 30);
+    });
+
+    const filename = lang === 'km' 
+      ? 'ទម្រង់បញ្ចូលគ្រូបង្រៀន_Blank_Template.xlsx' 
+      : 'Teacher_Blank_Template.xlsx';
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    this.saveBufferAsFile(buffer, filename);
+    return { filename };
+  },
+
+  /**
    * Parse uploaded ArrayBuffer from Excel file and map rows to teacher objects
    */
   async parseTeacherExcelFile(arrayBuffer) {

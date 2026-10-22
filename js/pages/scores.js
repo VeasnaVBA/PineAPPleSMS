@@ -1988,6 +1988,7 @@ export const ScoresPage = {
         if (statusText) {
           statusText.textContent = i18n.getLocale() === 'km' ? 'បានរក្សាទុក' : 'Saved';
         }
+        syncStateManager.scheduleAutoSync(400);
       } catch (err) {
         console.warn('Auto-save scores notice:', err);
       } finally {

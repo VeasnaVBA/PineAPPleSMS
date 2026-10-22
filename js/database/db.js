@@ -903,24 +903,36 @@ export async function deleteWorkspaceDatabase(userId, username = null) {
  * If not initialized but a user is logged in in localStorage, auto-initializes it.
  */
 export function getActiveDb() {
-  if (currentDbInstance) {
-    return currentDbInstance;
-  }
-
-  // Auto-recovery from localStorage session if available
+  let sessionUserId = null;
   try {
-    if (typeof localStorage !== 'undefined') {
-      const rawUser = localStorage.getItem('school_current_user');
+    if (typeof sessionStorage !== 'undefined') {
+      const rawUser = sessionStorage.getItem('school_current_user');
       if (rawUser) {
         const parsed = JSON.parse(rawUser);
         if (parsed && parsed.id) {
-          currentActiveUserId = parsed.id;
-          currentDbInstance = new WorkspaceDatabase(parsed.id);
-          return currentDbInstance;
+          sessionUserId = parsed.id;
         }
       }
     }
   } catch (_) {}
+
+  // If already open, verify that the instance belongs to the current logged-in user
+  if (currentDbInstance) {
+    if (sessionUserId && currentActiveUserId !== sessionUserId) {
+      currentDbInstance.close();
+      currentActiveUserId = sessionUserId;
+      currentDbInstance = new WorkspaceDatabase(sessionUserId);
+      return currentDbInstance;
+    }
+    return currentDbInstance;
+  }
+
+  // Auto-recovery from localStorage session if available
+  if (sessionUserId) {
+    currentActiveUserId = sessionUserId;
+    currentDbInstance = new WorkspaceDatabase(sessionUserId);
+    return currentDbInstance;
+  }
 
   // Fallback temporary instance for unauthenticated workspace operations (e.g. before login)
   currentActiveUserId = 'guest';

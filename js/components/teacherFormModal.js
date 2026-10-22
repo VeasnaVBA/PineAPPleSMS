@@ -12,6 +12,7 @@ import { StudentService } from '../services/studentService.js';
 import { LocationService } from '../services/locationService.js';
 import { TeacherCatalogService } from '../services/teacherCatalogService.js';
 import { photoService } from '../services/photoService.js';
+import { syncStateManager } from '../services/syncStateManager.js';
 import { Modal } from './modal.js';
 import { toast } from './toast.js';
 import { t, i18n } from '../i18n/i18n.js';
@@ -1024,6 +1025,7 @@ export const TeacherFormModal = {
         }
         modal.close();
         if (onSave) await onSave();
+        syncStateManager.scheduleAutoSync(100);
       } catch (err) {
         toast.error(err.message);
       }

@@ -443,6 +443,102 @@ export const StudentExcelService = {
   },
 
   /**
+   * Generate and export blank Excel template containing ONLY headers (no data rows)
+   * so user can copy and paste their external records directly into the sheet.
+   */
+  async exportBlankTemplate({ activeFilters = {}, lang = 'km' } = {}) {
+    const ExcelJS = this.getExcelJS();
+    const headers = this.getHeaders(lang);
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'SmartSchool Management System';
+    workbook.lastModifiedBy = 'SmartSchool';
+    workbook.created = new Date();
+    workbook.modified = new Date();
+
+    const sheetName = lang === 'km' ? 'បញ្ជីឈ្មោះសិស្ស' : 'Students';
+    const worksheet = workbook.addWorksheet(sheetName, {
+      views: [{ showGridLines: true }]
+    });
+
+    // 1. Add ONLY the header row
+    const headerRow = worksheet.addRow(headers);
+    headerRow.height = 30;
+    headerRow.eachCell((cell) => {
+      cell.font = {
+        name: 'Khmer OS Siemreap',
+        size: 12,
+        bold: true,
+        color: { argb: 'FFFFFFFF' }
+      };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF1E40AF' }
+      };
+      cell.alignment = {
+        vertical: 'middle',
+        horizontal: 'center',
+        wrapText: true
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF94A3B8' } },
+        left: { style: 'thin', color: { argb: 'FF94A3B8' } },
+        bottom: { style: 'thin', color: { argb: 'FF94A3B8' } },
+        right: { style: 'thin', color: { argb: 'FF94A3B8' } }
+      };
+    });
+
+    // 2. Set readable column widths based on header length with comfortable padding
+    worksheet.columns.forEach((column, i) => {
+      const headerText = headers[i] || '';
+      const minWidth = Math.max(headerText.length * 1.5, 14);
+      column.width = Math.min(Math.max(minWidth, 14), 32);
+    });
+
+    // 3. Generate clean, descriptive filename
+    const cleanStr = (str) => (str || '').toString().trim().replace(/[\/\\:*?"<>|]/g, '_');
+    let className = '';
+    if (activeFilters.className && activeFilters.className !== 'all' && activeFilters.className !== 'All') {
+      className = cleanStr(activeFilters.className);
+    } else if (activeFilters.classId && activeFilters.classId !== 'all') {
+      className = cleanStr(activeFilters.classId);
+    }
+
+    let academicYear = '';
+    if (activeFilters.academicYear && activeFilters.academicYear !== 'all') {
+      academicYear = cleanStr(activeFilters.academicYear).replace(/\s+/g, '');
+    }
+
+    let filename = '';
+    if (lang === 'km') {
+      if (className) {
+        filename = academicYear ? `ទម្រង់សិស្សទទេ_${className}_${academicYear}.xlsx` : `ទម្រង់សិស្សទទេ_${className}.xlsx`;
+      } else {
+        filename = `ទម្រង់បញ្ចូលទិន្នន័យសិស្ស_Blank_Template.xlsx`;
+      }
+    } else {
+      if (className) {
+        filename = academicYear ? `Student_Blank_Template_${className}_${academicYear}.xlsx` : `Student_Blank_Template_${className}.xlsx`;
+      } else {
+        filename = `Student_Blank_Template.xlsx`;
+      }
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    this.saveBufferAsFile(buffer, filename);
+
+    return { filename };
+  },
+
+  /**
+   * Helper alias to download blank template
+   */
+  async downloadBlankTemplate(lang = 'km', activeFilters = {}) {
+    return this.exportBlankTemplate({ activeFilters, lang });
+  },
+
+  /**
    * Parse uploaded ArrayBuffer from Excel file and map rows to student objects
    */
   async parseExcelFile(arrayBuffer) {

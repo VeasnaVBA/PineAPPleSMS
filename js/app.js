@@ -8,12 +8,12 @@ import { fontService } from './services/fontService.js';
 import { i18n } from './i18n/i18n.js';
 import { authService } from './services/authService.js';
 import { permissionService } from './services/permissionService.js';
-import { db } from './database/db.js';
+import { db, setSuppressWorkspaceMutation } from './database/db.js';
 import { seedInitialData } from './database/seed.js';
 import { WorkspaceSetupService } from './services/workspaceSetupService.js';
 import { Sidebar } from './components/sidebar.js';
 import { Topbar } from './components/topbar.js?v=3.0.88';
-import { Router } from './router.js?v=3.1.13';
+import { Router } from './router.js?v=3.1.16';
 import { LoginPage } from './pages/login.js';
 import { syncStateManager } from './services/syncStateManager.js';
 import { AdminDataService } from './services/adminDataService.js';
@@ -29,6 +29,13 @@ class SchoolApp {
   async init() {
     console.log('Initializing SmartSchool Management System...');
 
+    // Purge legacy persistent localStorage session so user always logs out when browser is closed
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('school_current_user');
+      }
+    } catch (_) {}
+
     // 1. Initialize Theme, Typography/Fonts, Language, and Sync State Manager
     themeService.init();
     fontService.init();
@@ -37,6 +44,7 @@ class SchoolApp {
 
     // 2. Initialize System Database and Default Administrator
     try {
+      setSuppressWorkspaceMutation(true);
       await db.open();
       await seedInitialData();
       await permissionService.load();
@@ -47,6 +55,9 @@ class SchoolApp {
       });
     } catch (err) {
       console.error('Failed to initialize local IndexedDB:', err);
+    } finally {
+      setSuppressWorkspaceMutation(false);
+      syncStateManager.markClean();
     }
 
     // 3. Listen to Auth changes
@@ -64,23 +75,30 @@ class SchoolApp {
 
     // 4. Check session
     if (authService.isAuthenticated()) {
+      const user = authService.getCurrentUser();
+
+      if (user && user.id) {
+        const { initUserDatabase } = await import('./database/db.js');
+        await initUserDatabase(user.id);
+      }
+
+      // If returning to an existing session online, pull latest data from Google Drive before rendering setup checks
+      if (typeof navigator !== 'undefined' && navigator.onLine && user && user.role !== 'ADMIN') {
+        try {
+          const { CloudSyncService } = await import('./services/cloudSyncService.js');
+          await CloudSyncService.checkAndSyncOnStartup(user);
+        } catch (cloudErr) {
+          console.warn('Startup workspace sync notice:', cloudErr);
+        }
+      }
+
       this.showAppShell();
 
-      // Background auto-sync latest data from Google Drive for active session if online
+      // Background admin sync
       if (typeof navigator !== 'undefined' && navigator.onLine) {
-        const user = authService.getCurrentUser();
-        // Always run AdminDataService startup sync so all accounts (Admin, Director, Teachers) get latest global admin settings
         import('./services/adminDataService.js').then(({ AdminDataService }) => {
           AdminDataService.checkAndSyncOnStartup();
         }).catch(() => {});
-
-        if (user && user.role !== 'ADMIN') {
-          import('./services/cloudSyncService.js').then(({ CloudSyncService }) => {
-            CloudSyncService.checkAndSyncOnStartup(user).catch(e => {
-              console.warn('Workspace startup sync notice:', e);
-            });
-          }).catch(() => {});
-        }
       }
     } else {
       this.showLogin();

@@ -102,10 +102,14 @@ export const TeachersPage = {
                   <span>${t('teachers.excel')}</span>
                   ${getIcon('chevronDown', 'w-3.5 h-3.5 text-muted-foreground ml-0.5')}
                 </button>
-                <div id="excel-dropdown-menu" class="hidden absolute right-0 sm:left-0 sm:right-auto mt-1.5 w-52 rounded-lg border border-border bg-card/95 backdrop-blur-md text-foreground shadow-lg shadow-black/10 dark:shadow-black/60 z-50 p-1 text-xs sm:text-sm animate-in fade-in-0 zoom-in-95">
+                <div id="excel-dropdown-menu" class="hidden absolute right-0 sm:left-0 sm:right-auto mt-1.5 w-60 rounded-lg border border-border bg-card/95 backdrop-blur-md text-foreground shadow-lg shadow-black/10 dark:shadow-black/60 z-50 p-1 text-xs sm:text-sm animate-in fade-in-0 zoom-in-95">
                   <button id="btn-export-excel" type="button" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
                     ${getIcon('download', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
                     <span>${t('teachers.exportExcel')}</span>
+                  </button>
+                  <button id="btn-export-blank-excel" type="button" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
+                    ${getIcon('fileSpreadsheet', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
+                    <span>${t('teachers.exportBlankExcel')}</span>
                   </button>
                   <button id="btn-import-excel" type="button" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
                     ${getIcon('upload', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
@@ -987,6 +991,11 @@ export const TeachersPage = {
       await this.handleExportExcel();
     });
 
+    document.getElementById('btn-export-blank-excel')?.addEventListener('click', async () => {
+      excelMenu?.classList.add('hidden');
+      await this.handleExportBlankExcel();
+    });
+
     document.getElementById('btn-import-excel')?.addEventListener('click', () => {
       excelMenu?.classList.add('hidden');
       this.openExcelImportModal();
@@ -1048,6 +1057,20 @@ export const TeachersPage = {
     }
   },
 
+  async handleExportBlankExcel() {
+    const isKm = i18n.getLocale() === 'km';
+    try {
+      toast.info(isKm ? 'កំពុងរៀបចំទម្រង់ Excel ទទេ...' : 'Preparing blank Excel template...');
+      const { filename } = await ExcelExportService.downloadBlankTemplate(isKm ? 'km' : 'en');
+      toast.success(isKm 
+        ? `បានទាញយកទម្រង់តារាង Excel (គ្មានទិន្នន័យ) ${filename} ដោយជោគជ័យ!` 
+        : `Successfully downloaded blank Excel template ${filename}!`);
+    } catch (err) {
+      console.error('Blank Excel export error:', err);
+      toast.error(err.message || (isKm ? 'បរាជ័យក្នុងការទាញយកទម្រង់ Excel ទទេ' : 'Failed to export blank Excel template.'));
+    }
+  },
+
   handleExportJSON() {
     const isKm = i18n.getLocale() === 'km';
     try {
@@ -1090,10 +1113,16 @@ export const TeachersPage = {
             <span class="font-bold text-foreground block">${isKm ? 'ទម្រង់ឯកសារ Excel (.xlsx) ៤៤ ជួរឈរផ្លូវការ' : 'Official MoEYS 44-Column Excel Template'}</span>
             <span>${isKm ? 'ប្រព័ន្ធនឹងបំពេញ អាយុ និងថ្ងៃចូលនិវត្តន៍ដោយស្វ័យប្រវត្តិតាមថ្ងៃខែឆ្នាំកំណើត។' : 'System auto-computes Age and Retirement Date (DOB + 60 Years).'}</span>
           </div>
-          <button id="btn-download-sample-template" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-card hover:bg-muted text-primary border border-primary/30 text-xs font-semibold shrink-0 cursor-pointer shadow-2xs">
-            ${getIcon('fileSpreadsheet', 'w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400')}
-            <span>${t('teachers.downloadTemplate')}</span>
-          </button>
+          <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            <button id="btn-download-blank-template" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-card hover:bg-muted text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-semibold shrink-0 cursor-pointer shadow-2xs">
+              ${getIcon('fileSpreadsheet', 'w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400')}
+              <span>${isKm ? 'ទម្រង់ទទេ (Blank)' : 'Blank Template'}</span>
+            </button>
+            <button id="btn-download-sample-template" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-card hover:bg-muted text-primary border border-primary/30 text-xs font-semibold shrink-0 cursor-pointer shadow-2xs">
+              ${getIcon('download', 'w-3.5 h-3.5 text-primary')}
+              <span>${t('teachers.downloadTemplate')}</span>
+            </button>
+          </div>
         </div>
 
         <!-- Drag & Drop Upload Zone -->
@@ -1191,6 +1220,16 @@ export const TeachersPage = {
     const confirmBtn = modal.element.querySelector('#btn-confirm-excel-import');
     const cancelBtn = modal.element.querySelector('#btn-cancel-excel-import');
     const errorBox = modal.element.querySelector('#teacher-excel-error-box');
+
+    // Download Blank Template (Only headers)
+    modal.element.querySelector('#btn-download-blank-template')?.addEventListener('click', async () => {
+      try {
+        const { filename } = await ExcelExportService.downloadBlankTemplate(isKm ? 'km' : 'en');
+        toast.info(isKm ? `បានទាញយកទម្រង់គំរូទទេ ${filename} ដោយជោគជ័យ!` : `Blank template ${filename} downloaded.`);
+      } catch (err) {
+        toast.error(err.message);
+      }
+    });
 
     // Download Sample Template
     modal.element.querySelector('#btn-download-sample-template')?.addEventListener('click', async () => {

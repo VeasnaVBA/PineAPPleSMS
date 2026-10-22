@@ -42,8 +42,11 @@ class AuthService {
 
   getCurrentUser() {
     try {
-      const data = localStorage.getItem(this.sessionKey);
-      return data ? JSON.parse(data) : null;
+      if (typeof sessionStorage !== 'undefined') {
+        const data = sessionStorage.getItem(this.sessionKey);
+        if (data) return JSON.parse(data);
+      }
+      return null;
     } catch {
       return null;
     }
@@ -244,7 +247,7 @@ class AuthService {
       setSuppressWorkspaceMutation(false);
     }
 
-    // 5. Save session in localStorage
+    // 5. Save session in sessionStorage (auto-logged out when browser/tab is closed)
     const sessionData = {
       id: user.id,
       username: user.username,
@@ -254,7 +257,12 @@ class AuthService {
       status: user.status
     };
 
-    localStorage.setItem(this.sessionKey, JSON.stringify(sessionData));
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem(this.sessionKey, JSON.stringify(sessionData));
+    }
+    try {
+      localStorage.removeItem(this.sessionKey);
+    } catch (_) {}
 
     // 6. Ensure URL hash is valid for the logging in role before notifying UI
     const currentHash = (typeof window !== 'undefined' && window.location.hash) ? window.location.hash.replace('#', '').trim() : '';
@@ -267,6 +275,12 @@ class AuthService {
         window.location.hash = '#dashboard';
       }
     }
+
+    // Clear any pending sync timers or dirty states from login UI interaction
+    try {
+      const { syncStateManager } = await import('./syncStateManager.js');
+      syncStateManager.markClean();
+    } catch (_) {}
 
     // 7. Whenever logging into an account, ALWAYS execute the "Get Data" function from Google Drive
     if (typeof navigator !== 'undefined' && navigator.onLine) {
@@ -313,7 +327,12 @@ class AuthService {
     const cur = this.getCurrentUser();
     if (!cur) return null;
     const updated = { ...cur, ...updates };
-    localStorage.setItem(this.sessionKey, JSON.stringify(updated));
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem(this.sessionKey, JSON.stringify(updated));
+    }
+    try {
+      localStorage.removeItem(this.sessionKey);
+    } catch (_) {}
     this.notify(updated);
     return updated;
   }
@@ -351,7 +370,14 @@ class AuthService {
    * 4. Notify listeners to switch to login view
    */
   logout() {
-    localStorage.removeItem(this.sessionKey);
+    try {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem(this.sessionKey);
+      }
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(this.sessionKey);
+      }
+    } catch (_) {}
     closeUserDatabase();
     this.clearAllCaches();
     if (typeof window !== 'undefined') {

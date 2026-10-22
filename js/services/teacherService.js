@@ -23,7 +23,7 @@ export function normalizeTeacherRecord(raw = {}) {
   // Official Khmer name format: Khmer Surname + Khmer First Name (ត្រកូល + នាមខ្លួន)
   let khmerName = (lastNameKhmer || firstNameKhmer)
     ? `${lastNameKhmer} ${firstNameKhmer}`.trim()
-    : (raw.khmerName || '').trim();
+    : (raw.khmerName || raw.name || '').trim();
 
   if (khmerName && (!lastNameKhmer && !firstNameKhmer)) {
     const parts = khmerName.split(/\s+/);
@@ -46,9 +46,13 @@ export function normalizeTeacherRecord(raw = {}) {
   const computedAge = dob ? calculateAge(dob) : (raw.age || '');
   const computedRetirement = dob ? calculateRetirementDate(dob) : (raw.retirementDate || '');
 
+  const finalKhmerName = (lastNameKhmer || firstNameKhmer) ? `${lastNameKhmer} ${firstNameKhmer}`.trim() : (khmerName || raw.name || '').trim();
+  const finalEnglishName = (lastNameLatin || firstNameLatin) ? `${lastNameLatin} ${firstNameLatin}`.trim() : (englishName || raw.englishName || raw.latinName || '').trim();
+
   return {
     id: raw.id ? String(raw.id).trim() : `tch-${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
     status: raw.status || 'Active', // Active (សកម្ម), On Leave (ទំនេរ), Transferred (ផ្ទេរចេញ), Retired (ចូលនិវត្តន៍)
+    name: finalKhmerName || finalEnglishName || raw.name || '',
     photo: raw.photo || '',
     photoBlob: raw.photoBlob || null,
     teacherId: raw.teacherId ? String(raw.teacherId).trim() : '',
@@ -58,8 +62,8 @@ export function normalizeTeacherRecord(raw = {}) {
     firstNameKhmer: (raw.firstNameKhmer || firstNameKhmer || '').trim(),
     lastNameLatin: (raw.lastNameLatin || lastNameLatin || '').trim(),
     firstNameLatin: (raw.firstNameLatin || firstNameLatin || '').trim(),
-    khmerName: (lastNameKhmer || firstNameKhmer) ? `${lastNameKhmer} ${firstNameKhmer}`.trim() : (khmerName || '').trim(),
-    englishName: (lastNameLatin || firstNameLatin) ? `${lastNameLatin} ${firstNameLatin}`.trim() : (englishName || '').trim(),
+    khmerName: finalKhmerName,
+    englishName: finalEnglishName,
     gender: raw.gender || 'Male',
     dob,
     dateOfBirth: dob,
@@ -147,7 +151,15 @@ export const TeacherService = {
   async getByUserId(userId) {
     if (!userId) return [];
     const all = await this.getAll();
-    return all.filter(t => t.userId === userId || t.accountId === userId);
+    const matched = all.filter(t => t.userId === userId || t.accountId === userId);
+    if (matched.length > 0) return matched;
+    // Fallback: If only 1 teacher profile exists in this isolated workspace, it belongs to this teacher account
+    if (all.length === 1) {
+      all[0].userId = userId;
+      all[0].accountId = userId;
+      return all;
+    }
+    return [];
   },
 
   /**
@@ -262,7 +274,10 @@ export const TeacherService = {
   async count() {
     const currentUser = authService.getCurrentUser();
     if (currentUser?.role === 'TEACHER') {
-      return await this.countByUserId(currentUser.id);
+      const byUser = await this.countByUserId(currentUser.id);
+      if (byUser > 0) return byUser;
+      const all = await db.count('teachers');
+      return all;
     }
     return await db.count('teachers');
   },
@@ -288,7 +303,13 @@ export const TeacherService = {
 
     // 1. Role Scoping: Teachers only see their own profile
     if (currentUser?.role === 'TEACHER') {
-      items = items.filter(t => t.userId === currentUser.id || t.accountId === currentUser.id || t.teacherId === currentUser.username);
+      if (items.length === 1) {
+        items[0].userId = currentUser.id;
+        items[0].accountId = currentUser.id;
+      } else {
+        const filtered = items.filter(t => t.userId === currentUser.id || t.accountId === currentUser.id || t.teacherId === currentUser.username || !t.userId);
+        if (filtered.length > 0) items = filtered;
+      }
     }
 
     // 2. Search query across 44 fields
@@ -429,6 +450,13 @@ export const TeacherService = {
    */
   async downloadSampleTemplate(lang = 'km') {
     return await ExcelExportService.downloadSampleTemplate(lang);
+  },
+
+  /**
+   * Download blank Excel template for teachers (headers only)
+   */
+  async downloadBlankTemplate(lang = 'km') {
+    return await ExcelExportService.downloadBlankTemplate(lang);
   },
 
   /**

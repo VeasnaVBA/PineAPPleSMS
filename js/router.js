@@ -4,15 +4,15 @@
  * Enforces route-level RBAC permissions (ADMIN, DIRECTOR, TEACHER)
  */
 import { DashboardPage } from './pages/dashboard.js?v=3.0.99';
-import { StudentsPage } from './pages/students.js?v=3.0.99';
-import { TeachersPage } from './pages/teachers.js?v=3.0.99';
-import { ClassesPage } from './pages/classes.js?v=3.0.99';
-import { AttendancePage } from './pages/attendance.js?v=3.0.99';
-import { ScoresPage } from './pages/scores.js?v=3.0.99';
+import { StudentsPage } from './pages/students.js?v=3.1.16';
+import { TeachersPage } from './pages/teachers.js?v=3.1.19';
+import { ClassesPage } from './pages/classes.js?v=3.1.16';
+import { AttendancePage } from './pages/attendance.js?v=3.1.16';
+import { ScoresPage } from './pages/scores.js?v=3.1.16';
 import { ReportsPage } from './pages/reports.js?v=3.1.13';
 import { SettingsPage } from './pages/settings.js?v=3.0.99';
 import { UsersPage } from './pages/users.js?v=3.0.99';
-import { SchoolsPage } from './pages/schools.js?v=3.1.08';
+import { SchoolsPage } from './pages/schools.js?v=3.1.16';
 import { RegistrationPage } from './pages/registration.js?v=3.0.99';
 import { PromotionPage } from './pages/promotion.js?v=3.0.99';
 import { SubjectsPage } from './pages/subjects.js?v=3.0.99';

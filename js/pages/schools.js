@@ -15,6 +15,7 @@
  */
 import { SchoolService } from '../services/schoolService.js';
 import { authService } from '../services/authService.js';
+import { syncStateManager } from '../services/syncStateManager.js';
 import { Modal } from '../components/modal.js';
 import { toast } from '../components/toast.js';
 import { t, i18n } from '../i18n/i18n.js';
@@ -647,6 +648,7 @@ export const SchoolsPage = {
         modal.close();
         await this.loadData();
         this.renderLayout();
+        syncStateManager.scheduleAutoSync(100);
       } catch (err) {
         toast.error(err.message);
         if (err.message.includes('already exists') || err.message.includes('already in use')) {
@@ -872,6 +874,7 @@ export const SchoolsPage = {
             toast.success(t('schools.deletedSuccess'));
             await this.loadData();
             this.renderLayout();
+            syncStateManager.scheduleAutoSync(100);
           } catch (err) {
             toast.error(err.message);
           }
@@ -896,6 +899,7 @@ export const SchoolsPage = {
           toast.success(t('schools.deletedSuccess'));
           await this.loadData();
           this.renderLayout();
+          syncStateManager.scheduleAutoSync(100);
         } catch (err) {
           toast.error(err.message);
         }

@@ -102,7 +102,8 @@ class SyncStateManager {
   }
 
   /**
-   * Initialize lifecycle listeners (online/offline, beforeunload, Electron IPC, database mutations)
+   * Initialize lifecycle listeners (online/offline, beforeunload, Electron IPC, database mutations,
+   * and global Save/Submit button & table input auto-save triggers)
    */
   init() {
     this.DEBOUNCE_MS = this.getAutoSyncInterval();
@@ -154,6 +155,84 @@ class SyncStateManager {
           });
         }
       }
+
+      // 4. Global Save & Submit Button Click Interceptor:
+      // Guarantees immediate background Google Drive sync whenever ANY save or submit button is clicked in the app
+      document.addEventListener('click', (event) => {
+        const target = event.target?.closest?.('button, input[type="submit"], input[type="button"], a[role="button"]');
+        if (!target) return;
+
+        // Skip anything inside login form or login screen
+        if (target.closest('#login-form, #login-container, .login-page') || target.id === 'btn-login-submit') {
+          return;
+        }
+
+        const btnId = (target.id || '').toLowerCase();
+        const btnClass = (target.className || '').toLowerCase();
+        const btnText = (target.textContent || '').trim().toLowerCase();
+        const isSaveOrSubmit = 
+          target.type === 'submit' ||
+          btnId.includes('save') || 
+          btnId.includes('submit') ||
+          btnClass.includes('btn-save') || 
+          btnClass.includes('save-btn') || 
+          btnClass.includes('btn-submit') ||
+          btnText === 'រក្សាទុក' || 
+          btnText.includes('រក្សាទុក') || 
+          btnText === 'save' || 
+          btnText.includes('save') ||
+          btnText.includes('submit');
+
+        if (isSaveOrSubmit) {
+          // Allow 150ms for local IndexedDB transaction to settle, then fire auto-sync to Drive
+          setTimeout(() => {
+            this.markDirty('button.click');
+            this.scheduleAutoSync(200);
+          }, 150);
+        }
+      }, true);
+
+      // 5. Global Form Submit Interceptor
+      document.addEventListener('submit', (e) => {
+        if (e.target?.id === 'login-form' || e.target?.closest('#login-container, .login-page')) {
+          return;
+        }
+        setTimeout(() => {
+          this.markDirty('form.submit');
+          this.scheduleAutoSync(200);
+        }, 150);
+      }, true);
+
+      // 6. Global Table Input & Textbox Interceptor:
+      // Catches inline changes to table cells (Scores, Attendance, Student/Teacher inline edits)
+      document.addEventListener('change', (event) => {
+        const target = event.target;
+        if (!target) return;
+        if (target.closest('#login-container, #login-form, .login-page')) {
+          return;
+        }
+        // Exclude filter / view controls that only adjust local search/filter state, not database data
+        if (
+          target.id === 'filter-teacher-status' ||
+          target.id === 'select-filter-field' ||
+          target.id === 'select-filter-value' ||
+          target.id === 'filter-class' ||
+          target.id === 'filter-student-status' ||
+          target.id === 'filter-academic-year' ||
+          target.closest('.filter-control, [data-filter], .search-box')
+        ) {
+          return;
+        }
+
+        if (target.matches?.('input, select, textarea, [contenteditable="true"]')) {
+          if (target.closest('table, tr, td, form, .score-cell-input, [data-row-idx], .att-cell-btn')) {
+            setTimeout(() => {
+              this.markDirty('input.change');
+              this.scheduleAutoSync(Math.min(this.DEBOUNCE_MS || 1500, 1500));
+            }, 100);
+          }
+        }
+      }, true);
     }
   }
 
@@ -233,13 +312,16 @@ class SyncStateManager {
   }
 
   /**
-   * Executes the silent background sync
+   * Executes background sync to Google Drive
+   * @param {Object} [options={}] - Options (e.g. { force: true } to sync immediately even if interval is manual)
    */
-  async triggerAutoSync() {
+  async triggerAutoSync(options = {}) {
+    const force = options?.force === true;
+
     // Check prerequisites
-    if (!this._isDirty) return;
+    if (!this._isDirty && !force) return;
     if (this._isAutoSyncing) return;
-    if (this.DEBOUNCE_MS === 0) return;
+    if (this.DEBOUNCE_MS === 0 && !force) return;
 
     const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
     if (!isOnline) {
@@ -257,6 +339,29 @@ class SyncStateManager {
       return;
     }
 
+    // Postpone if CloudSyncService is currently in flight restoring or pushing
+    if (CloudSyncService.isBusy && CloudSyncService.isBusy()) {
+      console.log('[SyncStateManager] Restore/push in progress, postponing auto-sync...');
+      this.scheduleAutoSync(2000);
+      return;
+    }
+
+    // Safety defense: if local workspace has 0 records across all primary stores on this device,
+    // do NOT push empty data to Drive! Instead mark clean and pull latest data from Drive!
+    try {
+      const { db } = await import('../database/db.js');
+      const schCount = await db.count('schools').catch(() => 0);
+      const tchCount = await db.count('teachers').catch(() => 0);
+      const clsCount = await db.count('classes').catch(() => 0);
+      const stdCount = await db.count('students').catch(() => 0);
+      if (schCount === 0 && tchCount === 0 && clsCount === 0 && stdCount === 0 && !force) {
+        console.log('[SyncStateManager] Local database is empty on this client. Skipping push to protect Drive and pulling latest data...');
+        this.markClean();
+        await CloudSyncService.checkAndSyncOnStartup(currentUser);
+        return;
+      }
+    } catch (_) {}
+
     // Capture mutation generation before starting background I/O
     const syncGen = this._mutationCount;
     this._isAutoSyncing = true;
@@ -267,8 +372,9 @@ class SyncStateManager {
 
       let success = false;
       if (currentUser.role === 'ADMIN') {
-        const res = await AdminDataService.saveToGoogleSheet({ silent: true });
-        success = Boolean(res?.success);
+        const resAdmin = await AdminDataService.saveToGoogleSheet({ silent: true });
+        const resWs = await CloudSyncService.pullToDrive(currentUser, { silent: true });
+        success = Boolean(resAdmin?.success) || Boolean(resWs);
       } else {
         success = await CloudSyncService.pullToDrive(currentUser, { silent: true });
       }
@@ -293,12 +399,34 @@ class SyncStateManager {
       } else {
         this._isAutoSyncing = false;
         this.notify();
+        // If sync failed (e.g. temporary server glitch), retry automatically after 4 seconds
+        if (this._isDirty) {
+          this.scheduleAutoSync(4000);
+        }
       }
     } catch (err) {
       console.warn('[SyncStateManager] Background auto-sync failed (will retry):', err);
       this._isAutoSyncing = false;
       this.notify();
+      // Retry automatically on network/request exception
+      if (this._isDirty) {
+        this.scheduleAutoSync(4000);
+      }
     }
+  }
+
+  /**
+   * Immediately marks dirty, cancels pending debounce timers, and fires an instant Google Drive sync
+   */
+  async syncNow(source = '') {
+    this._isDirty = true;
+    this._mutationCount++;
+    if (this._autoSyncTimer) {
+      clearTimeout(this._autoSyncTimer);
+      this._autoSyncTimer = null;
+    }
+    this.notify();
+    return await this.triggerAutoSync({ force: true });
   }
 
   /**

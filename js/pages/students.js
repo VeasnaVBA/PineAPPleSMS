@@ -14,6 +14,7 @@ import { SchoolService } from '../services/schoolService.js';
 import { db } from '../database/db.js';
 import { Modal } from '../components/modal.js';
 import { StudentFormModal } from '../components/studentFormModal.js';
+import { syncStateManager } from '../services/syncStateManager.js';
 import { toast } from '../components/toast.js';
 import { t, i18n } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
@@ -252,10 +253,14 @@ export const StudentsPage = {
                 <span>${t('students.excel')}</span>
                 ${getIcon('chevronDown', 'w-3.5 h-3.5 text-muted-foreground ml-0.5')}
               </button>
-              <div id="excel-dropdown-menu" class="hidden absolute right-0 sm:left-0 sm:right-auto mt-1.5 w-52 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg z-50 p-1 text-xs sm:text-sm animate-in fade-in-0 zoom-in-95">
+              <div id="excel-dropdown-menu" class="hidden absolute right-0 sm:left-0 sm:right-auto mt-1.5 w-60 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg z-50 p-1 text-xs sm:text-sm animate-in fade-in-0 zoom-in-95">
                 <button id="btn-export-excel" type="button" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors">
                   ${getIcon('download', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
                   <span>${t('students.exportExcel')}</span>
+                </button>
+                <button id="btn-export-blank-excel" type="button" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors">
+                  ${getIcon('fileSpreadsheet', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
+                  <span>${t('students.exportBlankExcel')}</span>
                 </button>
                 <button id="btn-import-excel" type="button" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors">
                   ${getIcon('upload', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
@@ -1755,6 +1760,59 @@ export const StudentsPage = {
       }
     });
 
+    // Export Blank Excel (.xlsx) Template with ONLY headers
+    const exportBlankBtn = document.getElementById('btn-export-blank-excel');
+    exportBlankBtn?.addEventListener('click', async () => {
+      excelMenu?.classList.add('hidden');
+      const isKm = i18n.getLocale() === 'km';
+      const originalHtml = exportBlankBtn.innerHTML;
+
+      try {
+        exportBlankBtn.disabled = true;
+        exportBlankBtn.innerHTML = `
+          <div class="w-4 h-4 rounded-full border-2 border-emerald-600 dark:border-emerald-400 border-t-transparent animate-spin shrink-0"></div>
+          <span>${isKm ? 'កំពុងបង្កើតទម្រង់ទទេ...' : 'Preparing blank template...'}</span>
+        `;
+
+        let activeClassName = '';
+        if (this.state.classId && this.state.classId !== 'all') {
+          const cls = this.state.classes?.find(c => c.id === this.state.classId);
+          activeClassName = cls ? cls.name : this.state.classId;
+        } else if (this.state.filterField === 'classId' && this.state.filterValue && this.state.filterValue !== 'all') {
+          const cls = this.state.classes?.find(c => c.id === this.state.filterValue);
+          activeClassName = cls ? cls.name : this.state.filterValue;
+        }
+
+        let activeAcademicYear = '';
+        if (this.state.academicYear && this.state.academicYear !== 'all') {
+          activeAcademicYear = this.state.academicYear;
+        } else if (this.state.filterField === 'academicYear' && this.state.filterValue && this.state.filterValue !== 'all') {
+          activeAcademicYear = this.state.filterValue;
+        }
+
+        const activeFilters = {
+          className: activeClassName,
+          classId: this.state.classId !== 'all' ? this.state.classId : '',
+          academicYear: activeAcademicYear
+        };
+
+        const { filename } = await StudentExcelService.exportBlankTemplate({
+          activeFilters,
+          lang: isKm ? 'km' : 'en'
+        });
+
+        toast.success(isKm 
+          ? `បានទាញយកទម្រង់តារាង Excel (គ្មានទិន្នន័យ) ${filename} ដោយជោគជ័យ!` 
+          : `Successfully downloaded blank Excel template ${filename}!`);
+      } catch (err) {
+        console.error('Blank Excel Export Error:', err);
+        toast.error(err.message || (isKm ? 'បរាជ័យក្នុងការទាញយកទម្រង់ Excel ទទេ' : 'Failed to export blank Excel template.'));
+      } finally {
+        exportBlankBtn.disabled = false;
+        exportBlankBtn.innerHTML = originalHtml;
+      }
+    });
+
     // Bulk Import Photos from Folder Trigger
     const bulkPhotoInput = document.getElementById('input-bulk-photo-folder');
     document.getElementById('btn-bulk-import-photos')?.addEventListener('click', () => {
@@ -1990,6 +2048,7 @@ export const StudentsPage = {
         modal.close();
         await this.loadData(true);
         this.populateFilterValuesDropdown();
+        syncStateManager.scheduleAutoSync(100);
       }
     });
   },
@@ -4817,10 +4876,16 @@ export const StudentsPage = {
             <p class="font-semibold text-foreground text-xs">${isKm ? 'ទម្រង់ឯកសារគំរូ (Template)' : 'Standard Format Template'}</p>
             <p class="text-[11px] text-muted-foreground mt-0.5">${isKm ? 'ទាញយកឯកសារគំរូដែលមាន ២៩ ជួរឈរត្រឹមត្រូវ' : 'Get standard 29-column template'}</p>
           </div>
-          <button type="button" id="btn-download-sample-template" class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card hover:bg-muted text-xs font-medium text-foreground transition-colors shadow-sm whitespace-nowrap">
-            ${getIcon('download', 'w-3.5 h-3.5 text-primary')}
-            <span>${t('students.downloadTemplate')}</span>
-          </button>
+          <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            <button type="button" id="btn-download-blank-template" class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card hover:bg-muted text-xs font-medium text-foreground transition-colors shadow-sm whitespace-nowrap">
+              ${getIcon('fileSpreadsheet', 'w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400')}
+              <span>${t('students.downloadBlankTemplate')}</span>
+            </button>
+            <button type="button" id="btn-download-sample-template" class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-card hover:bg-muted text-xs font-medium text-foreground transition-colors shadow-sm whitespace-nowrap">
+              ${getIcon('download', 'w-3.5 h-3.5 text-primary')}
+              <span>${t('students.downloadTemplate')}</span>
+            </button>
+          </div>
         </div>
 
         <!-- Drag and Drop / File Input Box -->
@@ -4901,6 +4966,18 @@ export const StudentsPage = {
     const confirmBtn = modal.element.querySelector('#btn-confirm-excel-import');
     const cancelBtn = modal.element.querySelector('#btn-cancel-excel-import');
     const errorBox = modal.element.querySelector('#excel-error-box');
+
+    // Download Blank Template (Only headers)
+    modal.element.querySelector('#btn-download-blank-template')?.addEventListener('click', async () => {
+      try {
+        const { filename } = await StudentExcelService.downloadBlankTemplate(isKm ? 'km' : 'en');
+        toast.success(isKm 
+          ? `បានទាញយកទម្រង់តារាង Excel (គ្មានទិន្នន័យ) ${filename} ដោយជោគជ័យ!` 
+          : `Blank template ${filename} downloaded successfully.`);
+      } catch (err) {
+        toast.error(err.message);
+      }
+    });
 
     // Download Sample Template
     modal.element.querySelector('#btn-download-sample-template')?.addEventListener('click', () => {

@@ -7,6 +7,7 @@ import { ClassService } from '../services/classService.js';
 import { TeacherService } from '../services/teacherService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
+import { syncStateManager } from '../services/syncStateManager.js';
 import { Modal } from '../components/modal.js';
 import { toast } from '../components/toast.js';
 import { t, i18n } from '../i18n/i18n.js';
@@ -222,6 +223,7 @@ export const ClassesPage = {
                                   toast.success(t('classes.deletedSuccess'));
                                   await this.loadData();
                                   this.renderLayout();
+                                  syncStateManager.scheduleAutoSync(100);
                                 } catch (err) {
                                   toast.error(err.message);
                                 }
@@ -297,6 +299,7 @@ export const ClassesPage = {
               toast.success(t('classes.deletedSuccess'));
               await this.loadData();
               this.renderLayout();
+              syncStateManager.scheduleAutoSync(100);
             } catch (err) {
               toast.error(err.message);
             }
@@ -493,6 +496,7 @@ export const ClassesPage = {
         modal.close();
         await this.loadData();
         this.renderLayout();
+        syncStateManager.scheduleAutoSync(100);
       } catch (err) {
         toast.error(err.message);
       }

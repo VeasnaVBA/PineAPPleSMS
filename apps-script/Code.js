@@ -148,7 +148,7 @@ function doPost(e) {
     } else if (action === 'CREATE_USER_WORKSPACE' || action === 'INIT_USER_WORKSPACE') {
       return handleCreateUserWorkspace(fileName, username);
     } else if (action === 'PULL_TO_DRIVE') {
-      return handlePullToDrive(fileName, username, payload.data || {});
+      return handlePullToDrive(fileName, username, payload.data || {}, payload);
     } else if (action === 'PUSH_TO_APP') {
       return handlePushToApp(fileName, username);
     } else if (action === 'DELETE_USER_DRIVE_FILE') {
@@ -818,7 +818,8 @@ function savePhotoFileToDrive(folder, filename, photoData) {
   }
 }
 
-function handlePullToDrive(fileName, username, data) {
+function handlePullToDrive(fileName, username, data, payload) {
+  payload = payload || {};
   var fileInfo = getOrCreateUserSpreadsheet(fileName, username);
   var spreadsheet = fileInfo.spreadsheet;
 
@@ -883,12 +884,12 @@ function handlePullToDrive(fileName, username, data) {
     if (!sheet) {
       sheet = spreadsheet.insertSheet(def.name);
     }
-    sheet.clear();
     
     var rows = def.data;
-    counts[def.name] = rows.length;
     
     if (rows && rows.length > 0) {
+      sheet.clear();
+      counts[def.name] = rows.length;
       // Collect union of keys across all rows so fields like photo are never dropped
       var headerMap = {};
       var headers = [];
@@ -915,7 +916,21 @@ function handlePullToDrive(fileName, username, data) {
       sheet.getRange(1, 1, matrix.length, headers.length).setValues(matrix);
       formatSheetHeader(sheet, headers.length);
     } else {
-      sheet.getRange(1, 1).setValue('No records');
+      // ZERO-RECORD OVERWRITE PROTECTION:
+      // If client sends 0 records for this sheet, check if Google Drive already has data rows.
+      // Auto-sync or fresh device connections must NEVER wipe out existing valid data in Drive!
+      var lastRow = sheet.getLastRow();
+      var firstCellVal = lastRow > 0 ? String(sheet.getRange(1, 1).getValue()).trim() : '';
+      var hasExistingData = lastRow > 1 && firstCellVal !== 'No records' && firstCellVal !== '';
+      
+      if (hasExistingData && !payload.allowEmptyWipe) {
+        // PRESERVE existing data!
+        counts[def.name] = lastRow - 1;
+      } else {
+        sheet.clear();
+        sheet.getRange(1, 1).setValue('No records');
+        counts[def.name] = 0;
+      }
     }
   }
   

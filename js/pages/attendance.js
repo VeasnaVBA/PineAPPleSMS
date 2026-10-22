@@ -937,8 +937,8 @@ export const AttendancePage = {
 
     try {
       await AttendanceService.saveMonthlyAttendanceSheet(this.state.sheet);
+      syncStateManager.scheduleAutoSync(silent ? 400 : 100);
       if (!silent) {
-        syncStateManager.triggerAutoSync().catch(() => {});
         const selectedCls = this.state.classes.find(c => c.id === this.state.selectedClassId);
         const monthObj = ATTENDANCE_MONTHS.find(m => m.id === this.state.selectedMonth);
         toast.success(`បានរក្សាទុកវត្តមាន ${selectedCls?.name || ''} (${monthObj ? 'ខែ' + monthObj.nameKm : ''} ${this.state.selectedYear}) ដោយជោគជ័យ`);

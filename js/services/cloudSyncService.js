@@ -26,8 +26,17 @@ import {
 import { StudentsPage } from '../pages/students.js';
 import { syncStateManager } from './syncStateManager.js';
 import { photoService } from './photoService.js';
+import { WorkspaceSetupService } from './workspaceSetupService.js';
 
 export const CloudSyncService = {
+  _isRestoring: false,
+  _isPushInProgress: false,
+  _isPullInProgress: false,
+
+  isBusy() {
+    return this._isRestoring || this._isPushInProgress || this._isPullInProgress;
+  },
+
   /**
    * Check if device is connected to the internet
    */
@@ -139,8 +148,24 @@ export const CloudSyncService = {
       return false;
     }
 
+    // If restore or push is currently executing, postpone auto-sync to avoid race conditions
+    if (this._isRestoring || this._isPushInProgress) {
+      if (isSilent) {
+        console.warn('[CloudSync] pullToDrive postponed: Restore or push is currently in progress.');
+        return false;
+      }
+    }
+
+    this._isPullInProgress = true;
+
     try {
-      // 4. Read all stores from active user's isolated IndexedDB
+      // 4. Ensure workspace database is explicitly initialized for active user
+      if (currentUser?.id) {
+        const { initUserDatabase } = await import('../database/db.js');
+        await initUserDatabase(currentUser.id);
+      }
+
+      // Read all stores from active user's isolated IndexedDB
       const rawStudents = await db.getAll('students');
       const students = await Promise.all(rawStudents.map(async (s) => {
         const norm = normalizeStudentRecord(s);
@@ -197,6 +222,11 @@ export const CloudSyncService = {
       const teachers = await Promise.all(rawTeachers.map(async (t) => {
         const norm = normalizeTeacherRecord(t);
         const clean = { ...norm };
+        clean.name = clean.khmerName || clean.name || '';
+        if (currentUser.role === 'TEACHER') {
+          clean.userId = clean.userId || currentUser.id;
+          clean.accountId = clean.accountId || currentUser.id;
+        }
         if (clean.photoBlob instanceof Blob) {
           try {
             clean.photo = await photoService.blobToDataUrl(clean.photoBlob);
@@ -234,6 +264,8 @@ export const CloudSyncService = {
       const payload = {
         action: 'PULL_TO_DRIVE',
         username: currentUser.username,
+        isAutoSync: isSilent,
+        allowEmptyWipe: options?.allowEmptyWipe === true,
         data: {
           students,
           schools,
@@ -308,6 +340,8 @@ export const CloudSyncService = {
         this.showErrorModal(err.message);
       }
       return false;
+    } finally {
+      this._isPullInProgress = false;
     }
   },
 
@@ -347,6 +381,7 @@ export const CloudSyncService = {
       return false;
     }
 
+    this._isPushInProgress = true;
     try {
       const payload = {
         action: 'PUSH_TO_APP',
@@ -415,6 +450,8 @@ export const CloudSyncService = {
         this.showErrorModal(err.message);
       }
       return false;
+    } finally {
+      this._isPushInProgress = false;
     }
   },
 
@@ -423,10 +460,15 @@ export const CloudSyncService = {
    */
   async applyRestoredData(data, currentUser, options = {}) {
     const isSilent = options?.silent === true;
+    this._isRestoring = true;
     setSuppressWorkspaceMutation(true);
     try {
       if (!data || typeof data !== 'object') return;
       // 1. Ensure active workspace DB is opened (zero contamination of other accounts)
+      if (currentUser?.id) {
+        const { initUserDatabase } = await import('../database/db.js');
+        await initUserDatabase(currentUser.id);
+      }
       await db.open();
 
       let studentCount = 0;
@@ -551,7 +593,7 @@ export const CloudSyncService = {
 
         await db.clear('teachers');
         for (const item of data.teachers) {
-          if (!item.id && !item.teacherId && !item.khmerName && !item.lastNameKhmer) continue;
+          if (!item.id && !item.teacherId && !item.khmerName && !item.lastNameKhmer && !item.name) continue;
 
           let restoredBlob = null;
           if (item.photo && typeof item.photo === 'string' && item.photo.startsWith('data:image/')) {
@@ -565,6 +607,8 @@ export const CloudSyncService = {
 
           const cleanItem = normalizeTeacherRecord({
             ...item,
+            userId: item.userId || (currentUser?.role === 'TEACHER' ? currentUser.id : null),
+            accountId: item.accountId || (currentUser?.role === 'TEACHER' ? currentUser.id : null),
             photoBlob: restoredBlob || null,
             photo: (item.photo && item.photo.startsWith('data:')) ? item.photo : (restoredBlob ? '(Photo attached)' : '')
           });
@@ -762,6 +806,9 @@ export const CloudSyncService = {
       // Mark sync state clean
       syncStateManager.markClean();
 
+      // Notify workspace setup change to refresh setup card and unlocks
+      WorkspaceSetupService.notifySetupChange();
+
       // 5. Trigger active view refresh immediately without full page reload
       if (window.router?.handleRoute) {
         await window.router.handleRoute();
@@ -782,6 +829,7 @@ export const CloudSyncService = {
         toast.error('Failed to write data into local database: ' + err.message, t('cloudSync.errorTitle'));
       }
     } finally {
+      this._isRestoring = false;
       setSuppressWorkspaceMutation(false);
       syncStateManager.markClean();
     }
@@ -836,26 +884,28 @@ export const CloudSyncService = {
 
   /**
    * Auto-sync check on app startup for active session
-   * If local database is empty or device has 0 students, automatically pulls latest data from Google Drive.
+   * Automatically pulls latest data from Google Drive so fresh or returning browsers always have current data.
    */
   async checkAndSyncOnStartup(user = authService.getCurrentUser()) {
     if (!this.isOnline()) return false;
     const currentUser = user || authService.getCurrentUser();
     if (!currentUser || !currentUser.username) return false;
 
-    // If local changes are dirty (unsynced), don't overwrite with cloud data; instead save local changes to cloud!
-    if (syncStateManager.isDirty()) {
-      syncStateManager.scheduleAutoSync(1000);
-      return false;
-    }
-
     const endpoint = getCloudSyncUrl();
     if (!endpoint) return false;
 
+    this._isRestoring = true;
     try {
+      if (currentUser?.id) {
+        const { initUserDatabase } = await import('../database/db.js');
+        await initUserDatabase(currentUser.id);
+      }
       await db.open();
-      const localStudentsCount = await db.count('students');
-      const isLocalEmpty = localStudentsCount === 0;
+      const localTeachersCount = await db.count('teachers').catch(() => 0);
+      const localSchoolsCount = await db.count('schools').catch(() => 0);
+      const localStudentsCount = await db.count('students').catch(() => 0);
+      const localClassesCount = await db.count('classes').catch(() => 0);
+      const isLocalEmpty = (localStudentsCount === 0 && localTeachersCount === 0 && localSchoolsCount === 0 && localClassesCount === 0);
 
       const payload = {
         action: 'PUSH_TO_APP',
@@ -865,19 +915,25 @@ export const CloudSyncService = {
       const result = await this.dispatchGoogleScriptRequest(endpoint, payload, 30000);
       if (result && result.success && result.found) {
         if (result.isNewlyCreated) {
-          try {
-            await this.pullToDrive(currentUser, { silent: true });
-          } catch (_) {}
+          // Only seed newly created cloud sheet if local actually has data
+          if (!isLocalEmpty) {
+            try {
+              await this.pullToDrive(currentUser, { silent: true });
+            } catch (_) {}
+          }
           return true;
         }
 
         if (result.data) {
-          await this.applyRestoredData(result.data, currentUser, { silent: !isLocalEmpty });
+          await this.applyRestoredData(result.data, currentUser, { silent: true });
+          WorkspaceSetupService.notifySetupChange();
           return true;
         }
       }
     } catch (err) {
       console.warn('[CloudSync] checkAndSyncOnStartup error:', err);
+    } finally {
+      this._isRestoring = false;
     }
     return false;
   },
