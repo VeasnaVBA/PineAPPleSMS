@@ -637,7 +637,7 @@ export const km = {
     attendanceReport: "របាយការណ៍វត្តមាន",
     rankingReport: "តារាងចំណាត់ថ្នាក់សិស្ស",
     studentPlanReport: "ផែនការសិស្សម្នាក់ៗ",
-    teacherClassStatsReport: "តារាង SEC",
+    teacherClassStatsReport: "តារាងចំនួនសិស្សតាមថ្នាក់ (សម្រាប់គ្រូ)",
     filterStudent: "ជ្រើសរើសសិស្ស៖",
     prevStudent: "សិស្សមុន",
     nextStudent: "សិស្សបន្ទាប់",

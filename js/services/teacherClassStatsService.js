@@ -508,7 +508,7 @@ export const TeacherClassStatsService = {
         <!-- Center Header: Title & Academic Year -->
         <div style="text-align: center; margin-bottom: 8px; padding-top: 2px;">
           <h1 contenteditable="true" style="font-weight: 800; font-size: 15px; color: #1e3a8a; margin: 0; padding: 0; letter-spacing: -0.2px;">
-            តារាង SEC
+            តារាងចំនួនសិស្សតាមថ្នាក់ (សម្រាប់គ្រូ)
           </h1>
           <div style="font-weight: 800; font-size: 13px; color: #1e3a8a; margin-top: 2px;">
             ឆ្នាំសិក្សា ${data.academicYear}

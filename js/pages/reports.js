@@ -7,7 +7,7 @@
 import { ReportService } from '../services/reportService.js';
 import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.88';
 import { StudentGradeBookService, formatTwoDigits, formatScoreNumber, calculateKhmerGrade } from '../services/studentGradeBookService.js?v=3.1.02';
-import { TeacherClassStatsService } from '../services/teacherClassStatsService.js?v=3.1.07';
+import { TeacherClassStatsService } from '../services/teacherClassStatsService.js?v=3.1.09';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
@@ -110,7 +110,7 @@ export const ReportsPage = {
             សៀវភៅសិក្ខាគារិក
           </button>
           <button class="rep-tab-btn px-4 py-2 rounded-lg transition-all ${this.state.activeTab === 'teacherClassStats' ? 'bg-primary text-primary-foreground font-bold shadow-sm' : 'text-muted-foreground hover:text-foreground'}" data-tab="teacherClassStats">
-            ${t('reports.teacherClassStatsReport') || 'តារាង SEC'}
+            ${t('reports.teacherClassStatsReport') || 'តារាងចំនួនសិស្សតាមថ្នាក់ (សម្រាប់គ្រូ)'}
           </button>
           <button class="rep-tab-btn px-4 py-2 rounded-lg transition-all ${this.state.activeTab === 'students' ? 'bg-primary text-primary-foreground font-bold shadow-sm' : 'text-muted-foreground hover:text-foreground'}" data-tab="students">
             ${t('reports.studentReport')}
@@ -298,14 +298,14 @@ export const ReportsPage = {
               ${getIcon('table', 'w-10 h-10')}
             </div>
             <h2 class="text-xl sm:text-2xl font-bold font-khmer text-foreground mb-2">
-              តារាង SEC
+              តារាងចំនួនសិស្សតាមថ្នាក់ (សម្រាប់គ្រូ)
             </h2>
             <p class="text-xs sm:text-sm text-muted-foreground font-khmer max-w-md mb-8 leading-relaxed">
               ពិនិត្យមើល និងបោះពុម្ពតារាងស្ថិតិសិស្សតាមថ្នាក់ (កម្រិតអាយុ សិស្សត្រួតថ្នាក់ មត្តេយ្យ សិស្សពិការ និងជនជាតិភាគតិច) ជាទម្រង់ក្រដាស A4 Portrait ផ្លូវការ (PRI)
             </p>
             <button id="btn-open-teacher-class-stats-modal" type="button" class="inline-flex items-center gap-3 px-8 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm sm:text-base shadow-lg hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
               ${getIcon('printer', 'w-5 h-5')}
-              <span>តារាង SEC</span>
+              <span>តារាងចំនួនសិស្សតាមថ្នាក់ (សម្រាប់គ្រូ)</span>
             </button>
           </div>
         `;
@@ -2300,7 +2300,7 @@ export const ReportsPage = {
 
     await ReportViewer.open({
       reportKey: 'teacher_class_stats',
-      title: isKm ? 'តារាង SEC' : 'SEC Table',
+      title: isKm ? 'តារាងចំនួនសិស្សតាមថ្នាក់ (សម្រាប់គ្រូ)' : 'Class Students Table (Teacher)',
       alwaysFresh: true,
       forceOrientation: 'portrait',
       defaultOrientation: 'portrait',
@@ -2333,7 +2333,7 @@ export const ReportsPage = {
         contentContainer.innerHTML = `
           <div class="py-12 flex items-center justify-center gap-2 text-muted-foreground text-xs font-khmer">
             <div class="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
-            <span>កំពុងរៀបចំទិន្នន័យតារាង SEC...</span>
+            <span>កំពុងរៀបចំទិន្នន័យ...</span>
           </div>
         `;
 
