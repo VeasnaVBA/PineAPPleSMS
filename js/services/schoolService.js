@@ -101,12 +101,32 @@ export const SchoolService = {
       throw new Error(`School Code "${cleanCode}" already exists.`);
     }
 
+    const village = data.village !== undefined ? String(data.village).trim() : '';
+    const commune = data.commune !== undefined ? String(data.commune).trim() : '';
+    const district = data.district !== undefined ? String(data.district).trim() : '';
+    const province = data.province !== undefined ? String(data.province).trim() : '';
+    let address = data.address !== undefined ? String(data.address).trim() : '';
+
+    if (!address && (village || commune || district || province)) {
+      address = [
+        village ? `ភូមិ${village}` : '',
+        commune ? `ឃុំ/សង្កាត់${commune}` : '',
+        district ? `ស្រុក/ខណ្ឌ${district}` : '',
+        province ? `រាជធានី/ខេត្ត${province}` : ''
+      ].filter(Boolean).join(' ');
+    }
+
     const now = new Date().toISOString();
     const newSchool = {
       id: data.id || ('sch-' + Date.now()),
       code: cleanCode,
       name: cleanName,
-      address: data.address?.trim() || '',
+      nameEn: data.nameEn ? String(data.nameEn).trim() : '',
+      village,
+      commune,
+      district,
+      province,
+      address,
       director: data.director?.trim() || '',
       phone: data.phone?.trim() || '',
       notes: data.notes?.trim() || '',
@@ -168,11 +188,32 @@ export const SchoolService = {
       throw new Error(`School Code "${cleanCode}" is already in use by another school.`);
     }
 
+    const village = data.village !== undefined ? String(data.village).trim() : (existing.village || '');
+    const commune = data.commune !== undefined ? String(data.commune).trim() : (existing.commune || '');
+    const district = data.district !== undefined ? String(data.district).trim() : (existing.district || '');
+    const province = data.province !== undefined ? String(data.province).trim() : (existing.province || '');
+    let address = data.address !== undefined ? String(data.address).trim() : (existing.address || '');
+
+    if ((data.village !== undefined || data.commune !== undefined || data.district !== undefined || data.province !== undefined) || !address) {
+      const generated = [
+        village ? `ភូមិ${village}` : '',
+        commune ? `ឃុំ/សង្កាត់${commune}` : '',
+        district ? `ស្រុក/ខណ្ឌ${district}` : '',
+        province ? `រាជធានី/ខេត្ត${province}` : ''
+      ].filter(Boolean).join(' ');
+      if (generated) address = generated;
+    }
+
     const updatedSchool = {
       ...existing,
       code: cleanCode,
       name: cleanName,
-      address: data.address !== undefined ? data.address.trim() : existing.address,
+      nameEn: data.nameEn !== undefined ? String(data.nameEn).trim() : (existing.nameEn || ''),
+      village,
+      commune,
+      district,
+      province,
+      address,
       director: data.director !== undefined ? data.director.trim() : existing.director,
       phone: data.phone !== undefined ? data.phone.trim() : existing.phone,
       notes: data.notes !== undefined ? data.notes.trim() : existing.notes,
@@ -340,5 +381,51 @@ export const SchoolService = {
     } catch (_) {}
 
     return '';
+  },
+
+  /**
+   * Helper: Parse a combined address string into village, commune, district, province parts
+   */
+  parseAddressToParts(address) {
+    if (!address || typeof address !== 'string') {
+      return { village: '', commune: '', district: '', province: '' };
+    }
+    const str = address.trim();
+    let village = '';
+    let commune = '';
+    let district = '';
+    let province = '';
+
+    const vMatch = str.match(/ភូមិ\s*([^,\s/]+)/);
+    if (vMatch) village = vMatch[1].trim();
+
+    const cMatch = str.match(/(?:ឃុំ|សង្កាត់)\s*([^,\s/]+)/);
+    if (cMatch) commune = cMatch[1].trim();
+
+    const dMatch = str.match(/(?:ស្រុក|ខណ្ឌ)\s*([^,\s/]+)/);
+    if (dMatch) district = dMatch[1].trim();
+
+    const pMatch = str.match(/(?:ខេត្ត|រាជធានី)\s*([^,\s/]+)/);
+    if (pMatch) province = pMatch[1].trim();
+
+    // Fallback: If no explicit Khmer prefix matched, but commas exist
+    if (!village && !commune && !district && !province && str.includes(',')) {
+      const parts = str.split(',').map(p => p.trim()).filter(Boolean);
+      if (parts.length === 2) {
+        district = parts[0];
+        province = parts[1];
+      } else if (parts.length === 3) {
+        commune = parts[0];
+        district = parts[1];
+        province = parts[2];
+      } else if (parts.length >= 4) {
+        village = parts[0];
+        commune = parts[1];
+        district = parts[2];
+        province = parts[3];
+      }
+    }
+
+    return { village, commune, district, province };
   }
 };

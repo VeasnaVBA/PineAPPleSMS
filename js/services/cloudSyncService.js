@@ -12,6 +12,7 @@ import { db, setSuppressWorkspaceMutation } from '../database/db.js';
 import { authService } from './authService.js';
 import { normalizeStudentRecord } from './studentService.js';
 import { normalizeTeacherRecord } from './teacherService.js';
+import { SchoolService } from './schoolService.js';
 import { toast } from '../components/toast.js';
 import { Modal } from '../components/modal.js';
 import { t } from '../i18n/i18n.js';
@@ -158,16 +159,38 @@ export const CloudSyncService = {
       }));
 
       const rawSchools = await db.getAll('schools');
-      const schools = rawSchools.map(sch => ({
-        id: sch.id || '',
-        code: sch.code || '',
-        name: sch.name || '',
-        nameEn: sch.nameEn || '',
-        address: sch.address || '',
-        director: sch.director || '',
-        phone: sch.phone || '',
-        notes: sch.notes || ''
-      }));
+      const schools = rawSchools.map(sch => {
+        const addrParts = (!sch.village && !sch.commune && !sch.district && !sch.province && sch.address)
+          ? SchoolService.parseAddressToParts(sch.address)
+          : {};
+        const village = sch.village || addrParts.village || '';
+        const commune = sch.commune || addrParts.commune || '';
+        const district = sch.district || addrParts.district || '';
+        const province = sch.province || addrParts.province || '';
+        let address = sch.address || '';
+        if (!address && (village || commune || district || province)) {
+          address = [
+            village ? `ភូមិ${village}` : '',
+            commune ? `ឃុំ/សង្កាត់${commune}` : '',
+            district ? `ស្រុក/ខណ្ឌ${district}` : '',
+            province ? `រាជធានី/ខេត្ត${province}` : ''
+          ].filter(Boolean).join(' ');
+        }
+        return {
+          id: sch.id || '',
+          code: sch.code || '',
+          name: sch.name || '',
+          nameEn: sch.nameEn || '',
+          village,
+          commune,
+          district,
+          province,
+          address,
+          director: sch.director || '',
+          phone: sch.phone || '',
+          notes: sch.notes || ''
+        };
+      });
 
       const classes = await db.getAll('classes');
       const rawTeachers = await db.getAll('teachers');
@@ -467,12 +490,29 @@ export const CloudSyncService = {
         await db.clear('schools');
         for (const item of data.schools) {
           if (!item.id && !item.code && !item.name) continue;
+          const village = item.village ? String(item.village).trim() : '';
+          const commune = item.commune ? String(item.commune).trim() : '';
+          const district = item.district ? String(item.district).trim() : '';
+          const province = item.province ? String(item.province).trim() : '';
+          let address = item.address ? String(item.address).trim() : '';
+          if (!address && (village || commune || district || province)) {
+            address = [
+              village ? `ភូមិ${village}` : '',
+              commune ? `ឃុំ/សង្កាត់${commune}` : '',
+              district ? `ស្រុក/ខណ្ឌ${district}` : '',
+              province ? `រាជធានី/ខេត្ត${province}` : ''
+            ].filter(Boolean).join(' ');
+          }
           const cleanItem = {
             id: item.id ? String(item.id).trim() : `sch-${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
             code: item.code || '',
             name: item.name || '',
             nameEn: item.nameEn || '',
-            address: item.address || '',
+            village,
+            commune,
+            district,
+            province,
+            address,
             director: item.director || '',
             phone: item.phone ? String(item.phone) : '',
             notes: item.notes || '',

@@ -79,6 +79,10 @@ export const SchoolsPage = {
         (s.nameEn && s.nameEn.toLowerCase().includes(q)) ||
         (s.director && s.director.toLowerCase().includes(q)) ||
         (s.phone && s.phone.toLowerCase().includes(q)) ||
+        (s.village && s.village.toLowerCase().includes(q)) ||
+        (s.commune && s.commune.toLowerCase().includes(q)) ||
+        (s.district && s.district.toLowerCase().includes(q)) ||
+        (s.province && s.province.toLowerCase().includes(q)) ||
         (s.address && s.address.toLowerCase().includes(q)) ||
         (s.notes && s.notes.toLowerCase().includes(q))
       );
@@ -160,14 +164,20 @@ export const SchoolsPage = {
                   <th class="px-3 py-3 w-28 text-center whitespace-nowrap" style="text-align: center !important;">${t('schools.colCode')}</th>
                   <!-- 3. ឈ្មោះសាលា (School Name) -->
                   <th class="px-4 py-3 min-w-[200px] text-center whitespace-nowrap" style="text-align: center !important;">${t('schools.colName')}</th>
-                  <!-- 4. អាសយដ្ឋានសាលា (School Address) -->
-                  <th class="px-3 py-3 min-w-[160px] text-center whitespace-nowrap" style="text-align: center !important;">${t('schools.colAddress')}</th>
-                  <!-- 5. នាយក (Director Name) -->
-                  <th class="px-3 py-3 min-w-[140px] text-center whitespace-nowrap" style="text-align: center !important;">${t('schools.colDirector')}</th>
-                  <!-- 6. លេខទូរសព្ទ (Phone Number) -->
-                  <th class="px-3 py-3 min-w-[120px] text-center whitespace-nowrap ${isKm ? 'font-khmer' : 'font-mono'}" style="text-align: center !important;">${t('schools.colPhone')}</th>
-                  <!-- 7. ផ្សេងៗ (Notes / Remarks) -->
-                  <th class="px-3 py-3 min-w-[140px] text-center whitespace-nowrap" style="text-align: center !important;">${t('schools.colNotes')}</th>
+                  <!-- 4. ភូមិ (Village) -->
+                  <th class="px-3 py-3 min-w-[100px] text-center whitespace-nowrap" style="text-align: center !important;">${t('schools.colVillage')}</th>
+                  <!-- 5. ឃុំ/សង្កាត់ (Commune) -->
+                  <th class="px-3 py-3 min-w-[110px] text-center whitespace-nowrap" style="text-align: center !important;">${t('schools.colCommune')}</th>
+                  <!-- 6. ស្រុក/ខណ្ឌ (District) -->
+                  <th class="px-3 py-3 min-w-[110px] text-center whitespace-nowrap" style="text-align: center !important;">${t('schools.colDistrict')}</th>
+                  <!-- 7. រាជធានី/ខេត្ត (Province) -->
+                  <th class="px-3 py-3 min-w-[120px] text-center whitespace-nowrap" style="text-align: center !important;">${t('schools.colProvince')}</th>
+                  <!-- 8. នាយក (Director Name) -->
+                  <th class="px-3 py-3 min-w-[130px] text-center whitespace-nowrap" style="text-align: center !important;">${t('schools.colDirector')}</th>
+                  <!-- 9. លេខទូរសព្ទ (Phone Number) -->
+                  <th class="px-3 py-3 min-w-[110px] text-center whitespace-nowrap ${isKm ? 'font-khmer' : 'font-mono'}" style="text-align: center !important;">${t('schools.colPhone')}</th>
+                  <!-- 10. ផ្សេងៗ (Notes / Remarks) -->
+                  <th class="px-3 py-3 min-w-[130px] text-center whitespace-nowrap" style="text-align: center !important;">${t('schools.colNotes')}</th>
                   <!-- Actions Column (Show, Update, Delete) -->
                   <th class="w-[50px] px-2 py-3 text-center whitespace-nowrap" style="text-align: center !important;">${t('schools.actions')}</th>
                 </tr>
@@ -175,7 +185,7 @@ export const SchoolsPage = {
               <tbody class="divide-y divide-border">
                 ${paginated.length === 0 ? `
                   <tr>
-                    <td colspan="8" class="p-12 text-center text-muted-foreground">
+                    <td colspan="11" class="p-12 text-center text-muted-foreground">
                       <div class="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto text-muted-foreground mb-3">
                         ${getIcon('school', 'w-6 h-6')}
                       </div>
@@ -184,6 +194,13 @@ export const SchoolsPage = {
                   </tr>
                 ` : paginated.map((school, idx) => {
                   const rowNum = startIndex + idx + 1;
+                  const addrParts = (!school.village && !school.commune && !school.district && !school.province && school.address) 
+                    ? SchoolService.parseAddressToParts(school.address) 
+                    : {};
+                  const village = school.village || addrParts.village || '';
+                  const commune = school.commune || addrParts.commune || '';
+                  const district = school.district || addrParts.district || '';
+                  const province = school.province || addrParts.province || '';
                   return `
                     <tr class="hover:bg-muted/40 transition-colors group">
                       <!-- 1. ល.រ -->
@@ -210,22 +227,37 @@ export const SchoolsPage = {
                         ` : ''}
                       </td>
 
-                      <!-- 4. អាសយដ្ឋានសាលា -->
+                      <!-- 4. ភូមិ (Village) -->
                       <td class="px-3 py-3 text-center text-muted-foreground text-xs leading-relaxed ${isKm ? 'font-khmer' : ''}">
-                        ${school.address || '—'}
+                        ${village || '—'}
                       </td>
 
-                      <!-- 5. នាយក -->
+                      <!-- 5. ឃុំ/សង្កាត់ (Commune) -->
+                      <td class="px-3 py-3 text-center text-muted-foreground text-xs leading-relaxed ${isKm ? 'font-khmer' : ''}">
+                        ${commune || '—'}
+                      </td>
+
+                      <!-- 6. ស្រុក/ខណ្ឌ (District) -->
+                      <td class="px-3 py-3 text-center text-muted-foreground text-xs leading-relaxed ${isKm ? 'font-khmer' : ''}">
+                        ${district || '—'}
+                      </td>
+
+                      <!-- 7. រាជធានី/ខេត្ត (Province) -->
+                      <td class="px-3 py-3 text-center text-muted-foreground text-xs leading-relaxed ${isKm ? 'font-khmer' : ''}">
+                        ${province || '—'}
+                      </td>
+
+                      <!-- 8. នាយក -->
                       <td class="px-3 py-3 text-center text-foreground font-medium text-xs ${isKm ? 'font-khmer' : ''}">
                         ${school.director || '—'}
                       </td>
 
-                      <!-- 6. លេខទូរសព្ទ -->
+                      <!-- 9. លេខទូរសព្ទ -->
                       <td class="px-3 py-3 text-center font-mono text-xs text-foreground">
                         ${school.phone || '—'}
                       </td>
 
-                      <!-- 7. ផ្សេងៗ -->
+                      <!-- 10. ផ្សេងៗ -->
                       <td class="px-3 py-3 text-center text-muted-foreground text-xs leading-relaxed max-w-xs truncate ${isKm ? 'font-khmer' : ''}" title="${school.notes || ''}">
                         ${school.notes || '—'}
                       </td>
@@ -384,6 +416,14 @@ export const SchoolsPage = {
     const isKm = i18n.getLocale() === 'km';
     const title = isEdit ? t('schools.editSchool') : t('schools.addSchool');
 
+    const addrParts = (!existingSchool?.village && !existingSchool?.commune && !existingSchool?.district && !existingSchool?.province && existingSchool?.address)
+      ? SchoolService.parseAddressToParts(existingSchool.address)
+      : {};
+    const initVillage = existingSchool?.village || addrParts.village || '';
+    const initCommune = existingSchool?.commune || addrParts.commune || '';
+    const initDistrict = existingSchool?.district || addrParts.district || '';
+    const initProvince = existingSchool?.province || addrParts.province || '';
+
     const content = `
       <form id="school-form" class="space-y-4 p-6 select-text">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -440,16 +480,60 @@ export const SchoolsPage = {
           </div>
         </div>
 
-        <!-- 5. School Address -->
-        <div>
-          <label class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 block leading-relaxed ${isKm ? 'font-khmer' : ''}">
+        <!-- 5. Separated Address Fields: Village, Commune, District, Province -->
+        <div class="space-y-2 pt-1 border-t border-border/60">
+          <label class="text-xs font-semibold text-foreground uppercase tracking-wide block leading-relaxed ${isKm ? 'font-khmer' : ''}">
             ${t('schools.colAddress')}
           </label>
-          <input type="text"
-                 id="form-school-address"
-                 value="${existingSchool?.address || ''}"
-                 placeholder="${t('schools.addressPlaceholder')}"
-                 class="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs ${isKm ? 'font-khmer' : ''}" />
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Village (ភូមិ) -->
+            <div>
+              <label class="text-[11px] font-medium text-muted-foreground block mb-1 ${isKm ? 'font-khmer' : ''}">
+                ${t('schools.colVillage')}
+              </label>
+              <input type="text"
+                     id="form-school-village"
+                     value="${initVillage}"
+                     placeholder="${t('schools.villagePlaceholder')}"
+                     class="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs ${isKm ? 'font-khmer' : ''}" />
+            </div>
+
+            <!-- Commune (ឃុំ/សង្កាត់) -->
+            <div>
+              <label class="text-[11px] font-medium text-muted-foreground block mb-1 ${isKm ? 'font-khmer' : ''}">
+                ${t('schools.colCommune')}
+              </label>
+              <input type="text"
+                     id="form-school-commune"
+                     value="${initCommune}"
+                     placeholder="${t('schools.communePlaceholder')}"
+                     class="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs ${isKm ? 'font-khmer' : ''}" />
+            </div>
+
+            <!-- District (ស្រុក/ខណ្ឌ) -->
+            <div>
+              <label class="text-[11px] font-medium text-muted-foreground block mb-1 ${isKm ? 'font-khmer' : ''}">
+                ${t('schools.colDistrict')}
+              </label>
+              <input type="text"
+                     id="form-school-district"
+                     value="${initDistrict}"
+                     placeholder="${t('schools.districtPlaceholder')}"
+                     class="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs ${isKm ? 'font-khmer' : ''}" />
+            </div>
+
+            <!-- Province (រាជធានី/ខេត្ត) -->
+            <div>
+              <label class="text-[11px] font-medium text-muted-foreground block mb-1 ${isKm ? 'font-khmer' : ''}">
+                ${t('schools.colProvince')}
+              </label>
+              <input type="text"
+                     id="form-school-province"
+                     value="${initProvince}"
+                     placeholder="${t('schools.provincePlaceholder')}"
+                     class="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs ${isKm ? 'font-khmer' : ''}" />
+            </div>
+          </div>
         </div>
 
         <!-- 6. Notes / Remarks (textarea) -->
@@ -493,7 +577,10 @@ export const SchoolsPage = {
     modal.element.querySelector('#btn-save-school')?.addEventListener('click', async () => {
       const codeInput = modal.element.querySelector('#form-school-code');
       const nameInput = modal.element.querySelector('#form-school-name');
-      const addressInput = modal.element.querySelector('#form-school-address');
+      const villageInput = modal.element.querySelector('#form-school-village');
+      const communeInput = modal.element.querySelector('#form-school-commune');
+      const districtInput = modal.element.querySelector('#form-school-district');
+      const provinceInput = modal.element.querySelector('#form-school-province');
       const directorInput = modal.element.querySelector('#form-school-director');
       const phoneInput = modal.element.querySelector('#form-school-phone');
       const notesInput = modal.element.querySelector('#form-school-notes');
@@ -524,10 +611,25 @@ export const SchoolsPage = {
         return;
       }
 
+      const village = villageInput?.value.trim() || '';
+      const commune = communeInput?.value.trim() || '';
+      const district = districtInput?.value.trim() || '';
+      const province = provinceInput?.value.trim() || '';
+      const fullAddress = [
+        village ? `ភូមិ${village}` : '',
+        commune ? `ឃុំ/សង្កាត់${commune}` : '',
+        district ? `ស្រុក/ខណ្ឌ${district}` : '',
+        province ? `រាជធានី/ខេត្ត${province}` : ''
+      ].filter(Boolean).join(' ');
+
       const schoolData = {
         code,
         name,
-        address: addressInput?.value.trim() || '',
+        village,
+        commune,
+        district,
+        province,
+        address: fullAddress || existingSchool?.address || '',
         director: directorInput?.value.trim() || '',
         phone: phoneInput?.value.trim() || '',
         notes: notesInput?.value.trim() || ''
@@ -574,6 +676,10 @@ export const SchoolsPage = {
     try {
       usage = await SchoolService.checkSchoolUsage(school.id);
     } catch (_) {}
+
+    const addrParts = (!school.village && !school.commune && !school.district && !school.province && school.address)
+      ? SchoolService.parseAddressToParts(school.address)
+      : {};
 
     const formatDate = (dateStr) => {
       if (!dateStr) return '—';
@@ -644,8 +750,26 @@ export const SchoolsPage = {
                 <span class="text-foreground font-mono text-sm">${school.phone || '—'}</span>
               </div>
               <div>
-                <span class="text-muted-foreground block text-[11px] mb-0.5 ${isKm ? 'font-khmer' : ''}">${t('schools.colAddress')}:</span>
-                <span class="text-foreground leading-relaxed ${isKm ? 'font-khmer' : ''}">${school.address || '—'}</span>
+                <span class="text-muted-foreground block text-[11px] mb-1 ${isKm ? 'font-khmer' : ''}">${t('schools.colAddress')}:</span>
+                <div class="grid grid-cols-2 gap-2 text-xs bg-muted/20 p-2.5 rounded-lg border border-border/40">
+                  <div>
+                    <span class="text-muted-foreground text-[10px] block ${isKm ? 'font-khmer' : ''}">${t('schools.colVillage')}:</span>
+                    <span class="text-foreground font-medium ${isKm ? 'font-khmer' : ''}">${school.village || addrParts.village || '—'}</span>
+                  </div>
+                  <div>
+                    <span class="text-muted-foreground text-[10px] block ${isKm ? 'font-khmer' : ''}">${t('schools.colCommune')}:</span>
+                    <span class="text-foreground font-medium ${isKm ? 'font-khmer' : ''}">${school.commune || addrParts.commune || '—'}</span>
+                  </div>
+                  <div>
+                    <span class="text-muted-foreground text-[10px] block ${isKm ? 'font-khmer' : ''}">${t('schools.colDistrict')}:</span>
+                    <span class="text-foreground font-medium ${isKm ? 'font-khmer' : ''}">${school.district || addrParts.district || '—'}</span>
+                  </div>
+                  <div>
+                    <span class="text-muted-foreground text-[10px] block ${isKm ? 'font-khmer' : ''}">${t('schools.colProvince')}:</span>
+                    <span class="text-foreground font-medium ${isKm ? 'font-khmer' : ''}">${school.province || addrParts.province || '—'}</span>
+                  </div>
+                </div>
+                ${(school.address) ? `<p class="text-[11px] text-muted-foreground mt-1.5 leading-relaxed ${isKm ? 'font-khmer' : ''}">${school.address}</p>` : ''}
               </div>
             </div>
           </div>

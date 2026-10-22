@@ -24,6 +24,7 @@ import { getCloudSyncUrl } from '../config/cloudSync.js';
 import { getIcon } from '../components/icons.js';
 import { toast } from '../components/toast.js';
 import { formatDisplayDate } from '../utils/dateUtils.js';
+import { SchoolService } from '../services/schoolService.js';
 import { i18n, t } from '../i18n/i18n.js';
 
 export const DownloadDataPage = {
@@ -1095,20 +1096,34 @@ export const DownloadDataPage = {
     // 2. Schools tab
     const schoolHeaders = [
       'ល.រ (No.)', 'កូដសាលា (School Code)', 'ឈ្មោះសាលា (School Name Kh)',
-      'ឈ្មោះជាឡាតាំង (School Name En)', 'អាសយដ្ឋាន (Address)', 'នាយកសាលា (Director)',
-      'លេខទូរសព្ទ (Phone)', 'ផ្សេងៗ (Notes)'
+      'ឈ្មោះជាឡាតាំង (School Name En)', 'ភូមិ (Village)', 'ឃុំ/សង្កាត់ (Commune)',
+      'ស្រុក/ខណ្ឌ (District)', 'រាជធានី/ខេត្ត (Province)', 'អាសយដ្ឋាន (Full Address)',
+      'នាយកសាលា (Director)', 'លេខទូរសព្ទ (Phone)', 'ផ្សេងៗ (Notes)'
     ];
-    const schoolRows = (rawData.schools || []).map((sch, idx) => [
-      idx + 1,
-      sch.code || sch.id || '',
-      sch.name || '',
-      sch.nameEn || '',
-      sch.address || '',
-      sch.director || '',
-      sch.phone || '',
-      sch.notes || ''
-    ]);
-    createStyledWorksheet('schools', schoolHeaders, schoolRows, new Set([1, 2, 7]));
+    const schoolRows = (rawData.schools || []).map((sch, idx) => {
+      const addrParts = (!sch.village && !sch.commune && !sch.district && !sch.province && sch.address)
+        ? SchoolService.parseAddressToParts(sch.address)
+        : {};
+      const village = sch.village || addrParts.village || '';
+      const commune = sch.commune || addrParts.commune || '';
+      const district = sch.district || addrParts.district || '';
+      const province = sch.province || addrParts.province || '';
+      return [
+        idx + 1,
+        sch.code || sch.id || '',
+        sch.name || '',
+        sch.nameEn || '',
+        village,
+        commune,
+        district,
+        province,
+        sch.address || '',
+        sch.director || '',
+        sch.phone || '',
+        sch.notes || ''
+      ];
+    });
+    createStyledWorksheet('schools', schoolHeaders, schoolRows, new Set([1, 2, 10]));
 
     // 3. Classes tab
     const classHeaders = [
