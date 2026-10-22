@@ -6,7 +6,7 @@
  */
 import { ReportService } from '../services/reportService.js';
 import { StudentPlanService } from '../services/studentPlanService.js?v=3.0.88';
-import { StudentGradeBookService, formatTwoDigits, formatScoreNumber, calculateKhmerGrade } from '../services/studentGradeBookService.js?v=3.0.88';
+import { StudentGradeBookService, formatTwoDigits, formatScoreNumber, calculateKhmerGrade } from '../services/studentGradeBookService.js?v=3.1.02';
 import { ClassService } from '../services/classService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { authService } from '../services/authService.js';
@@ -1314,6 +1314,12 @@ export const ReportsPage = {
               ${getIcon('slidersHorizontal', 'w-3.5 h-3.5 text-primary')}
               <span>មុខវិជ្ជា</span>
             </button>
+
+            <!-- Annual Ranking Matrix Inspector Button -->
+            <button type="button" id="rv-gb-btn-view-annual-ranking-matrix" class="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-md border border-input bg-card hover:bg-muted text-xs font-semibold text-foreground cursor-pointer shadow-xs whitespace-nowrap active:scale-95 transition-all" title="ពិនិត្យមើលតារាងចំណាត់ថ្នាក់មុខវិជ្ជាប្រចាំឆ្នាំ (Hidden Annual Ranking Matrix)">
+              ${getIcon('table', 'w-3.5 h-3.5 text-primary')}
+              <span>តារាងប្រចាំឆ្នាំ</span>
+            </button>
           `;
 
           controlsContainer.querySelector('#rv-gb-filter-class')?.addEventListener('change', async (e) => {
@@ -1350,6 +1356,10 @@ export const ReportsPage = {
 
           controlsContainer.querySelector('#rv-gb-btn-toggle-subjects')?.addEventListener('click', async () => {
             await openGradeBookSubjectSelectionModal();
+          });
+
+          controlsContainer.querySelector('#rv-gb-btn-view-annual-ranking-matrix')?.addEventListener('click', async () => {
+            await openAnnualRankingMatrixModal();
           });
         };
 
@@ -1483,6 +1493,144 @@ export const ReportsPage = {
             toast.success('បានរក្សាទុកការកំណត់មុខវិជ្ជាជោគជ័យ');
             await viewer.refreshContent(true);
           });
+        };
+
+        const openAnnualRankingMatrixModal = async () => {
+          document.getElementById('modal-rv-gb-annual-matrix')?.remove();
+
+          const targetClass = classes.find(c => c.id === currentClassId) || { id: currentClassId, name: '—' };
+
+          const loadingModal = document.createElement('div');
+          loadingModal.id = 'modal-rv-gb-annual-matrix';
+          loadingModal.className = 'fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-sm animate-fade-in font-khmer select-none';
+          loadingModal.innerHTML = `
+            <div class="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col p-8 items-center justify-center gap-3">
+              <div class="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+              <p class="text-xs text-muted-foreground">កំពុងទាញយកតារាងគណនា & ចំណាត់ថ្នាក់មុខវិជ្ជាប្រចាំឆ្នាំ...</p>
+            </div>
+          `;
+          document.body.appendChild(loadingModal);
+
+          try {
+            const data = await StudentGradeBookService.getStudentGradeBook({
+              classId: currentClassId,
+              studentId: currentStudentId,
+              academicYear: activeYear
+            });
+
+            const matrix = data?.hiddenRankingTable;
+            if (!matrix || !matrix.rows || matrix.rows.length === 0) {
+              loadingModal.innerHTML = `
+                <div class="w-full max-w-md bg-card border border-border rounded-2xl p-6 text-center space-y-4">
+                  <p class="text-sm text-muted-foreground">មិនមានទិន្នន័យចំណាត់ថ្នាក់មុខវិជ្ជាសម្រាប់ថ្នាក់នេះឡើយ។</p>
+                  <button type="button" class="btn-close-modal px-4 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-medium cursor-pointer">បិទ</button>
+                </div>
+              `;
+              loadingModal.querySelector('.btn-close-modal')?.addEventListener('click', () => loadingModal.remove());
+              return;
+            }
+
+            const matrixSubjects = matrix.subjects || [];
+            const matrixRows = matrix.rows || [];
+
+            loadingModal.innerHTML = `
+              <div class="w-full max-w-6xl max-h-[90vh] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col text-foreground animate-scale-in">
+                <!-- Header -->
+                <div class="px-5 py-4 border-b border-border flex items-center justify-between bg-muted/30">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                      ${getIcon('table', 'w-4 h-4')}
+                    </div>
+                    <div>
+                      <h3 class="font-bold text-sm sm:text-base text-foreground leading-tight">តារាងគណនាមធ្យមភាគ & ចំណាត់ថ្នាក់មុខវិជ្ជាប្រចាំឆ្នាំ (Annual Ranking Matrix)</h3>
+                      <p class="text-[11px] text-muted-foreground mt-0.5">ថ្នាក់៖ <strong>${escapeHtml(targetClass.name || '—')}</strong> &bull; ចំនួនសិស្ស៖ <strong>${matrixRows.length} នាក់</strong> &bull; ចំណាត់ថ្នាក់ប្រចាំឆ្នាំគណនាផ្ទាល់ពីមធ្យមភាគប្រចាំឆ្នាំ (Sem1+Sem2)/2</p>
+                    </div>
+                  </div>
+                  <button type="button" id="btn-close-gb-matrix-modal" class="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer transition-colors">
+                    ${getIcon('x', 'w-4 h-4')}
+                  </button>
+                </div>
+
+                <!-- Table Content Container (Scrollable) -->
+                <div class="p-4 overflow-auto flex-1">
+                  <div class="border border-border rounded-xl overflow-hidden shadow-xs">
+                    <table class="w-full text-xs text-left border-collapse font-khmer">
+                      <thead>
+                        <tr class="bg-muted text-muted-foreground font-semibold text-[11px] border-b border-border text-center">
+                          <th rowspan="2" class="p-2 border-r border-border min-w-[40px]">ល.រ</th>
+                          <th rowspan="2" class="p-2 border-r border-border min-w-[70px]">អត្តលេខ</th>
+                          <th rowspan="2" class="p-2 border-r border-border text-left min-w-[130px]">គោត្តនាម-នាម</th>
+                          <th rowspan="2" class="p-2 border-r border-border min-w-[45px]">ភេទ</th>
+                          ${matrixSubjects.map(sub => `
+                            <th colspan="3" class="p-2 border-r border-border border-b border-border text-center font-bold text-foreground bg-muted/70">
+                              ${escapeHtml(sub.name)}
+                            </th>
+                          `).join('')}
+                        </tr>
+                        <tr class="bg-muted/50 text-[10px] text-muted-foreground border-b border-border text-center font-medium">
+                          ${matrixSubjects.map(() => `
+                            <th class="py-1 px-1.5 border-r border-border min-w-[42px]">ឆ.១</th>
+                            <th class="py-1 px-1.5 border-r border-border min-w-[42px]">ឆ.២</th>
+                            <th class="py-1 px-1.5 border-r border-border min-w-[65px] bg-primary/5 text-primary font-bold">ប្រចាំឆ្នាំ (ចំណាត់ថ្នាក់)</th>
+                          `).join('')}
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-border/60">
+                        ${matrixRows.map((r, idx) => {
+                          const isCurrent = r.id === currentStudentId || (r.studentId && r.studentId === currentStudentId);
+                          return `
+                            <tr class="hover:bg-muted/40 transition-colors ${isCurrent ? 'bg-primary/10 font-medium' : ''}">
+                              <td class="p-2 text-center border-r border-border text-muted-foreground">${idx + 1}</td>
+                              <td class="p-2 text-center border-r border-border font-mono text-[11px]">${escapeHtml(r.studentId || '—')}</td>
+                              <td class="p-2 border-r border-border font-semibold ${isCurrent ? 'text-primary' : 'text-foreground'}">
+                                ${escapeHtml(r.name || '—')}
+                                ${isCurrent ? '<span class="ml-1 text-[10px] text-primary bg-primary/15 px-1.5 py-0.5 rounded-full font-normal">(សិស្សបច្ចុប្បន្ន)</span>' : ''}
+                              </td>
+                              <td class="p-2 text-center border-r border-border text-muted-foreground">${escapeHtml(r.gender || '—')}</td>
+                              ${matrixSubjects.map(sub => {
+                                const c = r.subjects?.[sub.id] || {};
+                                const s1 = c.sem1 !== null && c.sem1 !== undefined ? c.sem1 : '—';
+                                const s2 = c.sem2 !== null && c.sem2 !== undefined ? c.sem2 : '—';
+                                const ann = c.annual !== null && c.annual !== undefined ? c.annual : '—';
+                                const annRank = c.annualRank ? c.annualRank : '—';
+                                return `
+                                  <td class="p-1.5 text-center border-r border-border">${s1}</td>
+                                  <td class="p-1.5 text-center border-r border-border">${s2}</td>
+                                  <td class="p-1.5 text-center border-r border-border bg-primary/5">
+                                    <span class="font-bold text-foreground">${ann}</span>
+                                    ${annRank !== '—' ? `<span class="ml-1 text-[10px] px-1 py-0.2 rounded bg-amber-500/10 text-amber-600 font-bold border border-amber-500/20">#${annRank}</span>` : ''}
+                                  </td>
+                                `;
+                              }).join('')}
+                            </tr>
+                          `;
+                        }).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="px-5 py-3 border-t border-border bg-muted/20 flex items-center justify-between text-xs">
+                  <span class="text-muted-foreground">តារាងគណនានេះត្រូវបានបង្កើតដោយស្វ័យប្រវត្តិសម្រាប់ផ្ទៀងផ្ទាត់ចំណាត់ថ្នាក់មុខវិជ្ជាប្រចាំឆ្នាំ</span>
+                  <button type="button" id="btn-close-gb-matrix-bottom" class="px-4 py-1.5 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 cursor-pointer transition-colors shadow-xs">
+                    យល់ព្រម
+                  </button>
+                </div>
+              </div>
+            `;
+
+            const closeModal = () => loadingModal.remove();
+            loadingModal.querySelector('#btn-close-gb-matrix-modal')?.addEventListener('click', closeModal);
+            loadingModal.querySelector('#btn-close-gb-matrix-bottom')?.addEventListener('click', closeModal);
+            loadingModal.addEventListener('click', (e) => {
+              if (e.target === loadingModal) closeModal();
+            });
+          } catch (err) {
+            console.error('Failed to display annual ranking modal:', err);
+            toast.error('បរាជ័យក្នុងការបង្ហាញតារាងប្រចាំឆ្នាំ');
+            loadingModal.remove();
+          }
         };
 
         updateControls();
@@ -2047,6 +2195,45 @@ export const ReportsPage = {
                   </div>
                 </div>
               </div>
+            </div>
+
+            <!-- Hidden Annual Subject Calculation & Ranking Table (Requested hidden table in DOM) -->
+            <div id="gradebook-hidden-annual-ranking-matrix" class="hidden" style="display: none;" aria-hidden="true">
+              <table border="1" data-purpose="annual-subject-ranking-matrix" data-class-id="${escapeHtml(currentClassId || '')}">
+                <thead>
+                  <tr>
+                    <th>Student ID</th>
+                    <th>Student Name</th>
+                    ${(data.hiddenRankingTable?.subjects || []).map(s => `
+                      <th data-subject-id="${s.id}">${escapeHtml(s.name)} (Sem1)</th>
+                      <th data-subject-id="${s.id}">${escapeHtml(s.name)} (Sem1 Rank)</th>
+                      <th data-subject-id="${s.id}">${escapeHtml(s.name)} (Sem2)</th>
+                      <th data-subject-id="${s.id}">${escapeHtml(s.name)} (Sem2 Rank)</th>
+                      <th data-subject-id="${s.id}">${escapeHtml(s.name)} (Annual Avg)</th>
+                      <th data-subject-id="${s.id}">${escapeHtml(s.name)} (Annual Rank)</th>
+                    `).join('')}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${(data.hiddenRankingTable?.rows || []).map(r => `
+                    <tr data-student-id="${escapeHtml(r.studentId || r.id || '')}">
+                      <td>${escapeHtml(r.studentId || '')}</td>
+                      <td>${escapeHtml(r.name || '')}</td>
+                      ${(data.hiddenRankingTable?.subjects || []).map(s => {
+                        const cell = r.subjects?.[s.id] || {};
+                        return `
+                          <td>${cell.sem1 ?? ''}</td>
+                          <td>${cell.sem1Rank ?? ''}</td>
+                          <td>${cell.sem2 ?? ''}</td>
+                          <td>${cell.sem2Rank ?? ''}</td>
+                          <td>${cell.annual ?? ''}</td>
+                          <td>${cell.annualRank ?? ''}</td>
+                        `;
+                      }).join('')}
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
             </div>
           </div>
         `;

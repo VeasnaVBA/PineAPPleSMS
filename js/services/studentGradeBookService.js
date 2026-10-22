@@ -153,7 +153,7 @@ export const StudentGradeBookService = {
   async getStudentGradeBook({ classId, studentId, academicYear }) {
     const [
       classes, rawStudents, allAttendance, schoolCatalog,
-      sem1ExamSheet, sem2ExamSheet, sem1Sheet, sem2Sheet
+      sem1ExamSheet, sem2ExamSheet, sem1Sheet, sem2Sheet, rawScores
     ] = await Promise.all([
       db.getAll('classes'),
       db.getAll('students'),
@@ -162,7 +162,8 @@ export const StudentGradeBookService = {
       ScoreService.getMasterScoreSheet({ classId, academicYear, period: 'Semester 1 Exam' }).catch(() => ({ rows: [] })),
       ScoreService.getMasterScoreSheet({ classId, academicYear, period: 'Semester 2 Exam' }).catch(() => ({ rows: [] })),
       ScoreService.getMasterScoreSheet({ classId, academicYear, period: 'Semester 1' }).catch(() => ({ rows: [] })),
-      ScoreService.getMasterScoreSheet({ classId, academicYear, period: 'Semester 2' }).catch(() => ({ rows: [] }))
+      ScoreService.getMasterScoreSheet({ classId, academicYear, period: 'Semester 2' }).catch(() => ({ rows: [] })),
+      db.getAll('scores').catch(() => [])
     ]);
 
     const targetClass = (classes || []).find(c => c.id === classId) || { id: classId, name: '—' };
@@ -335,61 +336,202 @@ export const StudentGradeBookService = {
     const annualExamRanks = rankList(allStudentsSummary, 'annualExamAvg');
     const annualOverallRanks = rankList(allStudentsSummary, 'annualOverall');
 
-    // Subject annual ranking across class
-    const subjectAnnualRanks = new Map();
+    // =========================================================================
+    // HIDDEN ANNUAL SUBJECT RANKING TABLE (Class-wide Calculation Matrix)
+    // =========================================================================
+    // User specification:
+    // 1. Column ប្រចាំឆ្នាំ មធ្យមភាគ of each subject is (ឆមាស១ + ឆមាស២) / 2
+    // 2. Column ប្រចាំឆ្នាំ ចំណាត់ថ្នាក់ is NOT (ឆមាស១ rank + ឆមាស២ rank) / 2!
+    //    It is calculated by ranking all students based on their Annual Subject Average!
+    // =========================================================================
+    const normYear = (y) => String(y || '').replace(/[\u2010\u2011\u2012\u2013\u2014\u2015-]/g, '-').trim();
+    const targetYear = normYear(academicYear);
+    const allClassScores = (rawScores || []).filter(s =>
+      s.classId === classId &&
+      (!targetYear || !s.academicYear || normYear(s.academicYear) === targetYear)
+    );
+
+    const getSubjectKeys = (sub) => {
+      return [sub.id, sub.code, sub._id, sub.name, sub.nameKm, sub.nameEn]
+        .filter(Boolean)
+        .map(k => String(k).trim().toLowerCase());
+    };
+
+    const getScoreFromScoresObject = (scoresObj, sub) => {
+      if (!scoresObj || typeof scoresObj !== 'object') return null;
+      const keys = getSubjectKeys(sub);
+      for (const [k, v] of Object.entries(scoresObj)) {
+        if (keys.includes(String(k).trim().toLowerCase())) {
+          if (v !== null && v !== undefined && v !== '') {
+            const n = Number(v);
+            if (!isNaN(n)) return n;
+          }
+        }
+      }
+      return null;
+    };
+
+    const matchesPeriodName = (m, at, periodKey) => {
+      const candidates = [m, at].filter(Boolean).map(x => String(x).trim().toLowerCase());
+      if (periodKey === 'sem1_exam') {
+        return candidates.some(c => c.includes('exam') && (c.includes('1') || c.includes('១'))) ||
+               candidates.some(c => c.includes('ប្រឡងឆមាសទី១') || c.includes('ប្រឡងឆមាស១'));
+      }
+      if (periodKey === 'sem2_exam') {
+        return candidates.some(c => c.includes('exam') && (c.includes('2') || c.includes('២'))) ||
+               candidates.some(c => c.includes('ប្រឡងឆមាសទី២') || c.includes('ប្រឡងឆមាស២'));
+      }
+      if (periodKey === 'sem1') {
+        return candidates.some(c => c === 'semester 1' || c === 'ឆមាសទី១' || c === 'ឆមាស១');
+      }
+      if (periodKey === 'sem2') {
+        return candidates.some(c => c === 'semester 2' || c === 'ឆមាសទី២' || c === 'ឆមាស២');
+      }
+      return false;
+    };
+
+    const resolveStudentSubjectScore = (stu, sub, semesterNum) => {
+      const isSem1 = semesterNum === 1;
+      const examRow = findSheetRow(isSem1 ? sem1ExamRowsMap : sem2ExamRowsMap, stu);
+      const examScore = getScoreFromScoresObject(examRow?.subjectScores, sub);
+      if (examScore !== null) return examScore;
+
+      const sheetRow = findSheetRow(isSem1 ? sem1RowsMap : sem2RowsMap, stu);
+      const sheetScore = getScoreFromScoresObject(sheetRow?.subjectScores, sub);
+      if (sheetScore !== null) return sheetScore;
+
+      const studentKeys = [stu.id, stu.studentId, stu._id].filter(Boolean).map(String);
+      const subKeys = getSubjectKeys(sub);
+      const matched = allClassScores.filter(s =>
+        studentKeys.includes(String(s.studentId)) &&
+        subKeys.includes(String(s.subjectId || s.subjectCode || s.subjectNameKm || '').trim().toLowerCase())
+      );
+
+      const examRecord = matched.find(s => matchesPeriodName(s.month, s.assessmentType, isSem1 ? 'sem1_exam' : 'sem2_exam'));
+      if (examRecord && (examRecord.totalScore !== undefined || examRecord.examScore !== undefined)) {
+        const val = Number(examRecord.totalScore ?? examRecord.examScore);
+        if (!isNaN(val)) return val;
+      }
+
+      const semRecord = matched.find(s => matchesPeriodName(s.month, s.assessmentType, isSem1 ? 'sem1' : 'sem2'));
+      if (semRecord && (semRecord.totalScore !== undefined || semRecord.examScore !== undefined)) {
+        const val = Number(semRecord.totalScore ?? semRecord.examScore);
+        if (!isNaN(val)) return val;
+      }
+
+      const sem1Months = ['october', 'november', 'december', 'january', 'february', 'តុលា', 'វិច្ឆិកា', 'ធ្នូ', 'មករា', 'កុម្ភៈ'];
+      const sem2Months = ['march', 'april', 'may', 'june', 'july', 'មីនា', 'មេសា', 'ឧសភា', 'មិថុនា', 'កក្កដា'];
+      const targetMonths = isSem1 ? sem1Months : sem2Months;
+      const monthScores = matched.filter(s => {
+        const m = String(s.month || s.assessmentType || '').trim().toLowerCase();
+        return targetMonths.some(tm => m.includes(tm));
+      });
+      if (monthScores.length > 0) {
+        const sum = monthScores.reduce((acc, cur) => acc + (Number(cur.totalScore ?? cur.examScore) || 0), 0);
+        return Math.round((sum / monthScores.length) * 100) / 100;
+      }
+
+      return null;
+    };
+
+    // 1. Build the Hidden Calculation Matrix for all students in the class
+    const hiddenRankingMatrix = classStudents.map((stu, sIdx) => {
+      const row = {
+        index: sIdx + 1,
+        indexKm: toKhmerNumerals(sIdx + 1),
+        id: stu.id,
+        studentId: stu.studentId || '',
+        name: stu.khmerName || `${stu.firstNameKh || ''} ${stu.lastNameKh || ''}`.trim() || stu.name || '—',
+        gender: stu.gender || '—',
+        subjects: {}
+      };
+
+      subjects.forEach(sub => {
+        const s1 = resolveStudentSubjectScore(stu, sub, 1);
+        const s2 = resolveStudentSubjectScore(stu, sub, 2);
+        let ann = null;
+        if (s1 !== null && s2 !== null) {
+          ann = Math.round(((s1 + s2) / 2) * 100) / 100;
+        } else if (s1 !== null) {
+          ann = s1;
+        } else if (s2 !== null) {
+          ann = s2;
+        }
+
+        row.subjects[sub.id] = {
+          sem1: s1,
+          sem1Rank: '',
+          sem2: s2,
+          sem2Rank: '',
+          annual: ann,
+          annualRank: ''
+        };
+      });
+
+      return row;
+    });
+
+    // 2. Compute Class Ranks for Each Subject (Standard Competition Ranking / RANK.EQ)
     subjects.forEach(sub => {
-      const list = classStudents
-        .map(stu => {
-          const s1Exam = findSheetRow(sem1ExamRowsMap, stu);
-          const s2Exam = findSheetRow(sem2ExamRowsMap, stu);
-          const s1 = (s1Exam?.subjectScores?.[sub.id] !== undefined && s1Exam?.subjectScores?.[sub.id] !== null)
-            ? Number(s1Exam.subjectScores[sub.id])
-            : null;
-          const s2 = (s2Exam?.subjectScores?.[sub.id] !== undefined && s2Exam?.subjectScores?.[sub.id] !== null)
-            ? Number(s2Exam.subjectScores[sub.id])
-            : null;
-          let ann = null;
-          if (s1 !== null && s2 !== null) ann = Math.round(((s1 + s2) / 2) * 100) / 100;
-          else ann = s1 ?? s2 ?? null;
-          return { id: stu.id, altId: stu.studentId, score: ann };
-        })
+      // Semester 1 Rank
+      const sem1List = hiddenRankingMatrix
+        .map(r => ({ id: r.id, score: r.subjects[sub.id].sem1 }))
         .filter(x => x.score !== null && x.score !== undefined && !isNaN(x.score))
         .sort((a, b) => b.score - a.score);
 
-      const m = new Map();
-      let r = 1;
-      for (let i = 0; i < list.length; i++) {
-        if (i > 0 && list[i].score < list[i - 1].score) {
-          r = i + 1;
+      let r1 = 1;
+      for (let i = 0; i < sem1List.length; i++) {
+        if (i > 0 && sem1List[i].score < sem1List[i - 1].score) {
+          r1 = i + 1;
         }
-        m.set(list[i].id, r);
-        if (list[i].altId) m.set(list[i].altId, r);
+        const target = hiddenRankingMatrix.find(r => r.id === sem1List[i].id);
+        if (target) target.subjects[sub.id].sem1Rank = r1;
       }
-      subjectAnnualRanks.set(sub.id, m);
+
+      // Semester 2 Rank
+      const sem2List = hiddenRankingMatrix
+        .map(r => ({ id: r.id, score: r.subjects[sub.id].sem2 }))
+        .filter(x => x.score !== null && x.score !== undefined && !isNaN(x.score))
+        .sort((a, b) => b.score - a.score);
+
+      let r2 = 1;
+      for (let i = 0; i < sem2List.length; i++) {
+        if (i > 0 && sem2List[i].score < sem2List[i - 1].score) {
+          r2 = i + 1;
+        }
+        const target = hiddenRankingMatrix.find(r => r.id === sem2List[i].id);
+        if (target) target.subjects[sub.id].sem2Rank = r2;
+      }
+
+      // Annual Rank: Strictly calculated from Annual Average (NOT from averaging ranks!)
+      const annualList = hiddenRankingMatrix
+        .map(r => ({ id: r.id, score: r.subjects[sub.id].annual }))
+        .filter(x => x.score !== null && x.score !== undefined && !isNaN(x.score))
+        .sort((a, b) => b.score - a.score);
+
+      let rAnn = 1;
+      for (let i = 0; i < annualList.length; i++) {
+        if (i > 0 && annualList[i].score < annualList[i - 1].score) {
+          rAnn = i + 1;
+        }
+        const target = hiddenRankingMatrix.find(r => r.id === annualList[i].id);
+        if (target) target.subjects[sub.id].annualRank = rAnn;
+      }
     });
 
-    // Subject rows for current student
-    const curS1Exam = findSheetRow(sem1ExamRowsMap, currentStudent);
-    const curS2Exam = findSheetRow(sem2ExamRowsMap, currentStudent);
+    // 3. Subject rows for current student derived directly from the hidden calculation matrix
+    const curMatrixRow = hiddenRankingMatrix.find(r =>
+      r.id === curStuId || (currentAltId && r.studentId === currentAltId)
+    );
 
     const subjectRows = subjects.map((sub, idx) => {
-      const s1 = (curS1Exam?.subjectScores?.[sub.id] !== undefined && curS1Exam?.subjectScores?.[sub.id] !== null)
-        ? Number(curS1Exam.subjectScores[sub.id])
-        : null;
-      const sem1Rank = curS1Exam?.subjectRanks?.[sub.id] || '';
-
-      const s2 = (curS2Exam?.subjectScores?.[sub.id] !== undefined && curS2Exam?.subjectScores?.[sub.id] !== null)
-        ? Number(curS2Exam.subjectScores[sub.id])
-        : null;
-      const sem2Rank = curS2Exam?.subjectRanks?.[sub.id] || '';
-
-      let ann = null;
-      if (s1 !== null && s2 !== null) {
-        ann = Math.round(((s1 + s2) / 2) * 100) / 100;
-      } else {
-        ann = s1 ?? s2 ?? null;
-      }
-      const annualRank = ann !== null ? (subjectAnnualRanks.get(sub.id)?.get(curStuId) || subjectAnnualRanks.get(sub.id)?.get(currentAltId) || '') : '';
+      const subCalc = curMatrixRow?.subjects?.[sub.id] || {};
+      const s1 = subCalc.sem1 ?? null;
+      const sem1Rank = subCalc.sem1Rank ? String(subCalc.sem1Rank) : '';
+      const s2 = subCalc.sem2 ?? null;
+      const sem2Rank = subCalc.sem2Rank ? String(subCalc.sem2Rank) : '';
+      const ann = subCalc.annual ?? null;
+      const annualRank = subCalc.annualRank ? String(subCalc.annualRank) : '';
 
       const fullScore = SubjectService.getSubjectFullScore(sub, targetClass?.name || 'G7');
       const remark = ann !== null ? calculateKhmerGrade(ann, fullScore) : '';
@@ -561,7 +703,11 @@ export const StudentGradeBookService = {
         sem2: sem2Eval,
         annual: annualEval
       },
-      graduationResult
+      graduationResult,
+      hiddenRankingTable: {
+        subjects: subjects.map(s => ({ id: s.id, name: s.name || s.nameKm || '', code: s.code || '' })),
+        rows: hiddenRankingMatrix
+      }
     };
   }
 };
