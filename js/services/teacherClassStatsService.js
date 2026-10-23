@@ -50,7 +50,7 @@ export const TeacherClassStatsService = {
    */
   isFemaleStudent(stu) {
     if (!stu) return false;
-    const g = String(stu.gender || stu['ភេទ'] || stu.sex || '').trim().toLowerCase();
+    const g = String(stu.gender || stu['ភេទ'] || stu.sex || stu.raw?.gender || stu.raw?.['ភេទ'] || stu.raw?.sex || '').trim().toLowerCase();
     const cleanG = g.replace(/[\s\u200B\u200C\u200D\uFEFF]/g, '');
     return cleanG.includes('ស្រី') || cleanG === 'female' || cleanG === 'f' || cleanG === '2';
   },
@@ -99,15 +99,73 @@ export const TeacherClassStatsService = {
   },
 
   /**
-   * Helper: Check if student is an ethnic minority
+   * Helper: Check if student is an ethnic minority (ជនជាតិភាគតិច / ជនជាតិដើមភាគតិច)
+   * Specifically inspects column ផ្សេងៗ (notes / ផ្សេងៗ / ចំណាំ) as well as ethnicity fields.
    */
   isEthnicMinorityStudent(stu) {
     if (!stu) return false;
-    if (stu.isEthnicMinority === true || stu.ethnicMinority === true) return true;
-    const eth = String(stu.ethnicity || stu.ethnic || '').trim().toLowerCase();
-    if (eth && eth !== 'khmer' && eth !== 'ខ្មែរ') return true;
-    const notes = String(stu.notes || '').toLowerCase();
-    return notes.includes('ជនជាតិដើម') || notes.includes('ភាគតិច');
+    if (stu.isEthnicMinority === true || stu.ethnicMinority === true || stu.isIndigenous === true) return true;
+
+    // Collect all candidate fields related to "ផ្សេងៗ" (Notes), remarks, and ethnicity
+    const candidateSources = [
+      stu.notes,
+      stu['ផ្សេងៗ'],
+      stu['ចំណាំ'],
+      stu['កំណត់ចំណាំ'],
+      stu.note,
+      stu.remark,
+      stu.remarks,
+      stu.other,
+      stu.others,
+      stu.ethnicity,
+      stu.ethnic,
+      stu['ជនជាតិ'],
+      stu['ជនជាតិដើមភាគតិច'],
+      stu['ជនជាតិភាគតិច'],
+      stu.status,
+      stu.raw?.notes,
+      stu.raw?.['ផ្សេងៗ'],
+      stu.raw?.['ចំណាំ'],
+      stu.raw?.['កំណត់ចំណាំ'],
+      stu.raw?.note,
+      stu.raw?.remark,
+      stu.raw?.ethnicity
+    ];
+
+    for (const src of candidateSources) {
+      if (!src) continue;
+      const str = String(src).toLowerCase();
+      // Strip spaces, zero-width spaces, and punctuation for robust Khmer script matching
+      const clean = str.replace(/[\s\u200B\u200C\u200D\uFEFF_.,;:!?-]/g, '');
+      if (
+        clean.includes('ជនជាតិភាគតិច') ||
+        clean.includes('ជនជាតិដើមភាគតិច') ||
+        clean.includes('ជនជាតិដើម') ||
+        clean.includes('ភាគតិច') ||
+        clean.includes('ethnicminority') ||
+        clean.includes('indigenous') ||
+        clean.includes('ព្នង') ||
+        clean.includes('គ្រឹង') ||
+        clean.includes('ទំពូន') ||
+        clean.includes('ចារាយ') ||
+        clean.includes('កួយ') ||
+        clean.includes('ស្ទៀង') ||
+        clean.includes('ព្រៅ') ||
+        clean.includes('កាវែត') ||
+        clean.includes('ចាម')
+      ) {
+        return true;
+      }
+    }
+
+    // Direct ethnicity field check (if an ethnicity is specified and not Khmer)
+    const eth = String(stu.ethnicity || stu.ethnic || stu['ជនជាតិ'] || '').trim().toLowerCase();
+    const cleanEth = eth.replace(/[\s\u200B\u200C\u200D\uFEFF_.,;:!?-]/g, '');
+    if (cleanEth && cleanEth !== 'khmer' && cleanEth !== 'ខ្មែរ' && cleanEth !== 'កម្ពុជា' && cleanEth !== '-') {
+      return true;
+    }
+
+    return false;
   },
 
   /**
