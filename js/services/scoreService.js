@@ -4,6 +4,7 @@ import { SubjectService } from './subjectService.js';
 import { authService } from './authService.js';
 import { syncStateManager } from './syncStateManager.js';
 import { SettingsService } from './settingsService.js';
+import { normalizeStudentRecord } from './studentService.js';
 
 export const EVALUATION_PERIODS = [
   // Months Jan to Dec
@@ -394,7 +395,26 @@ export const ScoreService = {
     }
 
     const students = await ClassService.getEnrolledStudents(classId);
-    const activeStudents = students.filter(isStudentActive);
+    const activeStudents = (students || [])
+      .map(normalizeStudentRecord)
+      .filter(isStudentActive);
+
+    // Always sort students ascending (A-Z) by Khmer surname (lastNameKh), then given name (firstNameKh)
+    activeStudents.sort((a, b) => {
+      const lastA = String(a.lastNameKh || '').trim();
+      const lastB = String(b.lastNameKh || '').trim();
+      const lastComp = lastA.localeCompare(lastB, ['km', 'en'], { numeric: true, sensitivity: 'base' });
+      if (lastComp !== 0) return lastComp;
+
+      const firstA = String(a.firstNameKh || '').trim();
+      const firstB = String(b.firstNameKh || '').trim();
+      const firstComp = firstA.localeCompare(firstB, ['km', 'en'], { numeric: true, sensitivity: 'base' });
+      if (firstComp !== 0) return firstComp;
+
+      const nameA = String(a.khmerName || a.fullName || a.name || '').trim();
+      const nameB = String(b.khmerName || b.fullName || b.name || '').trim();
+      return nameA.localeCompare(nameB, ['km', 'en'], { numeric: true, sensitivity: 'base' });
+    });
 
     let className = '7A';
     try {
@@ -489,10 +509,10 @@ export const ScoreService = {
     }
 
     const rows = activeStudents.map(stu => {
-      // User requirement: Student Name (khmer firstname + khmer last name)
+      // Standard Khmer naming: Surname (lastNameKh) + Given Name (firstNameKh)
       let fullNameKh = '';
-      if (stu.firstNameKh || stu.lastNameKh) {
-        fullNameKh = `${stu.firstNameKh || ''} ${stu.lastNameKh || ''}`.trim();
+      if (stu.lastNameKh || stu.firstNameKh) {
+        fullNameKh = `${stu.lastNameKh || ''} ${stu.firstNameKh || ''}`.trim();
       } else {
         fullNameKh = stu.khmerName || stu.fullName || stu.name || '—';
       }
@@ -657,6 +677,24 @@ export const ScoreService = {
     this.rankStudents(rows);
     this.rankSubjectStudents(rows, subjectsWithMeta);
     this.calculateSubjectGrades(rows, subjectsWithMeta);
+
+    // Ensure rows are consistently sorted ascending (A-Z) by surname (lastNameKh), then given name (firstNameKh)
+    rows.sort((a, b) => {
+      const lastA = String(a.lastNameKh || '').trim();
+      const lastB = String(b.lastNameKh || '').trim();
+      const lastComp = lastA.localeCompare(lastB, ['km', 'en'], { numeric: true, sensitivity: 'base' });
+      if (lastComp !== 0) return lastComp;
+
+      const firstA = String(a.firstNameKh || '').trim();
+      const firstB = String(b.firstNameKh || '').trim();
+      const firstComp = firstA.localeCompare(firstB, ['km', 'en'], { numeric: true, sensitivity: 'base' });
+      if (firstComp !== 0) return firstComp;
+
+      const nameA = String(a.khmerFullName || '').trim();
+      const nameB = String(b.khmerFullName || '').trim();
+      return nameA.localeCompare(nameB, ['km', 'en'], { numeric: true, sensitivity: 'base' });
+    });
+
     return {
       rows,
       subjects: subjectsWithMeta,
@@ -842,7 +880,26 @@ export const ScoreService = {
     }
 
     const students = await ClassService.getEnrolledStudents(classId);
-    const activeStudents = students.filter(isStudentActive);
+    const activeStudents = (students || [])
+      .map(normalizeStudentRecord)
+      .filter(isStudentActive);
+
+    // Always sort students ascending (A-Z) by Khmer surname, then given name
+    activeStudents.sort((a, b) => {
+      const lastA = String(a.lastNameKh || '').trim();
+      const lastB = String(b.lastNameKh || '').trim();
+      const lastComp = lastA.localeCompare(lastB, ['km', 'en'], { numeric: true, sensitivity: 'base' });
+      if (lastComp !== 0) return lastComp;
+
+      const firstA = String(a.firstNameKh || '').trim();
+      const firstB = String(b.firstNameKh || '').trim();
+      const firstComp = firstA.localeCompare(firstB, ['km', 'en'], { numeric: true, sensitivity: 'base' });
+      if (firstComp !== 0) return firstComp;
+
+      const nameA = String(a.khmerName || a.fullName || a.name || '').trim();
+      const nameB = String(b.khmerName || b.fullName || b.name || '').trim();
+      return nameA.localeCompare(nameB, ['km', 'en'], { numeric: true, sensitivity: 'base' });
+    });
 
     // Fetch class info to detect grade level (e.g. '7A' -> 'G7')
     let className = '7A';

@@ -239,10 +239,27 @@ export const ClassService = {
       db.get('classes', classId)
     ]);
     const className = cls?.name ? String(cls.name).trim().toLowerCase() : '';
-    return students.filter(s => 
+    const filtered = (students || []).filter(s => 
       s.classId === classId || 
       (className && s.classId && String(s.classId).trim().toLowerCase() === className)
     );
+    // Always sort students ascending by Khmer surname (lastNameKh), then given name (firstNameKh)
+    filtered.sort((a, b) => {
+      const lastA = String(a.lastNameKh || '').trim();
+      const lastB = String(b.lastNameKh || '').trim();
+      const lastComp = lastA.localeCompare(lastB, ['km', 'en'], { numeric: true, sensitivity: 'base' });
+      if (lastComp !== 0) return lastComp;
+
+      const firstA = String(a.firstNameKh || '').trim();
+      const firstB = String(b.firstNameKh || '').trim();
+      const firstComp = firstA.localeCompare(firstB, ['km', 'en'], { numeric: true, sensitivity: 'base' });
+      if (firstComp !== 0) return firstComp;
+
+      const nameA = String(a.khmerName || a.fullName || a.name || '').trim();
+      const nameB = String(b.khmerName || b.fullName || b.name || '').trim();
+      return nameA.localeCompare(nameB, ['km', 'en'], { numeric: true, sensitivity: 'base' });
+    });
+    return filtered;
   },
 
   /**

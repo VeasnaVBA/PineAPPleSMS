@@ -19,8 +19,8 @@
  * - Instant Dynamic Calculations & Background Auto-Sync
  */
 
-import { ScoreService, EVALUATION_PERIODS, isStudentActive } from '../services/scoreService.js';
-import { ClassService } from '../services/classService.js';
+import { ScoreService, EVALUATION_PERIODS, isStudentActive } from '../services/scoreService.js?v=3.1.29';
+import { ClassService } from '../services/classService.js?v=3.1.29';
 import { SubjectService } from '../services/subjectService.js';
 import { SettingsService } from '../services/settingsService.js';
 import { SchoolService } from '../services/schoolService.js';
@@ -124,6 +124,8 @@ export const ScoresPage = {
     coefficients: {},
     rows: [],
     searchQuery: '',
+    sortField: 'lastNameKh',
+    sortDir: 'asc',
     subjectExtraCol: localStorage.getItem('scores_subject_extra_col') || 'none', // 'none' | 'rank' | 'grade' | 'both'
     semesterMonths: [null, null, null, null, null, null],
     _monthAveragesCache: {},
@@ -592,7 +594,7 @@ export const ScoresPage = {
       period: this.state.selectedPeriod
     });
 
-    this.state.rows = data.rows || [];
+    this.state.rows = this.sortStudentRows(data.rows || [], this.state.sortField || 'lastNameKh', this.state.sortDir || 'asc');
     this.state.subjects = data.subjects || [];
 
     if (isSemester) {
@@ -614,6 +616,41 @@ export const ScoresPage = {
     this.renderHeader();
     this.renderRows();
     this.updateSummaryStats();
+  },
+
+  /**
+   * Sort student rows alphabetically (Khmer A-Z) by surname or given name
+   */
+  sortStudentRows(rows, field = 'lastNameKh', dir = 'asc') {
+    return [...rows].sort((a, b) => {
+      let comp = 0;
+      if (field === 'firstNameKh') {
+        const firstA = String(a.firstNameKh || '').trim();
+        const firstB = String(b.firstNameKh || '').trim();
+        comp = firstA.localeCompare(firstB, ['km', 'en'], { numeric: true, sensitivity: 'base' });
+        if (comp === 0) {
+          const lastA = String(a.lastNameKh || '').trim();
+          const lastB = String(b.lastNameKh || '').trim();
+          comp = lastA.localeCompare(lastB, ['km', 'en'], { numeric: true, sensitivity: 'base' });
+        }
+      } else {
+        // Default: Sort by lastNameKh (Surname) first
+        const lastA = String(a.lastNameKh || '').trim();
+        const lastB = String(b.lastNameKh || '').trim();
+        comp = lastA.localeCompare(lastB, ['km', 'en'], { numeric: true, sensitivity: 'base' });
+        if (comp === 0) {
+          const firstA = String(a.firstNameKh || '').trim();
+          const firstB = String(b.firstNameKh || '').trim();
+          comp = firstA.localeCompare(firstB, ['km', 'en'], { numeric: true, sensitivity: 'base' });
+        }
+      }
+      if (comp === 0) {
+        const nameA = String(a.khmerFullName || '').trim();
+        const nameB = String(b.khmerFullName || '').trim();
+        comp = nameA.localeCompare(nameB, ['km', 'en'], { numeric: true, sensitivity: 'base' });
+      }
+      return dir === 'asc' ? comp : -comp;
+    });
   },
 
   organizeGroupedSubjects() {
@@ -697,11 +734,17 @@ export const ScoresPage = {
       <th class="score-sticky-col-1 p-0 text-center font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 ${isKm ? 'font-khmer text-xs' : 'font-mono text-xs'}" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
         <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-center text-center bg-transparent">${isKm ? 'ល.រ' : 'No.'}</div>
       </th>
-      <th class="score-sticky-col-2 p-0 text-left font-bold font-khmer text-slate-800 dark:text-slate-100 bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
-        <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-start text-left px-2 text-xs bg-transparent">${isKm ? 'គោត្តនាម' : 'Surname'}</div>
+      <th class="score-sticky-col-2 p-0 text-left font-bold font-khmer text-slate-800 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 cursor-pointer select-none hover:bg-slate-200/80 dark:hover:bg-slate-700/80 transition-colors" id="col-sort-lastname" title="${isKm ? 'ចុចដើម្បីតម្រៀបតាមគោត្តនាម' : 'Click to sort by surname'}" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
+        <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-start text-left px-2 text-xs bg-transparent gap-1">
+          <span>${isKm ? 'គោត្តនាម' : 'Surname'}</span>
+          <span class="text-[10px] text-primary font-mono">${(this.state.sortField === 'lastNameKh' || !this.state.sortField) ? (this.state.sortDir === 'desc' ? '▼' : '▲') : ''}</span>
+        </div>
       </th>
-      <th class="score-sticky-col-3 p-0 text-left font-bold font-khmer text-slate-800 dark:text-slate-100 bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
-        <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-start text-left px-2 text-xs bg-transparent">${isKm ? 'នាម' : 'Name'}</div>
+      <th class="score-sticky-col-3 p-0 text-left font-bold font-khmer text-slate-800 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 cursor-pointer select-none hover:bg-slate-200/80 dark:hover:bg-slate-700/80 transition-colors" id="col-sort-firstname" title="${isKm ? 'ចុចដើម្បីតម្រៀបតាមនាម' : 'Click to sort by name'}" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
+        <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-start text-left px-2 text-xs bg-transparent gap-1">
+          <span>${isKm ? 'នាម' : 'Name'}</span>
+          <span class="text-[10px] text-primary font-mono">${this.state.sortField === 'firstNameKh' ? (this.state.sortDir === 'desc' ? '▼' : '▲') : ''}</span>
+        </div>
       </th>
       <th class="score-sticky-col-4 p-0 text-center font-bold font-khmer text-slate-800 dark:text-slate-100 bg-slate-100 dark:bg-slate-800" style="z-index: 50 !important; transform: translateZ(0) !important; vertical-align: middle !important;">
         <div class="w-full h-full min-h-[96px] whitespace-nowrap flex items-center justify-center text-center px-1 text-xs bg-transparent">${isKm ? 'ភេទ' : 'Sex'}</div>
@@ -793,6 +836,33 @@ export const ScoresPage = {
         </div>
       </th>
     `;
+
+    // Attach click handlers to sortable columns: គោត្តនាម and នាម
+    const colLastName = headerRow.querySelector('#col-sort-lastname');
+    colLastName?.addEventListener('click', () => {
+      if (this.state.sortField === 'lastNameKh') {
+        this.state.sortDir = this.state.sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        this.state.sortField = 'lastNameKh';
+        this.state.sortDir = 'asc';
+      }
+      this.state.rows = this.sortStudentRows(this.state.rows, this.state.sortField, this.state.sortDir);
+      this.renderHeader();
+      this.renderRows();
+    });
+
+    const colFirstName = headerRow.querySelector('#col-sort-firstname');
+    colFirstName?.addEventListener('click', () => {
+      if (this.state.sortField === 'firstNameKh') {
+        this.state.sortDir = this.state.sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        this.state.sortField = 'firstNameKh';
+        this.state.sortDir = 'asc';
+      }
+      this.state.rows = this.sortStudentRows(this.state.rows, this.state.sortField, this.state.sortDir);
+      this.renderHeader();
+      this.renderRows();
+    });
 
     // Attach click handlers to month column headers for Semester 1 & 2
     if (isSemester) {
@@ -1064,7 +1134,7 @@ export const ScoresPage = {
     const showGrade = mode === 'grade' || mode === 'both';
     const extraColsPerSub = (showRank ? 1 : 0) + (showGrade ? 1 : 0);
 
-    let rows = this.state.rows;
+    let rows = this.sortStudentRows(this.state.rows, this.state.sortField || 'lastNameKh', this.state.sortDir || 'asc');
     const query = (this.state.searchQuery || '').trim().toLowerCase();
     if (query) {
       rows = rows.filter(r => 
