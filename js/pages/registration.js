@@ -7,7 +7,7 @@ import { RegistrationService } from '../services/registrationService.js';
 import { ClassService } from '../services/classService.js';
 import { StudentExcelService } from '../services/studentExcelService.js';
 import { photoService } from '../services/photoService.js';
-import { StudentFormModal } from '../components/studentFormModal.js';
+import { StudentFormModal } from '../components/studentFormModal.js?v=3.1.28';
 import { Modal } from '../components/modal.js';
 import { toast } from '../components/toast.js';
 import { t, i18n } from '../i18n/i18n.js';

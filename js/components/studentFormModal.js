@@ -120,6 +120,25 @@ export const StudentFormModal = {
     const initialDob = toInputDateFormat(rawDob);
     const initialAge = student?.age || calculateAge(rawDob);
 
+    // Initial check for repeating student (ត្រួតថ្នាក់) and ethnic minority (ជនជាតិភាគតិច)
+    const rawNotes = String(student?.notes || student?.['ផ្សេងៗ'] || '').toLowerCase();
+    const cleanRawNotes = rawNotes.replace(/[\s\u200B\u200C\u200D\uFEFF_.,;:!?-]/g, '');
+    const initialIsRepeating = Boolean(
+      student?.isRepeating ||
+      student?.repeating ||
+      cleanRawNotes.includes('ត្រួតថ្នាក់') ||
+      cleanRawNotes.includes('ត្រួត')
+    );
+    const initialIsEthnic = Boolean(
+      student?.isEthnicMinority ||
+      student?.ethnicMinority ||
+      student?.isIndigenous ||
+      cleanRawNotes.includes('ជនជាតិភាគតិច') ||
+      cleanRawNotes.includes('ជនជាតិដើមភាគតិច') ||
+      cleanRawNotes.includes('ជនជាតិដើម') ||
+      cleanRawNotes.includes('ភាគតិច')
+    );
+
     // Harvest & load customizable locations
     try {
       const allStudentsForHarvest = await StudentService.getAll();
@@ -749,9 +768,22 @@ export const StudentFormModal = {
 
           <!-- 29. Notes -->
           <div>
-            <label class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1 block leading-relaxed ${isKm ? 'font-khmer' : ''}">
-              ${t('students.notes')}
-            </label>
+            <div class="flex items-center justify-between mb-1.5 flex-wrap gap-2 select-none">
+              <label class="text-xs font-semibold text-muted-foreground uppercase tracking-wide block leading-relaxed ${isKm ? 'font-khmer' : ''}">
+                ${t('students.notes')}
+              </label>
+              <!-- Tick boxes for ត្រួតថ្នាក់ and ជនជាតិភាគតិច -->
+              <div class="flex items-center gap-2 sm:gap-3">
+                <label class="inline-flex items-center gap-1.5 text-xs font-medium cursor-pointer text-foreground hover:text-amber-600 dark:hover:text-amber-400 transition-colors bg-amber-500/10 border border-amber-500/25 px-2.5 py-1 rounded-md" title="សម្គាល់សិស្សត្រួតថ្នាក់">
+                  <input type="checkbox" id="chk-repeat-student" ${initialIsRepeating ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-amber-400 text-amber-600 focus:ring-amber-500 cursor-pointer" />
+                  <span class="font-khmer font-semibold text-amber-700 dark:text-amber-300">ត្រួតថ្នាក់</span>
+                </label>
+                <label class="inline-flex items-center gap-1.5 text-xs font-medium cursor-pointer text-foreground hover:text-blue-600 dark:hover:text-blue-400 transition-colors bg-blue-500/10 border border-blue-500/25 px-2.5 py-1 rounded-md" title="សម្គាល់សិស្សជនជាតិដើមភាគតិច">
+                  <input type="checkbox" id="chk-ethnic-minority" ${initialIsEthnic ? 'checked' : ''} class="w-3.5 h-3.5 rounded border-blue-400 text-blue-600 focus:ring-blue-500 cursor-pointer" />
+                  <span class="font-khmer font-semibold text-blue-700 dark:text-blue-300">ជនជាតិភាគតិច</span>
+                </label>
+              </div>
+            </div>
             <textarea id="form-notes" 
                       rows="3" 
                       placeholder="${t('students.notesPlaceholder')}" 
@@ -948,6 +980,54 @@ export const StudentFormModal = {
       }
     });
 
+    // ត្រួតថ្នាក់ and ជនជាតិភាគតិច checkbox synchronization with #form-notes textarea
+    const notesTextarea = modal.element.querySelector('#form-notes');
+    const chkRepeat = modal.element.querySelector('#chk-repeat-student');
+    const chkEthnic = modal.element.querySelector('#chk-ethnic-minority');
+
+    const updateNoteTag = (tagText, shouldAdd, removeRegex) => {
+      if (!notesTextarea) return;
+      let currentVal = (notesTextarea.value || '').trim();
+
+      if (shouldAdd) {
+        const cleanCurrent = currentVal.replace(/[\s\u200B\u200C\u200D\uFEFF]/g, '');
+        const cleanTag = tagText.replace(/[\s\u200B\u200C\u200D\uFEFF]/g, '');
+        if (!cleanCurrent.includes(cleanTag)) {
+          notesTextarea.value = currentVal ? `${currentVal}, ${tagText}` : tagText;
+        }
+      } else {
+        let cleaned = currentVal.replace(removeRegex, '');
+        cleaned = cleaned
+          .split(',')
+          .map(p => p.trim())
+          .filter(Boolean)
+          .join(', ');
+        notesTextarea.value = cleaned;
+      }
+      notesTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+
+    chkRepeat?.addEventListener('change', (e) => {
+      updateNoteTag('ត្រួតថ្នាក់', e.target.checked, /ត្រួតថ្នាក់|ត្រួត/g);
+    });
+
+    chkEthnic?.addEventListener('change', (e) => {
+      updateNoteTag('ជនជាតិភាគតិច', e.target.checked, /ជនជាតិភាគតិច|ជនជាតិដើមភាគតិច|ជនជាតិដើម|ភាគតិច/g);
+    });
+
+    notesTextarea?.addEventListener('input', () => {
+      const cleanVal = (notesTextarea.value || '').replace(/[\s\u200B\u200C\u200D\uFEFF]/g, '');
+      if (chkRepeat) {
+        chkRepeat.checked = cleanVal.includes('ត្រួតថ្នាក់') || cleanVal.includes('ត្រួត');
+      }
+      if (chkEthnic) {
+        chkEthnic.checked = cleanVal.includes('ជនជាតិភាគតិច') ||
+                            cleanVal.includes('ជនជាតិដើមភាគតិច') ||
+                            cleanVal.includes('ជនជាតិដើម') ||
+                            cleanVal.includes('ភាគតិច');
+      }
+    });
+
     // Sync location dropdowns
     const syncLocationDropdowns = (cat) => {
       const dropdowns = modal.element.querySelectorAll(`.custom-location-dropdown[data-category="${cat}"]`);
@@ -1111,6 +1191,8 @@ export const StudentFormModal = {
       const guardianOccupation = getVal('form-guardianOccupation');
       const guardianPhone = getVal('form-guardianPhone');
       const notes = getVal('form-notes');
+      const isRepeating = modal.element.querySelector('#chk-repeat-student')?.checked || false;
+      const isEthnicMinority = modal.element.querySelector('#chk-ethnic-minority')?.checked || false;
 
       // Check admissions documents
       const hardcopyForm = modal.element.querySelector('#form-doc-hardcopy')?.checked || false;
@@ -1172,6 +1254,11 @@ export const StudentFormModal = {
         guardianJob: guardianOccupation,
         guardianPhone,
         notes,
+        'ផ្សេងៗ': notes,
+        isRepeating,
+        repeating: isRepeating,
+        isEthnicMinority,
+        ethnicMinority: isEthnicMinority,
         photoBlob: tempBlob,
         photo: photoDataUrl || (tempBlob ? '(Photo attached)' : ''),
         dropoutDate: status === 'Inactive' ? (dropoutData.dropoutDate || new Date().toISOString().split('T')[0]) : null,

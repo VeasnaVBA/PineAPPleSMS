@@ -13,7 +13,7 @@ import { LocationService } from '../services/locationService.js';
 import { SchoolService } from '../services/schoolService.js';
 import { db } from '../database/db.js';
 import { Modal } from '../components/modal.js';
-import { StudentFormModal } from '../components/studentFormModal.js';
+import { StudentFormModal } from '../components/studentFormModal.js?v=3.1.28';
 import { syncStateManager } from '../services/syncStateManager.js';
 import { toast } from '../components/toast.js';
 import { t, i18n } from '../i18n/i18n.js';
