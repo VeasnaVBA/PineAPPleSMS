@@ -156,12 +156,12 @@ export const TeacherClassStatsService = {
       teacher?.firstNameKhmer || teacher?.firstNameKh
     ].filter(Boolean).join(' ').trim();
 
-    const teacherName = teacherKhmerFullName || teacher?.khmerName || teacher?.name || 'សេត ពុទ្ធី';
-    const teacherGender = teacher?.gender === 'Female' || teacher?.gender === 'ស្រី' ? 'ស្រី' : 'ប្រុស';
-    const teacherAge = teacher?.age ? `${toKhmerNumerals(teacher.age)} ឆ្នាំ` : '២៦ ឆ្នាំ';
-    const teacherIsEthnicMinority = teacher?.isEthnicMinority || teacher?.ethnicMinority ? 'ពិតមែន' : 'ទេ';
-    const teacherDegree = teacher?.highestDegree || teacher?.generalEducationDegree || 'បរិញ្ញាបត្រ';
-    let serviceYears = '៦ ឆ្នាំ';
+    const teacherName = teacherKhmerFullName || teacher?.khmerName || teacher?.name || '';
+    const teacherGender = teacher?.gender === 'Female' || teacher?.gender === 'ស្រី' ? 'ស្រី' : (teacher?.gender === 'Male' || teacher?.gender === 'ប្រុស' ? 'ប្រុស' : '');
+    const teacherAge = teacher?.age ? `${toKhmerNumerals(teacher.age)} ឆ្នាំ` : '';
+    const teacherIsEthnicMinority = teacher?.isEthnicMinority || teacher?.ethnicMinority ? 'ពិតមែន' : '';
+    const teacherDegree = teacher?.highestDegree || teacher?.generalEducationDegree || '';
+    let serviceYears = '';
     if (teacher?.joinedDate) {
       const startY = parseInt(String(teacher.joinedDate).slice(0, 4), 10);
       if (startY && !isNaN(startY)) {
@@ -169,7 +169,7 @@ export const TeacherClassStatsService = {
         if (diff > 0) serviceYears = `${toKhmerNumerals(diff)} ឆ្នាំ`;
       }
     }
-    const teacherPedagogy = teacher?.trainingLevel || teacher?.framework || 'គ.ល';
+    const teacherPedagogy = teacher?.trainingLevel || teacher?.framework || '';
 
     // 4. Academic Year
     const yearString = academicYear || targetClass.academicYear || (await SettingsService.getActiveAcademicYear()) || '2024–2025';
@@ -562,7 +562,7 @@ export const TeacherClassStatsService = {
             
             <!-- Section 1 Header: Teacher Info -->
             <div style="display: flex; justify-content: space-between; align-items: baseline; font-size: 8.5px; font-weight: bold; margin-bottom: 2px;">
-              <span>១. ព័ត៌មានសេវាគ្រូទទួលបន្ទុក</span>
+              <span>១. ព័ត៌មានលោកគ្រូទទួលបន្ទុក</span>
               <span style="font-size: 9px; color: #1e3a8a;">ថ្នាក់ទី ${data.className}</span>
             </div>
 
@@ -571,31 +571,43 @@ export const TeacherClassStatsService = {
               <tbody>
                 <tr>
                   <td style="text-align: left !important; padding-left: 6px !important; width: 56%; font-weight: 500;">ឈ្មោះជាអក្សរខ្មែរ</td>
-                  <td class="font-khmer-muol" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 8.5px; width: 44%; line-height: 1.5;" contenteditable="true">${data.teacherInfo.name}</td>
+                  <td class="font-khmer-muol" style="font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 8.5px; width: 44%; line-height: 1.5;" contenteditable="true">${data.teacherInfo.name || ''}</td>
                 </tr>
                 <tr>
                   <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">ភេទ(សូមគូសរង្វង់)</td>
-                  <td contenteditable="true">${data.teacherInfo.gender === 'ស្រី' ? 'ប្រុស/<span style="border: 1px solid #1e3a8a; border-radius: 50%; padding: 0 4px;">ស្រី</span>' : '<span style="border: 1px solid #1e3a8a; border-radius: 50%; padding: 0 4px;">ប្រុស</span>/ស្រី'}</td>
+                  <td contenteditable="true">${
+                    data.teacherInfo.gender === 'ស្រី'
+                      ? 'ប្រុស/<span style="border: 1px solid #1e3a8a; border-radius: 50%; padding: 0 4px;">ស្រី</span>'
+                      : data.teacherInfo.gender === 'ប្រុស'
+                      ? '<span style="border: 1px solid #1e3a8a; border-radius: 50%; padding: 0 4px;">ប្រុស</span>/ស្រី'
+                      : 'ប្រុស/ស្រី'
+                  }</td>
                 </tr>
                 <tr>
                   <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">អាយុ(សូមគូសរង្វង់)</td>
-                  <td contenteditable="true">${data.teacherInfo.age}</td>
+                  <td contenteditable="true">${data.teacherInfo.age || ''}</td>
                 </tr>
                 <tr>
                   <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">ជនជាតិដើមភាគតិច</td>
-                  <td contenteditable="true">${data.teacherInfo.isEthnicMinority === 'ពិតមែន' ? '<span style="border: 1px solid #1e3a8a; border-radius: 50%; padding: 0 4px;">ពិតមែន</span>/ទេ' : 'ពិតមែន/<span style="border: 1px solid #1e3a8a; border-radius: 50%; padding: 0 4px;">ទេ</span>'}</td>
+                  <td contenteditable="true" title="អ្នកអាចចុច ឬបំពេញផ្ទាល់លើរបាយការណ៍">${
+                    data.teacherInfo.isEthnicMinority === 'ពិតមែន'
+                      ? '<span style="border: 1px solid #1e3a8a; border-radius: 50%; padding: 0 4px;">ពិតមែន</span>/ទេ'
+                      : data.teacherInfo.isEthnicMinority === 'ទេ'
+                      ? 'ពិតមែន/<span style="border: 1px solid #1e3a8a; border-radius: 50%; padding: 0 4px;">ទេ</span>'
+                      : 'ពិតមែន/ទេ'
+                  }</td>
                 </tr>
                 <tr>
                   <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">កម្រិតវប្បធម៌</td>
-                  <td contenteditable="true">${data.teacherInfo.degree}</td>
+                  <td contenteditable="true">${data.teacherInfo.degree || ''}</td>
                 </tr>
                 <tr>
                   <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">រយៈពេលបម្រើការងារអប់រំ</td>
-                  <td contenteditable="true">${data.teacherInfo.serviceYears}</td>
+                  <td contenteditable="true">${data.teacherInfo.serviceYears || ''}</td>
                 </tr>
                 <tr>
                   <td style="text-align: left !important; padding-left: 6px !important; font-weight: 500;">កម្រិតគរុកោសល្យ</td>
-                  <td contenteditable="true">${data.teacherInfo.pedagogy}</td>
+                  <td contenteditable="true">${data.teacherInfo.pedagogy || ''}</td>
                 </tr>
               </tbody>
             </table>
@@ -703,7 +715,7 @@ export const TeacherClassStatsService = {
               <div>ធ្វើនៅ ${data.dates.location} ${data.dates.solarText}</div>
               <div style="margin-top: 6px; display: flex; justify-content: space-between; align-items: baseline; padding: 0 4px;">
                 <span>ហត្ថលេខាគ្រូទទួលបន្ទុក</span>
-                <span class="font-khmer-muol" style="min-width: 80px; border-bottom: 1px dotted #94a3b8; display: inline-block; font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 8.5px; line-height: 1.5;" contenteditable="true">${data.teacherInfo.name}</span>
+                <span class="font-khmer-muol" style="min-width: 80px; border-bottom: 1px dotted #94a3b8; display: inline-block; font-family: 'Khmer OS Moul Light', 'Khmer OS Muol Light', 'Moul', cursive, sans-serif !important; font-size: 8.5px; line-height: 1.5;" contenteditable="true">${data.teacherInfo.name || ''}</span>
               </div>
             </div>
 
