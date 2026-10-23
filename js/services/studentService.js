@@ -43,8 +43,8 @@ export function normalizeStudentRecord(raw) {
   s.englishName = [s.lastNameLatin, s.firstNameLatin].filter(Boolean).join(' ') || s.englishName || rawEnName || '';
 
   // 4. Gender & Date of Birth
-  s.gender = s.gender || 'Male';
-  s.dateOfBirth = s.dateOfBirth || '';
+  s.gender = s.gender || raw?.['ភេទ'] || raw?.sex || 'Male';
+  s.dateOfBirth = s.dateOfBirth || raw?.dob || raw?.['ថ្ងៃខែឆ្នាំកំណើត'] || '';
 
   // 5. Birthplace
   s.birthVillage = s.birthVillage || '';
@@ -60,7 +60,7 @@ export function normalizeStudentRecord(raw) {
 
   // 7. Academic
   s.academicYear = s.academicYear || '2024–2025';
-  s.lastYearSchool = s.lastYearSchool || raw.lastYearSchool || raw['សាលាចាស់'] || raw['សាលារៀនឆ្នាំមុន'] || '';
+  s.lastYearSchool = s.lastYearSchool || raw?.lastYearSchool || raw?.['សាលាចាស់'] || raw?.['សាលារៀនឆ្នាំមុន'] || '';
   s.school = s.school || '';
   s.classId = s.classId || '';
 
@@ -76,8 +76,9 @@ export function normalizeStudentRecord(raw) {
   s.motherOccupation = s.motherOccupation || '';
   s.motherPhone = s.motherPhone || '';
 
-  // 10. Notes
-  s.notes = s.notes || '';
+  // 10. Notes (ផ្សេងៗ)
+  s.notes = s.notes || raw?.['ផ្សេងៗ'] || raw?.['ចំណាំ'] || raw?.remarks || raw?.remark || raw?.other || '';
+  s['ផ្សេងៗ'] = s.notes;
 
   // 11. Inactive / Dropout Metadata
   const statusStr = String(s.status || '').trim().toLowerCase();

@@ -49,20 +49,52 @@ export const TeacherClassStatsService = {
    * Helper: Check if student is female
    */
   isFemaleStudent(stu) {
-    const g = String(stu?.gender || '').trim().toLowerCase();
-    return g === 'female' || g === 'f' || g === 'ស្រី' || g.includes('female') || g.includes('ស្រី');
+    if (!stu) return false;
+    const g = String(stu.gender || stu['ភេទ'] || stu.sex || '').trim().toLowerCase();
+    const cleanG = g.replace(/[\s\u200B\u200C\u200D\uFEFF]/g, '');
+    return cleanG.includes('ស្រី') || cleanG === 'female' || cleanG === 'f' || cleanG === '2';
   },
 
   /**
-   * Helper: Check if student is repeating the grade
+   * Helper: Check if student is repeating the grade (ត្រួតថ្នាក់)
+   * Specifically inspects column ផ្សេងៗ (notes / ផ្សេងៗ) as well as status and repeating flags.
    */
   isRepeatingStudent(stu) {
     if (!stu) return false;
     if (stu.isRepeating === true || stu.repeating === true) return true;
-    const stat = String(stu.status || '').toLowerCase();
-    if (stat.includes('repeat') || stat.includes('ត្រួត')) return true;
-    const notes = String(stu.notes || '').toLowerCase();
-    if (notes.includes('ត្រួតថ្នាក់') || notes.includes('repeater') || notes.includes('repeat')) return true;
+
+    // Collect all candidate fields related to "ផ្សេងៗ" (Notes) and other remarks
+    const candidateSources = [
+      stu.notes,
+      stu['ផ្សេងៗ'],
+      stu['ចំណាំ'],
+      stu.remark,
+      stu.remarks,
+      stu.other,
+      stu.others,
+      stu.status,
+      stu.lastYearSchool,
+      stu['សាលាចាស់'],
+      stu.raw?.notes,
+      stu.raw?.['ផ្សេងៗ']
+    ];
+
+    for (const src of candidateSources) {
+      if (!src) continue;
+      const str = String(src).toLowerCase();
+      // Strip spaces, zero-width spaces, and punctuation for robust Khmer script matching
+      const clean = str.replace(/[\s\u200B\u200C\u200D\uFEFF_.,;:!?-]/g, '');
+      if (
+        clean.includes('ត្រួតថ្នាក់') ||
+        clean.includes('ត្រួត') ||
+        clean.includes('repeater') ||
+        clean.includes('repeat') ||
+        clean.includes('repeating')
+      ) {
+        return true;
+      }
+    }
+
     return false;
   },
 
