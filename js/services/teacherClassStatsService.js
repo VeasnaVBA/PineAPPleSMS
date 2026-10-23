@@ -562,7 +562,7 @@ export const TeacherClassStatsService = {
             
             <!-- Section 1 Header: Teacher Info -->
             <div style="display: flex; justify-content: space-between; align-items: baseline; font-size: 8.5px; font-weight: bold; margin-bottom: 2px;">
-              <span>១. ព័ត៌មានលោកគ្រូទទួលបន្ទុក</span>
+              <span contenteditable="true">១. (ក) ព័ត៌មានលោកគ្រូទទួលបន្ទុក</span>
               <span style="font-size: 9px; color: #1e3a8a;">ថ្នាក់ទី ${data.className}</span>
             </div>
 
