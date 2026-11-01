@@ -242,11 +242,6 @@ export const UsersPage = {
                         TEACHER
                       </span>
                     </th>
-                    <th class="px-4 py-3 text-center">
-                      <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
-                        OFFICER
-                      </span>
-                    </th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-border" id="permissions-matrix-tbody">
@@ -305,7 +300,6 @@ export const UsersPage = {
     const isKm = i18n.getLocale() === 'km';
     const directorPerms = this.permissions?.DIRECTOR || {};
     const teacherPerms = this.permissions?.TEACHER || {};
-    const officerPerms = this.permissions?.OFFICER || {};
 
     const menuLabels = {
       dashboard: isKm ? 'ផ្ទាំងព័ត៌មាន' : 'Dashboard',
@@ -324,7 +318,6 @@ export const UsersPage = {
     const academicRows = MENU_KEYS.map(key => {
       const isDirectorChecked = directorPerms[key] !== false;
       const isTeacherChecked = Boolean(teacherPerms[key]);
-      const isOfficerChecked = Boolean(officerPerms[key]);
 
       return `
         <tr class="hover:bg-muted/40 transition-colors">
@@ -355,14 +348,6 @@ export const UsersPage = {
                    data-key="${key}"
                    ${isTeacherChecked ? 'checked' : ''} />
           </td>
-          <!-- Officer Checkbox -->
-          <td class="px-4 py-3.5 text-center">
-            <input type="checkbox" 
-                   class="perm-checkbox rounded border-input text-primary focus:ring-primary h-4 w-4 cursor-pointer"
-                   data-role="OFFICER" 
-                   data-key="${key}"
-                   ${isOfficerChecked ? 'checked' : ''} />
-          </td>
         </tr>
       `;
     }).join('');
@@ -384,10 +369,6 @@ export const UsersPage = {
           <span class="text-xs text-muted-foreground font-mono" title="Admin only">—</span>
         </td>
         <!-- Teacher (Restricted) -->
-        <td class="px-4 py-3.5 text-center">
-          <span class="text-xs text-muted-foreground font-mono" title="Admin only">—</span>
-        </td>
-        <!-- Officer (Restricted) -->
         <td class="px-4 py-3.5 text-center">
           <span class="text-xs text-muted-foreground font-mono" title="Admin only">—</span>
         </td>
@@ -653,14 +634,13 @@ export const UsersPage = {
     document.getElementById('btn-save-perms')?.addEventListener('click', async () => {
       const directorPerms = {};
       const teacherPerms = {};
-      const officerPerms = {};
+      const officerPerms = this.permissions?.OFFICER || { teachers: true };
 
       this.container.querySelectorAll('.perm-checkbox').forEach(cb => {
         const role = cb.getAttribute('data-role');
         const key = cb.getAttribute('data-key');
         if (role === 'DIRECTOR') directorPerms[key] = cb.checked;
         if (role === 'TEACHER') teacherPerms[key] = cb.checked;
-        if (role === 'OFFICER') officerPerms[key] = cb.checked;
       });
 
       try {
