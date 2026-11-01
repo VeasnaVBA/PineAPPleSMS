@@ -92,7 +92,7 @@ export const UserService = {
       throw new Error(isKm ? 'ពាក្យសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ ៤ តួអក្សរ។' : 'Password must be at least 4 characters long.');
     }
     const cleanRole = (role || '').trim().toUpperCase();
-    if (!['ADMIN', 'DIRECTOR', 'TEACHER'].includes(cleanRole)) {
+    if (!['ADMIN', 'DIRECTOR', 'TEACHER', 'OFFICER'].includes(cleanRole)) {
       throw new Error(isKm ? 'តួនាទីគណនីមិនត្រឹមត្រូវទេ។' : 'Invalid account role.');
     }
 
@@ -167,7 +167,7 @@ export const UserService = {
     if (!user) throw new Error('User not found.');
 
     if (displayName) user.displayName = displayName.trim();
-    if (role && ['ADMIN', 'DIRECTOR', 'TEACHER'].includes(role)) {
+    if (role && ['ADMIN', 'DIRECTOR', 'TEACHER', 'OFFICER'].includes(role)) {
       // If changing role from ADMIN, verify last admin protection
       if (user.role === 'ADMIN' && role !== 'ADMIN') {
         const activeAdmins = await this.countActiveAdmins();

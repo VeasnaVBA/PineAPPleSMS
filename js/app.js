@@ -122,7 +122,12 @@ class SchoolApp {
     if (appShell) appShell.classList.remove('hidden');
 
     const currentUser = authService.getCurrentUser();
-    const defaultRoute = currentUser?.role === 'ADMIN' ? 'users' : 'dashboard';
+    let defaultRoute = 'dashboard';
+    if (currentUser?.role === 'ADMIN') {
+      defaultRoute = 'users';
+    } else if (currentUser?.role === 'OFFICER') {
+      defaultRoute = 'teachers';
+    }
 
     // Role-based route guard on shell mount:
     let targetRoute = defaultRoute;
@@ -133,6 +138,12 @@ class SchoolApp {
         targetRoute = currentHash;
       } else {
         targetRoute = 'users';
+      }
+    } else if (currentUser?.role === 'OFFICER') {
+      if (currentHash && authService.canAccessRoute(currentHash)) {
+        targetRoute = currentHash;
+      } else {
+        targetRoute = 'teachers';
       }
     } else if (currentUser) {
       const setup = await WorkspaceSetupService.getSetupStatus();

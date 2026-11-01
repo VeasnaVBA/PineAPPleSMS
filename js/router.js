@@ -90,7 +90,12 @@ export class Router {
   async handleRoute() {
     const rawHash = window.location.hash.replace('#', '').trim();
     const currentUser = authService.getCurrentUser();
-    const defaultRoute = currentUser?.role === 'ADMIN' ? 'users' : 'dashboard';
+    let defaultRoute = 'dashboard';
+    if (currentUser?.role === 'ADMIN') {
+      defaultRoute = 'users';
+    } else if (currentUser?.role === 'OFFICER') {
+      defaultRoute = 'teachers';
+    }
     let route = routes[rawHash] ? rawHash : defaultRoute;
 
     // Automatic redirect if user does not have permission to access this route
@@ -102,7 +107,7 @@ export class Router {
     }
 
     // Check mandatory initial setup for Director & Teacher accounts
-    if (currentUser && currentUser.role !== 'ADMIN') {
+    if (currentUser && currentUser.role !== 'ADMIN' && currentUser.role !== 'OFFICER') {
       const setup = await WorkspaceSetupService.getSetupStatus();
       if (!setup.isComplete && !WorkspaceSetupService.isSetupAllowedRoute(route)) {
         const target = setup.firstIncompleteRoute || 'schools';
@@ -120,7 +125,12 @@ export class Router {
 
   async loadRoute(routeKey, force = false) {
     const currentUser = authService.getCurrentUser();
-    const defaultRoute = currentUser?.role === 'ADMIN' ? 'users' : 'dashboard';
+    let defaultRoute = 'dashboard';
+    if (currentUser?.role === 'ADMIN') {
+      defaultRoute = 'users';
+    } else if (currentUser?.role === 'OFFICER') {
+      defaultRoute = 'teachers';
+    }
 
     // Automatic redirect if user does not have permission to access this route
     if (currentUser && !authService.canAccessRoute(routeKey)) {
@@ -131,7 +141,7 @@ export class Router {
     }
 
     // Check mandatory initial setup for Director & Teacher accounts
-    if (currentUser && currentUser.role !== 'ADMIN') {
+    if (currentUser && currentUser.role !== 'ADMIN' && currentUser.role !== 'OFFICER') {
       const setup = await WorkspaceSetupService.getSetupStatus();
       if (!setup.isComplete && !WorkspaceSetupService.isSetupAllowedRoute(routeKey)) {
         const target = setup.firstIncompleteRoute || 'schools';
@@ -140,7 +150,12 @@ export class Router {
       }
     }
 
-    const defaultFallback = currentUser?.role === 'ADMIN' ? routes.users : routes.dashboard;
+    let defaultFallback = routes.dashboard;
+    if (currentUser?.role === 'ADMIN') {
+      defaultFallback = routes.users;
+    } else if (currentUser?.role === 'OFFICER') {
+      defaultFallback = routes.teachers;
+    }
     const page = routes[routeKey] || defaultFallback;
 
     // Prevent jarring re-render/blink if clicking on the already active tab
@@ -157,10 +172,15 @@ export class Router {
     // Enforce Route-level Permission Guard (setup routes always allowed)
     if (!WorkspaceSetupService.isSetupAllowedRoute(routeKey) && !authService.canAccessRoute(routeKey)) {
       const isKm = i18n.getLocale() === 'km';
-      const backHref = currentUser?.role === 'ADMIN' ? '#users' : '#dashboard';
-      const backLabel = currentUser?.role === 'ADMIN'
-        ? (isKm ? 'ត្រឡប់ទៅការគ្រប់គ្រងគណនី' : 'Back to User Accounts')
-        : (isKm ? 'ត្រឡប់ទៅផ្ទាំងព័ត៌មាន' : 'Back to Dashboard');
+      let backHref = '#dashboard';
+      let backLabel = isKm ? 'ត្រឡប់ទៅផ្ទាំងព័ត៌មាន' : 'Back to Dashboard';
+      if (currentUser?.role === 'ADMIN') {
+        backHref = '#users';
+        backLabel = isKm ? 'ត្រឡប់ទៅការគ្រប់គ្រងគណនី' : 'Back to User Accounts';
+      } else if (currentUser?.role === 'OFFICER') {
+        backHref = '#teachers';
+        backLabel = isKm ? 'ត្រឡប់ទៅគ្រប់គ្រងគ្រូបង្រៀន' : 'Back to Teacher Management';
+      }
 
       this.container.innerHTML = `
         <div class="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center animate-fade-in">

@@ -71,6 +71,10 @@ class AuthService {
     return (this.getCurrentUser()?.role || '').toUpperCase() === 'TEACHER';
   }
 
+  isOfficer() {
+    return (this.getCurrentUser()?.role || '').toUpperCase() === 'OFFICER';
+  }
+
   hasRole(...roles) {
     const userRole = (this.getCurrentUser()?.role || '').toUpperCase();
     const upperRoles = roles.map(r => String(r).toUpperCase());
@@ -263,6 +267,10 @@ class AuthService {
     if (sessionData.role === 'ADMIN') {
       if (currentHash !== 'users' && currentHash !== 'settings' && currentHash !== 'download-data') {
         window.location.hash = '#users';
+      }
+    } else if (sessionData.role === 'OFFICER') {
+      if (!currentHash || !permissionService.canRoleAccessRoute(sessionData.role, currentHash)) {
+        window.location.hash = '#teachers';
       }
     } else {
       if (!currentHash || !permissionService.canRoleAccessRoute(sessionData.role, currentHash)) {

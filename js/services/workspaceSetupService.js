@@ -28,6 +28,7 @@ export const WorkspaceSetupService = {
   async getSetupStatus() {
     const currentUser = authService.getCurrentUser();
     const isAdmin = currentUser?.role === 'ADMIN';
+    const isOfficer = currentUser?.role === 'OFFICER';
 
     try {
       let [schools, classes, teachers] = await Promise.all([
@@ -51,9 +52,10 @@ export const WorkspaceSetupService = {
       const firstIncompleteRoute = !hasSchool ? 'schools' : (!hasTeacher ? 'teachers' : (!hasClass ? 'classes' : null));
 
       return {
-        // Admin is never locked out of navigation, but setup status accurately reflects real records
-        isComplete: isAdmin ? true : isComplete,
+        // Admin and Officer are never locked out of navigation
+        isComplete: (isAdmin || isOfficer) ? true : isComplete,
         isAdmin,
+        isOfficer,
         hasSchool,
         hasClass,
         hasTeacher,
@@ -70,8 +72,9 @@ export const WorkspaceSetupService = {
     } catch (err) {
       console.warn('WorkspaceSetupService check error:', err);
       return {
-        isComplete: Boolean(isAdmin),
+        isComplete: Boolean(isAdmin || isOfficer),
         isAdmin: Boolean(isAdmin),
+        isOfficer: Boolean(isOfficer),
         hasSchool: false,
         hasClass: false,
         hasTeacher: false,

@@ -162,6 +162,7 @@ export const UsersPage = {
                 <option value="ADMIN" ${this.roleFilter === 'ADMIN' ? 'selected' : ''}>Admin</option>
                 <option value="DIRECTOR" ${this.roleFilter === 'DIRECTOR' ? 'selected' : ''}>Director</option>
                 <option value="TEACHER" ${this.roleFilter === 'TEACHER' ? 'selected' : ''}>Teacher</option>
+                <option value="OFFICER" ${this.roleFilter === 'OFFICER' ? 'selected' : ''}>Officer</option>
               </select>
 
               <select id="user-status-filter" 
@@ -241,6 +242,11 @@ export const UsersPage = {
                         TEACHER
                       </span>
                     </th>
+                    <th class="px-4 py-3 text-center">
+                      <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+                        OFFICER
+                      </span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-border" id="permissions-matrix-tbody">
@@ -299,6 +305,7 @@ export const UsersPage = {
     const isKm = i18n.getLocale() === 'km';
     const directorPerms = this.permissions?.DIRECTOR || {};
     const teacherPerms = this.permissions?.TEACHER || {};
+    const officerPerms = this.permissions?.OFFICER || {};
 
     const menuLabels = {
       dashboard: isKm ? 'ផ្ទាំងព័ត៌មាន' : 'Dashboard',
@@ -317,6 +324,7 @@ export const UsersPage = {
     const academicRows = MENU_KEYS.map(key => {
       const isDirectorChecked = directorPerms[key] !== false;
       const isTeacherChecked = Boolean(teacherPerms[key]);
+      const isOfficerChecked = Boolean(officerPerms[key]);
 
       return `
         <tr class="hover:bg-muted/40 transition-colors">
@@ -347,6 +355,14 @@ export const UsersPage = {
                    data-key="${key}"
                    ${isTeacherChecked ? 'checked' : ''} />
           </td>
+          <!-- Officer Checkbox -->
+          <td class="px-4 py-3.5 text-center">
+            <input type="checkbox" 
+                   class="perm-checkbox rounded border-input text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                   data-role="OFFICER" 
+                   data-key="${key}"
+                   ${isOfficerChecked ? 'checked' : ''} />
+          </td>
         </tr>
       `;
     }).join('');
@@ -368,6 +384,10 @@ export const UsersPage = {
           <span class="text-xs text-muted-foreground font-mono" title="Admin only">—</span>
         </td>
         <!-- Teacher (Restricted) -->
+        <td class="px-4 py-3.5 text-center">
+          <span class="text-xs text-muted-foreground font-mono" title="Admin only">—</span>
+        </td>
+        <!-- Officer (Restricted) -->
         <td class="px-4 py-3.5 text-center">
           <span class="text-xs text-muted-foreground font-mono" title="Admin only">—</span>
         </td>
@@ -453,6 +473,8 @@ export const UsersPage = {
         roleBadge = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-500/10 text-rose-500 border border-rose-500/20">ADMIN</span>`;
       } else if (u.role === 'DIRECTOR') {
         roleBadge = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-500/10 text-purple-500 border border-purple-500/20">DIRECTOR</span>`;
+      } else if (u.role === 'OFFICER') {
+        roleBadge = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">OFFICER</span>`;
       } else {
         roleBadge = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-500/10 text-blue-500 border border-blue-500/20">TEACHER</span>`;
       }
@@ -631,18 +653,21 @@ export const UsersPage = {
     document.getElementById('btn-save-perms')?.addEventListener('click', async () => {
       const directorPerms = {};
       const teacherPerms = {};
+      const officerPerms = {};
 
       this.container.querySelectorAll('.perm-checkbox').forEach(cb => {
         const role = cb.getAttribute('data-role');
         const key = cb.getAttribute('data-key');
         if (role === 'DIRECTOR') directorPerms[key] = cb.checked;
         if (role === 'TEACHER') teacherPerms[key] = cb.checked;
+        if (role === 'OFFICER') officerPerms[key] = cb.checked;
       });
 
       try {
         await permissionService.savePermissions({
           DIRECTOR: directorPerms,
-          TEACHER: teacherPerms
+          TEACHER: teacherPerms,
+          OFFICER: officerPerms
         });
         toast.success(
           isKm 
@@ -811,6 +836,7 @@ export const UsersPage = {
           <select id="modal-user-role" 
                   class="w-full h-10 px-3 py-2 pr-9 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs">
             <option value="TEACHER" ${userToEdit?.role === 'TEACHER' ? 'selected' : (!isEdit ? 'selected' : '')}>Teacher</option>
+            <option value="OFFICER" ${userToEdit?.role === 'OFFICER' ? 'selected' : ''}>Officer</option>
             <option value="DIRECTOR" ${userToEdit?.role === 'DIRECTOR' ? 'selected' : ''}>Director</option>
             <option value="ADMIN" ${userToEdit?.role === 'ADMIN' ? 'selected' : ''}>Admin</option>
           </select>

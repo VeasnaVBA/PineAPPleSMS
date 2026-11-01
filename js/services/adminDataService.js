@@ -649,8 +649,8 @@ export const AdminDataService = {
       if (!isSilent) {
         toast.success(
           isKm
-            ? `បានកំណត់ទៅកាន់ ៤ គណនីលំនាំដើម (${DEFAULT_USERS.length} គណនី) ឡើងវិញដោយជោគជ័យ! រាល់គណនីបន្ថែមត្រូវបានសម្អាតចេញ។`
-            : `Reset to the 4 default accounts (${DEFAULT_USERS.length}) successfully! All extra accounts removed.`,
+            ? `បានកំណត់ទៅកាន់គណនីលំនាំដើម (${DEFAULT_USERS.length} គណនី) ឡើងវិញដោយជោគជ័យ! រាល់គណនីបន្ថែមត្រូវបានសម្អាតចេញ។`
+            : `Reset to the default accounts (${DEFAULT_USERS.length}) successfully! All extra accounts removed.`,
           isKm ? 'កំណត់គណនីលំនាំដើម' : 'Reset Default Accounts'
         );
       }
@@ -800,8 +800,8 @@ export const AdminDataService = {
       if (!isSilent) {
         toast.success(
           isKm
-            ? 'កម្មវិធីត្រូវបានកំណត់ឡើងវិញទាំងស្រុងដោយជោគជ័យ! នៅសល់តែ ៤ គណនីលំនាំដើម (admin, director1, teacher1, king)។'
-            : 'App has been strictly reset! Retained ONLY the 4 default accounts (admin, director1, teacher1, king).',
+            ? 'កម្មវិធីត្រូវបានកំណត់ឡើងវិញទាំងស្រុងដោយជោគជ័យ! នៅសល់តែ ៥ គណនីលំនាំដើម (admin, director1, teacher1, king, officer1)។'
+            : 'App has been strictly reset! Retained ONLY the 5 default accounts (admin, director1, teacher1, king, officer1).',
           isKm ? 'កំណត់កម្មវិធីឡើងវិញ' : 'Strict App Reset'
         );
       }

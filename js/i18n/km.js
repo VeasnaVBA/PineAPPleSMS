@@ -11,6 +11,7 @@ export const km = {
     schools: "សាលារៀន",
     classes: "ថ្នាក់រៀន",
     teachers: "គ្រូបង្រៀន",
+    teachersManagement: "គ្រប់គ្រងគ្រូបង្រៀន",
     subjects: "មុខវិជ្ជា",
     courses: "មុខវិជ្ជា",
     students: "សិស្ស",

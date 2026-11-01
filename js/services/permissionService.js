@@ -109,6 +109,22 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     settings: false,
     users: false,
     'download-data': false
+  },
+  OFFICER: {
+    dashboard: false,
+    schools: false,
+    registration: false,
+    promotion: false,
+    students: false,
+    teachers: true,
+    classes: false,
+    subjects: false,
+    attendance: false,
+    scores: false,
+    reports: false,
+    settings: false,
+    users: false,
+    'download-data': false
   }
 };
 
@@ -138,6 +154,9 @@ class PermissionService {
           if (!this.customPermissions.DIRECTOR.classes) this.customPermissions.DIRECTOR.classes = true;
           if (!this.customPermissions.DIRECTOR.dashboard) this.customPermissions.DIRECTOR.dashboard = true;
         }
+        if (this.customPermissions.OFFICER) {
+          if (this.customPermissions.OFFICER.teachers === undefined) this.customPermissions.OFFICER.teachers = true;
+        }
       } else {
         this.customPermissions = JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS));
       }
@@ -149,7 +168,7 @@ class PermissionService {
   }
 
   /**
-   * Get all permissions for both DIRECTOR and TEACHER
+   * Get all permissions for DIRECTOR, TEACHER, and OFFICER
    */
   async getAll() {
     if (!this.customPermissions) {
@@ -157,7 +176,8 @@ class PermissionService {
     }
     return {
       DIRECTOR: { ...DEFAULT_ROLE_PERMISSIONS.DIRECTOR, ...(this.customPermissions?.DIRECTOR || {}) },
-      TEACHER: { ...DEFAULT_ROLE_PERMISSIONS.TEACHER, ...(this.customPermissions?.TEACHER || {}) }
+      TEACHER: { ...DEFAULT_ROLE_PERMISSIONS.TEACHER, ...(this.customPermissions?.TEACHER || {}) },
+      OFFICER: { ...DEFAULT_ROLE_PERMISSIONS.OFFICER, ...(this.customPermissions?.OFFICER || {}) }
     };
   }
 
@@ -201,8 +221,13 @@ class PermissionService {
       return true;
     }
 
-    // Teachers cannot access settings page
-    if (role === 'TEACHER' && routeKey === 'settings') {
+    // Officer has access to teachers module
+    if (role === 'OFFICER' && routeKey === 'teachers') {
+      return true;
+    }
+
+    // Teachers and Officers cannot access settings page
+    if ((role === 'TEACHER' || role === 'OFFICER') && routeKey === 'settings') {
       return false;
     }
 
@@ -233,6 +258,11 @@ class PermissionService {
 
     // Allow schools module management for both TEACHER and DIRECTOR
     if (action.startsWith('schools.')) {
+      if (role === 'OFFICER') return false;
+      return true;
+    }
+
+    if (role === 'OFFICER' && action.startsWith('teachers.')) {
       return true;
     }
 

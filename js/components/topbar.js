@@ -71,8 +71,8 @@ export class Topbar {
         <!-- Right Section: Academic Year, Language, Theme, Profile -->
         <div class="flex items-center gap-1.5 sm:gap-2">
 
-          <!-- Academic Year Badge (Hidden for Admin) -->
-          ${currentUser?.role !== 'ADMIN' ? `
+          <!-- Academic Year Badge (Hidden for Admin and Officer) -->
+          ${(currentUser?.role !== 'ADMIN' && currentUser?.role !== 'OFFICER') ? `
             <div class="hidden md:flex items-center gap-1.5 h-9 px-2.5 rounded-full bg-secondary text-secondary-foreground border border-border text-xs font-medium shrink-0">
               ${getIcon('calendar', 'w-3.5 h-3.5')}
               <span id="topbar-active-ay-badge">${this.activeYear}</span>
@@ -148,6 +148,7 @@ export class Topbar {
             if (user?.role === 'ADMIN') roleBadgeColor = 'bg-destructive/10 text-destructive border-destructive/20';
             else if (user?.role === 'DIRECTOR') roleBadgeColor = 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20';
             else if (user?.role === 'TEACHER') roleBadgeColor = 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20';
+            else if (user?.role === 'OFFICER') roleBadgeColor = 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20';
 
             return `
               <div class="relative inline-block text-left shrink-0" id="user-dropdown-wrapper">

@@ -183,11 +183,12 @@ export const TeacherService = {
   async create(teacherData) {
     const currentUser = authService.getCurrentUser();
     const isTeacher = currentUser?.role === 'TEACHER';
+    const isOfficer = currentUser?.role === 'OFFICER';
     const isDirector = currentUser?.role === 'DIRECTOR';
     const isAdmin = currentUser?.role === 'ADMIN';
 
     // Verify creation permission
-    if (!authService.can('teachers.create') && !isDirector && !isAdmin && !isTeacher) {
+    if (!authService.can('teachers.create') && !isDirector && !isAdmin && !isTeacher && !isOfficer) {
       throw new Error('Access denied: You do not have permission to create teachers.');
     }
 

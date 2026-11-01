@@ -390,10 +390,13 @@ export const SettingsPage = {
             <div class="space-y-1">
               <div class="flex items-center gap-2">
                 <span class="font-medium text-foreground">${currentLocale === 'km' ? 'តួនាទីបច្ចុប្បន្ន' : 'Current Role'}:</span>
-                <span class="px-2 py-0.5 rounded-full font-semibold ${currentUser?.role === 'ADMIN' ? 'bg-destructive/10 text-destructive border border-destructive/20' : currentUser?.role === 'DIRECTOR' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20'}">${currentUser?.role || 'Guest'}</span>
+                <span class="px-2 py-0.5 rounded-full font-semibold ${currentUser?.role === 'ADMIN' ? 'bg-destructive/10 text-destructive border border-destructive/20' : currentUser?.role === 'DIRECTOR' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20' : currentUser?.role === 'OFFICER' ? 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20'}">${currentUser?.role || 'Guest'}</span>
               </div>
               ${currentUser?.role === 'TEACHER' ? `
                 <p class="text-muted-foreground">${t('sync.assignedClass')}: <span class="font-bold text-foreground">${currentUser.classId || currentUser.assignedClassId || 'Not Assigned'}</span></p>
+              ` : ''}
+              ${currentUser?.role === 'OFFICER' ? `
+                <p class="text-muted-foreground">${currentLocale === 'km' ? 'គណនីមន្ត្រីការិយាល័យ (Office Staff Account)' : 'Office Staff Account'}</p>
               ` : ''}
               ${currentUser?.role === 'DIRECTOR' ? `
                 <p class="text-muted-foreground">${currentLocale === 'km' ? 'ស្ថានីយ៍មេគ្រប់គ្រងសាលារៀន (Director Master Node)' : 'Director Master School Node'}</p>

@@ -11,6 +11,7 @@ export const en = {
     schools: "Schools",
     classes: "Classes",
     teachers: "Teachers",
+    teachersManagement: "Teacher Management",
     subjects: "Subjects",
     courses: "Courses / Subjects",
     students: "Students",

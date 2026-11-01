@@ -94,5 +94,17 @@ export const DEFAULT_USERS = [
       reports: true,
       settings: true
     }
+  },
+  {
+    id: "usr_officer_01",
+    username: "officer1",
+    password: "123123",
+    displayName: "Officer Default",
+    role: "OFFICER",
+    status: "ACTIVE",
+    classId: null,
+    permissions: {
+      teachers: true
+    }
   }
 ];

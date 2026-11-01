@@ -25,6 +25,8 @@ export class Sidebar {
     const currentUser = authService.getCurrentUser();
     if (currentUser?.role === 'ADMIN') {
       this.activeRoute = (initialRoute === 'settings' || initialRoute === 'download-data') ? initialRoute : 'users';
+    } else if (currentUser?.role === 'OFFICER') {
+      this.activeRoute = initialRoute || 'teachers';
     } else {
       this.activeRoute = initialRoute;
     }
@@ -78,29 +80,38 @@ export class Sidebar {
   async render() {
     if (!this.container) return;
 
-    const allNavItems = [
-      { id: 'dashboard', labelKey: 'nav.dashboard', icon: 'dashboard', href: '#dashboard' },
-      { id: 'schools', labelKey: 'nav.schools', icon: 'school', href: '#schools', isSetupStep: 1 },
-      { id: 'teachers', labelKey: 'nav.teachers', icon: 'teachers', href: '#teachers', isSetupStep: 2 },
-      { id: 'classes', labelKey: 'nav.classes', icon: 'classes', href: '#classes', isSetupStep: 3 },
-      { id: 'subjects', labelKey: 'nav.subjects', icon: 'bookOpen', href: '#subjects' },
-      { id: 'students', labelKey: 'nav.students', icon: 'students', href: '#students' },
-      { id: 'registration', labelKey: 'nav.registration', icon: 'fileCheck', href: '#registration' },
-      { id: 'promotion', labelKey: 'nav.promotion', icon: 'badgeCheck', href: '#promotion' },
-      { id: 'attendance', labelKey: 'nav.attendance', icon: 'attendance', href: '#attendance' },
-      { id: 'scores', labelKey: 'nav.scores', icon: 'scores', href: '#scores' },
-      { id: 'reports', labelKey: 'nav.reports', icon: 'reports', href: '#reports' },
-      { id: 'users', labelKey: 'nav.users', icon: 'users', href: '#users' },
-      { id: 'download-data', labelKey: 'nav.downloadData', icon: 'downloadCloud', href: '#download-data' },
-      { id: 'settings', labelKey: 'nav.settings', icon: 'settings', href: '#settings' }
-    ];
+    const currentUser = authService.getCurrentUser();
+    const isAdmin = currentUser?.role === 'ADMIN';
+    const isOfficer = currentUser?.role === 'OFFICER';
+
+    let allNavItems = [];
+    if (isOfficer) {
+      allNavItems = [
+        { id: 'teachers', labelKey: 'nav.teachersManagement', icon: 'teachers', href: '#teachers' }
+      ];
+    } else {
+      allNavItems = [
+        { id: 'dashboard', labelKey: 'nav.dashboard', icon: 'dashboard', href: '#dashboard' },
+        { id: 'schools', labelKey: 'nav.schools', icon: 'school', href: '#schools', isSetupStep: 1 },
+        { id: 'teachers', labelKey: 'nav.teachers', icon: 'teachers', href: '#teachers', isSetupStep: 2 },
+        { id: 'classes', labelKey: 'nav.classes', icon: 'classes', href: '#classes', isSetupStep: 3 },
+        { id: 'subjects', labelKey: 'nav.subjects', icon: 'bookOpen', href: '#subjects' },
+        { id: 'students', labelKey: 'nav.students', icon: 'students', href: '#students' },
+        { id: 'registration', labelKey: 'nav.registration', icon: 'fileCheck', href: '#registration' },
+        { id: 'promotion', labelKey: 'nav.promotion', icon: 'badgeCheck', href: '#promotion' },
+        { id: 'attendance', labelKey: 'nav.attendance', icon: 'attendance', href: '#attendance' },
+        { id: 'scores', labelKey: 'nav.scores', icon: 'scores', href: '#scores' },
+        { id: 'reports', labelKey: 'nav.reports', icon: 'reports', href: '#reports' },
+        { id: 'users', labelKey: 'nav.users', icon: 'users', href: '#users' },
+        { id: 'download-data', labelKey: 'nav.downloadData', icon: 'downloadCloud', href: '#download-data' },
+        { id: 'settings', labelKey: 'nav.settings', icon: 'settings', href: '#settings' }
+      ];
+    }
 
     // Filter items based on current user permissions
     const navItems = allNavItems.filter(item => authService.canAccessRoute(item.id));
 
     const isKm = i18n.getLocale() === 'km';
-    const currentUser = authService.getCurrentUser();
-    const isAdmin = currentUser?.role === 'ADMIN';
     const fontClass = isKm ? 'font-khmer' : 'font-sans';
 
     // Role color scheme
@@ -111,6 +122,8 @@ export class Sidebar {
       roleBadgeColor = 'bg-purple-500/10 text-purple-500 border-purple-500/20';
     } else if (currentUser?.role === 'TEACHER') {
       roleBadgeColor = 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+    } else if (currentUser?.role === 'OFFICER') {
+      roleBadgeColor = 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20';
     }
 
     // Check initial setup status for all accounts
@@ -136,7 +149,7 @@ export class Sidebar {
 
         <!-- Navigation Menu -->
         <div class="flex-1 overflow-y-auto py-4 px-3 space-y-1 sidebar-nav">
-          ${(!setup.isComplete && !isAdmin) ? `
+          ${(!setup.isComplete && !isAdmin && !isOfficer) ? `
             <!-- Setup Progress Banner -->
             <div class="setup-progress-card mb-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs space-y-2">
               <div class="flex items-center justify-between font-bold text-amber-700 dark:text-amber-300 ${fontClass}">
@@ -154,10 +167,10 @@ export class Sidebar {
 
           ${navItems.map(item => {
             const isActive = this.activeRoute === item.id;
-            const isLocked = !isAdmin && !setup.isComplete && !WorkspaceSetupService.isSetupAllowedRoute(item.id);
+            const isLocked = !isAdmin && !isOfficer && !setup.isComplete && !WorkspaceSetupService.isSetupAllowedRoute(item.id);
 
             let statusBadge = '';
-            if (!setup.isComplete || isAdmin) {
+            if ((!setup.isComplete || isAdmin) && !isOfficer) {
               if (item.id === 'schools') {
                 statusBadge = setup.hasSchool 
                   ? `<span class="nav-badge text-emerald-600 dark:text-emerald-400 font-bold ml-auto text-xs" title="${isKm ? 'បានបញ្ចូលរួចរាល់' : 'Completed'}">✓</span>` 
