@@ -87,7 +87,13 @@ export class Sidebar {
     let allNavItems = [];
     if (isOfficer) {
       allNavItems = [
-        { id: 'teachers', labelKey: 'nav.teachersManagement', icon: 'teachers', href: '#teachers' }
+        { id: 'teachers', labelKey: 'nav.teachersManagement', icon: 'teachers', href: '#teachers' },
+        { id: 'schools', labelKey: 'nav.schools', icon: 'school', href: '#schools' },
+        { id: 'students', labelKey: 'nav.students', icon: 'students', href: '#students' },
+        { id: 'registration', labelKey: 'nav.registration', icon: 'fileCheck', href: '#registration' },
+        { id: 'reports', labelKey: 'nav.reports', icon: 'reports', href: '#reports' },
+        { id: 'download-data', labelKey: 'nav.downloadData', icon: 'downloadCloud', href: '#download-data' },
+        { id: 'settings', labelKey: 'nav.settings', icon: 'settings', href: '#settings' }
       ];
     } else {
       allNavItems = [

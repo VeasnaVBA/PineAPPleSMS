@@ -20,6 +20,20 @@ export const MENU_KEYS = [
   'settings'
 ];
 
+/**
+ * Dedicated Menu Keys for the OFFICER role
+ * The primary first menu is Teacher Management ('teachers')
+ */
+export const OFFICER_MENU_KEYS = [
+  'teachers',
+  'schools',
+  'students',
+  'registration',
+  'reports',
+  'download-data',
+  'settings'
+];
+
 export const GRANULAR_PERMISSIONS = [
   'schools.view',
   'schools.create',
@@ -221,13 +235,20 @@ class PermissionService {
       return true;
     }
 
-    // Officer has access to teachers module
-    if (role === 'OFFICER' && routeKey === 'teachers') {
-      return true;
+    // Officer role routing guard (isolated from academic matrix)
+    if (role === 'OFFICER') {
+      const officerPerms = {
+        ...(DEFAULT_ROLE_PERMISSIONS.OFFICER || {}),
+        ...(this.customPermissions?.OFFICER || {})
+      };
+      if (routeKey === 'teachers') {
+        return officerPerms.teachers !== false;
+      }
+      return Boolean(officerPerms[routeKey]);
     }
 
-    // Teachers and Officers cannot access settings page
-    if ((role === 'TEACHER' || role === 'OFFICER') && routeKey === 'settings') {
+    // Teachers cannot access settings page
+    if (role === 'TEACHER' && routeKey === 'settings') {
       return false;
     }
 
@@ -317,6 +338,23 @@ class PermissionService {
 
     this.notify();
     return this.customPermissions;
+  }
+
+  /**
+   * Save customized permissions strictly for the OFFICER role
+   */
+  async saveOfficerPermissions(officerPermissions, options = {}) {
+    if (!this.customPermissions) {
+      await this.load();
+    }
+    const merged = {
+      ...(this.customPermissions || {}),
+      OFFICER: {
+        ...(DEFAULT_ROLE_PERMISSIONS.OFFICER || {}),
+        ...officerPermissions
+      }
+    };
+    return await this.savePermissions(merged, options);
   }
 
   /**

@@ -127,7 +127,13 @@ export const UsersPage = {
           <button data-target-tab="tab-permissions" 
                   class="tab-btn px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-2 cursor-pointer ${this.activeTab === 'tab-permissions' ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'}">
             ${getIcon('lock', 'w-4 h-4')}
-            <span>${isKm ? 'ម៉ាទ្រីសសិទ្ធិប្រើប្រាស់' : 'Role Permissions Matrix'}</span>
+            <span>${isKm ? 'សិទ្ធិ Director & Teacher' : 'Director & Teacher Permissions'}</span>
+          </button>
+
+          <button data-target-tab="tab-officer-permissions" 
+                  class="tab-btn px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-2 cursor-pointer ${this.activeTab === 'tab-officer-permissions' ? 'bg-primary text-primary-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'}">
+            ${getIcon('briefcase', 'w-4 h-4 text-teal-500')}
+            <span>${isKm ? 'សិទ្ធិមន្ត្រីការិយាល័យ (Officer)' : 'Officer Permissions'}</span>
           </button>
 
           <button data-target-tab="tab-logs" 
@@ -261,6 +267,63 @@ export const UsersPage = {
           </div>
         </div>
 
+        <!-- TAB: OFFICER PERMISSIONS MATRIX -->
+        <div id="tab-officer-permissions" class="tab-content ${this.activeTab === 'tab-officer-permissions' ? '' : 'hidden'} space-y-6">
+          <div class="bg-card p-6 rounded-xl border border-border shadow-sm space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="text-base font-semibold text-foreground tracking-tight">
+                    ${isKm ? 'កំណត់សិទ្ធិម៉ឺនុយសម្រាប់តួនាទី Officer (មន្ត្រីការិយាល័យ)' : 'Officer Role Navigation Menu Permissions'}
+                  </h3>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/30">
+                    OFFICER
+                  </span>
+                </div>
+                <p class="text-xs text-muted-foreground mt-0.5">
+                  ${isKm 
+                    ? 'គ្រប់គ្រងម៉ឺនុយការងារដាច់ដោយឡែកសម្រាប់មន្ត្រីការិយាល័យ។ ម៉ឺនុយចម្បងដំបូងគេគឺ គ្រប់គ្រងគ្រូបង្រៀន (Teacher Management)។' 
+                    : 'Configure dedicated separate menus for Office Staff. The 1st primary menu is Teacher Management.'}
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button id="btn-reset-officer-perms" type="button" class="px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                  ${isKm ? 'កំណត់លំនាំដើមឡើងវិញ' : 'Reset Defaults'}
+                </button>
+                <button id="btn-save-officer-perms" type="button" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs shadow-sm transition-all cursor-pointer">
+                  ${getIcon('check', 'w-4 h-4')}
+                  <span>${isKm ? 'រក្សាទុកសិទ្ធិ Officer' : 'Save Officer Permissions'}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Officer Permission Checkbox Table -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs sm:text-sm">
+                <thead class="bg-muted/60 border-b border-border text-muted-foreground font-semibold">
+                  <tr>
+                    <th class="px-4 py-3">${isKm ? 'ឈ្មោះម៉ឺនុយការងារ (Navigation Menu)' : 'Office Navigation Menu'}</th>
+                    <th class="px-4 py-3 text-center w-36">${isKm ? 'ស្ថានភាព (Status)' : 'Status'}</th>
+                    <th class="px-4 py-3 text-center w-28">${isKm ? 'បើក/បិទ (Toggle)' : 'Access'}</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-border" id="officer-permissions-matrix-tbody">
+                  ${this.renderOfficerPermissionsMatrixRows()}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="p-3.5 rounded-lg bg-teal-500/10 border border-teal-500/30 flex items-center gap-2.5 text-xs text-teal-800 dark:text-teal-300">
+              ${getIcon('lock', 'w-4 h-4 text-teal-600 dark:text-teal-400 flex-shrink-0')}
+              <span>
+                ${isKm 
+                  ? 'ការផ្លាស់ប្តូរសិទ្ធិនឹងមានប្រសិទ្ធភាពភ្លាមៗចំពោះរបារចំហៀងរបស់ Officer និង Route Guard ហើយ sync ដោយស្វ័យប្រវត្តទៅ Google Sheets។' 
+                  : 'Officer permission changes take effect immediately across the Officer sidebar and route guards, and sync to Google Sheets.'}
+              </span>
+            </div>
+          </div>
+        </div>
+
         <!-- TAB 3: AUDIT LOGS (Section 22) -->
         <div id="tab-logs" class="tab-content ${this.activeTab === 'tab-logs' ? '' : 'hidden'} space-y-4">
           <div class="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
@@ -376,6 +439,110 @@ export const UsersPage = {
     `;
 
     return usersRow + academicRows;
+  },
+
+  renderOfficerPermissionsMatrixRows() {
+    const isKm = i18n.getLocale() === 'km';
+    const officerPerms = this.permissions?.OFFICER || {};
+
+    const officerMenuDefs = [
+      {
+        key: 'teachers',
+        label: isKm ? 'គ្រប់គ្រងគ្រូបង្រៀន' : 'Teacher Management',
+        icon: 'teachers',
+        isPrimary: true,
+        desc: isKm ? 'ម៉ឺនុយចម្បងដំបូង សម្រាប់គ្រប់គ្រងទិន្នន័យគ្រូបង្រៀន និងបុគ្គលិក' : 'Primary 1st menu for managing teachers and staff'
+      },
+      {
+        key: 'schools',
+        label: isKm ? 'ព័ត៌មានសាលារៀន' : 'School Information',
+        icon: 'school',
+        isPrimary: false,
+        desc: isKm ? 'មើលព័ត៌មាន និងទិន្នន័យទូទៅរបស់សាលារៀន' : 'View general school profile and data'
+      },
+      {
+        key: 'students',
+        label: isKm ? 'គ្រប់គ្រងសិស្ស' : 'Students Directory',
+        icon: 'students',
+        isPrimary: false,
+        desc: isKm ? 'មើល និងគ្រប់គ្រងបញ្ជីឈ្មោះសិស្ស' : 'View and manage student records'
+      },
+      {
+        key: 'registration',
+        label: isKm ? 'ចុះឈ្មោះសិស្សថ្មី' : 'Admissions & Registration',
+        icon: 'fileCheck',
+        isPrimary: false,
+        desc: isKm ? 'គ្រប់គ្រងពាក្យស្នើសុំ និងការចុះឈ្មោះសិស្សថ្មី' : 'Handle new student admissions and queue'
+      },
+      {
+        key: 'reports',
+        label: isKm ? 'មជ្ឈមណ្ឌលរបាយការណ៍' : 'Office Reports',
+        icon: 'reports',
+        isPrimary: false,
+        desc: isKm ? 'ទាញយក និងបោះពុម្ពរបាយការណ៍រដ្ឋបាលការិយាល័យ' : 'Generate and print office administrative reports'
+      },
+      {
+        key: 'download-data',
+        label: isKm ? 'ទាញយកទិន្នន័យ (Download Data)' : 'Download Backup Data',
+        icon: 'downloadCloud',
+        isPrimary: false,
+        desc: isKm ? 'ទាញយកកញ្ចប់ទិន្នន័យពី Cloud Drive' : 'Download data packages from Google Drive'
+      },
+      {
+        key: 'settings',
+        label: isKm ? 'ការកំណត់ប្រព័ន្ធ (Settings)' : 'System Settings',
+        icon: 'settings',
+        isPrimary: false,
+        desc: isKm ? 'ការកំណត់មូលដ្ឋានផ្ទាល់ខ្លួនរបស់គណនី' : 'Account preferences and basic settings'
+      }
+    ];
+
+    return officerMenuDefs.map((def) => {
+      const isChecked = def.key === 'teachers' 
+        ? (officerPerms.teachers !== false)
+        : Boolean(officerPerms[def.key]);
+
+      return `
+        <tr class="hover:bg-muted/40 transition-colors ${def.isPrimary ? 'bg-teal-500/5' : ''}">
+          <td class="px-4 py-3.5">
+            <div class="flex items-center gap-3">
+              <span class="p-2 rounded-lg ${def.isPrimary ? 'bg-teal-500/10 text-teal-600 dark:text-teal-400' : 'bg-muted text-muted-foreground'} flex-shrink-0">
+                ${getIcon(def.icon, 'w-4 h-4')}
+              </span>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-semibold text-foreground text-xs sm:text-sm">${def.label}</span>
+                  ${def.isPrimary ? `
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/30">
+                      ${isKm ? 'ម៉ឺនុយចម្បងទី ១' : '1st Primary Menu'}
+                    </span>
+                  ` : ''}
+                </div>
+                <p class="text-[11px] text-muted-foreground mt-0.5">${def.desc}</p>
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-3.5 text-center">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${
+              isChecked 
+                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' 
+                : 'bg-muted text-muted-foreground border border-border'
+            }">
+              <span class="w-1.5 h-1.5 rounded-full ${isChecked ? 'bg-emerald-500' : 'bg-muted-foreground'}"></span>
+              ${isChecked ? (isKm ? 'អនុញ្ញាត' : 'Enabled') : (isKm ? 'បិទ' : 'Disabled')}
+            </span>
+          </td>
+          <td class="px-4 py-3.5 text-center">
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" 
+                     class="officer-perm-checkbox rounded border-input text-teal-600 focus:ring-teal-500 h-4.5 w-4.5 cursor-pointer"
+                     data-officer-key="${def.key}"
+                     ${isChecked ? 'checked' : ''} />
+            </label>
+          </td>
+        </tr>
+      `;
+    }).join('');
   },
 
   renderAuditLogRows() {
@@ -669,6 +836,51 @@ export const UsersPage = {
         toast.success(isKm ? 'បានកំណត់សិទ្ធិលំនាំដើមឡើងវិញ' : 'Permissions reset to defaults.');
       } catch (err) {
         toast.error(err.message);
+      }
+    });
+
+    // Save Officer permissions button
+    document.getElementById('btn-save-officer-perms')?.addEventListener('click', async () => {
+      const officerPerms = {};
+      this.container.querySelectorAll('.officer-perm-checkbox').forEach(cb => {
+        const key = cb.getAttribute('data-officer-key');
+        officerPerms[key] = cb.checked;
+      });
+
+      try {
+        await permissionService.saveOfficerPermissions(officerPerms);
+        this.permissions = await permissionService.getAll();
+        const tbody = document.getElementById('officer-permissions-matrix-tbody');
+        if (tbody) tbody.innerHTML = this.renderOfficerPermissionsMatrixRows();
+        toast.success(
+          isKm 
+            ? 'សិទ្ធិមន្ត្រីការិយាល័យ (Officer) ត្រូវបានរក្សាទុកដោយជោគជ័យ! របារចំហៀងត្រូវបានធ្វើបច្ចុប្បន្នភាព។' 
+            : 'Officer role permissions saved successfully! Dynamic sidebar updated.'
+        );
+      } catch (err) {
+        toast.error('Failed to save Officer permissions: ' + err.message);
+      }
+    });
+
+    // Reset Officer defaults button
+    document.getElementById('btn-reset-officer-perms')?.addEventListener('click', async () => {
+      try {
+        const defaultOfficer = {
+          teachers: true,
+          schools: false,
+          students: false,
+          registration: false,
+          reports: false,
+          'download-data': false,
+          settings: false
+        };
+        await permissionService.saveOfficerPermissions(defaultOfficer);
+        this.permissions = await permissionService.getAll();
+        const tbody = document.getElementById('officer-permissions-matrix-tbody');
+        if (tbody) tbody.innerHTML = this.renderOfficerPermissionsMatrixRows();
+        toast.success(isKm ? 'បានកំណត់សិទ្ធិមន្ត្រីការិយាល័យលំនាំដើមឡើងវិញ' : 'Officer permissions reset to defaults.');
+      } catch (err) {
+        toast.error('Failed to reset Officer permissions: ' + err.message);
       }
     });
 
