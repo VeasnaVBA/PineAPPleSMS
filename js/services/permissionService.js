@@ -22,16 +22,10 @@ export const MENU_KEYS = [
 
 /**
  * Dedicated Menu Keys for the OFFICER role
- * The primary first menu is Teacher Management ('teachers')
+ * Currently strictly requested: Teacher Management ('teachers')
  */
 export const OFFICER_MENU_KEYS = [
-  'teachers',
-  'schools',
-  'students',
-  'registration',
-  'reports',
-  'download-data',
-  'settings'
+  'teachers'
 ];
 
 export const GRANULAR_PERMISSIONS = [
@@ -125,20 +119,7 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     'download-data': false
   },
   OFFICER: {
-    dashboard: false,
-    schools: false,
-    registration: false,
-    promotion: false,
-    students: false,
-    teachers: true,
-    classes: false,
-    subjects: false,
-    attendance: false,
-    scores: false,
-    reports: false,
-    settings: false,
-    users: false,
-    'download-data': false
+    teachers: true
   }
 };
 
@@ -235,7 +216,7 @@ class PermissionService {
       return true;
     }
 
-    // Officer role routing guard (isolated from academic matrix)
+    // Officer role routing guard (strictly requested menus only)
     if (role === 'OFFICER') {
       const officerPerms = {
         ...(DEFAULT_ROLE_PERMISSIONS.OFFICER || {}),
@@ -244,7 +225,7 @@ class PermissionService {
       if (routeKey === 'teachers') {
         return officerPerms.teachers !== false;
       }
-      return Boolean(officerPerms[routeKey]);
+      return false;
     }
 
     // Teachers cannot access settings page

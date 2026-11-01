@@ -451,49 +451,7 @@ export const UsersPage = {
         label: isKm ? 'គ្រប់គ្រងគ្រូបង្រៀន' : 'Teacher Management',
         icon: 'teachers',
         isPrimary: true,
-        desc: isKm ? 'ម៉ឺនុយចម្បងដំបូង សម្រាប់គ្រប់គ្រងទិន្នន័យគ្រូបង្រៀន និងបុគ្គលិក' : 'Primary 1st menu for managing teachers and staff'
-      },
-      {
-        key: 'schools',
-        label: isKm ? 'ព័ត៌មានសាលារៀន' : 'School Information',
-        icon: 'school',
-        isPrimary: false,
-        desc: isKm ? 'មើលព័ត៌មាន និងទិន្នន័យទូទៅរបស់សាលារៀន' : 'View general school profile and data'
-      },
-      {
-        key: 'students',
-        label: isKm ? 'គ្រប់គ្រងសិស្ស' : 'Students Directory',
-        icon: 'students',
-        isPrimary: false,
-        desc: isKm ? 'មើល និងគ្រប់គ្រងបញ្ជីឈ្មោះសិស្ស' : 'View and manage student records'
-      },
-      {
-        key: 'registration',
-        label: isKm ? 'ចុះឈ្មោះសិស្សថ្មី' : 'Admissions & Registration',
-        icon: 'fileCheck',
-        isPrimary: false,
-        desc: isKm ? 'គ្រប់គ្រងពាក្យស្នើសុំ និងការចុះឈ្មោះសិស្សថ្មី' : 'Handle new student admissions and queue'
-      },
-      {
-        key: 'reports',
-        label: isKm ? 'មជ្ឈមណ្ឌលរបាយការណ៍' : 'Office Reports',
-        icon: 'reports',
-        isPrimary: false,
-        desc: isKm ? 'ទាញយក និងបោះពុម្ពរបាយការណ៍រដ្ឋបាលការិយាល័យ' : 'Generate and print office administrative reports'
-      },
-      {
-        key: 'download-data',
-        label: isKm ? 'ទាញយកទិន្នន័យ (Download Data)' : 'Download Backup Data',
-        icon: 'downloadCloud',
-        isPrimary: false,
-        desc: isKm ? 'ទាញយកកញ្ចប់ទិន្នន័យពី Cloud Drive' : 'Download data packages from Google Drive'
-      },
-      {
-        key: 'settings',
-        label: isKm ? 'ការកំណត់ប្រព័ន្ធ (Settings)' : 'System Settings',
-        icon: 'settings',
-        isPrimary: false,
-        desc: isKm ? 'ការកំណត់មូលដ្ឋានផ្ទាល់ខ្លួនរបស់គណនី' : 'Account preferences and basic settings'
+        desc: isKm ? 'ម៉ឺនុយគ្រប់គ្រងទិន្នន័យគ្រូបង្រៀន (Teacher Management)' : 'Teacher Management menu'
       }
     ];
 
@@ -866,13 +824,7 @@ export const UsersPage = {
     document.getElementById('btn-reset-officer-perms')?.addEventListener('click', async () => {
       try {
         const defaultOfficer = {
-          teachers: true,
-          schools: false,
-          students: false,
-          registration: false,
-          reports: false,
-          'download-data': false,
-          settings: false
+          teachers: true
         };
         await permissionService.saveOfficerPermissions(defaultOfficer);
         this.permissions = await permissionService.getAll();
