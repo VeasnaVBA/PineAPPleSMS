@@ -6,6 +6,7 @@
 import { DashboardPage } from './pages/dashboard.js?v=3.0.99';
 import { StudentsPage } from './pages/students.js?v=3.1.16';
 import { TeachersPage } from './pages/teachers.js?v=3.1.19';
+import { OfficerTeachersPage } from './pages/officerTeachers.js';
 import { ClassesPage } from './pages/classes.js?v=3.1.16';
 import { AttendancePage } from './pages/attendance.js?v=3.1.16';
 import { ScoresPage } from './pages/scores.js?v=3.1.29';
@@ -154,9 +155,12 @@ export class Router {
     if (currentUser?.role === 'ADMIN') {
       defaultFallback = routes.users;
     } else if (currentUser?.role === 'OFFICER') {
-      defaultFallback = routes.teachers;
+      defaultFallback = OfficerTeachersPage;
     }
-    const page = routes[routeKey] || defaultFallback;
+    let page = routes[routeKey] || defaultFallback;
+    if (routeKey === 'teachers' && currentUser?.role === 'OFFICER') {
+      page = OfficerTeachersPage;
+    }
 
     // Prevent jarring re-render/blink if clicking on the already active tab
     if (!force && this.currentRoute === routeKey && this.container?.children?.length > 0) {
