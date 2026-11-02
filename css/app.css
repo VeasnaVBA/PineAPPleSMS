@@ -1094,23 +1094,154 @@ html[lang="km"] select {
   line-height: normal;
 }
 
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0.92; transform: translateY(1px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Emil Kowalski / Linear / Apple Design Engineering Motion System */
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quad: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-in-out-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.1);
+  --ease-out-fast: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in-fast: cubic-bezier(0.7, 0, 0.84, 0);
 }
 
-@keyframes slideDown {
-  from { opacity: 0.92; transform: translateY(-2px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes modalExit {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.975) translateY(4px);
+  }
+}
+
+@keyframes popoverEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes toastEnter {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toastExit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.95);
+  }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.1s ease-out forwards;
+  animation: fadeIn 0.16s var(--ease-out-expo) forwards;
+  will-change: opacity;
 }
 
-.animate-slide-down {
-  animation: slideDown 0.1s ease-out forwards;
+.animate-fade-out {
+  animation: fadeOut 0.12s var(--ease-in-fast) forwards;
+  will-change: opacity;
+}
+
+.animate-slide-down,
+.animate-modal-enter {
+  animation: modalEnter 0.2s var(--ease-out-expo) forwards;
+  transform-origin: center center;
+  will-change: transform, opacity;
+}
+
+.animate-slide-up,
+.animate-modal-exit {
+  animation: modalExit 0.14s var(--ease-in-fast) forwards;
+  transform-origin: center center;
+  will-change: transform, opacity;
+}
+
+.animate-popover {
+  animation: popoverEnter 0.15s var(--ease-out-expo) forwards;
+  transform-origin: top center;
+  will-change: transform, opacity;
+}
+
+.animate-toast {
+  animation: toastEnter 0.22s var(--ease-out-expo) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-toast-exit {
+  animation: toastExit 0.14s var(--ease-in-fast) forwards;
+  will-change: transform, opacity;
+}
+
+/* Tactile Micro-Interactions: Apple & Linear Active Press Feedback */
+button:active:not(:disabled):not(.no-press),
+[role="button"]:active:not(:disabled):not(.no-press),
+.btn:active:not(:disabled):not(.no-press),
+.cursor-pointer:active:not(:disabled):not(.no-press) {
+  transform: scale(0.978);
+  transition: transform 0.08s var(--ease-out-fast) !important;
+}
+
+/* Fluid Focus Ring Transitions */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible {
+  transition: border-color 0.14s var(--ease-out-expo), box-shadow 0.14s var(--ease-out-expo) !important;
+}
+
+/* Smooth Table Row Transitions */
+table tbody tr {
+  transition: background-color 0.12s var(--ease-out-expo);
+}
+
+/* Dialog Overlay Blur Animation */
+.dialog-overlay {
+  transition: background-color 0.18s var(--ease-out-expo), backdrop-filter 0.18s var(--ease-out-expo);
 }
 
 /* Resizable Image Container & Controls (Floating Overlay - Never distorts text or paper size) */

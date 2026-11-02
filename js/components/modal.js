@@ -123,11 +123,13 @@ export class Modal {
       }
 
       document.removeEventListener('keydown', handleKeydown);
-      modalEl.classList.add('opacity-0');
+      modalEl.classList.add('animate-fade-out');
+      const dialog = modalEl.querySelector('div');
+      if (dialog) dialog.classList.add('animate-slide-up');
       setTimeout(() => {
         modalEl.remove();
         if (onClose) onClose();
-      }, 150);
+      }, 130);
       return true;
     };
 
@@ -227,10 +229,12 @@ export class Modal {
    */
   static closeAll(force = true) {
     document.querySelectorAll('[id^="modal-"]').forEach(modalEl => {
-      modalEl.classList.add('opacity-0');
+      modalEl.classList.add('animate-fade-out');
+      const dialog = modalEl.querySelector('div');
+      if (dialog) dialog.classList.add('animate-slide-up');
       setTimeout(() => {
         modalEl.remove();
-      }, 100);
+      }, 120);
     });
   }
 }

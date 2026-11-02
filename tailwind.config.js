@@ -55,6 +55,16 @@ module.exports = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      transitionTimingFunction: {
+        'spring': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'snappy': 'cubic-bezier(0.2, 0, 0, 1)',
+        'bounce-soft': 'cubic-bezier(0.175, 0.885, 0.32, 1.1)'
+      },
+      transitionDuration: {
+        '120': '120ms',
+        '180': '180ms',
+        '220': '220ms'
+      },
       fontFamily: {
         sans: ["var(--font-en)", "var(--font-km)", "sans-serif"],
         khmer: ["var(--font-km)", "var(--font-en)", "sans-serif"],
