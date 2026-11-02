@@ -1,6 +1,5 @@
 /**
- * Toast notifications inspired by Sonner (Emil Kowalski) & shadcn/ui
- * High-craft micro-interactions: spring entry, soft blur, tactile dismiss, and stacking physics.
+ * Toast notifications inspired by shadcn/ui
  */
 import { getIcon } from './icons.js';
 
@@ -18,7 +17,7 @@ class ToastManager {
     }
     this.container = document.createElement('div');
     this.container.id = 'toast-container';
-    this.container.className = 'fixed bottom-5 right-5 z-[9999] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none p-3';
+    this.container.className = 'fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none p-4';
     document.body.appendChild(this.container);
   }
 
@@ -26,39 +25,42 @@ class ToastManager {
     this.init();
 
     const toast = document.createElement('div');
-    toast.className = `pointer-events-auto flex items-start gap-3 p-3.5 rounded-2xl shadow-xl border bg-card/95 text-card-foreground backdrop-blur-xl animate-toast transition-all duration-150 transform hover:shadow-2xl ${this.getTypeStyles(type)}`;
-    toast.style.boxShadow = '0 10px 28px -6px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+    toast.className = `pointer-events-auto flex items-start gap-3 p-4 rounded-xl shadow-lg border bg-card text-card-foreground backdrop-blur-md transition-all duration-200 transform translate-y-2 opacity-0 animate-slide-down ${this.getTypeStyles(type)}`;
 
     let iconSvg = '';
-    if (type === 'success') iconSvg = `<span class="p-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">${getIcon('check', 'w-4 h-4')}</span>`;
-    else if (type === 'error') iconSvg = `<span class="p-1 rounded-full bg-destructive/10 text-destructive flex items-center justify-center">${getIcon('x', 'w-4 h-4')}</span>`;
-    else if (type === 'warning') iconSvg = `<span class="p-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">${getIcon('alertTriangle', 'w-4 h-4')}</span>`;
-    else iconSvg = `<span class="p-1 rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center">${getIcon('bell', 'w-4 h-4')}</span>`;
+    if (type === 'success') iconSvg = getIcon('check', 'w-5 h-5 text-emerald-500');
+    else if (type === 'error') iconSvg = getIcon('x', 'w-5 h-5 text-destructive');
+    else if (type === 'warning') iconSvg = getIcon('alertTriangle', 'w-5 h-5 text-amber-500');
+    else iconSvg = getIcon('bell', 'w-5 h-5 text-primary');
 
     toast.innerHTML = `
       <div class="flex-shrink-0 mt-0.5">${iconSvg}</div>
-      <div class="flex-1 min-w-0 pr-1">
-        ${title ? `<h5 class="text-xs font-bold tracking-tight text-foreground leading-snug">${title}</h5>` : ''}
+      <div class="flex-1 min-w-0">
+        ${title ? `<h5 class="text-sm font-semibold tracking-tight text-foreground leading-tight">${title}</h5>` : ''}
         <p class="text-xs text-muted-foreground leading-relaxed mt-0.5">${message}</p>
         ${action && action.label ? `
-          <button type="button" class="toast-action-btn mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all shadow-xs cursor-pointer">
+          <button type="button" class="toast-action-btn mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-xs cursor-pointer">
             ${action.label}
           </button>
         ` : ''}
       </div>
-      <button class="toast-close text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors cursor-pointer flex-shrink-0 -mr-1 -mt-1">
+      <button class="toast-close text-muted-foreground hover:text-foreground ml-2 p-1 rounded-md hover:bg-accent transition-colors">
         ${getIcon('x', 'w-3.5 h-3.5')}
       </button>
     `;
 
     this.container.appendChild(toast);
 
+    // Fade in
+    requestAnimationFrame(() => {
+      toast.classList.remove('translate-y-2', 'opacity-0');
+    });
+
     const closeBtn = toast.querySelector('.toast-close');
     const actionBtn = toast.querySelector('.toast-action-btn');
     const dismiss = () => {
-      toast.classList.remove('animate-toast');
-      toast.classList.add('animate-toast-exit');
-      setTimeout(() => toast.remove(), 140);
+      toast.classList.add('opacity-0', 'translate-x-full');
+      setTimeout(() => toast.remove(), 250);
     };
 
     closeBtn?.addEventListener('click', dismiss);
@@ -80,13 +82,13 @@ class ToastManager {
   getTypeStyles(type) {
     switch (type) {
       case 'success':
-        return 'border-emerald-500/25';
+        return 'border-emerald-500/30';
       case 'error':
-        return 'border-destructive/30';
+        return 'border-destructive/40';
       case 'warning':
-        return 'border-amber-500/30';
+        return 'border-amber-500/40';
       default:
-        return 'border-border/80';
+        return 'border-border';
     }
   }
 

@@ -871,9 +871,7 @@ export const OfficerTeacherFormModal = {
 
     const closeModal = () => {
       overlay.classList.add('animate-fade-out');
-      const dialog = overlay.querySelector('div');
-      if (dialog) dialog.classList.add('animate-slide-up');
-      setTimeout(() => overlay.remove(), 130);
+      setTimeout(() => overlay.remove(), 150);
     };
 
     // Close handlers
