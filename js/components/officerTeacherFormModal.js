@@ -119,7 +119,7 @@ export const OfficerTeacherFormModal = {
         <!-- Top Sticky Action Bar -->
         <div class="flex items-center justify-between px-5 py-3 border-b border-border bg-card/95 backdrop-blur z-20 flex-shrink-0">
           <div class="flex items-center gap-2.5">
-            <span class="p-2 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400">
+            <span class="p-2 rounded-xl bg-primary/10 text-primary">
               ${getIcon('teachers', 'w-5 h-5')}
             </span>
             <div>
@@ -142,7 +142,7 @@ export const OfficerTeacherFormModal = {
         <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 bg-muted/15" id="officer-modal-scroll-body">
 
           <!-- 1. OFFICIAL MOEYS TEACHER PROFILE HEADER BANNER -->
-          <div class="relative rounded-2xl overflow-hidden shadow-lg border border-emerald-950/30 bg-gradient-to-r from-[#0d4536] via-[#0f513e] to-[#0a382c] text-white p-5 sm:p-6">
+          <div class="relative rounded-2xl overflow-hidden shadow-lg border border-border/40 text-white p-5 sm:p-6" style="background: linear-gradient(135deg, var(--main-btn-color, var(--primary, #0d4536)) 0%, rgba(15, 23, 42, 0.95) 100%);">
             <div class="flex flex-col md:flex-row items-center md:items-start gap-5">
               
               <!-- Avatar with upload hover trigger -->
@@ -172,7 +172,7 @@ export const OfficerTeacherFormModal = {
                   <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
                     ${getIcon('check', 'w-3 h-3')} ${isKm ? 'បានផ្ទៀងផ្ទាត់ដោយ MoEYS' : 'MoEYS Verified'}
                   </span>
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-500/20 text-teal-200 border border-teal-400/30 font-khmer">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/20 text-white border border-white/30 font-khmer">
                     ${isKm ? 'គ្រូបង្រៀន' : 'Teacher'}
                   </span>
                 </div>
@@ -225,7 +225,7 @@ export const OfficerTeacherFormModal = {
 
           <!-- 3. OFFICIAL TAB NAVIGATION BAR (8 Tabs) -->
           <div class="border-b border-border flex items-center gap-1 overflow-x-auto pb-1 text-xs sm:text-sm scrollbar-none" id="officer-tabs-bar">
-            <button type="button" data-tab="tab-electronic-info" class="officer-tab-btn px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-all cursor-pointer bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-950 shadow-xs flex items-center gap-1.5 ${isKm ? 'font-khmer' : ''}">
+            <button type="button" data-tab="tab-electronic-info" class="officer-tab-btn px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-all cursor-pointer btn-primary text-xs shadow-xs flex items-center gap-1.5 ${isKm ? 'font-khmer' : ''}">
               ${getIcon('user', 'w-4 h-4')}
               <span>${isKm ? 'ព័ត៌មានអេឡិចត្រូនិក' : 'Electronic Info'}</span>
             </button>
@@ -255,7 +255,7 @@ export const OfficerTeacherFormModal = {
               <!-- CARD 1: ព័ត៌មានអត្តសញ្ញាណផ្ទាល់ខ្លួន (Personal Identity) -->
               <div class="bg-card rounded-2xl border border-border p-4 sm:p-5 shadow-2xs space-y-4">
                 <div class="flex items-center gap-2 pb-2.5 border-b border-border text-foreground font-bold">
-                  <span class="p-1.5 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400">
+                  <span class="p-1.5 rounded-lg bg-primary/10 text-primary">
                     ${getIcon('user', 'w-4 h-4')}
                   </span>
                   <span class="${isKm ? 'font-khmer' : ''}">
@@ -272,7 +272,7 @@ export const OfficerTeacherFormModal = {
                     <input type="text" id="officer-last-name-km" required
                            value="${initialLastNameKm}"
                            placeholder="${isKm ? 'ឧ. សុខ' : 'e.g. SOK'}"
-                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 font-khmer shadow-2xs" />
+                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-khmer shadow-2xs" />
                   </div>
 
                   <!-- នាមខ្លួន * -->
@@ -283,7 +283,7 @@ export const OfficerTeacherFormModal = {
                     <input type="text" id="officer-first-name-km" required
                            value="${initialFirstNameKm}"
                            placeholder="${isKm ? 'ឧ. សុផល' : 'e.g. SOPHAL'}"
-                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 font-khmer shadow-2xs" />
+                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-khmer shadow-2xs" />
                   </div>
 
                   <!-- នាមត្រកូល (ឡាតាំង) -->
@@ -294,7 +294,7 @@ export const OfficerTeacherFormModal = {
                     <input type="text" id="officer-last-name-en"
                            value="${initialLastNameEn}"
                            placeholder="SOK"
-                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 uppercase font-mono shadow-2xs" />
+                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary uppercase font-mono shadow-2xs" />
                   </div>
 
                   <!-- នាមខ្លួន (ឡាតាំង) -->
@@ -305,7 +305,7 @@ export const OfficerTeacherFormModal = {
                     <input type="text" id="officer-first-name-en"
                            value="${initialFirstNameEn}"
                            placeholder="SOPHAL"
-                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 uppercase font-mono shadow-2xs" />
+                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary uppercase font-mono shadow-2xs" />
                   </div>
 
                   <!-- ភេទ * -->
@@ -314,7 +314,7 @@ export const OfficerTeacherFormModal = {
                       ${isKm ? 'ភេទ' : 'Gender'} <span class="text-rose-500 font-bold">*</span>
                     </label>
                     <select id="officer-gender" required
-                            class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs">
+                            class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs">
                       <option value="ប្រុស" ${initialGender === 'ប្រុស' ? 'selected' : ''}>${isKm ? 'ប្រុស' : 'Male'}</option>
                       <option value="ស្រី" ${initialGender === 'ស្រី' ? 'selected' : ''}>${isKm ? 'ស្រី' : 'Female'}</option>
                     </select>
@@ -327,7 +327,7 @@ export const OfficerTeacherFormModal = {
                     </label>
                     <input type="date" id="officer-dob" required
                            value="${initialDob}"
-                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs font-mono" />
+                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs font-mono" />
                   </div>
 
                   <!-- ជនជាតិ -->
@@ -336,7 +336,7 @@ export const OfficerTeacherFormModal = {
                       ${isKm ? 'ជនជាតិ' : 'Ethnicity'}
                     </label>
                     <select id="officer-ethnicity"
-                            class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs">
+                            class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs">
                       <option value="ខ្មែរ" ${initialEthnicity === 'ខ្មែរ' ? 'selected' : ''}>ខ្មែរ (Khmer)</option>
                       <option value="ចិន" ${initialEthnicity === 'ចិន' ? 'selected' : ''}>ចិន (Chinese)</option>
                       <option value="វៀតណាម" ${initialEthnicity === 'វៀតណាម' ? 'selected' : ''}>វៀតណាម (Vietnamese)</option>
@@ -353,7 +353,7 @@ export const OfficerTeacherFormModal = {
                     </label>
                     <div class="flex items-center gap-2">
                       <input type="file" id="officer-contest-photo-input" accept="image/*"
-                             class="w-full text-xs text-muted-foreground file:mr-2.5 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-teal-500/10 file:text-teal-600 dark:file:text-teal-400 hover:file:bg-teal-500/20 cursor-pointer border border-input rounded-lg h-9 bg-background flex items-center px-1.5 shadow-2xs" />
+                             class="w-full text-xs text-muted-foreground file:mr-2.5 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer border border-input rounded-lg h-9 bg-background flex items-center px-1.5 shadow-2xs" />
                     </div>
                   </div>
                 </div>
@@ -362,7 +362,7 @@ export const OfficerTeacherFormModal = {
               <!-- CARD 2: ព័ត៌មានទំនាក់ទំនង និងហិរញ្ញវត្ថុ (Contact & Finance) -->
               <div class="bg-card rounded-2xl border border-border p-4 sm:p-5 shadow-2xs space-y-4">
                 <div class="flex items-center gap-2 pb-2.5 border-b border-border text-foreground font-bold">
-                  <span class="p-1.5 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400">
+                  <span class="p-1.5 rounded-lg bg-primary/10 text-primary">
                     ${getIcon('creditCard', 'w-4 h-4')}
                   </span>
                   <span class="${isKm ? 'font-khmer' : ''}">
@@ -383,7 +383,7 @@ export const OfficerTeacherFormModal = {
                         <input type="text" id="officer-national-id"
                                value="${initialNationalId}"
                                placeholder="170 736 181"
-                               class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 font-mono shadow-2xs" />
+                               class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono shadow-2xs" />
                       </div>
 
                       <!-- គណនីធនាគារ -->
@@ -394,7 +394,7 @@ export const OfficerTeacherFormModal = {
                         <input type="text" id="officer-bank-account"
                                value="${initialBankAccount}"
                                placeholder="0300 03 216893 13"
-                               class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 font-mono shadow-2xs" />
+                               class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono shadow-2xs" />
                       </div>
                     </div>
 
@@ -404,13 +404,13 @@ export const OfficerTeacherFormModal = {
                         ${isKm ? 'ឯកសារអត្តសញ្ញាណប័ណ្ណ ឬសំបុត្រកំណើតបញ្ជាក់សញ្ជាតិ' : 'National ID or Birth Certificate Document'}
                       </label>
                       <input type="file" id="officer-id-doc-input" accept="image/*,.pdf"
-                             class="w-full text-xs text-muted-foreground file:mr-2.5 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-teal-500/10 file:text-teal-600 dark:file:text-teal-400 hover:file:bg-teal-500/20 cursor-pointer border border-input rounded-lg h-9 bg-background flex items-center px-1.5 shadow-2xs" />
+                             class="w-full text-xs text-muted-foreground file:mr-2.5 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer border border-input rounded-lg h-9 bg-background flex items-center px-1.5 shadow-2xs" />
                     </div>
                   </div>
 
                   <!-- Right: Document Preview Box (5 cols) -->
                   <div class="lg:col-span-5 flex flex-col space-y-1.5">
-                    <label class="block text-xs font-semibold text-teal-700 dark:text-teal-300">
+                    <label class="block text-xs font-semibold text-primary">
                       ${isKm ? 'មើលឯកសារអត្តសញ្ញាណប័ណ្ណ' : 'Preview Document'}
                     </label>
                     <div id="officer-id-doc-preview-container" class="w-full h-28 rounded-xl border-2 border-dashed border-border bg-muted/30 flex items-center justify-center p-2 overflow-hidden text-center transition-colors">
@@ -429,7 +429,7 @@ export const OfficerTeacherFormModal = {
                 
                 <!-- Main Header -->
                 <div class="flex items-center gap-2 pb-2.5 border-b border-border text-foreground font-bold">
-                  <span class="p-1.5 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400">
+                  <span class="p-1.5 rounded-lg bg-primary/10 text-primary">
                     ${getIcon('mapPin', 'w-4 h-4')}
                   </span>
                   <span class="${isKm ? 'font-khmer' : ''}">
@@ -439,7 +439,7 @@ export const OfficerTeacherFormModal = {
 
                 <!-- SUBSECTION 1: ទីកន្លែងកំណើត (Place of Birth) -->
                 <div class="space-y-2.5">
-                  <div class="flex items-center gap-2 text-xs font-bold text-teal-600 dark:text-teal-400">
+                  <div class="flex items-center gap-2 text-xs font-bold text-primary">
                     ${getIcon('home', 'w-3.5 h-3.5')}
                     <span>${isKm ? 'ទីកន្លែងកំណើត' : 'Place of Birth'}</span>
                   </div>
@@ -451,7 +451,7 @@ export const OfficerTeacherFormModal = {
                         ${isKm ? 'រាជធានី/ខេត្ត' : 'Birth Province'} <span class="text-rose-500 font-bold">*</span>
                       </label>
                       <select id="officer-birth-province" required
-                              class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs font-khmer">
+                              class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs font-khmer">
                         ${CAMBODIA_PROVINCES.map(p => `
                           <option value="${p}" ${initialBirthProvince === p ? 'selected' : ''}>${p}</option>
                         `).join('')}
@@ -466,7 +466,7 @@ export const OfficerTeacherFormModal = {
                       <input type="text" id="officer-birth-district" required
                              value="${initialBirthDistrict}"
                              placeholder="${isKm ? 'ស្វាយប៉ោ' : 'District'}"
-                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs font-khmer" />
+                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs font-khmer" />
                     </div>
 
                     <!-- ឃុំ/សង្កាត់ -->
@@ -477,7 +477,7 @@ export const OfficerTeacherFormModal = {
                       <input type="text" id="officer-birth-commune"
                              value="${initialBirthCommune}"
                              placeholder="${isKm ? 'ស្វាយប៉ោ' : 'Commune'}"
-                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs font-khmer" />
+                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs font-khmer" />
                     </div>
 
                     <!-- ភូមិ -->
@@ -488,14 +488,14 @@ export const OfficerTeacherFormModal = {
                       <input type="text" id="officer-birth-village"
                              value="${initialBirthVillage}"
                              placeholder="${isKm ? 'ព្រែកព្រះស្តេច' : 'Village'}"
-                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs font-khmer" />
+                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs font-khmer" />
                     </div>
                   </div>
                 </div>
 
                 <!-- SUBSECTION 2: អាសយដ្ឋាន ទំនាក់ទំនង (Contact Address & Current Residence) -->
                 <div class="space-y-2.5 pt-3 border-t border-border/60">
-                  <div class="flex items-center gap-2 text-xs font-bold text-teal-600 dark:text-teal-400">
+                  <div class="flex items-center gap-2 text-xs font-bold text-primary">
                     ${getIcon('mapPin', 'w-3.5 h-3.5')}
                     <span>${isKm ? 'អាសយដ្ឋានបច្ចុប្បន្ន និងទំនាក់ទំនង' : 'Current Residence & Contacts'}</span>
                   </div>
@@ -510,7 +510,7 @@ export const OfficerTeacherFormModal = {
                       <input type="text" id="officer-phone"
                              value="${initialPhone}"
                              placeholder="086816114"
-                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 font-mono shadow-2xs" />
+                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono shadow-2xs" />
                     </div>
 
                     <!-- អ៊ីមែល -->
@@ -521,7 +521,7 @@ export const OfficerTeacherFormModal = {
                       <input type="email" id="officer-email"
                              value="${initialEmail}"
                              placeholder="veasnawb@gmail.com"
-                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs font-mono" />
+                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs font-mono" />
                     </div>
 
                     <!-- ផ្ទះលេខ -->
@@ -532,7 +532,7 @@ export const OfficerTeacherFormModal = {
                       <input type="text" id="officer-house-number"
                              value="${initialHouseNumber}"
                              placeholder="N/A"
-                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs" />
+                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs" />
                     </div>
 
                     <!-- ក្រុម -->
@@ -543,7 +543,7 @@ export const OfficerTeacherFormModal = {
                       <input type="text" id="officer-group"
                              value="${initialGroup}"
                              placeholder="1"
-                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs" />
+                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs" />
                     </div>
 
                     <!-- ផ្លូវ (លេខឬឈ្មោះ) -->
@@ -554,7 +554,7 @@ export const OfficerTeacherFormModal = {
                       <input type="text" id="officer-street"
                              value="${initialStreet}"
                              placeholder="${isKm ? 'ឧ. ផ្លូវជាតិលេខ ៥' : 'Street name'}"
-                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs font-khmer" />
+                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs font-khmer" />
                     </div>
                   </div>
 
@@ -566,7 +566,7 @@ export const OfficerTeacherFormModal = {
                         ${isKm ? 'រាជធានី/ខេត្ត' : 'Current Province'}
                       </label>
                       <select id="officer-current-province"
-                              class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs font-khmer">
+                              class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs font-khmer">
                         ${CAMBODIA_PROVINCES.map(p => `
                           <option value="${p}" ${initialCurrentProvince === p ? 'selected' : ''}>${p}</option>
                         `).join('')}
@@ -581,7 +581,7 @@ export const OfficerTeacherFormModal = {
                       <input type="text" id="officer-current-district"
                              value="${initialCurrentDistrict}"
                              placeholder="${isKm ? 'ក្រុងសៀមរាប' : 'District'}"
-                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs font-khmer" />
+                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs font-khmer" />
                     </div>
 
                     <!-- ឃុំ/សង្កាត់ -->
@@ -592,7 +592,7 @@ export const OfficerTeacherFormModal = {
                       <input type="text" id="officer-current-commune"
                              value="${initialCurrentCommune}"
                              placeholder="${isKm ? 'សង្កាត់សៀមរាប' : 'Commune'}"
-                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs font-khmer" />
+                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs font-khmer" />
                     </div>
 
                     <!-- ភូមិ -->
@@ -603,7 +603,7 @@ export const OfficerTeacherFormModal = {
                       <input type="text" id="officer-current-village"
                              value="${initialCurrentVillage}"
                              placeholder="${isKm ? 'ស្លក្រាម' : 'Village'}"
-                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs font-khmer" />
+                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs font-khmer" />
                     </div>
                   </div>
                 </div>
@@ -612,7 +612,7 @@ export const OfficerTeacherFormModal = {
               <!-- CARD 4: ព័ត៌មានការងារបម្រើ (Employment Info) -->
               <div class="bg-card rounded-2xl border border-border p-4 sm:p-5 shadow-2xs space-y-4">
                 <div class="flex items-center gap-2 pb-2.5 border-b border-border text-foreground font-bold">
-                  <span class="p-1.5 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400">
+                  <span class="p-1.5 rounded-lg bg-primary/10 text-primary">
                     ${getIcon('briefcase', 'w-4 h-4')}
                   </span>
                   <span class="${isKm ? 'font-khmer' : ''}">
@@ -629,7 +629,7 @@ export const OfficerTeacherFormModal = {
                     <input type="text" id="officer-civil-servant-id" required
                            value="${initialCivilId}"
                            placeholder="1950200078"
-                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 font-mono shadow-2xs" />
+                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono shadow-2xs" />
                   </div>
 
                   <!-- ថ្ងៃខែឆ្នាំចូលបម្រើការងារ * -->
@@ -639,7 +639,7 @@ export const OfficerTeacherFormModal = {
                     </label>
                     <input type="date" id="officer-joined-date" required
                            value="${initialJoinedDate}"
-                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 font-mono shadow-2xs" />
+                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono shadow-2xs" />
                   </div>
 
                   <!-- ថ្ងៃតាំងស៊ប់ក្នុងក្របខ័ណ្ឌ -->
@@ -649,7 +649,7 @@ export const OfficerTeacherFormModal = {
                     </label>
                     <input type="date" id="officer-permanent-date"
                            value="${initialPermanentDate}"
-                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 font-mono shadow-2xs" />
+                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono shadow-2xs" />
                   </div>
                 </div>
               </div>
@@ -657,7 +657,7 @@ export const OfficerTeacherFormModal = {
               <!-- CARD 5: ព័ត៌មានពិការភាព និងសមាជិកភាពពិសេស (Disability & Special Membership) -->
               <div class="bg-card rounded-2xl border border-border p-4 sm:p-5 shadow-2xs space-y-4">
                 <div class="flex items-center gap-2 pb-2.5 border-b border-border text-foreground font-bold">
-                  <span class="p-1.5 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400">
+                  <span class="p-1.5 rounded-lg bg-primary/10 text-primary">
                     ${getIcon('award', 'w-4 h-4')}
                   </span>
                   <span class="${isKm ? 'font-khmer' : ''}">
@@ -671,7 +671,7 @@ export const OfficerTeacherFormModal = {
                     <!-- Checkbox -->
                     <div class="sm:col-span-3 flex items-center gap-2 pt-1">
                       <input type="checkbox" id="officer-is-disability" ${initialIsDisability ? 'checked' : ''}
-                             class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-input cursor-pointer" />
+                             class="w-4 h-4 rounded text-primary focus:ring-primary border-input cursor-pointer" />
                       <label for="officer-is-disability" class="text-xs font-semibold text-foreground cursor-pointer select-none ${isKm ? 'font-khmer' : ''}">
                         ${isKm ? 'គ្រូបង្រៀនពិការ' : 'Disabled Teacher'}
                       </label>
@@ -683,7 +683,7 @@ export const OfficerTeacherFormModal = {
                         ${isKm ? 'ប្រភេទពិការ' : 'Disability Type'}
                       </label>
                       <select id="officer-disability-type"
-                              class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs ${initialIsDisability ? '' : 'opacity-60'}">
+                              class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs ${initialIsDisability ? '' : 'opacity-60'}">
                         <option value="">${isKm ? 'ជ្រើសរើស...' : 'Select type...'}</option>
                         <option value="គថ្លង់" ${initialDisabilityType === 'គថ្លង់' ? 'selected' : ''}>គថ្លង់ (Mute/Deaf)</option>
                         <option value="ពិការភ្នែក" ${initialDisabilityType === 'ពិការភ្នែក' ? 'selected' : ''}>ពិការភ្នែក (Visual Impairment)</option>
@@ -701,7 +701,7 @@ export const OfficerTeacherFormModal = {
                       <input type="text" id="officer-disability-desc"
                              value="${initialDisabilityDesc}"
                              placeholder="${isKm ? 'ព័ត៌មានលម្អិតពិការភាព...' : 'Disability description...'}"
-                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs ${initialIsDisability ? '' : 'opacity-60'}" />
+                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs ${initialIsDisability ? '' : 'opacity-60'}" />
                     </div>
                   </div>
 
@@ -710,7 +710,7 @@ export const OfficerTeacherFormModal = {
                     <!-- Checkbox -->
                     <div class="sm:col-span-5 flex items-center gap-2 pt-1">
                       <input type="checkbox" id="officer-is-nssf" ${initialIsNssf ? 'checked' : ''}
-                             class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-input cursor-pointer" />
+                             class="w-4 h-4 rounded text-primary focus:ring-primary border-input cursor-pointer" />
                       <label for="officer-is-nssf" class="text-xs font-semibold text-foreground cursor-pointer select-none ${isKm ? 'font-khmer' : ''}">
                         ${isKm ? 'សមាជិកបេឡាជាតិរបបសន្តិសុខសង្គម (ប.ស.ស.)' : 'NSSF Member'}
                       </label>
@@ -727,7 +727,7 @@ export const OfficerTeacherFormModal = {
                       <input type="text" id="officer-nssf-number"
                              value="${initialNssfNumber}"
                              placeholder="13981100"
-                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 font-mono shadow-2xs ${initialIsNssf ? '' : 'opacity-60'}" />
+                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono shadow-2xs ${initialIsNssf ? '' : 'opacity-60'}" />
                     </div>
                   </div>
                 </div>
@@ -745,19 +745,19 @@ export const OfficerTeacherFormModal = {
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'មុខតំណែង / តួនាទី' : 'Position'}</label>
-                  <input type="text" id="officer-position" value="${teacher?.position || 'គ្រូបង្រៀន'}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-teal-500" />
+                  <input type="text" id="officer-position" value="${teacher?.position || 'គ្រូបង្រៀន'}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
                 </div>
                 <div>
                   <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'ក្របខ័ណ្ឌ' : 'Framework'}</label>
-                  <input type="text" id="officer-framework" value="${teacher?.framework || 'ក្របខ័ណ្ឌគ្រូបង្រៀនកម្រិតឧត្តម'}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-teal-500" />
+                  <input type="text" id="officer-framework" value="${teacher?.framework || 'ក្របខ័ណ្ឌគ្រូបង្រៀនកម្រិតឧត្តម'}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
                 </div>
                 <div>
                   <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'ឋានន្តរស័ក្តិ និងថ្នាក់' : 'Rank & Grade'}</label>
-                  <input type="text" id="officer-rank-grade" value="${teacher?.rankAndGrade || ''}" placeholder="ឧ. ឧត្តមថ្នាក់លេខ ៤" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-teal-500" />
+                  <input type="text" id="officer-rank-grade" value="${teacher?.rankAndGrade || ''}" placeholder="ឧ. ឧត្តមថ្នាក់លេខ ៤" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
                 </div>
                 <div>
                   <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'ស្ថានភាពការងារ' : 'Work Status'}</label>
-                  <select id="officer-work-status" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-teal-500">
+                  <select id="officer-work-status" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary">
                     <option value="សកម្ម" ${(teacher?.status === 'សកម្ម' || teacher?.status === 'Active' || !teacher) ? 'selected' : ''}>${isKm ? 'សកម្ម (Active)' : 'Active'}</option>
                     <option value="ទំនេរគ្មានបៀវត្ស" ${teacher?.status === 'ទំនេរគ្មានបៀវត្ស' ? 'selected' : ''}>${isKm ? 'ទំនេរគ្មានបៀវត្ស' : 'On Leave (Unpaid)'}</option>
                     <option value="ផ្ទេរចេញ" ${teacher?.status === 'ផ្ទេរចេញ' ? 'selected' : ''}>${isKm ? 'ផ្ទេរចេញ' : 'Transferred Out'}</option>
@@ -766,7 +766,7 @@ export const OfficerTeacherFormModal = {
                 </div>
                 <div>
                   <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'អង្គភាពបម្រើការងារ' : 'Working Unit'}</label>
-                  <input type="text" id="officer-unit" value="${initialUnit}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-teal-500" />
+                  <input type="text" id="officer-unit" value="${initialUnit}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
                 </div>
               </div>
             </div>
@@ -781,15 +781,15 @@ export const OfficerTeacherFormModal = {
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'កម្រិតវប្បធម៌ទូទៅ' : 'General Education Level'}</label>
-                  <input type="text" id="officer-gen-edu-level" value="${teacher?.generalEducationLevel || 'បរិញ្ញាបត្រ'}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-teal-500" />
+                  <input type="text" id="officer-gen-edu-level" value="${teacher?.generalEducationLevel || 'បរិញ្ញាបត្រ'}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
                 </div>
                 <div>
                   <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'សញ្ញាបត្រខ្ពស់បំផុត' : 'Highest Degree'}</label>
-                  <input type="text" id="officer-highest-degree" value="${teacher?.highestDegree || 'បរិញ្ញាបត្រអប់រំ'}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-teal-500" />
+                  <input type="text" id="officer-highest-degree" value="${teacher?.highestDegree || 'បរិញ្ញាបត្រអប់រំ'}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
                 </div>
                 <div>
                   <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'ជំនាញឯកទេស' : 'Degree Major'}</label>
-                  <input type="text" id="officer-degree-major" value="${teacher?.highestDegreeMajor || 'គណិតវិទ្យា'}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-teal-500" />
+                  <input type="text" id="officer-degree-major" value="${teacher?.highestDegreeMajor || 'គណិតវិទ្យា'}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
                 </div>
               </div>
             </div>
@@ -804,18 +804,18 @@ export const OfficerTeacherFormModal = {
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'ស្ថានភាពគ្រួសារ' : 'Marital Status'}</label>
-                  <select id="officer-marital-status" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-teal-500">
+                  <select id="officer-marital-status" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary">
                     <option value="Single" ${(teacher?.maritalStatus === 'Single' || !teacher?.spouseName) ? 'selected' : ''}>${isKm ? 'នៅលីវ' : 'Single'}</option>
                     <option value="Married" ${(teacher?.maritalStatus === 'Married' || teacher?.spouseName) ? 'selected' : ''}>${isKm ? 'រៀបការ' : 'Married'}</option>
                   </select>
                 </div>
                 <div>
                   <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'ឈ្មោះប្តី/ប្រពន្ធ' : 'Spouse Name'}</label>
-                  <input type="text" id="officer-spouse-name" value="${teacher?.spouseName || ''}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-teal-500" />
+                  <input type="text" id="officer-spouse-name" value="${teacher?.spouseName || ''}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
                 </div>
                 <div>
                   <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'មុខរបរប្តី/ប្រពន្ធ' : 'Spouse Job'}</label>
-                  <input type="text" id="officer-spouse-job" value="${teacher?.spouseJob || ''}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-teal-500" />
+                  <input type="text" id="officer-spouse-job" value="${teacher?.spouseJob || ''}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
                 </div>
               </div>
             </div>
@@ -830,11 +830,11 @@ export const OfficerTeacherFormModal = {
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'មុខវិជ្ជាឯកទេសទី ១' : 'Primary Subject 1'}</label>
-                  <input type="text" id="officer-subject1" value="${teacher?.subject1 || teacher?.subject || ''}" placeholder="${isKm ? 'ឧ. គណិតវិទ្យា' : 'e.g. Mathematics'}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-teal-500" />
+                  <input type="text" id="officer-subject1" value="${teacher?.subject1 || teacher?.subject || ''}" placeholder="${isKm ? 'ឧ. គណិតវិទ្យា' : 'e.g. Mathematics'}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
                 </div>
                 <div>
                   <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'ម៉ោងបង្រៀនក្នុងមួយសប្តាហ៍' : 'Hours Per Week'}</label>
-                  <input type="number" id="officer-hours1" value="${teacher?.hoursPerWeek1 || 18}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-teal-500" />
+                  <input type="number" id="officer-hours1" value="${teacher?.hoursPerWeek1 || 18}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
                 </div>
               </div>
             </div>
@@ -845,7 +845,7 @@ export const OfficerTeacherFormModal = {
         <!-- Sticky Footer -->
         <div class="flex items-center justify-between px-5 py-3.5 border-t border-border bg-card/95 backdrop-blur z-20 flex-shrink-0">
           <div class="flex items-center gap-2 text-xs text-muted-foreground">
-            <span class="p-1 rounded bg-teal-500/10 text-teal-600 dark:text-teal-400">
+            <span class="p-1 rounded bg-primary/10 text-primary">
               ${getIcon('lock', 'w-3.5 h-3.5')}
             </span>
             <span class="hidden sm:inline ${isKm ? 'font-khmer' : ''}">
@@ -857,7 +857,7 @@ export const OfficerTeacherFormModal = {
             <button id="btn-officer-modal-cancel" type="button" class="px-4 py-2 rounded-xl border border-border hover:bg-muted text-xs font-medium text-foreground transition-colors cursor-pointer ${isKm ? 'font-khmer' : ''}">
               ${t('common.cancel')}
             </button>
-            <button id="btn-officer-modal-submit" type="button" class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs shadow-md hover:shadow-lg transition-all cursor-pointer ${isKm ? 'font-khmer' : ''}">
+            <button id="btn-officer-modal-submit" type="button" class="btn-primary inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transition-all cursor-pointer ${isKm ? 'font-khmer' : ''}">
               ${getIcon('check', 'w-4 h-4')}
               <span>${isEdit ? (isKm ? 'រក្សាទុកការកែប្រែ' : 'Update Profile') : (isKm ? 'រក្សាទុកទិន្នន័យ' : 'Save Profile')}</span>
             </button>
@@ -887,13 +887,11 @@ export const OfficerTeacherFormModal = {
         const targetId = btn.getAttribute('data-tab');
         
         tabBtns.forEach(b => {
-          b.classList.remove('bg-slate-900', 'dark:bg-slate-100', 'text-white', 'dark:text-slate-950', 'shadow-xs', 'font-semibold');
+          b.classList.remove('btn-primary', 'shadow-xs', 'font-semibold');
           b.classList.add('text-muted-foreground', 'hover:text-foreground', 'hover:bg-muted', 'font-medium');
         });
-        btn.classList.add('bg-slate-900', 'dark:bg-slate-100', 'text-white', 'dark:text-slate-950', 'shadow-xs', 'font-semibold');
+        btn.classList.add('btn-primary', 'shadow-xs', 'font-semibold');
         btn.classList.remove('text-muted-foreground', 'hover:text-foreground', 'hover:bg-muted', 'font-medium');
-
-        tabPanels.forEach(p => p.classList.add('hidden'));
         overlay.querySelector(`#${targetId}-content`)?.classList.remove('hidden');
       });
     });
@@ -986,7 +984,7 @@ export const OfficerTeacherFormModal = {
         previewIdDocUrl = file.name;
         if (idDocPlaceholder) {
           idDocPlaceholder.innerHTML = `
-            <div class="text-xs text-teal-600 font-semibold flex flex-col items-center gap-1">
+            <div class="text-xs text-primary font-semibold flex flex-col items-center gap-1">
               ${getIcon('fileText', 'w-7 h-7')}
               <span class="truncate max-w-[180px]">${file.name}</span>
             </div>

@@ -67,7 +67,7 @@ export const OfficerTeachersPage = {
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
           <div>
             <div class="flex items-center gap-2">
-              <span class="p-2.5 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400">
+              <span class="p-2.5 rounded-xl bg-primary/10 text-primary">
                 ${getIcon('teachers', 'w-6 h-6')}
               </span>
               <div>
@@ -75,7 +75,7 @@ export const OfficerTeachersPage = {
                   <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-foreground ${isKm ? 'font-khmer' : ''}">
                     ${isKm ? 'គ្រប់គ្រងគ្រូបង្រៀន និងមន្ត្រី (ការិយាល័យ)' : 'Teacher & Officer Management'}
                   </h1>
-                  <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/30">
+                  <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-primary/10 text-primary border border-primary/20">
                     OFFICER
                   </span>
                 </div>
@@ -101,7 +101,7 @@ export const OfficerTeachersPage = {
             <!-- Add Teacher Button -->
             <button id="btn-officer-add-teacher" 
                     type="button"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-semibold shadow-sm hover:shadow transition-all cursor-pointer">
+                    class="btn-primary inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-sm hover:shadow transition-all cursor-pointer">
               ${getIcon('plus', 'w-4 h-4')}
               <span>${isKm ? 'បន្ថែមគ្រូបង្រៀនថ្មី' : 'Add New Teacher'}</span>
             </button>
@@ -123,14 +123,14 @@ export const OfficerTeachersPage = {
             <input type="text" 
                    id="officer-teacher-search" 
                    placeholder="${isKm ? 'ស្វែងរកតាមឈ្មោះ, អត្តលេខ, ទូរស័ព្ទ, អត្តសញ្ញាណប័ណ្ណ, ប.ស.ស....' : 'Search name, Civil ID, Phone, National ID, NSSF...'}"
-                   class="w-full h-9 pl-9 pr-3 py-1.5 bg-background border border-input rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs" />
+                   class="w-full h-9 pl-9 pr-3 py-1.5 bg-background border border-input rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs" />
           </div>
 
           <!-- Filters -->
           <div class="flex items-center gap-2 w-full lg:w-auto flex-wrap">
             <!-- Gender Filter -->
             <select id="officer-gender-filter" 
-                    class="h-9 px-3 py-1.5 bg-background border border-input rounded-xl text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs">
+                    class="h-9 px-3 py-1.5 bg-background border border-input rounded-xl text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs">
               <option value="all">${isKm ? 'គ្រប់ភេទ' : 'All Genders'}</option>
               <option value="ស្រី">${isKm ? 'ស្រី' : 'Female'}</option>
               <option value="ប្រុស">${isKm ? 'ប្រុស' : 'Male'}</option>
@@ -138,7 +138,7 @@ export const OfficerTeachersPage = {
 
             <!-- Status Filter -->
             <select id="officer-status-filter" 
-                    class="h-9 px-3 py-1.5 bg-background border border-input rounded-xl text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs">
+                    class="h-9 px-3 py-1.5 bg-background border border-input rounded-xl text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs">
               <option value="all">${isKm ? 'គ្រប់ស្ថានភាព' : 'All Status'}</option>
               <option value="សកម្ម">${isKm ? 'សកម្ម (Active)' : 'Active'}</option>
               <option value="ទំនេរគ្មានបៀវត្ស">${isKm ? 'ទំនេរគ្មានបៀវត្ស' : 'On Leave'}</option>
@@ -148,7 +148,7 @@ export const OfficerTeachersPage = {
 
             <!-- NSSF Filter -->
             <select id="officer-nssf-filter" 
-                    class="h-9 px-3 py-1.5 bg-background border border-input rounded-xl text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs">
+                    class="h-9 px-3 py-1.5 bg-background border border-input rounded-xl text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs">
               <option value="all">${isKm ? 'ប.ស.ស. ទាំងអស់' : 'All NSSF'}</option>
               <option value="yes">${isKm ? 'មាន ប.ស.ស.' : 'NSSF Member'}</option>
               <option value="no">${isKm ? 'គ្មាន ប.ស.ស.' : 'No NSSF'}</option>
@@ -156,7 +156,7 @@ export const OfficerTeachersPage = {
 
             <!-- Disability Filter -->
             <select id="officer-disability-filter" 
-                    class="h-9 px-3 py-1.5 bg-background border border-input rounded-xl text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 shadow-2xs">
+                    class="h-9 px-3 py-1.5 bg-background border border-input rounded-xl text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs">
               <option value="all">${isKm ? 'ពិការភាព ទាំងអស់' : 'All Disability'}</option>
               <option value="yes">${isKm ? 'មានពិការភាព' : 'Disabled'}</option>
               <option value="no">${isKm ? 'គ្មានពិការភាព' : 'Non-disabled'}</option>
@@ -172,7 +172,7 @@ export const OfficerTeachersPage = {
                 <tr>
                   <th class="w-10 px-3 py-3 text-center sticky left-0 z-10 bg-muted/90 backdrop-blur-xs">#</th>
                   <th class="w-12 px-2 py-3 text-center">${isKm ? 'រូបថត' : 'Photo'}</th>
-                  <th class="px-3.5 py-3 font-bold text-teal-700 dark:text-teal-400">${isKm ? 'អត្តលេខមន្ត្រី' : 'Civil ID'}</th>
+                  <th class="px-3.5 py-3 font-bold text-primary">${isKm ? 'អត្តលេខមន្ត្រី' : 'Civil ID'}</th>
                   <th class="px-4 py-3">${isKm ? 'គោត្តនាម-នាម' : 'Full Name (Khmer)'}</th>
                   <th class="px-3.5 py-3">${isKm ? 'ឈ្មោះឡាតាំង' : 'Latin Name'}</th>
                   <th class="px-2.5 py-3 text-center">${isKm ? 'ភេទ' : 'Gender'}</th>
@@ -287,7 +287,7 @@ export const OfficerTeachersPage = {
             <div class="text-[11px] text-muted-foreground font-medium ${isKm ? 'font-khmer' : ''}">${isKm ? 'ចំនួនគ្រូសរុប' : 'Total Staff'}</div>
             <div class="text-xl font-bold text-foreground mt-0.5">${totalTeachers} <span class="text-xs font-normal text-muted-foreground">${isKm ? 'នាក់' : ''}</span></div>
           </div>
-          <span class="p-2 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400">${getIcon('users', 'w-5 h-5')}</span>
+          <span class="p-2 rounded-lg bg-primary/10 text-primary">${getIcon('users', 'w-5 h-5')}</span>
         </div>
 
         <div class="bg-card p-3 rounded-xl border border-border shadow-2xs flex items-center justify-between">
@@ -301,9 +301,9 @@ export const OfficerTeachersPage = {
         <div class="bg-card p-3 rounded-xl border border-border shadow-2xs flex items-center justify-between">
           <div>
             <div class="text-[11px] text-muted-foreground font-medium ${isKm ? 'font-khmer' : ''}">${isKm ? 'សមាជិក ប.ស.ស.' : 'NSSF Members'}</div>
-            <div class="text-xl font-bold text-teal-600 dark:text-teal-400 mt-0.5">${nssfCount} <span class="text-xs font-normal text-muted-foreground">${isKm ? 'នាក់' : ''}</span></div>
+            <div class="text-xl font-bold text-primary mt-0.5">${nssfCount} <span class="text-xs font-normal text-muted-foreground">${isKm ? 'នាក់' : ''}</span></div>
           </div>
-          <span class="p-2 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400">${getIcon('award', 'w-5 h-5')}</span>
+          <span class="p-2 rounded-lg bg-primary/10 text-primary">${getIcon('award', 'w-5 h-5')}</span>
         </div>
 
         <div class="bg-card p-3 rounded-xl border border-border shadow-2xs flex items-center justify-between">
@@ -430,7 +430,7 @@ export const OfficerTeachersPage = {
       // NSSF badge
       const hasNssf = t.isNssf === true || t.isNssf === 'true' || !!t.nssfNumber;
       const nssfBadge = hasNssf
-        ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20" title="${t.nssfNumber || ''}">
+        ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20" title="${t.nssfNumber || ''}">
              ${getIcon('check', 'w-3 h-3')} ${t.nssfNumber || (isKm ? 'មាន' : 'Yes')}
            </span>`
         : `<span class="text-muted-foreground/60 text-[11px]">—</span>`;
@@ -457,7 +457,7 @@ export const OfficerTeachersPage = {
           </td>
 
           <!-- Civil ID -->
-          <td class="px-3.5 py-2.5 font-mono text-xs font-bold text-teal-700 dark:text-teal-300">
+          <td class="px-3.5 py-2.5 font-mono text-xs font-bold text-primary">
             ${civilId}
           </td>
 
@@ -545,7 +545,7 @@ export const OfficerTeachersPage = {
           <td class="w-24 px-3 py-2.5 text-center sticky right-0 z-10 bg-card">
             <div class="flex items-center justify-center gap-1">
               <!-- View CV -->
-              <button data-action="cv" data-id="${t.id}" class="p-1.5 rounded-lg hover:bg-teal-500/10 text-muted-foreground hover:text-teal-600 transition-colors cursor-pointer" title="${isKm ? 'មើលជីវប្រវត្តិ (CV)' : 'View CV'}">
+              <button data-action="cv" data-id="${t.id}" class="p-1.5 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors cursor-pointer" title="${isKm ? 'មើលជីវប្រវត្តិ (CV)' : 'View CV'}">
                 ${getIcon('fileText', 'w-3.5 h-3.5')}
               </button>
               <!-- Edit -->
