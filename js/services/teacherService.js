@@ -50,6 +50,7 @@ export function normalizeTeacherRecord(raw = {}) {
   const finalEnglishName = (lastNameLatin || firstNameLatin) ? `${lastNameLatin} ${firstNameLatin}`.trim() : (englishName || raw.englishName || raw.latinName || '').trim();
 
   return {
+    ...raw,
     id: raw.id ? String(raw.id).trim() : `tch-${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
     status: raw.status || 'Active', // Active (សកម្ម), On Leave (ទំនេរ), Transferred (ផ្ទេរចេញ), Retired (ចូលនិវត្តន៍)
     name: finalKhmerName || finalEnglishName || raw.name || '',
@@ -58,6 +59,17 @@ export function normalizeTeacherRecord(raw = {}) {
     teacherId: raw.teacherId ? String(raw.teacherId).trim() : '',
     civilServantId: raw.civilServantId ? String(raw.civilServantId).trim() : '',
     nationalId: raw.nationalId ? String(raw.nationalId).trim() : '',
+    ethnicity: raw.ethnicity || 'ខ្មែរ',
+    idCardDoc: raw.idCardDoc || '',
+    houseNumber: raw.houseNumber || '',
+    group: raw.group || '',
+    street: raw.street || '',
+    isDisability: raw.isDisability === true || raw.isDisability === 'true',
+    disabilityType: raw.disabilityType || '',
+    disabilityDescription: raw.disabilityDescription || '',
+    isNssf: raw.isNssf === true || raw.isNssf === 'true',
+    nssfNumber: raw.nssfNumber ? String(raw.nssfNumber).trim() : '',
+    unit: raw.unit || '',
     lastNameKhmer: (raw.lastNameKhmer || lastNameKhmer || '').trim(),
     firstNameKhmer: (raw.firstNameKhmer || firstNameKhmer || '').trim(),
     lastNameLatin: (raw.lastNameLatin || lastNameLatin || '').trim(),
