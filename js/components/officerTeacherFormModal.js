@@ -79,7 +79,7 @@ export const OfficerTeacherFormModal = {
     const initialFirstNameKm = teacher?.firstNameKhmer || teacher?.firstNameKh || '';
     const initialLastNameEn = (teacher?.lastNameLatin || '').toUpperCase();
     const initialFirstNameEn = (teacher?.firstNameLatin || '').toUpperCase();
-    const initialFullNameKm = `${initialLastNameKm} ${initialFirstNameKm}`.trim() || (isKm ? 'សក់ វាសនា' : 'Teacher Name');
+    const initialFullNameKm = `${initialLastNameKm} ${initialFirstNameKm}`.trim() || (isKm ? 'ឈ្មោះគ្រូបង្រៀន' : 'Teacher Name');
     const initialFullNameEn = `${initialLastNameEn} ${initialFirstNameEn}`.trim() || 'TEACHER NAME';
     const initialCivilId = teacher?.civilServantId || teacher?.teacherId || '';
     const initialPhone = teacher?.phone || teacher?.phone1 || '';
@@ -271,7 +271,7 @@ export const OfficerTeacherFormModal = {
                     </label>
                     <input type="text" id="officer-last-name-km" required
                            value="${initialLastNameKm}"
-                           placeholder="${isKm ? 'ឧ. សក់' : 'e.g. SOK'}"
+                           placeholder="${isKm ? 'ឧ. សុខ' : 'e.g. SOK'}"
                            class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 font-khmer shadow-2xs" />
                   </div>
 
@@ -282,7 +282,7 @@ export const OfficerTeacherFormModal = {
                     </label>
                     <input type="text" id="officer-first-name-km" required
                            value="${initialFirstNameKm}"
-                           placeholder="${isKm ? 'ឧ. វាសនា' : 'e.g. VEASNA'}"
+                           placeholder="${isKm ? 'ឧ. សុផល' : 'e.g. SOPHAL'}"
                            class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 font-khmer shadow-2xs" />
                   </div>
 
@@ -293,7 +293,7 @@ export const OfficerTeacherFormModal = {
                     </label>
                     <input type="text" id="officer-last-name-en"
                            value="${initialLastNameEn}"
-                           placeholder="SORK"
+                           placeholder="SOK"
                            class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 uppercase font-mono shadow-2xs" />
                   </div>
 
@@ -304,7 +304,7 @@ export const OfficerTeacherFormModal = {
                     </label>
                     <input type="text" id="officer-first-name-en"
                            value="${initialFirstNameEn}"
-                           placeholder="VEASNA"
+                           placeholder="SOPHAL"
                            class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500 uppercase font-mono shadow-2xs" />
                   </div>
 
