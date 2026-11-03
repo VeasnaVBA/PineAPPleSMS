@@ -139,34 +139,7 @@ export const OfficerTeacherFormModal = {
         <!-- Scrollable Form Body -->
         <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 bg-muted/15" id="officer-modal-scroll-body">
 
-          <!-- 3. OFFICIAL TAB NAVIGATION BAR (8 Tabs) -->
-          <div class="border-b border-border flex items-center gap-1 overflow-x-auto pb-1 text-xs sm:text-sm scrollbar-none" id="officer-tabs-bar">
-            <button type="button" data-tab="tab-electronic-info" class="officer-tab-btn px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-all cursor-pointer btn-primary text-xs shadow-xs flex items-center gap-1.5 ${isKm ? 'font-khmer' : ''}">
-              ${getIcon('user', 'w-4 h-4')}
-              <span>${isKm ? 'ព័ត៌មានអេឡិចត្រូនិក' : 'Electronic Info'}</span>
-            </button>
-            <button type="button" data-tab="tab-career" class="officer-tab-btn px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted flex items-center gap-1.5 ${isKm ? 'font-khmer' : ''}">
-              ${getIcon('history', 'w-4 h-4')}
-              <span>${isKm ? 'ប្រវត្តិការងារ/ប្តូរតំណែង' : 'Employment History'}</span>
-            </button>
-            <button type="button" data-tab="tab-training" class="officer-tab-btn px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted flex items-center gap-1.5 ${isKm ? 'font-khmer' : ''}">
-              ${getIcon('award', 'w-4 h-4')}
-              <span>${isKm ? 'កម្រិតបណ្តុះបណ្តាល' : 'Training Levels'}</span>
-            </button>
-            <button type="button" data-tab="tab-family" class="officer-tab-btn px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted flex items-center gap-1.5 ${isKm ? 'font-khmer' : ''}">
-              ${getIcon('users', 'w-4 h-4')}
-              <span>${isKm ? 'ព័ត៌មានគ្រួសារ' : 'Family Info'}</span>
-            </button>
-            <button type="button" data-tab="tab-teaching" class="officer-tab-btn px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted flex items-center gap-1.5 ${isKm ? 'font-khmer' : ''}">
-              ${getIcon('bookOpen', 'w-4 h-4')}
-              <span>${isKm ? 'ការបង្រៀន' : 'Teaching Load'}</span>
-            </button>
-          </div>
-
-          <!-- TAB 1 CONTENT: ព័ត៌មានអេឡិចត្រូនិក (All 5 Cards From Screenshots) -->
-          <div id="tab-electronic-info-content" class="officer-tab-panel space-y-5">
-            
-            <form id="officer-main-form" class="space-y-5">
+          <form id="officer-main-form" class="space-y-5">
               
               <!-- CARD 1: ព័ត៌មានអត្តសញ្ញាណផ្ទាល់ខ្លួន (Personal Identity) -->
               <div class="bg-card rounded-2xl border border-border p-4 sm:p-5 shadow-2xs space-y-4">
@@ -268,6 +241,12 @@ export const OfficerTeacherFormModal = {
                       ${isKm ? 'រូបថតប្រឡងប្រជែង' : 'Contest / Portrait Photo'}
                     </label>
                     <div class="flex items-center gap-2">
+                      <div class="w-9 h-9 rounded-lg border border-border bg-muted/40 overflow-hidden flex items-center justify-center flex-shrink-0">
+                        <img id="officer-photo-preview" src="${previewPhotoUrl || ''}" class="${previewPhotoUrl ? '' : 'hidden'} w-full h-full object-cover" alt="Photo" />
+                        <span id="officer-photo-preview-placeholder" class="${previewPhotoUrl ? 'hidden' : ''} text-muted-foreground">
+                          ${getIcon('user', 'w-4 h-4')}
+                        </span>
+                      </div>
                       <input type="file" id="officer-contest-photo-input" accept="image/*"
                              class="w-full text-xs text-muted-foreground file:mr-2.5 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer border border-input rounded-lg h-9 bg-background flex items-center px-1.5 shadow-2xs" />
                     </div>
@@ -650,112 +629,6 @@ export const OfficerTeacherFormModal = {
               </div>
 
             </form>
-          </div>
-
-          <!-- TAB 2 CONTENT: ប្រវត្តិការងារ/ប្តូរតំណែង (Employment History & Ranks) -->
-          <div id="tab-career-content" class="officer-tab-panel hidden space-y-4">
-            <div class="bg-card rounded-2xl border border-border p-5 shadow-2xs space-y-4">
-              <h4 class="text-sm font-bold text-foreground ${isKm ? 'font-khmer' : ''}">
-                ${isKm ? 'ព័ត៌មានក្របខ័ណ្ឌ ឋានន្តរស័ក្តិ និងតួនាទី' : 'Framework, Rank & Position'}
-              </h4>
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'មុខតំណែង / តួនាទី' : 'Position'}</label>
-                  <input type="text" id="officer-position" value="${teacher?.position || 'គ្រូបង្រៀន'}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'ក្របខ័ណ្ឌ' : 'Framework'}</label>
-                  <input type="text" id="officer-framework" value="${teacher?.framework || 'ក្របខ័ណ្ឌគ្រូបង្រៀនកម្រិតឧត្តម'}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'ឋានន្តរស័ក្តិ និងថ្នាក់' : 'Rank & Grade'}</label>
-                  <input type="text" id="officer-rank-grade" value="${teacher?.rankAndGrade || ''}" placeholder="ឧ. ឧត្តមថ្នាក់លេខ ៤" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'ស្ថានភាពការងារ' : 'Work Status'}</label>
-                  <select id="officer-work-status" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary">
-                    <option value="សកម្ម" ${(teacher?.status === 'សកម្ម' || teacher?.status === 'Active' || !teacher) ? 'selected' : ''}>${isKm ? 'សកម្ម (Active)' : 'Active'}</option>
-                    <option value="ទំនេរគ្មានបៀវត្ស" ${teacher?.status === 'ទំនេរគ្មានបៀវត្ស' ? 'selected' : ''}>${isKm ? 'ទំនេរគ្មានបៀវត្ស' : 'On Leave (Unpaid)'}</option>
-                    <option value="ផ្ទេរចេញ" ${teacher?.status === 'ផ្ទេរចេញ' ? 'selected' : ''}>${isKm ? 'ផ្ទេរចេញ' : 'Transferred Out'}</option>
-                    <option value="ចូលនិវត្តន៍" ${teacher?.status === 'ចូលនិវត្តន៍' ? 'selected' : ''}>${isKm ? 'ចូលនិវត្តន៍' : 'Retired'}</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'អង្គភាពបម្រើការងារ' : 'Working Unit'}</label>
-                  <input type="text" id="officer-unit" value="${initialUnit}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB 3 CONTENT: កម្រិតបណ្តុះបណ្តាល (Training Level) -->
-          <div id="tab-training-content" class="officer-tab-panel hidden space-y-4">
-            <div class="bg-card rounded-2xl border border-border p-5 shadow-2xs space-y-4">
-              <h4 class="text-sm font-bold text-foreground ${isKm ? 'font-khmer' : ''}">
-                ${isKm ? 'កម្រិតបណ្តុះបណ្តាល និងសញ្ញាបត្រ' : 'Training Level & Degrees'}
-              </h4>
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'កម្រិតវប្បធម៌ទូទៅ' : 'General Education Level'}</label>
-                  <input type="text" id="officer-gen-edu-level" value="${teacher?.generalEducationLevel || 'បរិញ្ញាបត្រ'}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'សញ្ញាបត្រខ្ពស់បំផុត' : 'Highest Degree'}</label>
-                  <input type="text" id="officer-highest-degree" value="${teacher?.highestDegree || 'បរិញ្ញាបត្រអប់រំ'}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'ជំនាញឯកទេស' : 'Degree Major'}</label>
-                  <input type="text" id="officer-degree-major" value="${teacher?.highestDegreeMajor || 'គណិតវិទ្យា'}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB 4 CONTENT: ព័ត៌មានគ្រួសារ (Family Info) -->
-          <div id="tab-family-content" class="officer-tab-panel hidden space-y-4">
-            <div class="bg-card rounded-2xl border border-border p-5 shadow-2xs space-y-4">
-              <h4 class="text-sm font-bold text-foreground ${isKm ? 'font-khmer' : ''}">
-                ${isKm ? 'ព័ត៌មានអាពាហ៍ពិពាហ៍ និងគ្រួសារ' : 'Marital & Family Information'}
-              </h4>
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'ស្ថានភាពគ្រួសារ' : 'Marital Status'}</label>
-                  <select id="officer-marital-status" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary">
-                    <option value="Single" ${(teacher?.maritalStatus === 'Single' || !teacher?.spouseName) ? 'selected' : ''}>${isKm ? 'នៅលីវ' : 'Single'}</option>
-                    <option value="Married" ${(teacher?.maritalStatus === 'Married' || teacher?.spouseName) ? 'selected' : ''}>${isKm ? 'រៀបការ' : 'Married'}</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'ឈ្មោះប្តី/ប្រពន្ធ' : 'Spouse Name'}</label>
-                  <input type="text" id="officer-spouse-name" value="${teacher?.spouseName || ''}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'មុខរបរប្តី/ប្រពន្ធ' : 'Spouse Job'}</label>
-                  <input type="text" id="officer-spouse-job" value="${teacher?.spouseJob || ''}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB 5 CONTENT: ការបង្រៀន (Teaching Load) -->
-          <div id="tab-teaching-content" class="officer-tab-panel hidden space-y-4">
-            <div class="bg-card rounded-2xl border border-border p-5 shadow-2xs space-y-4">
-              <h4 class="text-sm font-bold text-foreground ${isKm ? 'font-khmer' : ''}">
-                ${isKm ? 'មុខវិជ្ជាបង្រៀន និងបន្ទុកម៉ោង' : 'Teaching Subjects & Hours'}
-              </h4>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'មុខវិជ្ជាឯកទេសទី ១' : 'Primary Subject 1'}</label>
-                  <input type="text" id="officer-subject1" value="${teacher?.subject1 || teacher?.subject || ''}" placeholder="${isKm ? 'ឧ. គណិតវិទ្យា' : 'e.g. Mathematics'}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-foreground mb-1">${isKm ? 'ម៉ោងបង្រៀនក្នុងមួយសប្តាហ៍' : 'Hours Per Week'}</label>
-                  <input type="number" id="officer-hours1" value="${teacher?.hoursPerWeek1 || 18}" class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary" />
-                </div>
-              </div>
-            </div>
-          </div>
-
         </div>
 
         <!-- Sticky Footer -->
@@ -794,35 +667,14 @@ export const OfficerTeacherFormModal = {
     overlay.querySelector('#btn-officer-modal-close')?.addEventListener('click', closeModal);
     overlay.querySelector('#btn-officer-modal-cancel')?.addEventListener('click', closeModal);
 
-    // Tab Switching
-    const tabBtns = overlay.querySelectorAll('.officer-tab-btn');
-    const tabPanels = overlay.querySelectorAll('.officer-tab-panel');
-
-    tabBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const targetId = btn.getAttribute('data-tab');
-        
-        tabBtns.forEach(b => {
-          b.classList.remove('btn-primary', 'shadow-xs', 'font-semibold');
-          b.classList.add('text-muted-foreground', 'hover:text-foreground', 'hover:bg-muted', 'font-medium');
-        });
-        btn.classList.add('btn-primary', 'shadow-xs', 'font-semibold');
-        btn.classList.remove('text-muted-foreground', 'hover:text-foreground', 'hover:bg-muted', 'font-medium');
-        overlay.querySelector(`#${targetId}-content`)?.classList.remove('hidden');
-      });
-    });
+    // Tabs removed - direct single form
 
     
 
     // Photo input handling
     const contestPhotoInput = overlay.querySelector('#officer-contest-photo-input');
-    const headerAvatar = overlay.querySelector('#officer-header-avatar');
-    const headerPlaceholder = overlay.querySelector('#officer-header-placeholder');
-    const headerPhotoTrigger = overlay.querySelector('#officer-header-photo-trigger');
-
-    headerPhotoTrigger?.addEventListener('click', () => {
-      contestPhotoInput?.click();
-    });
+    const photoPreview = overlay.querySelector('#officer-photo-preview');
+    const photoPlaceholder = overlay.querySelector('#officer-photo-preview-placeholder');
 
     contestPhotoInput?.addEventListener('change', (e) => {
       const file = e.target.files?.[0];
@@ -833,12 +685,12 @@ export const OfficerTeacherFormModal = {
       }
       tempPhotoBlob = file;
       const url = URL.createObjectURL(file);
-      if (headerAvatar) {
-        headerAvatar.src = url;
-        headerAvatar.classList.remove('hidden');
+      if (photoPreview) {
+        photoPreview.src = url;
+        photoPreview.classList.remove('hidden');
       }
-      if (headerPlaceholder) {
-        headerPlaceholder.classList.add('hidden');
+      if (photoPlaceholder) {
+        photoPlaceholder.classList.add('hidden');
       }
     });
 
