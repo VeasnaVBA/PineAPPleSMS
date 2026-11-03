@@ -456,8 +456,8 @@ export const UsersPage = {
     ];
 
     return officerMenuDefs.map((def) => {
-      const isChecked = def.key === 'teachers' 
-        ? (officerPerms.teachers !== false)
+      const isChecked = (def.key === 'teachers' || def.key === 'students')
+        ? (officerPerms[def.key] !== false)
         : Boolean(officerPerms[def.key]);
 
       return `
@@ -472,7 +472,7 @@ export const UsersPage = {
                   <span class="font-semibold text-foreground text-xs sm:text-sm">${def.label}</span>
                   ${def.isPrimary ? `
                     <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/30">
-                      ${isKm ? 'ម៉ឺនុយចម្បងទី ១' : '1st Primary Menu'}
+                      ${isKm ? (def.key === 'teachers' ? 'ម៉ឺនុយចម្បងទី ១' : 'ម៉ឺនុយចម្បងទី ២') : (def.key === 'teachers' ? '1st Primary Menu' : '2nd Primary Menu')}
                     </span>
                   ` : ''}
                 </div>
@@ -759,7 +759,7 @@ export const UsersPage = {
     document.getElementById('btn-save-perms')?.addEventListener('click', async () => {
       const directorPerms = {};
       const teacherPerms = {};
-      const officerPerms = this.permissions?.OFFICER || { teachers: true };
+      const officerPerms = this.permissions?.OFFICER || { teachers: true, students: true };
 
       this.container.querySelectorAll('.perm-checkbox').forEach(cb => {
         const role = cb.getAttribute('data-role');
@@ -824,7 +824,8 @@ export const UsersPage = {
     document.getElementById('btn-reset-officer-perms')?.addEventListener('click', async () => {
       try {
         const defaultOfficer = {
-          teachers: true
+          teachers: true,
+          students: true
         };
         await permissionService.saveOfficerPermissions(defaultOfficer);
         this.permissions = await permissionService.getAll();

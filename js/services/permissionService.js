@@ -25,7 +25,8 @@ export const MENU_KEYS = [
  * Currently strictly requested: Teacher Management ('teachers')
  */
 export const OFFICER_MENU_KEYS = [
-  'teachers'
+  'teachers',
+  'students'
 ];
 
 export const GRANULAR_PERMISSIONS = [
@@ -119,7 +120,8 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     'download-data': false
   },
   OFFICER: {
-    teachers: true
+    teachers: true,
+    students: true
   }
 };
 
@@ -151,6 +153,7 @@ class PermissionService {
         }
         if (this.customPermissions.OFFICER) {
           if (this.customPermissions.OFFICER.teachers === undefined) this.customPermissions.OFFICER.teachers = true;
+          if (this.customPermissions.OFFICER.students === undefined) this.customPermissions.OFFICER.students = true;
         }
       } else {
         this.customPermissions = JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS));
@@ -225,6 +228,9 @@ class PermissionService {
       if (routeKey === 'teachers') {
         return officerPerms.teachers !== false;
       }
+      if (routeKey === 'students') {
+        return officerPerms.students !== false;
+      }
       return false;
     }
 
@@ -264,7 +270,7 @@ class PermissionService {
       return true;
     }
 
-    if (role === 'OFFICER' && action.startsWith('teachers.')) {
+    if (role === 'OFFICER' && (action.startsWith('teachers.') || action.startsWith('students.'))) {
       return true;
     }
 

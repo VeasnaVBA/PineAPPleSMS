@@ -26,7 +26,7 @@ export class Sidebar {
     if (currentUser?.role === 'ADMIN') {
       this.activeRoute = (initialRoute === 'settings' || initialRoute === 'download-data') ? initialRoute : 'users';
     } else if (currentUser?.role === 'OFFICER') {
-      this.activeRoute = initialRoute || 'teachers';
+      this.activeRoute = (initialRoute === 'students') ? 'students' : (initialRoute || 'teachers');
     } else {
       this.activeRoute = initialRoute;
     }
@@ -87,7 +87,8 @@ export class Sidebar {
     let allNavItems = [];
     if (isOfficer) {
       allNavItems = [
-        { id: 'teachers', labelKey: 'nav.teachersManagement', icon: 'teachers', href: '#teachers' }
+        { id: 'teachers', labelKey: 'nav.teachersManagement', icon: 'teachers', href: '#teachers' },
+        { id: 'students', labelKey: 'nav.students', icon: 'students', href: '#students' }
       ];
     } else {
       allNavItems = [

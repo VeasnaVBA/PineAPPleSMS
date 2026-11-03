@@ -95,7 +95,7 @@ export class Router {
     if (currentUser?.role === 'ADMIN') {
       defaultRoute = 'users';
     } else if (currentUser?.role === 'OFFICER') {
-      defaultRoute = 'teachers';
+      defaultRoute = (rawHash === 'students') ? 'students' : 'teachers';
     }
     let route = routes[rawHash] ? rawHash : defaultRoute;
 
@@ -130,7 +130,7 @@ export class Router {
     if (currentUser?.role === 'ADMIN') {
       defaultRoute = 'users';
     } else if (currentUser?.role === 'OFFICER') {
-      defaultRoute = 'teachers';
+      defaultRoute = (routeKey === 'students') ? 'students' : 'teachers';
     }
 
     // Automatic redirect if user does not have permission to access this route
@@ -155,7 +155,7 @@ export class Router {
     if (currentUser?.role === 'ADMIN') {
       defaultFallback = routes.users;
     } else if (currentUser?.role === 'OFFICER') {
-      defaultFallback = OfficerTeachersPage;
+      defaultFallback = (routeKey === 'students') ? routes.students : OfficerTeachersPage;
     }
     let page = routes[routeKey] || defaultFallback;
     if (routeKey === 'teachers' && currentUser?.role === 'OFFICER') {
