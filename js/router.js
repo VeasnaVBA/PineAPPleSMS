@@ -4,7 +4,7 @@
  * Enforces route-level RBAC permissions (ADMIN, DIRECTOR, TEACHER)
  */
 import { DashboardPage } from './pages/dashboard.js?v=3.0.99';
-import { StudentsPage } from './pages/students.js?v=3.1.16';
+import { StudentsPage } from './pages/students.js?v=3.1.34';
 import { TeachersPage } from './pages/teachers.js?v=3.1.19';
 import { OfficerTeachersPage } from './pages/officerTeachers.js';
 import { ClassesPage } from './pages/classes.js?v=3.1.16';
@@ -91,10 +91,11 @@ export class Router {
   async handleRoute() {
     const rawHash = window.location.hash.replace('#', '').trim();
     const currentUser = authService.getCurrentUser();
+    const cleanRole = (currentUser?.role || '').trim().toUpperCase();
     let defaultRoute = 'dashboard';
-    if (currentUser?.role === 'ADMIN') {
+    if (cleanRole === 'ADMIN') {
       defaultRoute = 'users';
-    } else if (currentUser?.role === 'OFFICER') {
+    } else if (cleanRole === 'OFFICER') {
       defaultRoute = (rawHash === 'students') ? 'students' : 'teachers';
     }
     let route = routes[rawHash] ? rawHash : defaultRoute;
@@ -126,10 +127,11 @@ export class Router {
 
   async loadRoute(routeKey, force = false) {
     const currentUser = authService.getCurrentUser();
+    const cleanRole = (currentUser?.role || '').trim().toUpperCase();
     let defaultRoute = 'dashboard';
-    if (currentUser?.role === 'ADMIN') {
+    if (cleanRole === 'ADMIN') {
       defaultRoute = 'users';
-    } else if (currentUser?.role === 'OFFICER') {
+    } else if (cleanRole === 'OFFICER') {
       defaultRoute = (routeKey === 'students') ? 'students' : 'teachers';
     }
 
@@ -152,13 +154,13 @@ export class Router {
     }
 
     let defaultFallback = routes.dashboard;
-    if (currentUser?.role === 'ADMIN') {
+    if (cleanRole === 'ADMIN') {
       defaultFallback = routes.users;
-    } else if (currentUser?.role === 'OFFICER') {
+    } else if (cleanRole === 'OFFICER') {
       defaultFallback = (routeKey === 'students') ? routes.students : OfficerTeachersPage;
     }
     let page = routes[routeKey] || defaultFallback;
-    if (routeKey === 'teachers' && currentUser?.role === 'OFFICER') {
+    if (routeKey === 'teachers' && cleanRole === 'OFFICER') {
       page = OfficerTeachersPage;
     }
 

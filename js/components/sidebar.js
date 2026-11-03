@@ -23,9 +23,10 @@ export class Sidebar {
 
   async init(initialRoute = 'dashboard') {
     const currentUser = authService.getCurrentUser();
-    if (currentUser?.role === 'ADMIN') {
+    const cleanRole = (currentUser?.role || '').trim().toUpperCase();
+    if (cleanRole === 'ADMIN') {
       this.activeRoute = (initialRoute === 'settings' || initialRoute === 'download-data') ? initialRoute : 'users';
-    } else if (currentUser?.role === 'OFFICER') {
+    } else if (cleanRole === 'OFFICER') {
       this.activeRoute = (initialRoute === 'students') ? 'students' : (initialRoute || 'teachers');
     } else {
       this.activeRoute = initialRoute;
@@ -81,8 +82,9 @@ export class Sidebar {
     if (!this.container) return;
 
     const currentUser = authService.getCurrentUser();
-    const isAdmin = currentUser?.role === 'ADMIN';
-    const isOfficer = currentUser?.role === 'OFFICER';
+    const cleanRole = (currentUser?.role || '').trim().toUpperCase();
+    const isAdmin = cleanRole === 'ADMIN';
+    const isOfficer = cleanRole === 'OFFICER';
 
     let allNavItems = [];
     if (isOfficer) {

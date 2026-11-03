@@ -104,7 +104,8 @@ export const DEFAULT_USERS = [
     status: "ACTIVE",
     classId: null,
     permissions: {
-      teachers: true
+      teachers: true,
+      students: true
     }
   }
 ];

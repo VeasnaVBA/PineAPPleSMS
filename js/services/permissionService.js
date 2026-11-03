@@ -154,6 +154,8 @@ class PermissionService {
         if (this.customPermissions.OFFICER) {
           if (this.customPermissions.OFFICER.teachers === undefined) this.customPermissions.OFFICER.teachers = true;
           if (this.customPermissions.OFFICER.students === undefined) this.customPermissions.OFFICER.students = true;
+        } else {
+          this.customPermissions.OFFICER = { teachers: true, students: true };
         }
       } else {
         this.customPermissions = JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS));
@@ -198,6 +200,8 @@ class PermissionService {
    * Synchronous check using in-memory cache
    */
   canRoleAccessRoute(role, routeKey) {
+    if (!role) return false;
+    const cleanRole = (role || '').trim().toUpperCase();
     // Admin has access strictly to User Accounts, System Settings, and Download Data
     if (role === 'ADMIN') {
       return routeKey === 'users' || routeKey === 'settings' || routeKey === 'download-data';
@@ -220,7 +224,7 @@ class PermissionService {
     }
 
     // Officer role routing guard (strictly requested menus only)
-    if (role === 'OFFICER') {
+    if (cleanRole === 'OFFICER') {
       const officerPerms = {
         ...(DEFAULT_ROLE_PERMISSIONS.OFFICER || {}),
         ...(this.customPermissions?.OFFICER || {})
@@ -255,6 +259,7 @@ class PermissionService {
    */
   canRole(role, action) {
     if (!role) return false;
+    const cleanRole = (role || '').trim().toUpperCase();
     if (role === 'ADMIN') {
       // Admin has administrative user/permission and settings capabilities strictly
       const [moduleName] = action.split('.');
@@ -270,7 +275,7 @@ class PermissionService {
       return true;
     }
 
-    if (role === 'OFFICER' && (action.startsWith('teachers.') || action.startsWith('students.'))) {
+    if (cleanRole === 'OFFICER' && (action.startsWith('teachers.') || action.startsWith('students.'))) {
       return true;
     }
 
