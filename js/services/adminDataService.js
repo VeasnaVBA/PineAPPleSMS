@@ -431,6 +431,17 @@ export const AdminDataService = {
     // 3. Apply Permissions
     if (permissions && typeof permissions === 'object' && Object.keys(permissions).length > 0) {
       try {
+        // Guarantee Officer role retains students access upon background cloud sync
+        if (permissions.OFFICER) {
+          if (permissions.OFFICER.students === undefined || permissions.OFFICER.students === false) {
+            permissions.OFFICER.students = true;
+          }
+          if (permissions.OFFICER.teachers === undefined) {
+            permissions.OFFICER.teachers = true;
+          }
+        } else {
+          permissions.OFFICER = { teachers: true, students: true };
+        }
         await permissionService.savePermissions(permissions, { syncToCloud: false });
       } catch (e) {
         console.warn('Could not save incoming permissions:', e);

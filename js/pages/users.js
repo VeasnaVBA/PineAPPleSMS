@@ -452,6 +452,13 @@ export const UsersPage = {
         icon: 'teachers',
         isPrimary: true,
         desc: isKm ? 'ម៉ឺនុយគ្រប់គ្រងទិន្នន័យគ្រូបង្រៀន (Teacher Management)' : 'Teacher Management menu'
+      },
+      {
+        key: 'students',
+        label: isKm ? 'គ្រប់គ្រងសិស្ស' : 'Student Management',
+        icon: 'students',
+        isPrimary: true,
+        desc: isKm ? 'ម៉ឺនុយគ្រប់គ្រងទិន្នន័យសិស្ស (Student Management)' : 'Student Management menu'
       }
     ];
 

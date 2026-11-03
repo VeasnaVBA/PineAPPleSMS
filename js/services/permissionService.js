@@ -153,7 +153,7 @@ class PermissionService {
         }
         if (this.customPermissions.OFFICER) {
           if (this.customPermissions.OFFICER.teachers === undefined) this.customPermissions.OFFICER.teachers = true;
-          if (this.customPermissions.OFFICER.students === undefined) this.customPermissions.OFFICER.students = true;
+          if (this.customPermissions.OFFICER.students === undefined || this.customPermissions.OFFICER.students === false) this.customPermissions.OFFICER.students = true;
         } else {
           this.customPermissions.OFFICER = { teachers: true, students: true };
         }
@@ -305,6 +305,16 @@ class PermissionService {
    */
   async savePermissions(allPermissions, options = {}) {
     this.customPermissions = JSON.parse(JSON.stringify(allPermissions));
+    if (this.customPermissions) {
+      if (!this.customPermissions.OFFICER) {
+        this.customPermissions.OFFICER = { teachers: true, students: true };
+      } else {
+        if (this.customPermissions.OFFICER.teachers === undefined) this.customPermissions.OFFICER.teachers = true;
+        if (this.customPermissions.OFFICER.students === undefined || this.customPermissions.OFFICER.students === false) {
+          this.customPermissions.OFFICER.students = true;
+        }
+      }
+    }
     await db.put('settings', {
       key: 'role_permissions',
       value: this.customPermissions,
