@@ -3217,13 +3217,23 @@ export const IDCardStudioModal = {
           size: A4 ${isSheetLandscape ? 'landscape' : 'portrait'};
           margin: 0;
         }
-        body.printing-id-cards > *:not(#id-card-print-container) {
+        body.printing-id-cards > *:not(#id-card-print-container),
+        body.printing-id-cards #app,
+        body.printing-id-cards #id-card-studio-overlay,
+        #id-card-studio-overlay {
           display: none !important;
+          visibility: hidden !important;
         }
         body.printing-id-cards #id-card-print-container {
           display: block !important;
+          visibility: visible !important;
           margin: 0 !important;
           padding: 0 !important;
+          width: 100% !important;
+          background: transparent !important;
+        }
+        body.printing-id-cards #id-card-print-container * {
+          visibility: visible !important;
         }
         .a4-card-sheet {
           page-break-after: always !important;
@@ -3275,20 +3285,37 @@ export const IDCardStudioModal = {
       document.body.classList.add('landscape-print');
     }
 
-    // Trigger print
+    // Trigger print with reliable lifecycle cleanup (no premature timeout!)
     setTimeout(() => {
-      window.print();
-      
+      let cleanedUp = false;
       const cleanup = () => {
-        document.body.classList.remove('printing-id-cards');
-        document.body.classList.remove('landscape-print');
-        printContainer.remove();
-        printStyle.remove();
+        if (cleanedUp) return;
+        cleanedUp = true;
+        document.body.classList.remove('printing-id-cards', 'landscape-print');
+        printContainer?.remove();
+        printStyle?.remove();
         window.removeEventListener('afterprint', cleanup);
       };
 
-      window.addEventListener('afterprint', cleanup);
-      setTimeout(cleanup, 2500); // Fallback cleanup
+      window.addEventListener('afterprint', cleanup, { once: true });
+
+      // Media query listener: clean up when user exits print preview
+      if (window.matchMedia) {
+        const mediaQueryList = window.matchMedia('print');
+        const mediaChangeHandler = (mql) => {
+          if (!mql.matches) {
+            cleanup();
+            if (mediaQueryList.removeEventListener) {
+              mediaQueryList.removeEventListener('change', mediaChangeHandler);
+            }
+          }
+        };
+        if (mediaQueryList.addEventListener) {
+          mediaQueryList.addEventListener('change', mediaChangeHandler);
+        }
+      }
+
+      window.print();
     }, 150);
   },
 
@@ -3331,6 +3358,9 @@ export const IDCardStudioModal = {
    * Close and destroy the modal
    */
   close() {
+    document.body.classList.remove('printing-id-cards', 'landscape-print');
+    document.getElementById('id-card-print-container')?.remove();
+    document.getElementById('id-card-print-page-style')?.remove();
     if (this.activeOverlay) {
       this.activeOverlay.remove();
       this.activeOverlay = null;
