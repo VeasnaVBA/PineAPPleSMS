@@ -5,7 +5,7 @@
  * theme color schemes, signature & stamp uploaders, toggleable field checklist,
  * and 1-to-1 A4 print fidelity.
  */
-import { DEFAULT_CARD_CONFIG, DEFAULT_FIELD_STYLES, DIMENSION_PRESETS, THEME_COLOR_PRESETS, renderCardSheetHtml, renderIDCardHtml, chunkStudentsForPages, resolveCardDateText } from './idCardTemplate.js';
+import { DEFAULT_CARD_CONFIG, DEFAULT_FIELD_STYLES, DIMENSION_PRESETS, THEME_COLOR_PRESETS, renderCardSheetHtml, renderIDCardHtml, renderIDCardBackHtml, chunkStudentsForPages, resolveCardDateText } from './idCardTemplate.js';
 import { formatKhmerLunarDate, formatKhmerSolarDate } from '../utils/khmerLunar.js';
 import { SettingsService } from '../services/settingsService.js';
 import { SchoolService } from '../services/schoolService.js';
@@ -23,6 +23,8 @@ export const IDCardStudioModal = {
   currentPage: 0,
   previewStudentIndex: 0,
   viewMode: 'card', // 'card' (Single Card Design Focus) | 'sheet' (Full A4 Sheet Layout)
+  cardSide: 'front', // 'front' | 'back' | 'both'
+  sheetSide: 'front', // 'front' | 'back'
   zoomScale: 1.75, // Default zoom scale for single card view
   studentSearchQuery: '',
   studentClassFilter: 'all',
@@ -177,6 +179,8 @@ export const IDCardStudioModal = {
     this.studentClassFilter = 'all';
     this.onlyShowSelectedInSheet = true;
     this.viewMode = this.viewMode || 'card';
+    this.cardSide = this.cardSide || 'front';
+    this.sheetSide = this.sheetSide || 'front';
     this.zoomScale = this.viewMode === 'card' ? 1.75 : (this.config.sheetOrientation === 'landscape' ? 0.55 : 0.65);
 
     // Load persisted settings from IndexedDB
@@ -304,6 +308,7 @@ export const IDCardStudioModal = {
       branding: { titleKm: 'សាលារៀន & ឡូហ្គោ', titleEn: 'School & Logo' },
       signature: { titleKm: 'ហត្ថលេខា ត្រា & កាលបរិច្ឆេទ', titleEn: 'Signature, Stamp & Date' },
       fields: { titleKm: 'ទិន្នន័យលើកាត', titleEn: 'Card Fields' },
+      back: { titleKm: 'ផ្នែកខាងក្រោយកាត', titleEn: 'Back Side Settings' },
       students: { titleKm: 'ជ្រើសរើសសិស្សបោះពុម្ព', titleEn: 'Select Students' }
     };
     const currentTab = tabMeta[this.activeTab] || tabMeta.layout;
@@ -362,30 +367,46 @@ export const IDCardStudioModal = {
             </div>
 
             <!-- Print Dropdown Menu Options -->
-            <div id="print-dropdown-menu" class="hidden absolute right-0 mt-2 w-64 rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl z-50 p-1.5 text-xs font-khmer animate-fade-in">
-              <button type="button" id="btn-print-option-selected" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
-                <span class="w-6 h-6 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold">✓</span>
+            <div id="print-dropdown-menu" class="hidden absolute right-0 mt-2 w-72 rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl z-50 p-1.5 text-xs font-khmer animate-fade-in">
+              <button type="button" id="btn-print-option-duplex" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
+                <span class="w-6 h-6 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold">📑</span>
                 <div class="min-w-0 flex-1">
-                  <div class="font-bold text-foreground">${isKm ? 'បោះពុម្ពសិស្សដែលបានជ្រើស' : 'Print Selected Students'}</div>
+                  <div class="font-bold text-foreground">${isKm ? 'បោះពុម្ពសងខាង (មុខ & ក្រោយ - Duplex)' : 'Print Duplex (Front & Back)'}</div>
+                  <div class="text-[10px] text-muted-foreground">${isKm ? `ចំនួន ${selectedCount} សិស្ស (${totalPages * 2} ទំព័រ A4)` : `${selectedCount} students (${totalPages * 2} A4 pages)`}</div>
+                </div>
+              </button>
+
+              <button type="button" id="btn-print-option-front" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
+                <span class="w-6 h-6 rounded-md bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0 font-bold">📄</span>
+                <div class="min-w-0 flex-1">
+                  <div class="font-bold text-foreground">${isKm ? 'បោះពុម្ពតែខាងមុខ (Front Only)' : 'Print Front Sheets Only'}</div>
                   <div class="text-[10px] text-muted-foreground">${isKm ? `ចំនួន ${selectedCount} សិស្ស (${totalPages} ទំព័រ A4)` : `${selectedCount} students (${totalPages} A4 pages)`}</div>
                 </div>
               </button>
 
-              <button type="button" id="btn-print-option-current" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
-                <span class="w-6 h-6 rounded-md bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">📇</span>
+              <button type="button" id="btn-print-option-back" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
+                <span class="w-6 h-6 rounded-md bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0 font-bold">🔄</span>
                 <div class="min-w-0 flex-1">
-                  <div class="font-bold text-foreground">${isKm ? 'បោះពុម្ពកាតសិស្សបច្ចុប្បន្ន' : 'Print Current Card'}</div>
-                  <div class="text-[10px] text-muted-foreground truncate">${currentStudentName} (1 ${isKm ? 'កាត' : 'card'})</div>
+                  <div class="font-bold text-foreground">${isKm ? 'បោះពុម្ពតែខាងក្រោយ (Back Only)' : 'Print Back Sheets Only'}</div>
+                  <div class="text-[10px] text-muted-foreground">${isKm ? `ចំនួន ${selectedCount} សិស្ស (${totalPages} ទំព័រ A4)` : `${selectedCount} students (${totalPages} A4 pages)`}</div>
                 </div>
               </button>
 
               <div class="my-1 border-t border-border/60"></div>
 
-              <button type="button" id="btn-print-option-all" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
-                <span class="w-6 h-6 rounded-md bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">👥</span>
+              <button type="button" id="btn-print-option-current" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
+                <span class="w-6 h-6 rounded-md bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">📇</span>
                 <div class="min-w-0 flex-1">
-                  <div class="font-bold text-foreground">${isKm ? 'បោះពុម្ពសិស្សទាំងអស់' : 'Print All Students'}</div>
-                  <div class="text-[10px] text-muted-foreground">${totalStudents} ${isKm ? 'សិស្ស' : 'students'} (${totalPagesAll} ${isKm ? 'ទំព័រ A4' : 'A4 pages'})</div>
+                  <div class="font-bold text-foreground">${isKm ? 'បោះពុម្ពកាតសិស្សបច្ចុប្បន្ន (សងខាង)' : 'Print Current Card (Both Sides)'}</div>
+                  <div class="text-[10px] text-muted-foreground truncate">${currentStudentName} (1 ${isKm ? 'កាត' : 'card'})</div>
+                </div>
+              </button>
+
+              <button type="button" id="btn-print-option-all" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
+                <span class="w-6 h-6 rounded-md bg-slate-500/10 text-slate-600 flex items-center justify-center shrink-0">👥</span>
+                <div class="min-w-0 flex-1">
+                  <div class="font-bold text-foreground">${isKm ? 'បោះពុម្ពសិស្សទាំងអស់ (Duplex)' : 'Print All Students (Duplex)'}</div>
+                  <div class="text-[10px] text-muted-foreground">${totalStudents} ${isKm ? 'សិស្ស' : 'students'} (${totalPagesAll * 2} ${isKm ? 'ទំព័រ A4' : 'A4 pages'})</div>
                 </div>
               </button>
             </div>
@@ -415,6 +436,9 @@ export const IDCardStudioModal = {
           </button>
           <button type="button" data-tab="fields" class="studio-tab-btn px-3.5 py-1.5 rounded-lg ${this.activeTab === 'fields' ? 'bg-primary text-primary-foreground font-bold shadow-xs border border-primary' : 'bg-card hover:bg-muted text-muted-foreground hover:text-foreground font-medium border border-input shadow-2xs'} font-khmer transition-all cursor-pointer text-xs whitespace-nowrap">
             <span>${isKm ? 'ទិន្នន័យលើកាត' : 'Card Fields'}</span>
+          </button>
+          <button type="button" data-tab="back" class="studio-tab-btn px-3.5 py-1.5 rounded-lg ${this.activeTab === 'back' ? 'bg-primary text-primary-foreground font-bold shadow-xs border border-primary' : 'bg-card hover:bg-muted text-muted-foreground hover:text-foreground font-medium border border-input shadow-2xs'} font-khmer transition-all cursor-pointer text-xs whitespace-nowrap">
+            <span>${isKm ? 'ផ្នែកខាងក្រោយ' : 'Back Side'}</span>
           </button>
           <button type="button" data-tab="students" class="studio-tab-btn px-3.5 py-1.5 rounded-lg ${this.activeTab === 'students' ? 'bg-primary text-primary-foreground font-bold shadow-xs border border-primary' : 'bg-card hover:bg-muted text-muted-foreground hover:text-foreground font-medium border border-input shadow-2xs'} font-khmer transition-all cursor-pointer text-xs whitespace-nowrap flex items-center gap-1.5">
             <span>${isKm ? 'ជ្រើសរើសសិស្ស' : 'Select Students'}</span>
@@ -455,6 +479,19 @@ export const IDCardStudioModal = {
               </div>
 
               ${this.viewMode === 'card' ? `
+                <!-- Single Card Side Switcher (Front / Back / Both) -->
+                <div class="flex items-center h-8 bg-muted/60 p-0.5 rounded-lg border border-border text-xs">
+                  <button type="button" id="btn-side-front" class="h-7 px-2.5 rounded-md transition-all font-khmer cursor-pointer text-xs ${this.cardSide === 'front' ? 'bg-background text-primary font-bold shadow-2xs border border-border/50' : 'text-muted-foreground hover:text-foreground'}">
+                    ${isKm ? 'ខាងមុខ' : 'Front'}
+                  </button>
+                  <button type="button" id="btn-side-back" class="h-7 px-2.5 rounded-md transition-all font-khmer cursor-pointer text-xs ${this.cardSide === 'back' ? 'bg-background text-primary font-bold shadow-2xs border border-border/50' : 'text-muted-foreground hover:text-foreground'}">
+                    ${isKm ? 'ខាងក្រោយ' : 'Back'}
+                  </button>
+                  <button type="button" id="btn-side-both" class="h-7 px-2.5 rounded-md transition-all font-khmer cursor-pointer text-xs ${this.cardSide === 'both' ? 'bg-background text-primary font-bold shadow-2xs border border-border/50' : 'text-muted-foreground hover:text-foreground'}">
+                    ${isKm ? 'មុខ-ក្រោយ' : 'Both Sides'}
+                  </button>
+                </div>
+
                 <div class="hidden sm:flex items-center gap-2 pl-2 border-l border-border">
                   <!-- Single Card Select Toggle -->
                   <label class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-input bg-card hover:bg-muted text-xs font-khmer cursor-pointer transition-colors shadow-2xs">
@@ -469,6 +506,16 @@ export const IDCardStudioModal = {
                   </button>
                 </div>
               ` : `
+                <!-- Sheet Side Switcher (Front Sheet / Back Sheet) -->
+                <div class="flex items-center h-8 bg-muted/60 p-0.5 rounded-lg border border-border text-xs">
+                  <button type="button" id="btn-sheet-side-front" class="h-7 px-2.5 rounded-md transition-all font-khmer cursor-pointer text-xs ${this.sheetSide === 'front' ? 'bg-background text-primary font-bold shadow-2xs border border-border/50' : 'text-muted-foreground hover:text-foreground'}">
+                    ${isKm ? 'សន្លឹកខាងមុខ' : 'Front Sheet'}
+                  </button>
+                  <button type="button" id="btn-sheet-side-back" class="h-7 px-2.5 rounded-md transition-all font-khmer cursor-pointer text-xs ${this.sheetSide === 'back' ? 'bg-background text-primary font-bold shadow-2xs border border-border/50' : 'text-muted-foreground hover:text-foreground'}">
+                    ${isKm ? 'សន្លឹកខាងក្រោយ (Duplex)' : 'Back Sheet (Duplex)'}
+                  </button>
+                </div>
+
                 <div class="hidden sm:flex items-center gap-2 pl-2 border-l border-border">
                   <div class="flex items-center h-8 bg-muted/60 p-0.5 rounded-lg border border-border text-xs">
                     <button type="button" id="btn-sheet-toggle-selected" class="h-7 px-2.5 rounded-md font-khmer transition-all cursor-pointer text-xs ${this.onlyShowSelectedInSheet ? 'bg-background text-primary font-bold shadow-2xs' : 'text-muted-foreground hover:text-foreground'}">
@@ -1121,6 +1168,148 @@ export const IDCardStudioModal = {
               </div>
             </div>
 
+            <!-- Tab: Back Side Customization -->
+            <div id="tab-panel-back" class="tab-panel ${this.activeTab === 'back' ? '' : 'hidden'} space-y-4">
+              <!-- Enable / Disable Back Side -->
+              <div class="p-3 rounded-xl bg-muted/40 border border-border/80 flex items-center justify-between">
+                <div>
+                  <span class="font-bold text-xs font-khmer text-foreground block">${isKm ? 'បើកដំណើរការផ្នែកខាងក្រោយ' : 'Enable Back Side'}</span>
+                  <span class="text-[10px] text-muted-foreground font-khmer block">${isKm ? 'សម្រាប់បោះពុម្ពកាតសងខាង (Duplex)' : 'For double-sided ID card printing'}</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="chk-back-show" class="sr-only peer" ${this.config.showBackSide !== false ? 'checked' : ''} />
+                  <div class="w-9 h-5 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                </label>
+              </div>
+
+              <!-- Back Side Titles -->
+              <div class="space-y-3 p-3 rounded-xl bg-card border border-border/80 shadow-2xs">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-xs font-khmer text-foreground">${isKm ? 'ចំណងជើងផ្នែកខាងក្រោយ' : 'Back Side Titles'}</span>
+                  <span class="text-[10px] text-muted-foreground font-mono">Title</span>
+                </div>
+                
+                <div class="space-y-1">
+                  <label class="block text-[11px] font-semibold font-khmer text-muted-foreground">${isKm ? 'ចំណងជើង (ភាសាខ្មែរ)' : 'Title (Khmer)'}</label>
+                  <input type="text" id="inp-back-title-kh" value="${this.config.backSideTitleKh || 'បទបញ្ជាផ្ទៃក្នុង និងលក្ខខណ្ឌប្រើប្រាស់'}" class="w-full px-2.5 py-1.5 rounded-lg border border-input bg-background text-xs font-khmer text-foreground focus:ring-1 focus:ring-primary focus:border-primary" />
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-[11px] font-semibold font-khmer text-muted-foreground">${isKm ? 'ចំណងជើង (អង់គ្លេស)' : 'Title (English)'}</label>
+                  <input type="text" id="inp-back-title-en" value="${this.config.backSideTitleEn || 'School Regulations & Card Policy'}" class="w-full px-2.5 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary focus:border-primary" />
+                </div>
+              </div>
+
+              <!-- Rules & Regulations Textarea -->
+              <div class="space-y-3 p-3 rounded-xl bg-card border border-border/80 shadow-2xs">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-xs font-khmer text-foreground">${isKm ? 'ខ្លឹមសារបទបញ្ជា / លក្ខខណ្ឌ' : 'Rules & Regulations'}</span>
+                  <span class="text-[10px] text-muted-foreground font-khmer">${isKm ? 'មួយជួរ = មួយប្រយោគ' : '1 line per rule'}</span>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-[11px] font-semibold font-khmer text-muted-foreground">${isKm ? 'បទបញ្ជា (ភាសាខ្មែរ)' : 'Rules (Khmer)'}</label>
+                  <textarea id="txt-back-rules-kh" rows="4" class="w-full px-2.5 py-1.5 rounded-lg border border-input bg-background text-xs font-khmer text-foreground focus:ring-1 focus:ring-primary focus:border-primary resize-y">${this.config.backSideRulesKh || ''}</textarea>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-[11px] font-semibold font-khmer text-muted-foreground">${isKm ? 'បទបញ្ជា (អង់គ្លេស - ស្រេចចិត្ត)' : 'Rules (English - Optional)'}</label>
+                  <textarea id="txt-back-rules-en" rows="3" class="w-full px-2.5 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary focus:border-primary resize-y">${this.config.backSideRulesEn || ''}</textarea>
+                </div>
+              </div>
+
+              <!-- Emergency Contact & School Address -->
+              <div class="space-y-3 p-3 rounded-xl bg-card border border-border/80 shadow-2xs">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-xs font-khmer text-foreground">${isKm ? 'ព័ត៌មានទំនាក់ទំនង & អាសយដ្ឋាន' : 'Contact & Address'}</span>
+                  <span class="text-[10px] text-muted-foreground font-mono">Contact</span>
+                </div>
+
+                <div class="flex items-center justify-between pb-1 border-b border-border/50">
+                  <span class="text-[11px] font-medium font-khmer">${isKm ? 'បង្ហាញលេខទូរស័ព្ទបន្ទាន់' : 'Show Emergency Phone'}</span>
+                  <input type="checkbox" id="chk-back-show-emergency" class="h-4 w-4 rounded border-input text-primary focus:ring-primary cursor-pointer accent-primary" ${this.config.backShowEmergency !== false ? 'checked' : ''} />
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-[11px] font-semibold font-khmer text-muted-foreground">${isKm ? 'លេខទូរស័ព្ទបន្ទាន់' : 'Emergency Phone'}</label>
+                  <input type="text" id="inp-back-phone" value="${this.config.backEmergencyPhone || ''}" placeholder="012 345 678" class="w-full px-2.5 py-1.5 rounded-lg border border-input bg-background text-xs font-mono text-foreground focus:ring-1 focus:ring-primary focus:border-primary" />
+                </div>
+
+                <div class="flex items-center justify-between pt-1 pb-1 border-b border-border/50">
+                  <span class="text-[11px] font-medium font-khmer">${isKm ? 'បង្ហាញអាសយដ្ឋានសាលា' : 'Show School Address'}</span>
+                  <input type="checkbox" id="chk-back-show-address" class="h-4 w-4 rounded border-input text-primary focus:ring-primary cursor-pointer accent-primary" ${this.config.backShowAddress !== false ? 'checked' : ''} />
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-[11px] font-semibold font-khmer text-muted-foreground">${isKm ? 'អាសយដ្ឋាន / ទីតាំងសាលា' : 'School Address'}</label>
+                  <input type="text" id="inp-back-address" value="${this.config.backAddress || ''}" placeholder="រាជធានីភ្នំពេញ" class="w-full px-2.5 py-1.5 rounded-lg border border-input bg-background text-xs font-khmer text-foreground focus:ring-1 focus:ring-primary focus:border-primary" />
+                </div>
+              </div>
+
+              <!-- Barcode & Cardholder Signature -->
+              <div class="space-y-3 p-3 rounded-xl bg-card border border-border/80 shadow-2xs">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-xs font-khmer text-foreground">${isKm ? 'បាកូដ & ហត្ថលេខាកាន់ប័ណ្ណ' : 'Barcode & Signature'}</span>
+                  <span class="text-[10px] text-muted-foreground font-mono">Barcode</span>
+                </div>
+
+                <div class="flex items-center justify-between pb-1 border-b border-border/50">
+                  <div>
+                    <span class="text-[11px] font-semibold font-khmer block">${isKm ? 'បង្ហាញបាកូដ (Code 128)' : 'Show Barcode (Code 128)'}</span>
+                    <span class="text-[9.5px] text-muted-foreground font-khmer block">${isKm ? 'បង្កើតស្វ័យប្រវត្តិតាមអត្តលេខសិស្ស' : 'Auto-generated from Student ID'}</span>
+                  </div>
+                  <input type="checkbox" id="chk-back-barcode" class="h-4 w-4 rounded border-input text-primary focus:ring-primary cursor-pointer accent-primary" ${this.config.backShowBarcode !== false ? 'checked' : ''} />
+                </div>
+
+                <div class="flex items-center justify-between pt-1 pb-1 border-b border-border/50">
+                  <span class="text-[11px] font-semibold font-khmer">${isKm ? 'បង្ហាញកន្លែងចុះហត្ថលេខា' : 'Show Signature Line'}</span>
+                  <input type="checkbox" id="chk-back-signature" class="h-4 w-4 rounded border-input text-primary focus:ring-primary cursor-pointer accent-primary" ${this.config.backShowCardholderSign !== false ? 'checked' : ''} />
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-[11px] font-semibold font-khmer text-muted-foreground">${isKm ? 'ឈ្មោះកន្លែងហត្ថលេខា' : 'Signature Label'}</label>
+                  <input type="text" id="inp-back-sign-label" value="${this.config.backCardholderSignLabel || 'ហត្ថលេខាកាន់ប័ណ្ណ'}" class="w-full px-2.5 py-1.5 rounded-lg border border-input bg-background text-xs font-khmer text-foreground focus:ring-1 focus:ring-primary focus:border-primary" />
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-[11px] font-semibold font-khmer text-muted-foreground">${isKm ? 'អត្ថបទសុពលភាព (ស្រេចចិត្ត)' : 'Validity Text (Optional)'}</label>
+                  <input type="text" id="inp-back-validity" value="${this.config.backValidityText || ''}" placeholder="${isKm ? 'ឧទាហរណ៍៖ សុពលភាព ២០២៤–២០២៥' : 'e.g. Valid 2024-2025'}" class="w-full px-2.5 py-1.5 rounded-lg border border-input bg-background text-xs font-khmer text-foreground focus:ring-1 focus:ring-primary focus:border-primary" />
+                </div>
+              </div>
+
+              <!-- Back Side Background Image -->
+              <div class="space-y-3 p-3 rounded-xl bg-card border border-border/80 shadow-2xs">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-xs font-khmer text-foreground">${isKm ? 'រូបភាពផ្ទៃខាងក្រោយ' : 'Back Background Image'}</span>
+                  <span class="text-[10px] text-muted-foreground font-mono">Image</span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <input type="file" id="file-back-bg" accept="image/*" class="hidden" />
+                  <button type="button" id="btn-upload-back-bg" class="flex-1 py-1.5 px-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-khmer text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
+                    ${getIcon('upload', 'w-3.5 h-3.5')}
+                    <span>${this.config.backBackgroundImage ? (isKm ? 'ប្តូររូបភាពផ្ទៃក្រោយ' : 'Change Background') : (isKm ? 'បញ្ចូលរូបភាពផ្ទៃក្រោយ' : 'Upload Background')}</span>
+                  </button>
+                  ${this.config.backBackgroundImage ? `
+                    <button type="button" id="btn-remove-back-bg" class="py-1.5 px-2.5 rounded-lg border border-destructive/30 bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs cursor-pointer transition-colors" title="${isKm ? 'លុបរូបភាព' : 'Remove Image'}">
+                      ${getIcon('trash', 'w-3.5 h-3.5')}
+                    </button>
+                  ` : ''}
+                </div>
+
+                ${this.config.backBackgroundImage ? `
+                  <div class="space-y-1 pt-1">
+                    <div class="flex items-center justify-between text-[11px] font-khmer">
+                      <span class="text-muted-foreground">${isKm ? 'កម្រិតពន្លឺ (Opacity)' : 'Opacity'}</span>
+                      <span id="label-back-bg-opacity" class="font-mono font-bold">${this.config.backBackgroundOpacity !== undefined ? this.config.backBackgroundOpacity : 100}%</span>
+                    </div>
+                    <input type="range" id="range-back-bg-opacity" min="10" max="100" step="5" value="${this.config.backBackgroundOpacity !== undefined ? this.config.backBackgroundOpacity : 100}" class="w-full accent-primary cursor-pointer" />
+                  </div>
+                ` : ''}
+              </div>
+
+            </div>
+
             <!-- Tab 6: Student Selection & Printing Manager -->
             <div id="tab-panel-students" class="tab-panel ${this.activeTab === 'students' ? '' : 'hidden'} space-y-3.5">
               <!-- Summary Card -->
@@ -1306,20 +1495,73 @@ export const IDCardStudioModal = {
       if (btnPrev) btnPrev.disabled = this.previewStudentIndex <= 0;
       if (btnNext) btnNext.disabled = this.previewStudentIndex >= totalStudents - 1;
 
+      // Update Single Card side buttons state
+      const btnSideFront = this.activeOverlay?.querySelector('#btn-side-front');
+      const btnSideBack = this.activeOverlay?.querySelector('#btn-side-back');
+      const btnSideBoth = this.activeOverlay?.querySelector('#btn-side-both');
+      const sideActive = 'h-7 px-2.5 rounded-md transition-all font-khmer cursor-pointer text-xs bg-background text-primary font-bold shadow-2xs border border-border/50';
+      const sideInactive = 'h-7 px-2.5 rounded-md transition-all font-khmer cursor-pointer text-xs text-muted-foreground hover:text-foreground';
+      if (btnSideFront) btnSideFront.className = this.cardSide === 'front' ? sideActive : sideInactive;
+      if (btnSideBack) btnSideBack.className = this.cardSide === 'back' ? sideActive : sideInactive;
+      if (btnSideBoth) btnSideBoth.className = this.cardSide === 'both' ? sideActive : sideInactive;
+
       // Render Single Card with Master Framing Wrapper
-      const cardHtml = renderIDCardHtml(currentStudent, this.config, this.classMap);
+      let cardPreviewContent = '';
+      if (this.cardSide === 'back') {
+        const backHtml = renderIDCardBackHtml(currentStudent, this.config, this.classMap);
+        cardPreviewContent = `
+          <div class="single-card-viewport shadow-2xl rounded-sm transition-all bg-white relative">
+            ${backHtml}
+          </div>
+        `;
+      } else if (this.cardSide === 'both') {
+        const frontHtml = renderIDCardHtml(currentStudent, this.config, this.classMap);
+        const backHtml = renderIDCardBackHtml(currentStudent, this.config, this.classMap);
+        cardPreviewContent = `
+          <div class="flex flex-wrap items-center justify-center gap-6">
+            <div class="flex flex-col items-center gap-1.5">
+              <span class="text-[11px] font-bold font-khmer text-primary px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20">
+                ${isKm ? 'ខាងមុខ (Front)' : 'Front Side'}
+              </span>
+              <div class="single-card-viewport shadow-2xl rounded-sm transition-all bg-white relative">
+                ${frontHtml}
+              </div>
+            </div>
+            <div class="flex flex-col items-center gap-1.5">
+              <span class="text-[11px] font-bold font-khmer text-primary px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20">
+                ${isKm ? 'ខាងក្រោយ (Back)' : 'Back Side'}
+              </span>
+              <div class="single-card-viewport shadow-2xl rounded-sm transition-all bg-white relative">
+                ${backHtml}
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        const frontHtml = renderIDCardHtml(currentStudent, this.config, this.classMap);
+        cardPreviewContent = `
+          <div class="single-card-viewport shadow-2xl rounded-sm transition-all bg-white relative">
+            ${frontHtml}
+          </div>
+        `;
+      }
 
       sheetContainer.innerHTML = `
         <div class="single-card-focus-wrapper flex flex-col items-center justify-center p-6">
           <!-- Master Single Card Container -->
-          <div class="single-card-viewport shadow-2xl rounded-sm transition-all bg-white relative">
-            ${cardHtml}
-          </div>
+          ${cardPreviewContent}
         </div>
       `;
 
     } else {
       // FULL A4 SHEET MULTI-CARD LAYOUT VIEW
+      const btnSheetSideFront = this.activeOverlay?.querySelector('#btn-sheet-side-front');
+      const btnSheetSideBack = this.activeOverlay?.querySelector('#btn-sheet-side-back');
+      const sideActive = 'h-7 px-2.5 rounded-md transition-all font-khmer cursor-pointer text-xs bg-background text-primary font-bold shadow-2xs border border-border/50';
+      const sideInactive = 'h-7 px-2.5 rounded-md transition-all font-khmer cursor-pointer text-xs text-muted-foreground hover:text-foreground';
+      if (btnSheetSideFront) btnSheetSideFront.className = this.sheetSide === 'front' ? sideActive : sideInactive;
+      if (btnSheetSideBack) btnSheetSideBack.className = this.sheetSide === 'back' ? sideActive : sideInactive;
+
       const targetStudents = this.onlyShowSelectedInSheet && selectedCount > 0 ? selectedStudents : (this.onlyShowSelectedInSheet && selectedCount === 0 ? [] : this.students);
 
       if (targetStudents.length === 0) {
@@ -1368,14 +1610,15 @@ export const IDCardStudioModal = {
       }
 
       const currentSlice = pages[this.currentPage] || [];
-      sheetContainer.innerHTML = renderCardSheetHtml(currentSlice, this.config, this.currentPage, totalPages, this.classMap);
+      sheetContainer.innerHTML = renderCardSheetHtml(currentSlice, this.config, this.currentPage, totalPages, this.classMap, { side: this.sheetSide || 'front', duplexMirror: true });
 
       // Update pagination label
       const pagerLabel = this.activeOverlay?.querySelector('#sheet-pager-label');
       if (pagerLabel) {
+        const sideText = (this.sheetSide === 'back') ? (isKm ? ' (ខាងក្រោយ)' : ' (Back)') : (isKm ? ' (ខាងមុខ)' : ' (Front)');
         pagerLabel.textContent = isKm 
-          ? `ទំព័រ ${this.currentPage + 1} / ${totalPages}` 
-          : `Page ${this.currentPage + 1} of ${totalPages}`;
+          ? `ទំព័រ ${this.currentPage + 1} / ${totalPages}${sideText}` 
+          : `Page ${this.currentPage + 1} of ${totalPages}${sideText}`;
       }
 
       // Update info text
@@ -1501,6 +1744,7 @@ export const IDCardStudioModal = {
       branding: { titleKm: 'សាលារៀន & ឡូហ្គោ', titleEn: 'School & Logo' },
       signature: { titleKm: 'ហត្ថលេខា ត្រា & កាលបរិច្ឆេទ', titleEn: 'Signature, Stamp & Date' },
       fields: { titleKm: 'ទិន្នន័យលើកាត', titleEn: 'Card Fields' },
+      back: { titleKm: 'ផ្នែកខាងក្រោយកាត', titleEn: 'Back Side Settings' },
       students: { titleKm: 'ជ្រើសរើសសិស្សបោះពុម្ព', titleEn: 'Select Students' }
     };
 
@@ -2154,6 +2398,112 @@ export const IDCardStudioModal = {
       });
     });
 
+    // Tab: Back Side Controls Event Listeners
+    // 1. Enable / Disable Back Side
+    overlay.querySelector('#chk-back-show')?.addEventListener('change', (e) => {
+      this.config.showBackSide = e.target.checked;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+
+    // 2. Titles
+    overlay.querySelector('#inp-back-title-kh')?.addEventListener('input', (e) => {
+      this.config.backSideTitleKh = e.target.value;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+    overlay.querySelector('#inp-back-title-en')?.addEventListener('input', (e) => {
+      this.config.backSideTitleEn = e.target.value;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+
+    // 3. Rules Textarea
+    overlay.querySelector('#txt-back-rules-kh')?.addEventListener('input', (e) => {
+      this.config.backSideRulesKh = e.target.value;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+    overlay.querySelector('#txt-back-rules-en')?.addEventListener('input', (e) => {
+      this.config.backSideRulesEn = e.target.value;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+
+    // 4. Emergency & Address
+    overlay.querySelector('#chk-back-show-emergency')?.addEventListener('change', (e) => {
+      this.config.backShowEmergency = e.target.checked;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+    overlay.querySelector('#inp-back-phone')?.addEventListener('input', (e) => {
+      this.config.backEmergencyPhone = e.target.value;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+    overlay.querySelector('#chk-back-show-address')?.addEventListener('change', (e) => {
+      this.config.backShowAddress = e.target.checked;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+    overlay.querySelector('#inp-back-address')?.addEventListener('input', (e) => {
+      this.config.backAddress = e.target.value;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+
+    // 5. Barcode & Signature & Validity
+    overlay.querySelector('#chk-back-barcode')?.addEventListener('change', (e) => {
+      this.config.backShowBarcode = e.target.checked;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+    overlay.querySelector('#chk-back-signature')?.addEventListener('change', (e) => {
+      this.config.backShowCardholderSign = e.target.checked;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+    overlay.querySelector('#inp-back-sign-label')?.addEventListener('input', (e) => {
+      this.config.backCardholderSignLabel = e.target.value;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+    overlay.querySelector('#inp-back-validity')?.addEventListener('input', (e) => {
+      this.config.backValidityText = e.target.value;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+
+    // 6. Back Background Image & Opacity
+    overlay.querySelector('#btn-upload-back-bg')?.addEventListener('click', () => {
+      overlay.querySelector('#file-back-bg')?.click();
+    });
+    overlay.querySelector('#file-back-bg')?.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (re) => {
+          this.config.backBackgroundImage = re.target.result;
+          this.savePersistedSettings();
+          this.renderModal();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    overlay.querySelector('#btn-remove-back-bg')?.addEventListener('click', () => {
+      this.config.backBackgroundImage = '';
+      this.savePersistedSettings();
+      this.renderModal();
+    });
+    overlay.querySelector('#range-back-bg-opacity')?.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10);
+      this.config.backBackgroundOpacity = val;
+      const label = overlay.querySelector('#label-back-bg-opacity');
+      if (label) label.textContent = `${val}%`;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+
     // Asset Move & Zoom transform sliders
     overlay.querySelectorAll('.input-transform-slider').forEach(slider => {
       slider.addEventListener('input', (e) => {
@@ -2289,33 +2639,75 @@ export const IDCardStudioModal = {
       }
     });
 
-    // Print Primary Button (Prints selected students)
+    // Print Primary Button (Prints selected students - Duplex)
     overlay.querySelector('#btn-studio-print-primary')?.addEventListener('click', () => {
       printDropdownMenu?.classList.add('hidden');
-      this.executePrint('selected');
+      this.executePrint('selected', 'duplex');
     });
 
-    // Print Option 1: Selected Students
+    // Print Option: Duplex (Front & Back)
+    overlay.querySelector('#btn-print-option-duplex')?.addEventListener('click', () => {
+      printDropdownMenu?.classList.add('hidden');
+      this.executePrint('selected', 'duplex');
+    });
+
+    // Print Option: Front Sheets Only
+    overlay.querySelector('#btn-print-option-front')?.addEventListener('click', () => {
+      printDropdownMenu?.classList.add('hidden');
+      this.executePrint('selected', 'front');
+    });
+
+    // Print Option: Back Sheets Only
+    overlay.querySelector('#btn-print-option-back')?.addEventListener('click', () => {
+      printDropdownMenu?.classList.add('hidden');
+      this.executePrint('selected', 'back');
+    });
+
+    // Print Option: Selected fallback
     overlay.querySelector('#btn-print-option-selected')?.addEventListener('click', () => {
       printDropdownMenu?.classList.add('hidden');
-      this.executePrint('selected');
+      this.executePrint('selected', 'duplex');
     });
 
-    // Print Option 2: Current Student Card
+    // Print Option: Current Student Card (Both Sides)
     overlay.querySelector('#btn-print-option-current')?.addEventListener('click', () => {
       printDropdownMenu?.classList.add('hidden');
-      this.executePrint('current');
+      this.executePrint('current', 'duplex');
     });
 
-    // Print Option 3: All Students
+    // Print Option: All Students (Duplex)
     overlay.querySelector('#btn-print-option-all')?.addEventListener('click', () => {
       printDropdownMenu?.classList.add('hidden');
-      this.executePrint('all');
+      this.executePrint('all', 'duplex');
     });
 
     // PDF Button
     overlay.querySelector('#btn-studio-pdf')?.addEventListener('click', () => {
-      this.executePrint('selected');
+      this.executePrint('selected', 'duplex');
+    });
+
+    // Sub-toolbar: Single Card Side Switcher (Front / Back / Both)
+    overlay.querySelector('#btn-side-front')?.addEventListener('click', () => {
+      this.cardSide = 'front';
+      this.updatePreview();
+    });
+    overlay.querySelector('#btn-side-back')?.addEventListener('click', () => {
+      this.cardSide = 'back';
+      this.updatePreview();
+    });
+    overlay.querySelector('#btn-side-both')?.addEventListener('click', () => {
+      this.cardSide = 'both';
+      this.updatePreview();
+    });
+
+    // Sub-toolbar: Sheet Side Switcher (Front Sheet / Back Sheet)
+    overlay.querySelector('#btn-sheet-side-front')?.addEventListener('click', () => {
+      this.sheetSide = 'front';
+      this.updatePreview();
+    });
+    overlay.querySelector('#btn-sheet-side-back')?.addEventListener('click', () => {
+      this.sheetSide = 'back';
+      this.updatePreview();
     });
 
     // Sub-toolbar: Checkbox for current preview student
@@ -2335,7 +2727,7 @@ export const IDCardStudioModal = {
 
     // Sub-toolbar: Print current card button
     overlay.querySelector('#btn-print-current-card-sub')?.addEventListener('click', () => {
-      this.executePrint('current');
+      this.executePrint('current', 'duplex');
     });
 
     // Sub-toolbar: Sheet layout toggle (Selected vs All)
@@ -2719,8 +3111,9 @@ export const IDCardStudioModal = {
   /**
    * Generates full printable DOM containing selected, current or all students and triggers window.print()
    * @param {'selected'|'current'|'all'} scope
+   * @param {'duplex'|'front'|'back'} printMode
    */
-  executePrint(scope = 'selected') {
+  executePrint(scope = 'selected', printMode = 'duplex') {
     const isKm = i18n.getLocale() === 'km';
     let targetStudents = [];
 
@@ -2763,6 +3156,22 @@ export const IDCardStudioModal = {
           size: A4 ${isSheetLandscape ? 'landscape' : 'portrait'};
           margin: 0;
         }
+        body.printing-id-cards > *:not(#id-card-print-container) {
+          display: none !important;
+        }
+        body.printing-id-cards #id-card-print-container {
+          display: block !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        .a4-card-sheet {
+          page-break-after: always !important;
+          break-after: page !important;
+        }
+        .a4-card-sheet:last-child {
+          page-break-after: avoid !important;
+          break-after: avoid !important;
+        }
       }
     `;
     document.head.appendChild(printStyle);
@@ -2772,9 +3181,25 @@ export const IDCardStudioModal = {
     printContainer.className = `id-card-print-container ${isSheetLandscape ? 'sheet-landscape' : 'sheet-portrait'}`;
 
     let allSheetsHtml = '';
-    pages.forEach((slice, idx) => {
-      allSheetsHtml += renderCardSheetHtml(slice, this.config, idx, totalPages, this.classMap);
-    });
+
+    if (printMode === 'duplex') {
+      // Duplex: prints Sheet Front then Sheet Back (mirrored) for each chunk
+      const totalSheets = totalPages * 2;
+      pages.forEach((slice, idx) => {
+        allSheetsHtml += renderCardSheetHtml(slice, this.config, idx * 2, totalSheets, this.classMap, { side: 'front' });
+        allSheetsHtml += renderCardSheetHtml(slice, this.config, idx * 2 + 1, totalSheets, this.classMap, { side: 'back', duplexMirror: true });
+      });
+    } else if (printMode === 'back') {
+      // Back sheets only
+      pages.forEach((slice, idx) => {
+        allSheetsHtml += renderCardSheetHtml(slice, this.config, idx, totalPages, this.classMap, { side: 'back', duplexMirror: true });
+      });
+    } else {
+      // Front sheets only
+      pages.forEach((slice, idx) => {
+        allSheetsHtml += renderCardSheetHtml(slice, this.config, idx, totalPages, this.classMap, { side: 'front' });
+      });
+    }
 
     printContainer.innerHTML = allSheetsHtml;
     document.body.appendChild(printContainer);

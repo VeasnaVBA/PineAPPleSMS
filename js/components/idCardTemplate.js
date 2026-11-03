@@ -147,7 +147,26 @@ export const DEFAULT_CARD_CONFIG = {
   // Per-field Text Styling: Font, Size, Color, Bold
   fieldStyles: {
     ...DEFAULT_FIELD_STYLES
-  }
+  },
+
+  // Back Side Settings & Personalization
+  showBackSide: true,
+  backSideTitleKh: 'បទបញ្ជាផ្ទៃក្នុង និងលក្ខខណ្ឌប្រើប្រាស់',
+  backSideTitleEn: 'School Regulations & Card Policy',
+  backSideRulesKh: '១. ប័ណ្ណនេះត្រូវពាក់ជាប់ជានិច្ចពេលនៅក្នុងបរិវេណសាលា\n២. មិនត្រូវផ្ទេរ ឬឱ្យអ្នកដទៃខ្ចីប្រើប្រាស់ជាដាច់ខាត\n៣. ក្នុងករណីបាត់ ឬខូចខាត ត្រូវរាយការណ៍មកការិយាល័យជាបន្ទាន់\n៤. អ្នករើសបានសូមមេត្តាប្រគល់ជូនសាលាវិញតាមលេខទូរស័ព្ទខាងក្រោម',
+  backSideRulesEn: '1. This card must be worn on school premises.\n2. Non-transferable; property of the school.\n3. Report lost cards immediately.',
+  backEmergencyPhone: '012 345 678 / 023 888 999',
+  backAddress: 'រាជធានីភ្នំពេញ ព្រះរាជាណាចក្រកម្ពុជា',
+  backValidityText: '', // e.g. 'សុពលភាព៖ ២០២៤–២០២៥'
+  backShowBarcode: true,
+  backBarcodeHeight: 28,
+  backShowEmergency: true,
+  backShowAddress: true,
+  backShowCardholderSign: true,
+  backCardholderSignLabel: 'ហត្ថលេខាកាន់ប័ណ្ណ',
+  backBackgroundImage: '',
+  backBackgroundOpacity: 100,
+  backAccentColor: ''
 };
 
 /**
@@ -631,6 +650,221 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
 }
 
 /**
+ * Renders the Back Side of a Student ID card in Portrait or Landscape orientation
+ * @param {Object} student 
+ * @param {Object} config 
+ * @param {Map} classMap 
+ * @returns {string} HTML string
+ */
+export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG, classMap = new Map()) {
+  const cfg = { ...DEFAULT_CARD_CONFIG, ...config };
+  const isLandscape = cfg.cardOrientation === 'landscape';
+  const accent = cfg.backAccentColor || cfg.accentColor || '#1E40AF';
+  const widthMm = cfg.widthMm || (isLandscape ? 85.6 : 54);
+  const heightMm = cfg.heightMm || (isLandscape ? 54 : 85.6);
+
+  const studentId = student.studentId || student.id || 'STU-000';
+  const academicYear = student.academicYear || '2024–2025';
+
+  const khRules = (cfg.backSideRulesKh || '')
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean);
+
+  const enRules = (cfg.backSideRulesEn || '')
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean);
+
+  let barcodeSvg = '';
+  if (cfg.backShowBarcode) {
+    try {
+      barcodeSvg = generateBarcodeSVG(studentId, {
+        width: isLandscape ? 130 : 135,
+        height: cfg.backBarcodeHeight || (isLandscape ? 26 : 28),
+        color: '#0f172a',
+        fontSize: 6.5,
+        showText: true
+      });
+    } catch (err) {
+      console.warn('Failed to generate barcode SVG:', err);
+      barcodeSvg = `<div class="font-mono text-[7px] text-slate-700 font-bold tracking-wider py-1">${studentId}</div>`;
+    }
+  }
+
+  const schoolLogoMiniHtml = cfg.schoolLogo ? `
+    <img src="${cfg.schoolLogo}" alt="Logo" class="w-4 h-4 object-contain filter drop-shadow-2xs select-none" />
+  ` : `
+    <div class="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] select-none" style="background: ${accent};">
+      <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+    </div>
+  `;
+
+  const emergencyHtml = (cfg.backShowEmergency && cfg.backEmergencyPhone) ? `
+    <div class="flex items-center gap-1 text-slate-700 font-khmer text-[6px] truncate">
+      <span class="text-rose-600 shrink-0 font-bold leading-none">☎</span>
+      <span class="font-semibold text-slate-500 shrink-0">ទូរសព្ទបន្ទាន់:</span>
+      <span class="font-mono font-bold text-slate-800 truncate">${cfg.backEmergencyPhone}</span>
+    </div>
+  ` : '';
+
+  const addressHtml = (cfg.backShowAddress && cfg.backAddress) ? `
+    <div class="flex items-start gap-1 text-slate-700 font-khmer text-[5.5px] leading-tight">
+      <span class="text-emerald-600 shrink-0 font-bold leading-none">📍</span>
+      <span class="font-semibold text-slate-500 shrink-0">អាសយដ្ឋាន:</span>
+      <span class="truncate text-slate-800">${cfg.backAddress}</span>
+    </div>
+  ` : '';
+
+  const bgHtml = cfg.backBackgroundImage ? `
+    <img src="${cfg.backBackgroundImage}" alt="Back Background" class="absolute inset-0 w-full h-full object-cover pointer-events-none z-0 select-none" style="opacity: ${(cfg.backBackgroundOpacity !== undefined ? cfg.backBackgroundOpacity : 100) / 100};" />
+  ` : '';
+
+  // LANDSCAPE BACK SIDE
+  if (isLandscape) {
+    return `
+      <div class="id-card-item id-card-back id-card-landscape relative overflow-hidden bg-white text-slate-800 select-none box-border flex flex-col justify-between font-sans border border-slate-300 shadow-sm print:border-slate-400 print:shadow-none"
+           style="width: ${widthMm}mm; height: ${heightMm}mm; max-width: ${widthMm}mm; max-height: ${heightMm}mm; --card-accent: ${accent};">
+        
+        ${bgHtml}
+
+        <div class="card-body-content relative z-10 mx-2 my-1 flex flex-col justify-between flex-1 h-full min-w-0">
+          
+          <!-- Top Header: Mini Branding & Title -->
+          <div class="border-b border-slate-200/90 pb-0.5 flex items-center justify-between w-full shrink-0">
+            <div class="flex items-center gap-1.5 min-w-0">
+              ${schoolLogoMiniHtml}
+              <div class="min-w-0">
+                <h5 class="text-[7px] font-bold font-khmer uppercase text-slate-800 truncate leading-tight">${cfg.schoolNameKh || 'សាលារៀន'}</h5>
+                ${cfg.schoolNameEn ? `<p class="text-[5.5px] font-semibold uppercase text-slate-400 tracking-tight leading-none">${cfg.schoolNameEn}</p>` : ''}
+              </div>
+            </div>
+            <span class="px-1.5 py-0.2 rounded text-[6px] font-bold font-khmer text-white shrink-0" style="background: ${accent};">
+              ${cfg.backSideTitleKh || 'លក្ខខណ្ឌប្រើប្រាស់'}
+            </span>
+          </div>
+
+          <!-- Middle Split: Left Rules & Contact / Right Barcode & Signature -->
+          <div class="flex items-stretch justify-between gap-2 flex-1 my-0.5 min-h-0">
+            
+            <!-- Left Column (Rules & Contact) -->
+            <div class="flex-[1.35] min-w-0 flex flex-col justify-between text-[6px] leading-snug text-slate-700 font-khmer py-0.5">
+              <div class="space-y-0.5">
+                ${khRules.slice(0, 4).map(r => `<div class="leading-tight text-slate-700">${r}</div>`).join('')}
+                ${enRules.length > 0 ? `
+                  <div class="pt-0.5 border-t border-slate-100 text-[5px] text-slate-400 font-sans leading-none truncate">
+                    ${enRules[0]}
+                  </div>
+                ` : ''}
+              </div>
+
+              ${(emergencyHtml || addressHtml) ? `
+                <div class="space-y-0.5 pt-0.5 mt-auto border-t border-slate-100 bg-slate-50/70 p-0.5 rounded">
+                  ${emergencyHtml}
+                  ${addressHtml}
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Right Column (Signature & Barcode) -->
+            <div class="flex-1 min-w-0 flex flex-col justify-between items-center border-l border-slate-100 pl-2 py-0.5">
+              ${cfg.backShowCardholderSign ? `
+                <div class="w-full text-center text-[5.8px] font-khmer text-slate-500 mb-0.5">
+                  <div class="border-b border-dotted border-slate-400 h-3 mb-0.5 mx-auto w-24"></div>
+                  <span>${cfg.backCardholderSignLabel || 'ហត្ថលេខាកាន់ប័ណ្ណ'}</span>
+                </div>
+              ` : '<div class="h-1"></div>'}
+
+              ${cfg.backShowBarcode && barcodeSvg ? `
+                <div class="w-full flex flex-col items-center justify-center my-auto">
+                  <div class="w-full flex justify-center items-center overflow-hidden">
+                    ${barcodeSvg}
+                  </div>
+                </div>
+              ` : ''}
+
+              <div class="text-[5px] text-slate-400 font-medium text-center mt-auto">
+                <span>${cfg.backValidityText || (academicYear ? `ឆ្នាំសិក្សា ${academicYear}` : '')}</span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    `;
+  }
+
+  // PORTRAIT BACK SIDE (Default)
+  return `
+    <div class="id-card-item id-card-back id-card-portrait relative overflow-hidden bg-white text-slate-800 select-none box-border flex flex-col justify-between font-sans border border-slate-300 shadow-sm print:border-slate-400 print:shadow-none"
+         style="width: ${widthMm}mm; height: ${heightMm}mm; max-width: ${widthMm}mm; max-height: ${heightMm}mm; --card-accent: ${accent};">
+      
+      ${bgHtml}
+
+      <div class="card-body-content relative z-10 mx-2 my-1.5 flex flex-col justify-between flex-1 h-full min-w-0">
+        
+        <!-- Top Bar: Logo & School & Title -->
+        <div class="border-b border-slate-200/90 pb-1 text-center w-full shrink-0">
+          <div class="flex items-center justify-center gap-1.5 mb-0.5">
+            ${schoolLogoMiniHtml}
+            <div class="text-left min-w-0">
+              <h5 class="text-[7.5px] font-bold font-khmer uppercase text-slate-800 truncate leading-tight">${cfg.schoolNameKh || 'សាលារៀន'}</h5>
+              ${cfg.schoolNameEn ? `<p class="text-[5.5px] font-semibold uppercase text-slate-400 tracking-tight leading-none">${cfg.schoolNameEn}</p>` : ''}
+            </div>
+          </div>
+          <div class="inline-block px-2 py-0.5 rounded-full text-[6px] font-bold font-khmer text-white tracking-wide" style="background: ${accent};">
+            ${cfg.backSideTitleKh || 'បទបញ្ជាផ្ទៃក្នុង & លក្ខខណ្ឌ'}
+          </div>
+        </div>
+
+        <!-- Rules Body -->
+        <div class="card-back-rules-container my-1 px-0.5 flex-1 min-h-0 flex flex-col justify-center space-y-1 text-[6.2px] leading-relaxed text-slate-700 font-khmer">
+          ${khRules.map(r => `<div class="text-left leading-snug">${r}</div>`).join('')}
+          ${enRules.length > 0 ? `
+            <div class="pt-0.5 border-t border-slate-100 text-[5px] text-slate-500 font-sans leading-tight space-y-0.5">
+              ${enRules.map(r => `<div class="text-left leading-tight">${r}</div>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- Info & Contact Section -->
+        ${(emergencyHtml || addressHtml) ? `
+          <div class="space-y-0.5 px-1 py-1 rounded bg-slate-50/90 border border-slate-200/60 my-0.5 shrink-0">
+            ${emergencyHtml}
+            ${addressHtml}
+          </div>
+        ` : ''}
+
+        <!-- Footer: Cardholder Sign & Barcode -->
+        <div class="pt-0.5 flex flex-col items-center w-full shrink-0 mt-auto">
+          ${cfg.backShowCardholderSign ? `
+            <div class="w-full flex justify-between items-end px-1 mb-1 text-[6px] font-khmer text-slate-500">
+              <div class="text-center w-24">
+                <div class="border-b border-dotted border-slate-400 h-3 mb-0.5"></div>
+                <span>${cfg.backCardholderSignLabel || 'ហត្ថលេខាកាន់ប័ណ្ណ'}</span>
+              </div>
+              <div class="text-right text-[5.5px] text-slate-400 font-medium">
+                <span>${cfg.backValidityText || (academicYear ? `ឆ្នាំសិក្សា ${academicYear}` : '')}</span>
+              </div>
+            </div>
+          ` : ''}
+
+          ${cfg.backShowBarcode && barcodeSvg ? `
+            <div class="card-back-barcode flex flex-col items-center justify-center w-full px-1">
+              <div class="w-full flex justify-center items-center overflow-hidden">
+                ${barcodeSvg}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+
+      </div>
+    </div>
+  `;
+}
+
+/**
  * Split an array of students into chunks for pagination
  */
 export function chunkStudentsForPages(students = [], perPage = 8) {
@@ -682,9 +916,16 @@ export function getSheetGridLayout(cardsPerSheet = 8, cardOrientation = 'portrai
 
 /**
  * Renders a single virtual A4 sheet containing up to cardsPerSheet ID cards
+ * @param {Array} studentsSlice 
+ * @param {Object} config 
+ * @param {number} pageIndex 
+ * @param {number} totalPages 
+ * @param {Map} classMap 
+ * @param {Object} options - { side: 'front'|'back', duplexMirror: boolean }
  */
-export function renderCardSheetHtml(studentsSlice = [], config = DEFAULT_CARD_CONFIG, pageIndex = 0, totalPages = 1, classMap = new Map()) {
+export function renderCardSheetHtml(studentsSlice = [], config = DEFAULT_CARD_CONFIG, pageIndex = 0, totalPages = 1, classMap = new Map(), options = {}) {
   const cfg = { ...DEFAULT_CARD_CONFIG, ...config };
+  const side = options?.side || 'front';
   const isSheetLandscape = cfg.sheetOrientation === 'landscape';
   const layout = getSheetGridLayout(cfg.cardsPerSheet, cfg.cardOrientation, cfg.sheetOrientation);
   const gapMm = cfg.gapMm || 4;
@@ -693,13 +934,47 @@ export function renderCardSheetHtml(studentsSlice = [], config = DEFAULT_CARD_CO
   const sheetHeightMm = isSheetLandscape ? 210 : 297;
   const sheetMarginMm = cfg.sheetMarginMm !== undefined ? cfg.sheetMarginMm : 8;
 
-  const cardsHtml = studentsSlice.map(student => {
-    return renderIDCardHtml(student, cfg, classMap);
-  }).join('');
+  let cardsHtml = '';
+
+  if (side === 'back') {
+    const duplexMirror = options?.duplexMirror !== false;
+    let studentsToRender = studentsSlice;
+    if (duplexMirror) {
+      const { cols, rows } = layout;
+      const mirrored = new Array(cols * rows).fill(null);
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const frontIdx = r * cols + c;
+          const backIdx = r * cols + (cols - 1 - c);
+          if (frontIdx < studentsSlice.length) {
+            mirrored[backIdx] = studentsSlice[frontIdx];
+          }
+        }
+      }
+      studentsToRender = mirrored;
+    }
+
+    cardsHtml = studentsToRender.map(student => {
+      if (!student) {
+        const isLandscape = cfg.cardOrientation === 'landscape';
+        const w = cfg.widthMm || (isLandscape ? 85.6 : 54);
+        const h = cfg.heightMm || (isLandscape ? 54 : 85.6);
+        return `<div class="id-card-item opacity-0 pointer-events-none select-none" style="width: ${w}mm; height: ${h}mm;"></div>`;
+      }
+      return renderIDCardBackHtml(student, cfg, classMap);
+    }).join('');
+  } else {
+    cardsHtml = studentsSlice.map(student => {
+      return renderIDCardHtml(student, cfg, classMap);
+    }).join('');
+  }
+
+  const isBack = side === 'back';
 
   return `
     <div class="a4-card-sheet relative bg-white mx-auto shadow-xl print:shadow-none box-border flex flex-col justify-between overflow-hidden print:overflow-visible font-sans ${isSheetLandscape ? 'a4-sheet-landscape' : 'a4-sheet-portrait'}"
          data-page="${pageIndex + 1}"
+         data-sheet-side="${side}"
          style="width: ${sheetWidthMm}mm; min-height: ${sheetHeightMm}mm; height: ${sheetHeightMm}mm; padding: ${sheetMarginMm}mm; box-sizing: border-box;">
       
       <!-- Top Cutting Guides / Crop Marks -->
@@ -707,7 +982,7 @@ export function renderCardSheetHtml(studentsSlice = [], config = DEFAULT_CARD_CO
         <div class="absolute top-2 left-4 right-4 flex justify-between text-[8px] text-slate-400 select-none print:flex">
           <span class="flex items-center gap-1">
             ${getIcon('scissors', 'w-3 h-3 text-slate-400')}
-            <span>Cutting Guides (${cfg.cardOrientation.toUpperCase()})</span>
+            <span>Cutting Guides (${cfg.cardOrientation.toUpperCase()}${isBack ? ' - BACK SIDE' : ''})</span>
           </span>
           <span>Page ${pageIndex + 1} / ${totalPages}</span>
         </div>
@@ -722,7 +997,7 @@ export function renderCardSheetHtml(studentsSlice = [], config = DEFAULT_CARD_CO
       <!-- Bottom Sheet Footer -->
       <div class="text-center text-[7.5px] text-slate-400 select-none pt-1.5 flex justify-between items-center print:flex">
         <span>SmartSchool ID Card Studio</span>
-        <span>A4 ${cfg.sheetOrientation.toUpperCase()} • ${studentsSlice.length} Cards</span>
+        <span>A4 ${cfg.sheetOrientation.toUpperCase()} • ${studentsSlice.length} Cards${isBack ? ' (Back Side)' : ''}</span>
         <span>Page ${pageIndex + 1} of ${totalPages}</span>
       </div>
     </div>
