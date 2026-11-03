@@ -936,7 +936,29 @@ export function renderCardSheetHtml(studentsSlice = [], config = DEFAULT_CARD_CO
 
   let cardsHtml = '';
 
-  if (side === 'back') {
+  if (side === 'pairs') {
+    // Foldable Side-by-Side Pairs mode: Front & Back attached side-by-side with central dashed fold line
+    cardsHtml = studentsSlice.map(student => {
+      if (!student) return '';
+      return `
+        <div class="id-card-foldable-pair flex items-stretch border border-slate-300 rounded-xs overflow-hidden shadow-xs print:shadow-none bg-white mx-auto"
+             style="page-break-inside: avoid; break-inside: avoid;">
+          <!-- Front Card -->
+          <div class="id-card-pair-front relative">
+            ${renderIDCardHtml(student, cfg, classMap)}
+          </div>
+          <!-- Dashed Center Fold Guide Line -->
+          <div class="id-card-pair-divider relative flex items-center justify-center w-0 overflow-visible z-30 pointer-events-none select-none">
+            <div class="h-full border-l border-dashed border-slate-400 absolute inset-y-0" title="Fold Line (បន្ទាត់បត់)"></div>
+          </div>
+          <!-- Back Card (Exact Same Millimeter Dimensions) -->
+          <div class="id-card-pair-back relative">
+            ${renderIDCardBackHtml(student, cfg, classMap)}
+          </div>
+        </div>
+      `;
+    }).join('');
+  } else if (side === 'back') {
     const duplexMirror = options?.duplexMirror !== false;
     let studentsToRender = studentsSlice;
     if (duplexMirror) {
@@ -970,6 +992,13 @@ export function renderCardSheetHtml(studentsSlice = [], config = DEFAULT_CARD_CO
   }
 
   const isBack = side === 'back';
+  const isPairs = side === 'pairs';
+  let activeGridClass = layout.gridClass;
+  if (isPairs) {
+    activeGridClass = isSheetLandscape 
+      ? 'grid-cols-2 grid-rows-2 justify-items-center items-center' 
+      : 'grid-cols-1 grid-rows-3 justify-items-center items-center';
+  }
 
   return `
     <div class="a4-card-sheet relative bg-white mx-auto shadow-xl print:shadow-none box-border flex flex-col justify-between overflow-hidden print:overflow-visible font-sans ${isSheetLandscape ? 'a4-sheet-landscape' : 'a4-sheet-portrait'}"
@@ -982,22 +1011,22 @@ export function renderCardSheetHtml(studentsSlice = [], config = DEFAULT_CARD_CO
         <div class="absolute top-2 left-4 right-4 flex justify-between text-[8px] text-slate-400 select-none print:flex">
           <span class="flex items-center gap-1">
             ${getIcon('scissors', 'w-3 h-3 text-slate-400')}
-            <span>Cutting Guides (${cfg.cardOrientation.toUpperCase()}${isBack ? ' - BACK SIDE' : ''})</span>
+            <span>Cutting Guides (${cfg.cardOrientation.toUpperCase()}${isPairs ? ' - FOLDABLE PAIRS (FOLD IN HALF)' : (isBack ? ' - BACK SIDE' : '')})</span>
           </span>
           <span>Page ${pageIndex + 1} / ${totalPages}</span>
         </div>
       ` : ''}
 
       <!-- Centered Cards Grid on A4 Page -->
-      <div class="id-cards-grid grid ${layout.gridClass} justify-center items-center h-full w-full my-auto"
-           style="gap: ${gapMm}mm;">
+      <div class="id-cards-grid grid ${activeGridClass} justify-center items-center h-full w-full my-auto"
+           style="gap: ${isPairs ? (gapMm + 2) : gapMm}mm;">
         ${cardsHtml}
       </div>
 
       <!-- Bottom Sheet Footer -->
       <div class="text-center text-[7.5px] text-slate-400 select-none pt-1.5 flex justify-between items-center print:flex">
         <span>SmartSchool ID Card Studio</span>
-        <span>A4 ${cfg.sheetOrientation.toUpperCase()} • ${studentsSlice.length} Cards${isBack ? ' (Back Side)' : ''}</span>
+        <span>A4 ${cfg.sheetOrientation.toUpperCase()} • ${studentsSlice.length} Students${isPairs ? ' (Foldable Pairs - មុខ-ក្រោយជាប់គ្នា)' : (isBack ? ' (Back Side)' : '')}</span>
         <span>Page ${pageIndex + 1} of ${totalPages}</span>
       </div>
     </div>

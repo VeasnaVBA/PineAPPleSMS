@@ -367,7 +367,16 @@ export const IDCardStudioModal = {
             </div>
 
             <!-- Print Dropdown Menu Options -->
-            <div id="print-dropdown-menu" class="hidden absolute right-0 mt-2 w-72 rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl z-50 p-1.5 text-xs font-khmer animate-fade-in">
+            <div id="print-dropdown-menu" class="hidden absolute right-0 mt-2 w-76 rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl z-50 p-1.5 text-xs font-khmer animate-fade-in">
+              <!-- Foldable Pairs Option (Top Recommended) -->
+              <button type="button" id="btn-print-option-pairs" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-primary/10 transition-colors cursor-pointer bg-primary/5 border border-primary/20 mb-1">
+                <span class="w-6 h-6 rounded-md bg-primary/20 text-primary flex items-center justify-center shrink-0 font-bold text-sm">✂️</span>
+                <div class="min-w-0 flex-1">
+                  <div class="font-bold text-primary">${isKm ? 'បោះពុម្ពមុខ-ក្រោយជាប់គ្នា (សម្រាប់បត់អ៊ុតកាត)' : 'Print Foldable Pairs (Side-by-Side)'}</div>
+                  <div class="text-[10px] text-muted-foreground">${isKm ? 'មុខ & ក្រោយជាប់គ្នាក្នុងសន្លឹកតែមួយ ងាយបត់អ៊ុត ត្រូវទំហំ 100%' : 'Front & Back side-by-side with fold line. 100% matched!'}</div>
+                </div>
+              </button>
+
               <button type="button" id="btn-print-option-duplex" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
                 <span class="w-6 h-6 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold">📑</span>
                 <div class="min-w-0 flex-1">
@@ -506,13 +515,16 @@ export const IDCardStudioModal = {
                   </button>
                 </div>
               ` : `
-                <!-- Sheet Side Switcher (Front Sheet / Back Sheet) -->
+                <!-- Sheet Side Switcher (Front Sheet / Back Sheet / Foldable Pairs) -->
                 <div class="flex items-center h-8 bg-muted/60 p-0.5 rounded-lg border border-border text-xs">
                   <button type="button" id="btn-sheet-side-front" class="h-7 px-2.5 rounded-md transition-all font-khmer cursor-pointer text-xs ${this.sheetSide === 'front' ? 'bg-background text-primary font-bold shadow-2xs border border-border/50' : 'text-muted-foreground hover:text-foreground'}">
                     ${isKm ? 'សន្លឹកខាងមុខ' : 'Front Sheet'}
                   </button>
                   <button type="button" id="btn-sheet-side-back" class="h-7 px-2.5 rounded-md transition-all font-khmer cursor-pointer text-xs ${this.sheetSide === 'back' ? 'bg-background text-primary font-bold shadow-2xs border border-border/50' : 'text-muted-foreground hover:text-foreground'}">
-                    ${isKm ? 'សន្លឹកខាងក្រោយ (Duplex)' : 'Back Sheet (Duplex)'}
+                    ${isKm ? 'សន្លឹកខាងក្រោយ' : 'Back Sheet'}
+                  </button>
+                  <button type="button" id="btn-sheet-side-pairs" class="h-7 px-2.5 rounded-md transition-all font-khmer cursor-pointer text-xs ${this.sheetSide === 'pairs' ? 'bg-background text-primary font-bold shadow-2xs border border-border/50' : 'text-muted-foreground hover:text-foreground'}">
+                    ${isKm ? 'មុខ-ក្រោយជាប់គ្នា (Foldable)' : 'Foldable Pairs'}
                   </button>
                 </div>
 
@@ -1557,10 +1569,12 @@ export const IDCardStudioModal = {
       // FULL A4 SHEET MULTI-CARD LAYOUT VIEW
       const btnSheetSideFront = this.activeOverlay?.querySelector('#btn-sheet-side-front');
       const btnSheetSideBack = this.activeOverlay?.querySelector('#btn-sheet-side-back');
+      const btnSheetSidePairs = this.activeOverlay?.querySelector('#btn-sheet-side-pairs');
       const sideActive = 'h-7 px-2.5 rounded-md transition-all font-khmer cursor-pointer text-xs bg-background text-primary font-bold shadow-2xs border border-border/50';
       const sideInactive = 'h-7 px-2.5 rounded-md transition-all font-khmer cursor-pointer text-xs text-muted-foreground hover:text-foreground';
       if (btnSheetSideFront) btnSheetSideFront.className = this.sheetSide === 'front' ? sideActive : sideInactive;
       if (btnSheetSideBack) btnSheetSideBack.className = this.sheetSide === 'back' ? sideActive : sideInactive;
+      if (btnSheetSidePairs) btnSheetSidePairs.className = this.sheetSide === 'pairs' ? sideActive : sideInactive;
 
       const targetStudents = this.onlyShowSelectedInSheet && selectedCount > 0 ? selectedStudents : (this.onlyShowSelectedInSheet && selectedCount === 0 ? [] : this.students);
 
@@ -1602,7 +1616,8 @@ export const IDCardStudioModal = {
         return;
       }
 
-      const pages = chunkStudentsForPages(targetStudents, this.config.cardsPerSheet);
+      const perPage = (this.sheetSide === 'pairs') ? (isSheetLandscape ? 4 : 3) : this.config.cardsPerSheet;
+      const pages = chunkStudentsForPages(targetStudents, perPage);
       const totalPages = pages.length;
 
       if (this.currentPage >= totalPages) {
@@ -1615,7 +1630,9 @@ export const IDCardStudioModal = {
       // Update pagination label
       const pagerLabel = this.activeOverlay?.querySelector('#sheet-pager-label');
       if (pagerLabel) {
-        const sideText = (this.sheetSide === 'back') ? (isKm ? ' (ខាងក្រោយ)' : ' (Back)') : (isKm ? ' (ខាងមុខ)' : ' (Front)');
+        const sideText = (this.sheetSide === 'pairs') 
+          ? (isKm ? ' (មុខ-ក្រោយជាប់គ្នា)' : ' (Pairs)') 
+          : ((this.sheetSide === 'back') ? (isKm ? ' (ខាងក្រោយ)' : ' (Back)') : (isKm ? ' (ខាងមុខ)' : ' (Front)'));
         pagerLabel.textContent = isKm 
           ? `ទំព័រ ${this.currentPage + 1} / ${totalPages}${sideText}` 
           : `Page ${this.currentPage + 1} of ${totalPages}${sideText}`;
@@ -1624,7 +1641,9 @@ export const IDCardStudioModal = {
       // Update info text
       const infoText = this.activeOverlay?.querySelector('#sheet-cards-info-text');
       if (infoText) {
-        infoText.textContent = `${this.config.cardsPerSheet} ${isKm ? 'កាតក្នុងមួយទំព័រ' : 'cards per page'} (${isCardLandscape ? (isKm ? 'បណ្តោយ' : 'Landscape') : (isKm ? 'បញ្ឈរ' : 'Portrait')})`;
+        infoText.textContent = (this.sheetSide === 'pairs')
+          ? `${perPage} ${isKm ? 'គូ (មុខ-ក្រោយ) ក្នុងមួយទំព័រ' : 'pairs (front-back) per page'}`
+          : `${this.config.cardsPerSheet} ${isKm ? 'កាតក្នុងមួយទំព័រ' : 'cards per page'} (${isCardLandscape ? (isKm ? 'បណ្តោយ' : 'Landscape') : (isKm ? 'បញ្ឈរ' : 'Portrait')})`;
       }
 
       // Update Prev / Next buttons state
@@ -1773,6 +1792,17 @@ export const IDCardStudioModal = {
 
         overlay.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
         overlay.querySelector(`#tab-panel-${tabKey}`)?.classList.remove('hidden');
+
+        // Auto-switch preview when clicking Back Side tab
+        if (tabKey === 'back') {
+          if (this.viewMode === 'single' && this.cardSide === 'front') {
+            this.cardSide = 'back';
+            this.updatePreview();
+          } else if (this.viewMode === 'sheet' && this.sheetSide === 'front') {
+            this.sheetSide = 'back';
+            this.updatePreview();
+          }
+        }
       });
     });
 
@@ -2639,10 +2669,16 @@ export const IDCardStudioModal = {
       }
     });
 
-    // Print Primary Button (Prints selected students - Duplex)
+    // Print Primary Button (Prints selected students - Foldable Pairs or Duplex)
     overlay.querySelector('#btn-studio-print-primary')?.addEventListener('click', () => {
       printDropdownMenu?.classList.add('hidden');
-      this.executePrint('selected', 'duplex');
+      this.executePrint('selected', 'pairs');
+    });
+
+    // Print Option: Foldable Pairs (Front & Back Side-by-Side on same sheet)
+    overlay.querySelector('#btn-print-option-pairs')?.addEventListener('click', () => {
+      printDropdownMenu?.classList.add('hidden');
+      this.executePrint('selected', 'pairs');
     });
 
     // Print Option: Duplex (Front & Back)
@@ -2700,13 +2736,17 @@ export const IDCardStudioModal = {
       this.updatePreview();
     });
 
-    // Sub-toolbar: Sheet Side Switcher (Front Sheet / Back Sheet)
+    // Sub-toolbar: Sheet Side Switcher (Front Sheet / Back Sheet / Foldable Pairs)
     overlay.querySelector('#btn-sheet-side-front')?.addEventListener('click', () => {
       this.sheetSide = 'front';
       this.updatePreview();
     });
     overlay.querySelector('#btn-sheet-side-back')?.addEventListener('click', () => {
       this.sheetSide = 'back';
+      this.updatePreview();
+    });
+    overlay.querySelector('#btn-sheet-side-pairs')?.addEventListener('click', () => {
+      this.sheetSide = 'pairs';
       this.updatePreview();
     });
 
@@ -3139,9 +3179,11 @@ export const IDCardStudioModal = {
       }
     }
 
-    const pages = chunkStudentsForPages(targetStudents, this.config.cardsPerSheet);
-    const totalPages = pages.length;
+    const isPairs = printMode === 'pairs';
     const isSheetLandscape = this.config.sheetOrientation === 'landscape';
+    const perPage = isPairs ? (isSheetLandscape ? 4 : 3) : this.config.cardsPerSheet;
+    const pages = chunkStudentsForPages(targetStudents, perPage);
+    const totalPages = pages.length;
 
     // Remove any previous print container or dynamic print styles
     document.getElementById('id-card-print-container')?.remove();
@@ -3182,7 +3224,12 @@ export const IDCardStudioModal = {
 
     let allSheetsHtml = '';
 
-    if (printMode === 'duplex') {
+    if (printMode === 'pairs') {
+      // Foldable Pairs: prints Front & Back side-by-side on the SAME sheet with a central fold line
+      pages.forEach((slice, idx) => {
+        allSheetsHtml += renderCardSheetHtml(slice, this.config, idx, totalPages, this.classMap, { side: 'pairs' });
+      });
+    } else if (printMode === 'duplex') {
       // Duplex: prints Sheet Front then Sheet Back (mirrored) for each chunk
       const totalSheets = totalPages * 2;
       pages.forEach((slice, idx) => {
