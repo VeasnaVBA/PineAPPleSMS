@@ -459,11 +459,18 @@ export const UsersPage = {
         icon: 'students',
         isPrimary: true,
         desc: isKm ? 'ម៉ឺនុយគ្រប់គ្រងទិន្នន័យសិស្ស (Student Management)' : 'Student Management menu'
+      },
+      {
+        key: 'classes',
+        label: isKm ? 'គ្រប់គ្រងថ្នាក់រៀន' : 'Classroom Management',
+        icon: 'classes',
+        isPrimary: true,
+        desc: isKm ? 'ម៉ឺនុយគ្រប់គ្រង និងបង្កើតថ្នាក់រៀនគ្មានដែនកំណត់' : 'Classroom Management menu (Unlimited classes)'
       }
     ];
 
     return officerMenuDefs.map((def) => {
-      const isChecked = (def.key === 'teachers' || def.key === 'students')
+      const isChecked = (def.key === 'teachers' || def.key === 'students' || def.key === 'classes')
         ? (officerPerms[def.key] !== false)
         : Boolean(officerPerms[def.key]);
 
@@ -766,7 +773,7 @@ export const UsersPage = {
     document.getElementById('btn-save-perms')?.addEventListener('click', async () => {
       const directorPerms = {};
       const teacherPerms = {};
-      const officerPerms = this.permissions?.OFFICER || { teachers: true, students: true };
+      const officerPerms = this.permissions?.OFFICER || { teachers: true, students: true, classes: true };
 
       this.container.querySelectorAll('.perm-checkbox').forEach(cb => {
         const role = cb.getAttribute('data-role');
@@ -832,7 +839,8 @@ export const UsersPage = {
       try {
         const defaultOfficer = {
           teachers: true,
-          students: true
+          students: true,
+          classes: true
         };
         await permissionService.saveOfficerPermissions(defaultOfficer);
         this.permissions = await permissionService.getAll();

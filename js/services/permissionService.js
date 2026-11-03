@@ -26,7 +26,8 @@ export const MENU_KEYS = [
  */
 export const OFFICER_MENU_KEYS = [
   'teachers',
-  'students'
+  'students',
+  'classes'
 ];
 
 export const GRANULAR_PERMISSIONS = [
@@ -121,7 +122,8 @@ export const DEFAULT_ROLE_PERMISSIONS = {
   },
   OFFICER: {
     teachers: true,
-    students: true
+    students: true,
+    classes: true
   }
 };
 
@@ -154,8 +156,9 @@ class PermissionService {
         if (this.customPermissions.OFFICER) {
           if (this.customPermissions.OFFICER.teachers === undefined) this.customPermissions.OFFICER.teachers = true;
           if (this.customPermissions.OFFICER.students === undefined || this.customPermissions.OFFICER.students === false) this.customPermissions.OFFICER.students = true;
+          if (this.customPermissions.OFFICER.classes === undefined || this.customPermissions.OFFICER.classes === false) this.customPermissions.OFFICER.classes = true;
         } else {
-          this.customPermissions.OFFICER = { teachers: true, students: true };
+          this.customPermissions.OFFICER = { teachers: true, students: true, classes: true };
         }
       } else {
         this.customPermissions = JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS));
@@ -235,6 +238,9 @@ class PermissionService {
       if (routeKey === 'students') {
         return officerPerms.students !== false;
       }
+      if (routeKey === 'classes') {
+        return officerPerms.classes !== false;
+      }
       return false;
     }
 
@@ -275,7 +281,7 @@ class PermissionService {
       return true;
     }
 
-    if (cleanRole === 'OFFICER' && (action.startsWith('teachers.') || action.startsWith('students.'))) {
+    if (cleanRole === 'OFFICER' && (action.startsWith('teachers.') || action.startsWith('students.') || action.startsWith('classes.'))) {
       return true;
     }
 
@@ -307,11 +313,14 @@ class PermissionService {
     this.customPermissions = JSON.parse(JSON.stringify(allPermissions));
     if (this.customPermissions) {
       if (!this.customPermissions.OFFICER) {
-        this.customPermissions.OFFICER = { teachers: true, students: true };
+        this.customPermissions.OFFICER = { teachers: true, students: true, classes: true };
       } else {
         if (this.customPermissions.OFFICER.teachers === undefined) this.customPermissions.OFFICER.teachers = true;
         if (this.customPermissions.OFFICER.students === undefined || this.customPermissions.OFFICER.students === false) {
           this.customPermissions.OFFICER.students = true;
+        }
+        if (this.customPermissions.OFFICER.classes === undefined || this.customPermissions.OFFICER.classes === false) {
+          this.customPermissions.OFFICER.classes = true;
         }
       }
     }

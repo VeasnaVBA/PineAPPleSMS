@@ -4,10 +4,10 @@
  * Enforces route-level RBAC permissions (ADMIN, DIRECTOR, TEACHER)
  */
 import { DashboardPage } from './pages/dashboard.js?v=3.0.99';
-import { StudentsPage } from './pages/students.js?v=3.1.36';
+import { StudentsPage } from './pages/students.js?v=3.1.37';
 import { TeachersPage } from './pages/teachers.js?v=3.1.19';
 import { OfficerTeachersPage } from './pages/officerTeachers.js';
-import { ClassesPage } from './pages/classes.js?v=3.1.16';
+import { ClassesPage } from './pages/classes.js?v=3.1.37';
 import { AttendancePage } from './pages/attendance.js?v=3.1.16';
 import { ScoresPage } from './pages/scores.js?v=3.1.29';
 import { ReportsPage } from './pages/reports.js?v=3.1.13';
@@ -96,7 +96,7 @@ export class Router {
     if (cleanRole === 'ADMIN') {
       defaultRoute = 'users';
     } else if (cleanRole === 'OFFICER') {
-      defaultRoute = (rawHash === 'students') ? 'students' : 'teachers';
+      defaultRoute = (rawHash === 'students' || rawHash === 'classes') ? rawHash : 'teachers';
     }
     let route = routes[rawHash] ? rawHash : defaultRoute;
 
@@ -132,7 +132,7 @@ export class Router {
     if (cleanRole === 'ADMIN') {
       defaultRoute = 'users';
     } else if (cleanRole === 'OFFICER') {
-      defaultRoute = (routeKey === 'students') ? 'students' : 'teachers';
+      defaultRoute = (routeKey === 'students' || routeKey === 'classes') ? routeKey : 'teachers';
     }
 
     // Automatic redirect if user does not have permission to access this route
@@ -157,7 +157,7 @@ export class Router {
     if (cleanRole === 'ADMIN') {
       defaultFallback = routes.users;
     } else if (cleanRole === 'OFFICER') {
-      defaultFallback = (routeKey === 'students') ? routes.students : OfficerTeachersPage;
+      defaultFallback = (routeKey === 'students') ? routes.students : (routeKey === 'classes' ? routes.classes : OfficerTeachersPage);
     }
     let page = routes[routeKey] || defaultFallback;
     if (routeKey === 'teachers' && cleanRole === 'OFFICER') {

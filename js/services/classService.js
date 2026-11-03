@@ -97,8 +97,9 @@ export const ClassService = {
     const isTeacher = currentUser?.role === 'TEACHER';
     const isDirector = currentUser?.role === 'DIRECTOR';
     const isAdmin = currentUser?.role === 'ADMIN';
+    const isOfficer = currentUser?.role === 'OFFICER';
 
-    if (!authService.can('classes.create') && !isDirector && !isAdmin && !isTeacher) {
+    if (!authService.can('classes.create') && !isDirector && !isAdmin && !isTeacher && !isOfficer) {
       throw new Error('Access denied: You do not have permission to create classes.');
     }
 
@@ -165,8 +166,9 @@ export const ClassService = {
     const isTeacher = currentUser?.role === 'TEACHER';
     const isDirector = currentUser?.role === 'DIRECTOR';
     const isAdmin = currentUser?.role === 'ADMIN';
+    const isOfficer = currentUser?.role === 'OFFICER';
 
-    if (!authService.can('classes.edit') && !isDirector && !isAdmin && !isTeacher) {
+    if (!authService.can('classes.edit') && !isDirector && !isAdmin && !isTeacher && !isOfficer) {
       throw new Error('Access denied: You do not have permission to edit classes.');
     }
 
@@ -214,7 +216,8 @@ export const ClassService = {
   async delete(id, user = authService.getCurrentUser()) {
     const currentUser = user || authService.getCurrentUser();
     const isTeacher = currentUser?.role === 'TEACHER';
-    if (!isTeacher && !authService.can('classes.delete')) {
+    const isOfficer = currentUser?.role === 'OFFICER';
+    if (!isTeacher && !isOfficer && !authService.can('classes.delete')) {
       throw new Error('Access denied: You do not have permission to delete classes.');
     }
     const res = await db.delete('classes', id);
