@@ -367,42 +367,59 @@ export const IDCardStudioModal = {
             </div>
 
             <!-- Print Dropdown Menu Options -->
-            <div id="print-dropdown-menu" class="hidden absolute right-0 mt-2 w-76 rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl z-50 p-1.5 text-xs font-khmer animate-fade-in">
-              <!-- Foldable Pairs Option (Top Recommended) -->
-              <button type="button" id="btn-print-option-pairs" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-primary/10 transition-colors cursor-pointer bg-primary/5 border border-primary/20 mb-1">
-                <span class="w-6 h-6 rounded-md bg-primary/20 text-primary flex items-center justify-center shrink-0 font-bold text-sm">✂️</span>
+            <div id="print-dropdown-menu" class="hidden absolute right-0 mt-2 w-80 rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl z-50 p-2 text-xs font-khmer animate-fade-in space-y-1">
+              
+              <!-- 1. AUTO DUPLEX (Both Sides Directly) -->
+              <button type="button" id="btn-print-option-duplex" class="w-full text-left flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-primary/10 transition-colors cursor-pointer bg-primary/5 border border-primary/20">
+                <span class="w-7 h-7 rounded-lg bg-primary/20 text-primary flex items-center justify-center shrink-0 font-bold text-sm">📑</span>
                 <div class="min-w-0 flex-1">
-                  <div class="font-bold text-primary">${isKm ? 'បោះពុម្ពមុខ-ក្រោយជាប់គ្នា (សម្រាប់បត់អ៊ុតកាត)' : 'Print Foldable Pairs (Side-by-Side)'}</div>
-                  <div class="text-[10px] text-muted-foreground">${isKm ? 'មុខ & ក្រោយជាប់គ្នាក្នុងសន្លឹកតែមួយ ងាយបត់អ៊ុត ត្រូវទំហំ 100%' : 'Front & Back side-by-side with fold line. 100% matched!'}</div>
+                  <div class="font-bold text-primary flex items-center justify-between">
+                    <span>${isKm ? 'បោះពុម្ពសងខាង (Auto Duplex)' : 'Print Both Sides (Auto Duplex)'}</span>
+                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-primary/15 font-sans font-semibold">2-Sided</span>
+                  </div>
+                  <div class="text-[10.5px] text-muted-foreground">${isKm ? 'ទំព័រ ១ (មុខ) & ទំព័រ ២ (ក្រោយ) ឆ្លាស់គ្នាស្វ័យប្រវត្ត' : 'Page 1 (Front) & Page 2 (Back) alternating'}</div>
                 </div>
               </button>
 
-              <button type="button" id="btn-print-option-duplex" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
-                <span class="w-6 h-6 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold">📑</span>
+              <!-- Section: MANUAL FLIP WORKFLOW (For single-sided printers) -->
+              <div class="pt-1 pb-0.5 px-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                ${isKm ? '🔄 វិធីត្រឡប់ក្រដាសដោយដៃ (Manual Flip)' : '🔄 Manual Flip (Step 1 & Step 2)'}
+              </div>
+
+              <!-- Step 1: Front Side Only -->
+              <button type="button" id="btn-print-option-front" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer border border-transparent hover:border-border">
+                <span class="w-6 h-6 rounded-md bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0 font-bold text-xs">①</span>
                 <div class="min-w-0 flex-1">
-                  <div class="font-bold text-foreground">${isKm ? 'បោះពុម្ពសងខាង (មុខ & ក្រោយ - Duplex)' : 'Print Duplex (Front & Back)'}</div>
-                  <div class="text-[10px] text-muted-foreground">${isKm ? `ចំនួន ${selectedCount} សិស្ស (${totalPages * 2} ទំព័រ A4)` : `${selectedCount} students (${totalPages * 2} A4 pages)`}</div>
+                  <div class="font-bold text-foreground">${isKm ? 'ជំហាន ១ ៖ បោះពុម្ពតែខាងមុខ (Front Only)' : 'Step 1: Print Front Sheets Only'}</div>
+                  <div class="text-[10px] text-muted-foreground">${isKm ? 'ព្រីនខាងមុខជាមុនសិន រួចយកក្រដាសត្រឡប់ដាក់ចូលថាសវិញ' : 'Print front first, then flip paper into tray'}</div>
                 </div>
               </button>
 
-              <button type="button" id="btn-print-option-front" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
-                <span class="w-6 h-6 rounded-md bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0 font-bold">📄</span>
+              <!-- Step 2: Back Side Only -->
+              <button type="button" id="btn-print-option-back" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer border border-transparent hover:border-border">
+                <span class="w-6 h-6 rounded-md bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0 font-bold text-xs">②</span>
                 <div class="min-w-0 flex-1">
-                  <div class="font-bold text-foreground">${isKm ? 'បោះពុម្ពតែខាងមុខ (Front Only)' : 'Print Front Sheets Only'}</div>
-                  <div class="text-[10px] text-muted-foreground">${isKm ? `ចំនួន ${selectedCount} សិស្ស (${totalPages} ទំព័រ A4)` : `${selectedCount} students (${totalPages} A4 pages)`}</div>
+                  <div class="font-bold text-foreground">${isKm ? 'ជំហាន ២ ៖ បោះពុម្ពតែខាងក្រោយ (Back Only)' : 'Step 2: Print Back Sheets Only'}</div>
+                  <div class="text-[10px] text-muted-foreground">${isKm ? 'ឆ្លុះជួរស្វ័យប្រវត្ត ត្រូវទីតាំងខាងមុខខ្នងទល់ខ្នង 100%' : 'Auto-mirrored columns match back-to-back 100%'}</div>
                 </div>
               </button>
 
-              <button type="button" id="btn-print-option-back" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
-                <span class="w-6 h-6 rounded-md bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0 font-bold">🔄</span>
-                <div class="min-w-0 flex-1">
-                  <div class="font-bold text-foreground">${isKm ? 'បោះពុម្ពតែខាងក្រោយ (Back Only)' : 'Print Back Sheets Only'}</div>
-                  <div class="text-[10px] text-muted-foreground">${isKm ? `ចំនួន ${selectedCount} សិស្ស (${totalPages} ទំព័រ A4)` : `${selectedCount} students (${totalPages} A4 pages)`}</div>
-                </div>
-              </button>
-
+              <!-- Divider -->
               <div class="my-1 border-t border-border/60"></div>
 
+              <!-- Foldable Pairs Option -->
+              <button type="button" id="btn-print-option-pairs" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
+                <span class="w-6 h-6 rounded-md bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0 font-bold text-xs">✂️</span>
+                <div class="min-w-0 flex-1">
+                  <div class="font-bold text-foreground">${isKm ? 'ជម្រើស ៖ មុខ-ក្រោយជាប់គ្នា (សម្រាប់បត់)' : 'Option: Foldable Pairs (Side-by-Side)'}</div>
+                  <div class="text-[10px] text-muted-foreground">${isKm ? 'មុខ & ក្រោយលើសន្លឹកតែមួយ មានបន្ទាត់បត់' : 'Front & Back on same sheet with fold line'}</div>
+                </div>
+              </button>
+
+              <!-- Divider -->
+              <div class="my-1 border-t border-border/60"></div>
+
+              <!-- Current Card Single -->
               <button type="button" id="btn-print-option-current" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
                 <span class="w-6 h-6 rounded-md bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">📇</span>
                 <div class="min-w-0 flex-1">
@@ -411,6 +428,7 @@ export const IDCardStudioModal = {
                 </div>
               </button>
 
+              <!-- All Students -->
               <button type="button" id="btn-print-option-all" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
                 <span class="w-6 h-6 rounded-md bg-slate-500/10 text-slate-600 flex items-center justify-center shrink-0">👥</span>
                 <div class="min-w-0 flex-1">
@@ -2669,10 +2687,10 @@ export const IDCardStudioModal = {
       }
     });
 
-    // Print Primary Button (Prints selected students - Foldable Pairs or Duplex)
+    // Print Primary Button (Prints selected students - Back-to-Back Duplex)
     overlay.querySelector('#btn-studio-print-primary')?.addEventListener('click', () => {
       printDropdownMenu?.classList.add('hidden');
-      this.executePrint('selected', 'pairs');
+      this.executePrint('selected', 'duplex');
     });
 
     // Print Option: Foldable Pairs (Front & Back Side-by-Side on same sheet)
