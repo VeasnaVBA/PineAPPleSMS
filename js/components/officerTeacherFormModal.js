@@ -79,8 +79,6 @@ export const OfficerTeacherFormModal = {
     const initialFirstNameKm = teacher?.firstNameKhmer || teacher?.firstNameKh || '';
     const initialLastNameEn = (teacher?.lastNameLatin || '').toUpperCase();
     const initialFirstNameEn = (teacher?.firstNameLatin || '').toUpperCase();
-    const initialFullNameKm = `${initialLastNameKm} ${initialFirstNameKm}`.trim() || (isKm ? 'ឈ្មោះគ្រូបង្រៀន' : 'Teacher Name');
-    const initialFullNameEn = `${initialLastNameEn} ${initialFirstNameEn}`.trim() || 'TEACHER NAME';
     const initialCivilId = teacher?.civilServantId || teacher?.teacherId || '';
     const initialPhone = teacher?.phone || teacher?.phone1 || '';
     const initialEmail = teacher?.email || '';
@@ -140,88 +138,6 @@ export const OfficerTeacherFormModal = {
 
         <!-- Scrollable Form Body -->
         <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 bg-muted/15" id="officer-modal-scroll-body">
-
-          <!-- 1. OFFICIAL MOEYS TEACHER PROFILE HEADER BANNER -->
-          <div class="relative rounded-2xl overflow-hidden shadow-lg border border-border/40 text-white p-5 sm:p-6" style="background: linear-gradient(135deg, var(--main-btn-color, var(--primary, #0d4536)) 0%, rgba(15, 23, 42, 0.95) 100%);">
-            <div class="flex flex-col md:flex-row items-center md:items-start gap-5">
-              
-              <!-- Avatar with upload hover trigger -->
-              <div class="relative group cursor-pointer flex-shrink-0" id="officer-header-photo-trigger">
-                <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white/30 overflow-hidden bg-emerald-950/60 shadow-xl flex items-center justify-center relative">
-                  <img id="officer-header-avatar" src="${previewPhotoUrl || ''}" class="${previewPhotoUrl ? '' : 'hidden'} w-full h-full object-cover" alt="Profile photo" />
-                  <div id="officer-header-placeholder" class="${previewPhotoUrl ? 'hidden' : 'flex'} flex-col items-center justify-center text-emerald-200">
-                    ${getIcon('user', 'w-10 h-10')}
-                  </div>
-                  <!-- Camera hover badge -->
-                  <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-medium">
-                    ${getIcon('camera', 'w-5 h-5 mb-0.5')}
-                    <span>${isKm ? 'ប្តូររូបថត' : 'Change'}</span>
-                  </div>
-                </div>
-                <div class="absolute bottom-0 right-1 p-1.5 rounded-full bg-emerald-600 text-white shadow-md border-2 border-white">
-                  ${getIcon('camera', 'w-3.5 h-3.5')}
-                </div>
-              </div>
-
-              <!-- Main Teacher Identity Header -->
-              <div class="flex-1 text-center md:text-left space-y-2.5">
-                <div class="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
-                  <h2 id="officer-live-name-km" class="text-2xl sm:text-3xl font-bold tracking-tight font-khmer text-white">
-                    ${initialFullNameKm}
-                  </h2>
-                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                    ${getIcon('check', 'w-3 h-3')} ${isKm ? 'បានផ្ទៀងផ្ទាត់ដោយ MoEYS' : 'MoEYS Verified'}
-                  </span>
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/20 text-white border border-white/30 font-khmer">
-                    ${isKm ? 'គ្រូបង្រៀន' : 'Teacher'}
-                  </span>
-                </div>
-
-                <div id="officer-live-name-en" class="text-xs sm:text-sm font-semibold tracking-wider text-emerald-100/90 font-mono uppercase">
-                  ${initialFullNameEn}
-                </div>
-
-                <!-- Info Badges Bar -->
-                <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1 text-xs">
-                  <!-- Civil ID Badge -->
-                  <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-black/25 backdrop-blur-xs border border-white/10 text-emerald-100">
-                    ${getIcon('idCard', 'w-3.5 h-3.5 text-emerald-300')}
-                    <span>${isKm ? 'អត្តលេខ:' : 'Civil ID:'}</span>
-                    <span id="officer-live-civil-id" class="font-mono font-bold text-white">${initialCivilId || '—'}</span>
-                  </div>
-
-                  <!-- Organization / Unit -->
-                  <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-black/25 backdrop-blur-xs border border-white/10 text-emerald-100">
-                    ${getIcon('school', 'w-3.5 h-3.5 text-emerald-300')}
-                    <span>${isKm ? 'អង្គភាព:' : 'Unit:'}</span>
-                    <span id="officer-live-unit" class="text-white truncate max-w-[220px]">${initialUnit}</span>
-                  </div>
-
-                  <!-- Phone Badge -->
-                  <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-black/25 backdrop-blur-xs border border-white/10 text-emerald-100">
-                    ${getIcon('phone', 'w-3.5 h-3.5 text-emerald-300')}
-                    <span>${isKm ? 'លេខទូរស័ព្ទ:' : 'Phone:'}</span>
-                    <span id="officer-live-phone" class="font-mono text-white">${initialPhone || '—'}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 2. STATUS 5 ACTIVE NOTIFICATION CARD -->
-          <div class="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 sm:p-4 flex items-start gap-3 text-foreground">
-            <div class="p-1.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5">
-              ${getIcon('check', 'w-4 h-4')}
-            </div>
-            <div class="space-y-0.5">
-              <div class="text-xs sm:text-sm font-bold text-emerald-700 dark:text-emerald-300 ${isKm ? 'font-khmer' : ''}">
-                ${isKm ? 'ស្ថានភាពគណនីក្នុងអង្គភាព: សកម្មពេញលេញ (Status 5)' : 'Account Status in Unit: Fully Active (Status 5)'}
-              </div>
-              <p class="text-[11px] sm:text-xs text-muted-foreground ${isKm ? 'font-khmer' : ''}">
-                ${isKm ? 'គណនីនេះមានសិទ្ធិពេញលេញជាមន្ត្រីនៅក្នុងអង្គភាពនេះ។' : 'This profile holds verified officer rights within the assigned unit.'}
-              </p>
-            </div>
-          </div>
 
           <!-- 3. OFFICIAL TAB NAVIGATION BAR (8 Tabs) -->
           <div class="border-b border-border flex items-center gap-1 overflow-x-auto pb-1 text-xs sm:text-sm scrollbar-none" id="officer-tabs-bar">
@@ -896,38 +812,7 @@ export const OfficerTeacherFormModal = {
       });
     });
 
-    // Live update Header Banner when user types name, ID, phone
-    const lastNameKmInput = overlay.querySelector('#officer-last-name-km');
-    const firstNameKmInput = overlay.querySelector('#officer-first-name-km');
-    const lastNameEnInput = overlay.querySelector('#officer-last-name-en');
-    const firstNameEnInput = overlay.querySelector('#officer-first-name-en');
-    const civilIdInput = overlay.querySelector('#officer-civil-servant-id');
-    const phoneInput = overlay.querySelector('#officer-phone');
-
-    const liveNameKm = overlay.querySelector('#officer-live-name-km');
-    const liveNameEn = overlay.querySelector('#officer-live-name-en');
-    const liveCivilId = overlay.querySelector('#officer-live-civil-id');
-    const livePhone = overlay.querySelector('#officer-live-phone');
-
-    const updateLiveBanner = () => {
-      const lKm = (lastNameKmInput?.value || '').trim();
-      const fKm = (firstNameKmInput?.value || '').trim();
-      if (liveNameKm) liveNameKm.textContent = `${lKm} ${fKm}`.trim() || (isKm ? 'ឈ្មោះគ្រូបង្រៀន' : 'Teacher Name');
-
-      const lEn = (lastNameEnInput?.value || '').trim().toUpperCase();
-      const fEn = (firstNameEnInput?.value || '').trim().toUpperCase();
-      if (liveNameEn) liveNameEn.textContent = `${lEn} ${fEn}`.trim() || 'TEACHER NAME';
-
-      if (liveCivilId) liveCivilId.textContent = civilIdInput?.value.trim() || '—';
-      if (livePhone) livePhone.textContent = phoneInput?.value.trim() || '—';
-    };
-
-    lastNameKmInput?.addEventListener('input', updateLiveBanner);
-    firstNameKmInput?.addEventListener('input', updateLiveBanner);
-    lastNameEnInput?.addEventListener('input', updateLiveBanner);
-    firstNameEnInput?.addEventListener('input', updateLiveBanner);
-    civilIdInput?.addEventListener('input', updateLiveBanner);
-    phoneInput?.addEventListener('input', updateLiveBanner);
+    
 
     // Photo input handling
     const contestPhotoInput = overlay.querySelector('#officer-contest-photo-input');
