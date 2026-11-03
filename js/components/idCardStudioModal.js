@@ -3198,8 +3198,9 @@ export const IDCardStudioModal = {
     }
 
     const isPairs = printMode === 'pairs';
+    const isSingleCard = (scope === 'current' || targetStudents.length === 1) && !isPairs;
     const isSheetLandscape = this.config.sheetOrientation === 'landscape';
-    const perPage = isPairs ? (isSheetLandscape ? 4 : 3) : this.config.cardsPerSheet;
+    const perPage = isSingleCard ? 1 : (isPairs ? (isSheetLandscape ? 4 : 3) : this.config.cardsPerSheet);
     const pages = chunkStudentsForPages(targetStudents, perPage);
     const totalPages = pages.length;
 
@@ -3251,18 +3252,18 @@ export const IDCardStudioModal = {
       // Duplex: prints Sheet Front then Sheet Back (mirrored) for each chunk
       const totalSheets = totalPages * 2;
       pages.forEach((slice, idx) => {
-        allSheetsHtml += renderCardSheetHtml(slice, this.config, idx * 2, totalSheets, this.classMap, { side: 'front' });
-        allSheetsHtml += renderCardSheetHtml(slice, this.config, idx * 2 + 1, totalSheets, this.classMap, { side: 'back', duplexMirror: true });
+        allSheetsHtml += renderCardSheetHtml(slice, this.config, idx * 2, totalSheets, this.classMap, { side: 'front', isSingleCard });
+        allSheetsHtml += renderCardSheetHtml(slice, this.config, idx * 2 + 1, totalSheets, this.classMap, { side: 'back', duplexMirror: true, isSingleCard });
       });
     } else if (printMode === 'back') {
       // Back sheets only
       pages.forEach((slice, idx) => {
-        allSheetsHtml += renderCardSheetHtml(slice, this.config, idx, totalPages, this.classMap, { side: 'back', duplexMirror: true });
+        allSheetsHtml += renderCardSheetHtml(slice, this.config, idx, totalPages, this.classMap, { side: 'back', duplexMirror: true, isSingleCard });
       });
     } else {
       // Front sheets only
       pages.forEach((slice, idx) => {
-        allSheetsHtml += renderCardSheetHtml(slice, this.config, idx, totalPages, this.classMap, { side: 'front' });
+        allSheetsHtml += renderCardSheetHtml(slice, this.config, idx, totalPages, this.classMap, { side: 'front', isSingleCard });
       });
     }
 

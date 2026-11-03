@@ -901,6 +901,22 @@ export function getSheetGridLayout(cardsPerSheet = 8, cardOrientation = 'portrai
   }
 
   // A4 Portrait: 210mm width, 297mm height
+  if (!isCardLandscape) {
+    // Portrait cards (54mm x 85.6mm): Max 3 rows fit in 297mm A4 height (3 * 85.6 = 256.8mm)
+    switch (count) {
+      case 2:
+        return { cols: 1, rows: 2, gridClass: 'grid-cols-1 grid-rows-2' };
+      case 4:
+        return { cols: 2, rows: 2, gridClass: 'grid-cols-2 grid-rows-2' };
+      case 6:
+      case 8:
+      case 10:
+      default:
+        return { cols: 2, rows: 3, gridClass: 'grid-cols-2 grid-rows-3' };
+    }
+  }
+
+  // Landscape cards on Portrait A4 (85.6mm x 54mm): 4 rows fit comfortably (4 * 54 = 216mm <= 297mm)
   switch (count) {
     case 4:
       return { cols: 2, rows: 2, gridClass: 'grid-cols-2 grid-rows-2' };
@@ -927,18 +943,67 @@ export function renderCardSheetHtml(studentsSlice = [], config = DEFAULT_CARD_CO
   const cfg = { ...DEFAULT_CARD_CONFIG, ...config };
   const side = options?.side || 'front';
   const isSheetLandscape = cfg.sheetOrientation === 'landscape';
+  const isCardLandscape = cfg.cardOrientation === 'landscape';
+  const widthMm = cfg.widthMm || (isCardLandscape ? 85.6 : 54);
+  const heightMm = cfg.heightMm || (isCardLandscape ? 54 : 85.6);
   const layout = getSheetGridLayout(cfg.cardsPerSheet, cfg.cardOrientation, cfg.sheetOrientation);
-  const gapMm = cfg.gapMm || 4;
+  const gapMm = cfg.gapMm !== undefined ? cfg.gapMm : 4;
 
   const sheetWidthMm = isSheetLandscape ? 297 : 210;
   const sheetHeightMm = isSheetLandscape ? 210 : 297;
   const sheetMarginMm = cfg.sheetMarginMm !== undefined ? cfg.sheetMarginMm : 8;
+  const isBack = side === 'back';
+  const isPairs = side === 'pairs';
+  const isSingleCard = options?.isSingleCard === true || (studentsSlice.length === 1 && options?.centerSingleCard === true);
 
-  let cardsHtml = '';
+  // CASE 1: Single Student Card Centered on A4 Sheet (Dead Center Match)
+  if (isSingleCard && studentsSlice.length === 1) {
+    const student = studentsSlice[0];
+    const cardHtml = isBack
+      ? renderIDCardBackHtml(student, cfg, classMap)
+      : renderIDCardHtml(student, cfg, classMap);
 
-  if (side === 'pairs') {
-    // Foldable Side-by-Side Pairs mode: Front & Back attached side-by-side with central dashed fold line
-    cardsHtml = studentsSlice.map(student => {
+    return `
+      <div class="a4-card-sheet relative bg-white mx-auto shadow-xl print:shadow-none box-border flex flex-col justify-between overflow-hidden print:overflow-visible font-sans ${isSheetLandscape ? 'a4-sheet-landscape' : 'a4-sheet-portrait'}"
+           data-page="${pageIndex + 1}"
+           data-sheet-side="${side}"
+           style="width: ${sheetWidthMm}mm; min-height: ${sheetHeightMm}mm; height: ${sheetHeightMm}mm; padding: 0; box-sizing: border-box;">
+        
+        <!-- Top Cutting Guide Markings -->
+        <div class="pt-4 px-6 flex justify-between text-[8px] text-slate-400 select-none print:flex">
+          <span class="flex items-center gap-1">
+            ${getIcon('scissors', 'w-3 h-3 text-slate-400')}
+            <span>Single Card Precision Center Alignment (${isBack ? 'BACK SIDE / ខាងក្រោយ' : 'FRONT SIDE / ខាងមុខ'})</span>
+          </span>
+          <span>Page ${pageIndex + 1} / ${totalPages}</span>
+        </div>
+
+        <!-- Dead Center of A4 Sheet: Card lands in exact identical millimeter coordinates on both sides -->
+        <div class="single-card-center-container flex-1 flex items-center justify-center m-auto relative">
+          <div class="relative">
+            <!-- Corner Crosshair Crop Marks -->
+            <div class="absolute -top-3 -left-3 text-slate-400 font-mono text-[9px] leading-none select-none pointer-events-none">┌</div>
+            <div class="absolute -top-3 -right-3 text-slate-400 font-mono text-[9px] leading-none select-none pointer-events-none">┐</div>
+            <div class="absolute -bottom-3 -left-3 text-slate-400 font-mono text-[9px] leading-none select-none pointer-events-none">└</div>
+            <div class="absolute -bottom-3 -right-3 text-slate-400 font-mono text-[9px] leading-none select-none pointer-events-none">┘</div>
+
+            ${cardHtml}
+          </div>
+        </div>
+
+        <!-- Bottom Sheet Footer -->
+        <div class="pb-3 px-6 text-center text-[7.5px] text-slate-400 select-none flex justify-between items-center print:flex">
+          <span>SmartSchool ID Card Studio • Center Duplex Mode</span>
+          <span>A4 ${cfg.sheetOrientation.toUpperCase()} • ${isBack ? 'Back Side (ខ្នង)' : 'Front Side (មុខ)'}</span>
+          <span>Page ${pageIndex + 1} of ${totalPages}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  // CASE 2: Foldable Pairs Mode
+  if (isPairs) {
+    const pairsHtml = studentsSlice.map(student => {
       if (!student) return '';
       return `
         <div class="id-card-foldable-pair flex items-stretch border border-slate-300 rounded-xs overflow-hidden shadow-xs print:shadow-none bg-white mx-auto"
@@ -958,46 +1023,81 @@ export function renderCardSheetHtml(studentsSlice = [], config = DEFAULT_CARD_CO
         </div>
       `;
     }).join('');
-  } else if (side === 'back') {
+
+    const pairsGridClass = isSheetLandscape 
+      ? 'grid-cols-2 grid-rows-2 justify-items-center items-center' 
+      : 'grid-cols-1 grid-rows-3 justify-items-center items-center';
+
+    return `
+      <div class="a4-card-sheet relative bg-white mx-auto shadow-xl print:shadow-none box-border flex flex-col justify-between overflow-hidden print:overflow-visible font-sans ${isSheetLandscape ? 'a4-sheet-landscape' : 'a4-sheet-portrait'}"
+           data-page="${pageIndex + 1}"
+           data-sheet-side="${side}"
+           style="width: ${sheetWidthMm}mm; min-height: ${sheetHeightMm}mm; height: ${sheetHeightMm}mm; padding: ${sheetMarginMm}mm; box-sizing: border-box;">
+        
+        <!-- Top Cutting Guides / Crop Marks -->
+        ${cfg.showCropMarks ? `
+          <div class="absolute top-2 left-4 right-4 flex justify-between text-[8px] text-slate-400 select-none print:flex">
+            <span class="flex items-center gap-1">
+              ${getIcon('scissors', 'w-3 h-3 text-slate-400')}
+              <span>Cutting Guides (${cfg.cardOrientation.toUpperCase()} - FOLDABLE PAIRS)</span>
+            </span>
+            <span>Page ${pageIndex + 1} / ${totalPages}</span>
+          </div>
+        ` : ''}
+
+        <!-- Centered Cards Grid on A4 Page -->
+        <div class="id-cards-grid grid ${pairsGridClass} justify-center items-center h-full w-full my-auto"
+             style="gap: ${gapMm + 2}mm;">
+          ${pairsHtml}
+        </div>
+
+        <!-- Bottom Sheet Footer -->
+        <div class="text-center text-[7.5px] text-slate-400 select-none pt-1.5 flex justify-between items-center print:flex">
+          <span>SmartSchool ID Card Studio</span>
+          <span>A4 ${cfg.sheetOrientation.toUpperCase()} • ${studentsSlice.length} Students (Foldable Pairs)</span>
+          <span>Page ${pageIndex + 1} of ${totalPages}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  // CASE 3: Multi-card Grid (Front or Back Duplex Sheet)
+  const { cols, rows } = layout;
+  let cardsHtml = '';
+
+  if (isBack) {
+    // Back Side: Mirrored horizontally so Column 0 becomes Column (cols - 1)
     const duplexMirror = options?.duplexMirror !== false;
-    let studentsToRender = studentsSlice;
-    if (duplexMirror) {
-      const { cols, rows } = layout;
-      const mirrored = new Array(cols * rows).fill(null);
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const frontIdx = r * cols + c;
-          const backIdx = r * cols + (cols - 1 - c);
-          if (frontIdx < studentsSlice.length) {
-            mirrored[backIdx] = studentsSlice[frontIdx];
-          }
+    const mirrored = new Array(cols * rows).fill(null);
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const frontIdx = r * cols + c;
+        const backIdx = duplexMirror ? (r * cols + (cols - 1 - c)) : frontIdx;
+        if (frontIdx < studentsSlice.length) {
+          mirrored[backIdx] = studentsSlice[frontIdx];
         }
       }
-      studentsToRender = mirrored;
     }
 
-    cardsHtml = studentsToRender.map(student => {
+    cardsHtml = mirrored.map(student => {
       if (!student) {
-        const isLandscape = cfg.cardOrientation === 'landscape';
-        const w = cfg.widthMm || (isLandscape ? 85.6 : 54);
-        const h = cfg.heightMm || (isLandscape ? 54 : 85.6);
-        return `<div class="id-card-item opacity-0 pointer-events-none select-none" style="width: ${w}mm; height: ${h}mm;"></div>`;
+        return `<div class="id-card-item opacity-0 pointer-events-none select-none" style="width: ${widthMm}mm; height: ${heightMm}mm;"></div>`;
       }
       return renderIDCardBackHtml(student, cfg, classMap);
     }).join('');
   } else {
-    cardsHtml = studentsSlice.map(student => {
+    // Front Side: Populates all cols * rows slots with identical placeholders for symmetry
+    const frontSlots = new Array(cols * rows).fill(null);
+    for (let i = 0; i < studentsSlice.length; i++) {
+      frontSlots[i] = studentsSlice[i];
+    }
+
+    cardsHtml = frontSlots.map(student => {
+      if (!student) {
+        return `<div class="id-card-item opacity-0 pointer-events-none select-none" style="width: ${widthMm}mm; height: ${heightMm}mm;"></div>`;
+      }
       return renderIDCardHtml(student, cfg, classMap);
     }).join('');
-  }
-
-  const isBack = side === 'back';
-  const isPairs = side === 'pairs';
-  let activeGridClass = layout.gridClass;
-  if (isPairs) {
-    activeGridClass = isSheetLandscape 
-      ? 'grid-cols-2 grid-rows-2 justify-items-center items-center' 
-      : 'grid-cols-1 grid-rows-3 justify-items-center items-center';
   }
 
   return `
@@ -1011,22 +1111,22 @@ export function renderCardSheetHtml(studentsSlice = [], config = DEFAULT_CARD_CO
         <div class="absolute top-2 left-4 right-4 flex justify-between text-[8px] text-slate-400 select-none print:flex">
           <span class="flex items-center gap-1">
             ${getIcon('scissors', 'w-3 h-3 text-slate-400')}
-            <span>Cutting Guides (${cfg.cardOrientation.toUpperCase()}${isPairs ? ' - FOLDABLE PAIRS (FOLD IN HALF)' : (isBack ? ' - BACK SIDE' : '')})</span>
+            <span>Cutting Guides (${cfg.cardOrientation.toUpperCase()}${isBack ? ' - BACK SIDE' : ''})</span>
           </span>
           <span>Page ${pageIndex + 1} / ${totalPages}</span>
         </div>
       ` : ''}
 
-      <!-- Centered Cards Grid on A4 Page -->
-      <div class="id-cards-grid grid ${activeGridClass} justify-center items-center h-full w-full my-auto"
-           style="gap: ${isPairs ? (gapMm + 2) : gapMm}mm;">
+      <!-- Centered Cards Grid with Fixed Millimeter Tracks -->
+      <div class="id-cards-grid grid justify-center items-center h-full w-full my-auto"
+           style="display: grid; grid-template-columns: repeat(${cols}, ${widthMm}mm); grid-template-rows: repeat(${rows}, ${heightMm}mm); gap: ${gapMm}mm; justify-content: center; align-content: center;">
         ${cardsHtml}
       </div>
 
       <!-- Bottom Sheet Footer -->
       <div class="text-center text-[7.5px] text-slate-400 select-none pt-1.5 flex justify-between items-center print:flex">
         <span>SmartSchool ID Card Studio</span>
-        <span>A4 ${cfg.sheetOrientation.toUpperCase()} • ${studentsSlice.length} Students${isPairs ? ' (Foldable Pairs - មុខ-ក្រោយជាប់គ្នា)' : (isBack ? ' (Back Side)' : '')}</span>
+        <span>A4 ${cfg.sheetOrientation.toUpperCase()} • ${studentsSlice.length} Cards${isBack ? ' (Back Side)' : ''}</span>
         <span>Page ${pageIndex + 1} of ${totalPages}</span>
       </div>
     </div>
