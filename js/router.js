@@ -6,7 +6,7 @@
 import { DashboardPage } from './pages/dashboard.js?v=3.0.99';
 import { StudentsPage } from './pages/students.js?v=3.1.37';
 import { TeachersPage } from './pages/teachers.js?v=3.1.19';
-import { OfficerTeachersPage } from './pages/officerTeachers.js';
+import { OfficerTeachersPage } from './pages/officerTeachers.js?v=3.1.38';
 import { ClassesPage } from './pages/classes.js?v=3.1.37';
 import { AttendancePage } from './pages/attendance.js?v=3.1.16';
 import { ScoresPage } from './pages/scores.js?v=3.1.29';
