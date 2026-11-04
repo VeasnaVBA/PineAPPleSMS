@@ -446,6 +446,97 @@ export const ClassesPage = {
       </button>
     `;
 
+    if (window.UI?.drawer?.open) {
+      window.UI.drawer.open({
+        title,
+        render: (container) => {
+          container.innerHTML = `
+            <div class="class-form-drawer flex flex-col h-full space-y-4">
+              <div class="flex-1">
+                ${content}
+              </div>
+              <div class="sticky bottom-0 bg-card/95 backdrop-blur-md border-t border-border pt-4 pb-2 mt-4 z-20 flex items-center justify-end gap-2">
+                ${footer}
+              </div>
+            </div>
+          `;
+
+          container.querySelector('#btn-cancel-cls')?.addEventListener('click', () => {
+            window.UI.drawer.close();
+          });
+
+          container.querySelector('#btn-save-cls')?.addEventListener('click', async () => {
+            const name = container.querySelector('#form-cls-name')?.value.trim();
+            if (!name) {
+              if (window.UI?.toast) {
+                window.UI.toast('error', t('classes.nameRequired'));
+              } else {
+                toast.error(t('classes.nameRequired'));
+              }
+              return;
+            }
+
+            let academicYear = '';
+            if (isTeacher) {
+              academicYear = container.querySelector('#form-cls-year-input')?.value.trim();
+              if (!academicYear) {
+                const reqMsg = isKm ? 'សូមបញ្ចូលឆ្នាំសិក្សា' : 'Academic year is required';
+                if (window.UI?.toast) {
+                  window.UI.toast('error', reqMsg);
+                } else {
+                  toast.error(reqMsg);
+                }
+                return;
+              }
+              await SettingsService.setTeacherStudyYear(academicYear);
+            } else {
+              academicYear = container.querySelector('#form-cls-year')?.value;
+            }
+
+            const data = {
+              name,
+              teacherId: container.querySelector('#form-cls-teacher')?.value,
+              room: container.querySelector('#form-cls-room')?.value.trim(),
+              academicYear,
+              status: container.querySelector('#form-cls-status')?.value || 'Active'
+            };
+
+            try {
+              if (isEdit) {
+                await ClassService.update(existingClass.id, data);
+                if (window.UI?.toast) {
+                  window.UI.toast('success', t('classes.updatedSuccess'));
+                } else {
+                  toast.success(t('classes.updatedSuccess'));
+                }
+              } else {
+                const created = await ClassService.create(data);
+                if (isTeacher && created?.id) {
+                  await authService.setAssignedClassId(created.id);
+                }
+                if (window.UI?.toast) {
+                  window.UI.toast('success', t('classes.savedSuccess'));
+                } else {
+                  toast.success(t('classes.savedSuccess'));
+                }
+              }
+              window.UI.drawer.close();
+              await this.loadData();
+              this.renderLayout();
+              syncStateManager.scheduleAutoSync(100);
+            } catch (err) {
+              if (window.UI?.toast) {
+                window.UI.toast('error', err.message);
+              } else {
+                toast.error(err.message);
+              }
+            }
+          });
+        }
+      });
+      return;
+    }
+
     const modal = Modal.open({
       title,
       content,
