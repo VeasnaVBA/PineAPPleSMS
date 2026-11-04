@@ -826,6 +826,57 @@ export const RegistrationPage = {
       return;
     }
 
+    const drawerTitle = applicant.khmerName || applicant.englishName || (i18n.getLocale() === 'km' ? 'ផ្ទៀងផ្ទាត់ និងកែប្រែពាក្យសុំ' : 'Verify & Edit Application');
+
+    if (window.UI?.drawer?.open) {
+      window.UI.drawer.open({
+        title: drawerTitle,
+        render: async (container) => {
+          await StudentFormModal.open({
+            mode: 'ADMISSION_VERIFICATION',
+            student: applicant,
+            container,
+            close: () => window.UI?.drawer?.close(),
+            onSave: async (applicantData) => {
+              const updated = await RegistrationService.update(applicant.id, applicantData);
+              if (window.UI?.toast) {
+                window.UI.toast('success', t('registration.verifySuccessToast') || 'Applicant verified and saved.');
+              } else {
+                toast.success({ message: t('registration.verifySuccessToast') || 'Applicant verified and saved.' });
+              }
+              const idx = this.cachedApplicants.findIndex(a => a.id === applicant.id);
+              if (idx !== -1) {
+                this.cachedApplicants[idx] = updated;
+              }
+              window.UI?.drawer?.close();
+              this.updateHeaderCounts();
+              this.renderTableRows();
+            },
+            onEnroll: async (applicantData) => {
+              await RegistrationService.update(applicant.id, applicantData);
+              const enrolled = await RegistrationService.enrollApplicant(applicant.id, {
+                studentId: applicantData.studentId,
+                classId: applicantData.classId
+              });
+              const msg = t('registration.enrollSuccessToast').replace('{name}', enrolled.khmerName || enrolled.studentId);
+              if (window.UI?.toast) {
+                window.UI.toast('success', msg);
+              } else {
+                toast.success({ message: msg });
+              }
+              this.cachedApplicants = this.cachedApplicants.filter(a => a.id !== applicant.id);
+              this.state.selectedIds.delete(applicant.id);
+              window.UI?.drawer?.close();
+              this.updateHeaderCounts();
+              this.updateBulkToolbar();
+              this.renderTableRows();
+            }
+          });
+        }
+      });
+      return;
+    }
+
     await StudentFormModal.open({
       mode: 'ADMISSION_VERIFICATION',
       student: applicant,
@@ -874,21 +925,66 @@ export const RegistrationPage = {
    */
   async openAddApplicantModal() {
     const nextTempId = await RegistrationService.generateTempId();
+    const initialStudent = {
+      tempStudentId: nextTempId,
+      studentId: nextTempId,
+      gender: 'Male',
+      verificationStatus: 'PENDING',
+      documentsChecked: {
+        hardcopyForm: false,
+        birthCertificate: false,
+        transferLetter: false,
+        transcripts: false
+      }
+    };
+    const drawerTitle = t('registration.addApplicantBtn') || 'ចុះឈ្មោះសិស្សថ្មី';
+
+    if (window.UI?.drawer?.open) {
+      window.UI.drawer.open({
+        title: drawerTitle,
+        render: async (container) => {
+          await StudentFormModal.open({
+            mode: 'ADMISSION_VERIFICATION',
+            student: initialStudent,
+            container,
+            close: () => window.UI?.drawer?.close(),
+            onSave: async (applicantData) => {
+              const created = await RegistrationService.create(applicantData);
+              if (window.UI?.toast) {
+                window.UI.toast('success', 'Applicant added to registration queue.');
+              } else {
+                toast.success({ message: 'Applicant added to registration queue.' });
+              }
+              this.cachedApplicants.unshift(created);
+              window.UI?.drawer?.close();
+              this.updateHeaderCounts();
+              this.renderTableRows();
+            },
+            onEnroll: async (applicantData) => {
+              const created = await RegistrationService.create(applicantData);
+              const enrolled = await RegistrationService.enrollApplicant(created.id, {
+                studentId: applicantData.studentId,
+                classId: applicantData.classId
+              });
+              const msg = t('registration.enrollSuccessToast').replace('{name}', enrolled.khmerName || enrolled.studentId);
+              if (window.UI?.toast) {
+                window.UI.toast('success', msg);
+              } else {
+                toast.success({ message: msg });
+              }
+              window.UI?.drawer?.close();
+              this.updateHeaderCounts();
+              this.renderTableRows();
+            }
+          });
+        }
+      });
+      return;
+    }
 
     await StudentFormModal.open({
       mode: 'ADMISSION_VERIFICATION',
-      student: {
-        tempStudentId: nextTempId,
-        studentId: nextTempId,
-        gender: 'Male',
-        verificationStatus: 'PENDING',
-        documentsChecked: {
-          hardcopyForm: false,
-          birthCertificate: false,
-          transferLetter: false,
-          transcripts: false
-        }
-      },
+      student: initialStudent,
       onSave: async (applicantData, modal) => {
         const created = await RegistrationService.create(applicantData);
         toast.success({ message: 'Applicant added to registration queue.' });
