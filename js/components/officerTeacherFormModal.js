@@ -155,6 +155,43 @@ export const OfficerTeacherFormModal = {
                   </span>
                 </div>
 
+                <!-- Dedicated Photo Uploader Card -->
+                <div class="p-4 rounded-xl border border-dashed border-border bg-muted/20 flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                  <div id="officer-photo-preview-container" class="w-24 h-28 sm:w-28 sm:h-32 rounded-xl overflow-hidden border-2 border-border bg-card flex items-center justify-center flex-shrink-0 shadow-xs relative group cursor-pointer hover:border-primary transition-all" title="${isKm ? 'ចុចដើម្បីជ្រើសរើសរូបថត' : 'Click to select photo'}">
+                    <img id="officer-photo-preview" src="${previewPhotoUrl || ''}" class="${previewPhotoUrl ? '' : 'hidden'} w-full h-full object-cover" alt="Officer Photo" />
+                    <div id="officer-photo-preview-placeholder" class="${previewPhotoUrl ? 'hidden' : 'flex'} flex-col items-center justify-center text-muted-foreground p-2 text-center">
+                      ${getIcon('user', 'w-9 h-9 text-muted-foreground/60 mb-1')}
+                      <span class="text-[11px] font-medium font-khmer">${isKm ? 'គ្មានរូបថត' : 'No photo'}</span>
+                    </div>
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[11px] font-medium gap-1 pointer-events-none">
+                      ${getIcon('camera', 'w-5 h-5')}
+                      <span class="font-khmer">${isKm ? 'ប្តូររូបថត' : 'Change'}</span>
+                    </div>
+                  </div>
+                  <div class="flex-1 min-w-0 space-y-1.5 text-center sm:text-left">
+                    <div class="flex items-center justify-center sm:justify-start gap-2">
+                      <label class="text-xs sm:text-sm font-bold text-foreground font-khmer">
+                        ${isKm ? 'រូបថតបច្ចុប្បន្នភាព / រូបថតមន្ត្រី-គ្រូបង្រៀន' : 'Portrait / Profile Photo'}
+                      </label>
+                      <span class="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">4x6</span>
+                    </div>
+                    <p class="text-[11px] text-muted-foreground font-khmer">
+                      ${isKm ? 'ទំហំស្តង់ដារ 4x6 ឬរូបថតផ្ទាល់ខ្លួនច្បាស់ (JPG, PNG, WebP) - សម្រាប់បង្ហាញលើកាត និងជីវប្រវត្តិ' : 'Standard 4x6 passport size or portrait (JPG, PNG, WebP) - used on ID cards and dossiers'}
+                    </p>
+                    <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1.5">
+                      <label class="cursor-pointer px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold shadow-xs hover:bg-primary/90 transition-all inline-flex items-center gap-1.5 cursor-pointer">
+                        ${getIcon('upload', 'w-3.5 h-3.5')}
+                        <span class="font-khmer">${isKm ? 'ជ្រើសរើសរូបថត' : 'Upload Photo'}</span>
+                        <input type="file" id="officer-contest-photo-input" accept="image/*" class="hidden" />
+                      </label>
+                      <button type="button" id="officer-photo-remove-btn" class="px-2.5 py-1.5 rounded-lg border border-border bg-card hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 text-xs text-muted-foreground font-medium transition-colors font-khmer cursor-pointer ${previewPhotoUrl ? '' : 'hidden'}">
+                        ${getIcon('trash2', 'w-3.5 h-3.5 inline mr-1')}
+                        ${isKm ? 'លុបរូប' : 'Remove'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <!-- នាមត្រកូល * -->
                   <div>
@@ -223,7 +260,7 @@ export const OfficerTeacherFormModal = {
                   </div>
 
                   <!-- ជនជាតិ -->
-                  <div>
+                  <div class="sm:col-span-2">
                     <label class="block text-xs font-semibold text-foreground mb-1">
                       ${isKm ? 'ជនជាតិ' : 'Ethnicity'}
                     </label>
@@ -236,23 +273,6 @@ export const OfficerTeacherFormModal = {
                       <option value="ជនជាតិដើមភាគតិច" ${initialEthnicity === 'ជនជាតិដើមភាគតិច' ? 'selected' : ''}>ជនជាតិដើមភាគតិច (Indigenous)</option>
                       <option value="ផ្សេងៗ" ${initialEthnicity === 'ផ្សេងៗ' ? 'selected' : ''}>ផ្សេងៗ (Other)</option>
                     </select>
-                  </div>
-
-                  <!-- រូបថតប្រឡងប្រជែង (File Picker) -->
-                  <div>
-                    <label class="block text-xs font-semibold text-foreground mb-1">
-                      ${isKm ? 'រូបថតប្រឡងប្រជែង' : 'Contest / Portrait Photo'}
-                    </label>
-                    <div class="flex items-center gap-2">
-                      <div class="w-9 h-9 rounded-lg border border-border bg-muted/40 overflow-hidden flex items-center justify-center flex-shrink-0">
-                        <img id="officer-photo-preview" src="${previewPhotoUrl || ''}" class="${previewPhotoUrl ? '' : 'hidden'} w-full h-full object-cover" alt="Photo" />
-                        <span id="officer-photo-preview-placeholder" class="${previewPhotoUrl ? 'hidden' : ''} text-muted-foreground">
-                          ${getIcon('user', 'w-4 h-4')}
-                        </span>
-                      </div>
-                      <input type="file" id="officer-contest-photo-input" accept="image/*"
-                             class="w-full text-xs text-muted-foreground file:mr-2.5 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer border border-input rounded-lg h-9 bg-background flex items-center px-1.5 shadow-2xs" />
-                    </div>
                   </div>
                 </div>
               </div>
@@ -308,13 +328,18 @@ export const OfficerTeacherFormModal = {
 
                   <!-- Right: Document Preview Box (5 cols) -->
                   <div class="lg:col-span-5 flex flex-col space-y-1.5">
-                    <label class="block text-xs font-semibold text-primary">
-                      ${isKm ? 'មើលឯកសារអត្តសញ្ញាណប័ណ្ណ' : 'Preview Document'}
-                    </label>
+                    <div class="flex items-center justify-between">
+                      <label class="block text-xs font-semibold text-foreground font-khmer">
+                        ${isKm ? 'មើលឯកសារអត្តសញ្ញាណប័ណ្ណ' : 'Preview Document'}
+                      </label>
+                      <button type="button" id="officer-id-doc-remove-btn" class="text-[11px] text-destructive hover:underline font-khmer cursor-pointer ${previewIdDocUrl ? '' : 'hidden'}">
+                        ${isKm ? 'លុបឯកសារ' : 'Remove Doc'}
+                      </button>
+                    </div>
                     <div id="officer-id-doc-preview-container" class="w-full h-28 rounded-xl border-2 border-dashed border-border bg-muted/30 flex items-center justify-center p-2 overflow-hidden text-center transition-colors">
                       <div id="officer-id-doc-placeholder" class="${previewIdDocUrl ? 'hidden' : 'flex'} flex-col items-center justify-center text-muted-foreground text-xs p-2">
                         ${getIcon('fileText', 'w-6 h-6 mb-1 text-muted-foreground/60')}
-                        <span>${isKm ? 'គ្មានឯកសារអត្តសញ្ញាណប័ណ្ណ' : 'No document uploaded'}</span>
+                        <span class="font-khmer">${isKm ? 'គ្មានឯកសារអត្តសញ្ញាណប័ណ្ណ' : 'No document uploaded'}</span>
                       </div>
                       <img id="officer-id-doc-img" src="${previewIdDocUrl || ''}" class="${previewIdDocUrl ? '' : 'hidden'} max-h-full max-w-full object-contain rounded" alt="ID Document Preview" />
                     </div>
@@ -684,31 +709,84 @@ export const OfficerTeacherFormModal = {
 
     // Photo input handling
     const contestPhotoInput = overlay.querySelector('#officer-contest-photo-input');
+    const photoPreviewContainer = overlay.querySelector('#officer-photo-preview-container');
     const photoPreview = overlay.querySelector('#officer-photo-preview');
     const photoPlaceholder = overlay.querySelector('#officer-photo-preview-placeholder');
+    const photoRemoveBtn = overlay.querySelector('#officer-photo-remove-btn');
+
+    const handlePhotoFile = async (file) => {
+      if (!file) return;
+      try {
+        tempPhotoBlob = await photoService.processImageFile(file);
+        previewPhotoUrl = photoService.getUrlForBlob(tempPhotoBlob);
+        if (photoPreview) {
+          photoPreview.src = previewPhotoUrl;
+          photoPreview.classList.remove('hidden');
+        }
+        if (photoPlaceholder) {
+          photoPlaceholder.classList.add('hidden');
+        }
+        if (photoRemoveBtn) {
+          photoRemoveBtn.classList.remove('hidden');
+        }
+        toast.success(isKm ? 'បានផ្ទុករូបថតដោយជោគជ័យ' : 'Photo uploaded successfully');
+      } catch (err) {
+        toast.error(err.message || 'Error processing photo');
+      }
+    };
 
     contestPhotoInput?.addEventListener('change', (e) => {
       const file = e.target.files?.[0];
-      if (!file) return;
-      if (!file.type.startsWith('image/')) {
-        toast.error(isKm ? 'សូមជ្រើសរើសឯកសាររូបភាពត្រឹមត្រូវ' : 'Please select a valid image file');
-        return;
-      }
-      tempPhotoBlob = file;
-      const url = URL.createObjectURL(file);
+      handlePhotoFile(file);
+    });
+
+    // Clicking avatar box triggers photo picker
+    photoPreviewContainer?.addEventListener('click', (e) => {
+      if (e.target.closest('#officer-photo-remove-btn')) return;
+      contestPhotoInput?.click();
+    });
+
+    // Drag and drop photo onto preview container
+    ['dragenter', 'dragover'].forEach(eventName => {
+      photoPreviewContainer?.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        photoPreviewContainer.classList.add('border-primary', 'bg-primary/5');
+      });
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+      photoPreviewContainer?.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        photoPreviewContainer.classList.remove('border-primary', 'bg-primary/5');
+      });
+    });
+    photoPreviewContainer?.addEventListener('drop', (e) => {
+      const file = e.dataTransfer?.files?.[0];
+      handlePhotoFile(file);
+    });
+
+    // Remove photo
+    photoRemoveBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      tempPhotoBlob = null;
+      previewPhotoUrl = null;
       if (photoPreview) {
-        photoPreview.src = url;
-        photoPreview.classList.remove('hidden');
+        photoPreview.src = '';
+        photoPreview.classList.add('hidden');
       }
       if (photoPlaceholder) {
-        photoPlaceholder.classList.add('hidden');
+        photoPlaceholder.classList.remove('hidden');
       }
+      photoRemoveBtn.classList.add('hidden');
+      if (contestPhotoInput) contestPhotoInput.value = '';
     });
 
     // ID Card Document Preview handling
     const idDocInput = overlay.querySelector('#officer-id-doc-input');
     const idDocPlaceholder = overlay.querySelector('#officer-id-doc-placeholder');
     const idDocImg = overlay.querySelector('#officer-id-doc-img');
+    const idDocRemoveBtn = overlay.querySelector('#officer-id-doc-remove-btn');
 
     idDocInput?.addEventListener('change', (e) => {
       const file = e.target.files?.[0];
@@ -725,6 +803,7 @@ export const OfficerTeacherFormModal = {
           if (idDocPlaceholder) {
             idDocPlaceholder.classList.add('hidden');
           }
+          idDocRemoveBtn?.classList.remove('hidden');
         };
         reader.readAsDataURL(file);
       } else {
@@ -740,7 +819,26 @@ export const OfficerTeacherFormModal = {
           idDocPlaceholder.classList.remove('hidden');
         }
         if (idDocImg) idDocImg.classList.add('hidden');
+        idDocRemoveBtn?.classList.remove('hidden');
       }
+    });
+
+    idDocRemoveBtn?.addEventListener('click', () => {
+      tempIdDocBlob = null;
+      previewIdDocUrl = '';
+      if (idDocImg) {
+        idDocImg.src = '';
+        idDocImg.classList.add('hidden');
+      }
+      if (idDocPlaceholder) {
+        idDocPlaceholder.innerHTML = `
+          ${getIcon('fileText', 'w-6 h-6 mb-1 text-muted-foreground/60')}
+          <span class="font-khmer">${isKm ? 'គ្មានឯកសារអត្តសញ្ញាណប័ណ្ណ' : 'No document uploaded'}</span>
+        `;
+        idDocPlaceholder.classList.remove('hidden');
+      }
+      idDocRemoveBtn.classList.add('hidden');
+      if (idDocInput) idDocInput.value = '';
     });
 
     // Checkbox toggles styling
@@ -851,6 +949,26 @@ export const OfficerTeacherFormModal = {
 
       if (tempPhotoBlob) {
         payload.photoBlob = tempPhotoBlob;
+        try {
+          payload.photo = await photoService.blobToDataUrl(tempPhotoBlob);
+        } catch (_) {
+          payload.photo = teacher?.photo || '';
+        }
+      } else if (previewPhotoUrl === null) {
+        payload.photoBlob = null;
+        payload.photo = '';
+      } else {
+        payload.photoBlob = teacher?.photoBlob || null;
+        payload.photo = teacher?.photo || '';
+      }
+
+      if (tempIdDocBlob) {
+        payload.idCardDocBlob = tempIdDocBlob;
+      }
+      if (previewIdDocUrl) {
+        payload.idCardDoc = previewIdDocUrl;
+      } else if (previewIdDocUrl === '') {
+        payload.idCardDoc = '';
       }
 
       const submitBtn = overlay.querySelector('#btn-officer-modal-submit');
