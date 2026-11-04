@@ -34,3 +34,20 @@
   background-color: rgba(156, 163, 175, 0.4);
   margin: 0.75rem auto 0.5rem auto;
 }
+
+@media print {
+  #ui-react-root,
+  .vaul-drawer-overlay,
+  .vaul-drawer-content,
+  .vaul-drawer-handle,
+  [data-sonner-toaster],
+  [data-sonner-toast],
+  [data-vaul-drawer],
+  [data-vaul-overlay],
+  [data-vaul-portal] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}

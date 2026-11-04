@@ -231,3 +231,6 @@ class ThemeService {
 }
 
 export const themeService = new ThemeService();
+if (typeof window !== 'undefined') {
+  window.themeService = themeService;
+}

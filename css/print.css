@@ -95,6 +95,28 @@
     print-color-adjust: exact !important;
   }
 
+  /* Reset Dark Mode variables during print to guarantee clean white paper output */
+  html.dark,
+  .dark,
+  body.dark {
+    --background: 0 0% 100% !important;
+    --foreground: 240 10% 3.9% !important;
+    --card: 0 0% 100% !important;
+    --card-foreground: 240 10% 3.9% !important;
+    --popover: 0 0% 100% !important;
+    --popover-foreground: 240 10% 3.9% !important;
+    --secondary: 240 4.8% 95.9% !important;
+    --secondary-foreground: 240 5.9% 10% !important;
+    --muted: 240 4.8% 95.9% !important;
+    --muted-foreground: 240 3.8% 46.1% !important;
+    --accent: 240 4.8% 95.9% !important;
+    --accent-foreground: 240 5.9% 10% !important;
+    --border: 240 5.9% 82% !important;
+    --input: 240 5.9% 68% !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
   /* Hide navigation shell, topbar, background app content when printing */
   #sidebar,
   #sidebar-container,
@@ -105,8 +127,27 @@
   .no-print,
   button,
   .btn-close-modal,
-  .action-buttons {
+  .action-buttons,
+  /* Hide Toaster notifications and Vaul Drawers when printing */
+  #toast-container,
+  #ui-react-root,
+  [data-sonner-toaster],
+  [data-sonner-toast],
+  .toaster,
+  .vaul-drawer-overlay,
+  .vaul-drawer-content,
+  .vaul-drawer-handle,
+  [data-vaul-drawer],
+  [data-vaul-overlay],
+  [data-vaul-portal],
+  [data-vaul-drawer-visible],
+  [data-vaul-handle],
+  [data-vaul-handle-hitarea],
+  [data-radix-portal] {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
   }
 
   #main-content {

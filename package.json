@@ -10,7 +10,8 @@
     "build:css": "tailwindcss -i ./css/input.css -o ./css/tailwind.css --minify",
     "watch:css": "tailwindcss -i ./css/input.css -o ./css/tailwind.css --watch",
     "serve": "npx serve .",
-    "build:electron": "electron-builder"
+    "build:electron": "electron-builder",
+    "prebuild:electron": "npm run build"
   },
   "keywords": [
     "school-management",
@@ -20,7 +21,10 @@
   ],
   "author": "SchoolFlow Team",
   "license": "MIT",
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^44.3.0",
+    "electron-builder": "^26.15.3",
     "@vitejs/plugin-react": "^6.2.1",
     "exceljs": "^4.4.0",
     "react": "^19.3.1",
@@ -30,21 +34,35 @@
     "vaul": "^1.1.2",
     "vite": "^8.3.5"
   },
-  "devDependencies": {
-    "electron": "^44.3.0",
-    "electron-builder": "^26.15.3"
-  },
   "build": {
     "appId": "com.pineapplesms.app",
     "productName": "PineAPPleSMS",
     "directories": {
       "output": "dist"
     },
+    "files": [
+      "main.js",
+      "index.html",
+      "assets/**/*",
+      "css/**/*",
+      "electron/**/*",
+      "js/**/*",
+      "package.json"
+    ],
     "win": {
       "target": [
         "nsis",
         "portable"
-      ]
+      ],
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PineAPPleSMS"
     }
-  }
+  },
+  "main": "main.js"
 }
