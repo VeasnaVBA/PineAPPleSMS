@@ -3154,6 +3154,28 @@ export const ScoresPage = {
       </div>
     `;
 
+    if (window.UI?.drawer?.open) {
+      window.UI.drawer.open({
+        title: isKm ? 'កម្រិតនិទ្ទេស (A - F)' : 'Grading Scale (A - F)',
+        render: (container) => {
+          container.innerHTML = `
+            <div class="grade-scale-drawer flex flex-col h-full space-y-4">
+              <div class="flex-1 overflow-y-auto">
+                ${content}
+              </div>
+              <div class="sticky bottom-0 bg-card/95 backdrop-blur-md border-t border-border pt-3 pb-1 mt-4 z-20 flex justify-end">
+                <button id="btn-close-grade-guide" type="button" class="px-4 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-semibold cursor-pointer">
+                  ${isKm ? 'យល់ព្រម' : 'Got it'}
+                </button>
+              </div>
+            </div>
+          `;
+          container.querySelector('#btn-close-grade-guide')?.addEventListener('click', () => window.UI.drawer.close());
+        }
+      });
+      return;
+    }
+
     const modal = Modal.open({
       title: isKm ? 'កម្រិតនិទ្ទេស (A - F)' : 'Grading Scale (A - F)',
       content,
@@ -3349,6 +3371,113 @@ export const ScoresPage = {
         </div>
       </div>
     `;
+
+    const coeffFooterHtml = `
+      <div class="flex items-center justify-between w-full">
+        <button id="btn-cancel-coeff" type="button" class="px-3.5 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-medium cursor-pointer font-khmer">
+          ${isKm ? 'បោះបង់' : 'Cancel'}
+        </button>
+        <button id="btn-save-coeff" type="button" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-bold shadow-xs hover:bg-primary/90 transition-all cursor-pointer font-khmer">
+          ${getIcon('check', 'w-3.5 h-3.5')}
+          <span>${isKm ? 'រក្សាទុក & គណនាឡើងវិញ' : 'Save & Recalculate'}</span>
+        </button>
+      </div>
+    `;
+
+    if (window.UI?.drawer?.open) {
+      window.UI.drawer.open({
+        title: isKm ? 'កំណត់មេគុណតាមខែ (Coefficients)' : 'Monthly Coefficient Settings',
+        render: (container) => {
+          container.innerHTML = `
+            <div class="coeff-drawer flex flex-col h-full space-y-4">
+              <div class="flex-1 overflow-y-auto">
+                ${content}
+              </div>
+              <div class="sticky bottom-0 bg-card/95 backdrop-blur-md border-t border-border pt-3 pb-1 mt-4 z-20">
+                ${coeffFooterHtml}
+              </div>
+            </div>
+          `;
+
+          const activeTopInput = container.querySelector('#active-month-coeff-input');
+          const matchingGridInput = container.querySelector(`.coeff-period-input[data-period-id="${currentPeriod}"]`);
+
+          if (activeTopInput && matchingGridInput) {
+            activeTopInput.addEventListener('input', () => {
+              matchingGridInput.value = activeTopInput.value;
+            });
+            matchingGridInput.addEventListener('input', () => {
+              activeTopInput.value = matchingGridInput.value;
+            });
+          }
+
+          container.querySelector('#btn-quick-set-months-10')?.addEventListener('click', () => {
+            months.forEach(m => {
+              const inp = container.querySelector(`.coeff-period-input[data-period-id="${m.id}"]`);
+              if (inp) inp.value = '10';
+            });
+            if (activeTopInput && months.some(m => m.id === currentPeriod)) {
+              activeTopInput.value = '10';
+            }
+          });
+
+          container.querySelector('#btn-quick-set-exams-20')?.addEventListener('click', () => {
+            exams.forEach(e => {
+              const inp = container.querySelector(`.coeff-period-input[data-period-id="${e.id}"]`);
+              if (inp) inp.value = e.id === 'Annual' ? '2' : '20';
+            });
+            if (activeTopInput && exams.some(e => e.id === currentPeriod)) {
+              activeTopInput.value = currentPeriod === 'Annual' ? '2' : '20';
+            }
+          });
+
+          container.querySelector('#btn-cancel-coeff')?.addEventListener('click', () => window.UI.drawer.close());
+
+          container.querySelector('#btn-save-coeff')?.addEventListener('click', async () => {
+            const newMap = { ...(this.state.coefficients || {}) };
+            container.querySelectorAll('.coeff-period-input').forEach(inp => {
+              const pId = inp.getAttribute('data-period-id');
+              const num = parseFloat(inp.value);
+              if (pId && !isNaN(num) && num > 0) {
+                newMap[pId] = num;
+              }
+            });
+
+            if (activeTopInput) {
+              const activeNum = parseFloat(activeTopInput.value);
+              if (!isNaN(activeNum) && activeNum > 0) {
+                newMap[currentPeriod] = activeNum;
+              }
+            }
+
+            await ScoreService.saveMonthlyCoefficients(newMap);
+            this.state.coefficients = newMap;
+
+            this.updateCoefficientBadge();
+            this.renderHeader();
+
+            this.state.rows.forEach(r => this.recalculateRowData(r));
+            ScoreService.rankStudents(this.state.rows);
+            this.updateRanksInDOM();
+            this.updateSummaryStats();
+            this.triggerDebouncedAutoSave();
+
+            window.UI.drawer.close();
+
+            const newCoeff = this.getCurrentPeriodCoefficient();
+            const succMsg = isKm 
+              ? `បានរក្សាទុកមេគុណ (${newCoeff}) និងគណនាមធ្យមភាគឡើងវិញដោយជោគជ័យ!` 
+              : `Saved coefficient (${newCoeff}) and recalculated averages successfully!`;
+            if (window.UI?.toast) {
+              window.UI.toast('success', succMsg);
+            } else {
+              toast.success(succMsg, isKm ? 'ជោគជ័យ' : 'Success');
+            }
+          });
+        }
+      });
+      return;
+    }
 
     const modal = Modal.open({
       title: isKm ? 'កំណត់មេគុណតាមខែ (Coefficients)' : 'Monthly Coefficient Settings',

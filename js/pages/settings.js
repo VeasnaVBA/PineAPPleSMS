@@ -1362,6 +1362,7 @@ export const SettingsPage = {
 
   openAddYearModal(container) {
     const currentLocale = i18n.getLocale();
+    const title = t('settings.addAcademicYear');
     const content = `
       <form id="ay-form" class="space-y-4 text-xs sm:text-sm">
         <div>
@@ -1392,8 +1393,56 @@ export const SettingsPage = {
       </button>
     `;
 
+    if (window.UI?.drawer?.open) {
+      window.UI.drawer.open({
+        title,
+        render: (drawerEl) => {
+          drawerEl.innerHTML = `
+            <div class="settings-form-drawer flex flex-col h-full space-y-4">
+              <div class="flex-1">
+                ${content}
+              </div>
+              <div class="sticky bottom-0 bg-card/95 backdrop-blur-md border-t border-border pt-3 pb-1 mt-4 z-20 flex justify-end gap-2">
+                ${footer}
+              </div>
+            </div>
+          `;
+
+          drawerEl.querySelector('#btn-cancel-ay')?.addEventListener('click', () => window.UI.drawer.close());
+
+          drawerEl.querySelector('#btn-save-ay')?.addEventListener('click', async () => {
+            const name = drawerEl.querySelector('#form-ay-name')?.value.trim();
+            if (!name) return;
+            const startDate = drawerEl.querySelector('#form-ay-start')?.value;
+            const endDate = drawerEl.querySelector('#form-ay-end')?.value;
+
+            try {
+              await SettingsService.createAcademicYear({ name, startDate, endDate });
+              AdminDataService.queueAutoSync();
+              const succMsg = currentLocale === 'km' ? `បានបង្កើតឆ្នាំសិក្សា "${name}" ដោយជោគជ័យ` : `Academic year "${name}" created successfully`;
+              if (window.UI?.toast) {
+                window.UI.toast('success', succMsg);
+              } else {
+                toast.success(succMsg);
+              }
+              window.UI.drawer.close();
+              window.dispatchEvent(new CustomEvent('app:refresh-data'));
+              await this.render(container);
+            } catch (err) {
+              if (window.UI?.toast) {
+                window.UI.toast('error', err.message);
+              } else {
+                toast.error(err.message);
+              }
+            }
+          });
+        }
+      });
+      return;
+    }
+
     const modal = Modal.open({
-      title: t('settings.addAcademicYear'),
+      title,
       content,
       footer,
       maxWidth: 'max-w-sm'
@@ -1425,6 +1474,7 @@ export const SettingsPage = {
    */
   openEditYearModal(container, ay) {
     const currentLocale = i18n.getLocale();
+    const title = t('settings.editAcademicYear');
     const content = `
       <form id="form-edit-ay" class="space-y-4 text-xs select-none">
         <div>
@@ -1455,8 +1505,56 @@ export const SettingsPage = {
       </button>
     `;
 
+    if (window.UI?.drawer?.open) {
+      window.UI.drawer.open({
+        title,
+        render: (drawerEl) => {
+          drawerEl.innerHTML = `
+            <div class="settings-form-drawer flex flex-col h-full space-y-4">
+              <div class="flex-1">
+                ${content}
+              </div>
+              <div class="sticky bottom-0 bg-card/95 backdrop-blur-md border-t border-border pt-3 pb-1 mt-4 z-20 flex justify-end gap-2">
+                ${footer}
+              </div>
+            </div>
+          `;
+
+          drawerEl.querySelector('#btn-cancel-edit-ay')?.addEventListener('click', () => window.UI.drawer.close());
+
+          drawerEl.querySelector('#btn-save-edit-ay')?.addEventListener('click', async () => {
+            const name = drawerEl.querySelector('#form-edit-ay-name')?.value.trim();
+            if (!name) return;
+            const startDate = drawerEl.querySelector('#form-edit-ay-start')?.value;
+            const endDate = drawerEl.querySelector('#form-edit-ay-end')?.value;
+
+            try {
+              await SettingsService.updateAcademicYear(ay.id || ay.name, { name, startDate, endDate });
+              AdminDataService.queueAutoSync();
+              const succMsg = currentLocale === 'km' ? `បានកែប្រែឆ្នាំសិក្សា "${name}" ដោយជោគជ័យ` : `Academic year "${name}" updated successfully`;
+              if (window.UI?.toast) {
+                window.UI.toast('success', succMsg);
+              } else {
+                toast.success(succMsg);
+              }
+              window.UI.drawer.close();
+              window.dispatchEvent(new CustomEvent('app:refresh-data'));
+              await this.render(container);
+            } catch (err) {
+              if (window.UI?.toast) {
+                window.UI.toast('error', err.message);
+              } else {
+                toast.error(err.message);
+              }
+            }
+          });
+        }
+      });
+      return;
+    }
+
     const modal = Modal.open({
-      title: t('settings.editAcademicYear'),
+      title,
       content,
       footer,
       maxWidth: 'max-w-sm'

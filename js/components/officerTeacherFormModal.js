@@ -56,7 +56,7 @@ export const OfficerTeacherFormModal = {
    * @param {Object} [options.teacher=null] - Existing teacher record (if editing)
    * @param {Function} options.onSave - Callback when saved
    */
-  async open({ teacher = null, onSave }) {
+  async open({ teacher = null, onSave, container = null, close = null }) {
     const isEdit = !!teacher;
     const isKm = i18n.getLocale() === 'km';
     const title = isEdit 
@@ -107,9 +107,12 @@ export const OfficerTeacherFormModal = {
     const initialIsNssf = teacher?.isNssf === true || teacher?.isNssf === 'true';
     const initialNssfNumber = teacher?.nssfNumber || '';
 
-    const overlay = document.createElement('div');
-    overlay.className = 'dialog-overlay fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-background/80 backdrop-blur-sm animate-fade-in overflow-y-auto';
-    overlay.id = 'officer-teacher-form-modal-overlay';
+    const isDrawer = !!container;
+    const overlay = isDrawer ? container : document.createElement('div');
+    if (!isDrawer) {
+      overlay.className = 'dialog-overlay fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-background/80 backdrop-blur-sm animate-fade-in overflow-y-auto';
+      overlay.id = 'officer-teacher-form-modal-overlay';
+    }
 
     overlay.innerHTML = `
       <div class="relative w-full max-w-6xl bg-card border border-border rounded-2xl shadow-2xl flex flex-col my-auto overflow-hidden animate-slide-down max-h-[94vh]">
@@ -656,11 +659,19 @@ export const OfficerTeacherFormModal = {
       </div>
     `;
 
-    document.body.appendChild(overlay);
+    if (!isDrawer) {
+      document.body.appendChild(overlay);
+    }
 
     const closeModal = () => {
-      overlay.classList.add('animate-fade-out');
-      setTimeout(() => overlay.remove(), 150);
+      if (typeof close === 'function') {
+        close();
+      } else if (isDrawer && window.UI?.drawer?.close) {
+        window.UI.drawer.close();
+      } else {
+        overlay.classList.add('animate-fade-out');
+        setTimeout(() => overlay.remove(), 150);
+      }
     };
 
     // Close handlers

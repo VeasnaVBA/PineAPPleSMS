@@ -564,6 +564,135 @@ export const SchoolsPage = {
       </div>
     `;
 
+    if (window.UI?.drawer?.open) {
+      window.UI.drawer.open({
+        title,
+        render: (container) => {
+          container.innerHTML = `
+            <div class="school-form-drawer flex flex-col h-full space-y-4">
+              <div class="flex-1 overflow-y-auto">
+                ${content}
+              </div>
+              <div class="sticky bottom-0 bg-card/95 backdrop-blur-md border-t border-border pt-4 pb-2 mt-4 z-20">
+                ${footer}
+              </div>
+            </div>
+          `;
+
+          container.querySelector('#btn-cancel-school')?.addEventListener('click', () => window.UI.drawer.close());
+
+          container.querySelector('#btn-save-school')?.addEventListener('click', async () => {
+            const codeInput = container.querySelector('#form-school-code');
+            const nameInput = container.querySelector('#form-school-name');
+            const villageInput = container.querySelector('#form-school-village');
+            const communeInput = container.querySelector('#form-school-commune');
+            const districtInput = container.querySelector('#form-school-district');
+            const provinceInput = container.querySelector('#form-school-province');
+            const directorInput = container.querySelector('#form-school-director');
+            const phoneInput = container.querySelector('#form-school-phone');
+            const notesInput = container.querySelector('#form-school-notes');
+
+            const codeErr = container.querySelector('#err-school-code');
+            const nameErr = container.querySelector('#err-school-name');
+            if (codeErr) codeErr.classList.add('hidden');
+            if (nameErr) nameErr.classList.add('hidden');
+
+            const code = codeInput?.value.trim();
+            const name = nameInput?.value.trim();
+
+            if (!code) {
+              const msg = t('schools.codeRequired');
+              if (window.UI?.toast) {
+                window.UI.toast('error', msg);
+              }
+              if (codeErr) {
+                codeErr.textContent = msg;
+                codeErr.classList.remove('hidden');
+              }
+              codeInput?.focus();
+              return;
+            }
+
+            if (!name) {
+              const msg = t('schools.nameRequired');
+              if (window.UI?.toast) {
+                window.UI.toast('error', msg);
+              }
+              if (nameErr) {
+                nameErr.textContent = msg;
+                nameErr.classList.remove('hidden');
+              }
+              nameInput?.focus();
+              return;
+            }
+
+            const village = villageInput?.value.trim() || '';
+            const commune = communeInput?.value.trim() || '';
+            const district = districtInput?.value.trim() || '';
+            const province = provinceInput?.value.trim() || '';
+            const fullAddress = [
+              village ? `ភូមិ${village}` : '',
+              commune ? `ឃុំ/សង្កាត់${commune}` : '',
+              district ? `ស្រុក/ខណ្ឌ${district}` : '',
+              province ? `រាជធានី/ខេត្ត${province}` : ''
+            ].filter(Boolean).join(' ');
+
+            const schoolData = {
+              code,
+              name,
+              village,
+              commune,
+              district,
+              province,
+              address: fullAddress || existingSchool?.address || '',
+              director: directorInput?.value.trim() || '',
+              phone: phoneInput?.value.trim() || '',
+              notes: notesInput?.value.trim() || ''
+            };
+
+            try {
+              if (isEdit) {
+                await SchoolService.updateSchool(existingSchool.id, schoolData);
+                const sMsg = t('schools.updatedSuccess');
+                if (window.UI?.toast) {
+                  window.UI.toast('success', sMsg);
+                } else {
+                  toast.success(sMsg);
+                }
+              } else {
+                const currentUser = authService.getCurrentUser();
+                await SchoolService.createSchool(schoolData, currentUser);
+                const sMsg = t('schools.savedSuccess');
+                if (window.UI?.toast) {
+                  window.UI.toast('success', sMsg);
+                } else {
+                  toast.success(sMsg);
+                }
+              }
+              window.UI.drawer.close();
+              await this.loadData();
+              this.renderLayout();
+              syncStateManager.scheduleAutoSync(100);
+            } catch (err) {
+              if (window.UI?.toast) {
+                window.UI.toast('error', err.message);
+              } else {
+                toast.error(err.message);
+              }
+              if (err.message.includes('already exists') || err.message.includes('already in use')) {
+                if (codeErr) {
+                  codeErr.textContent = t('schools.duplicateCode');
+                  codeErr.classList.remove('hidden');
+                }
+                codeInput?.focus();
+              }
+            }
+          });
+        }
+      });
+      return;
+    }
+
     const modal = Modal.open({
       title,
       content,

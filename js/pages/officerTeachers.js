@@ -215,12 +215,7 @@ export const OfficerTeachersPage = {
 
     // Add Teacher button
     this.container.querySelector('#btn-officer-add-teacher')?.addEventListener('click', () => {
-      OfficerTeacherFormModal.open({
-        onSave: async () => {
-          this.cachedTeachers = await TeacherService.getAll();
-          await this.loadData();
-        }
-      });
+      this.openTeacherForm(null);
     });
 
     // Export to Excel button
@@ -590,13 +585,7 @@ export const OfficerTeachersPage = {
         const id = btn.getAttribute('data-id');
         const teacher = await TeacherService.getById(id);
         if (teacher) {
-          OfficerTeacherFormModal.open({
-            teacher,
-            onSave: async () => {
-              this.cachedTeachers = await TeacherService.getAll();
-              await this.loadData();
-            }
-          });
+          this.openTeacherForm(teacher);
         }
       });
     });
@@ -781,5 +770,40 @@ export const OfficerTeachersPage = {
       console.error('Excel Export error:', err);
       toast.error(err.message || 'Error exporting to Excel');
     }
+  },
+
+  openTeacherForm(teacher = null) {
+    const isEdit = !!teacher;
+    const isKm = i18n.getLocale() === 'km';
+    const drawerTitle = isEdit 
+      ? (isKm ? 'កែប្រែព័ត៌មានមន្ត្រី/គ្រូបង្រៀន (ការិយាល័យ)' : 'Edit Teacher Record (Office)') 
+      : (isKm ? 'បន្ថែមមន្ត្រី/គ្រូបង្រៀនថ្មី (ការិយាល័យ)' : 'Add New Teacher (Office)');
+
+    if (window.UI?.drawer?.open) {
+      window.UI.drawer.open({
+        title: drawerTitle,
+        render: async (container) => {
+          await OfficerTeacherFormModal.open({
+            teacher,
+            container,
+            close: () => window.UI.drawer.close(),
+            onSave: async () => {
+              window.UI.drawer.close();
+              this.cachedTeachers = await TeacherService.getAll();
+              await this.loadData();
+            }
+          });
+        }
+      });
+      return;
+    }
+
+    OfficerTeacherFormModal.open({
+      teacher,
+      onSave: async () => {
+        this.cachedTeachers = await TeacherService.getAll();
+        await this.loadData();
+      }
+    });
   }
 };

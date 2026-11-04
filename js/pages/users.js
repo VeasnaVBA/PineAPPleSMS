@@ -1058,14 +1058,40 @@ export const UsersPage = {
       </form>
     `;
 
+    const modalTitle = isEdit 
+      ? (isKm ? 'កែប្រែគណនីអ្នកប្រើប្រាស់' : 'Edit User Account') 
+      : (isKm ? 'បង្កើតគណនីអ្នកប្រើប្រាស់ថ្មី' : 'Create User Account');
+
+    if (window.UI?.drawer?.open) {
+      window.UI.drawer.open({
+        title: modalTitle,
+        render: (container) => {
+          container.innerHTML = `
+            <div class="user-form-drawer flex flex-col h-full space-y-4">
+              <div class="flex-1 overflow-y-auto">
+                ${content}
+              </div>
+            </div>
+          `;
+          const modal = {
+            element: container,
+            close: () => window.UI.drawer.close()
+          };
+          this.bindUserModalEvents(modal, userToEdit, isEdit, isKm);
+        }
+      });
+      return;
+    }
+
     const modal = Modal.open({
-      title: isEdit 
-        ? (isKm ? 'កែប្រែគណនីអ្នកប្រើប្រាស់' : 'Edit User Account') 
-        : (isKm ? 'បង្កើតគណនីអ្នកប្រើប្រាស់ថ្មី' : 'Create User Account'),
+      title: modalTitle,
       content,
       maxWidth: 'max-w-lg'
     });
+    this.bindUserModalEvents(modal, userToEdit, isEdit, isKm);
+  },
 
+  bindUserModalEvents(modal, userToEdit, isEdit, isKm) {
     const roleSelect = document.getElementById('modal-user-role');
     const usernameInput = document.getElementById('modal-user-username');
     const usernameFeedback = document.getElementById('modal-username-feedback');

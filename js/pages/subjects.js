@@ -814,6 +814,149 @@ export const SubjectsPage = {
       </div>
     `;
 
+    const drawerTitle = isEdit 
+      ? (isKm ? 'កែប្រែព័ត៌មានមុខវិជ្ជា' : 'Edit Course Details') 
+      : (isKm ? 'បង្កើតមុខវិជ្ជាថ្មី' : 'Create New Course');
+
+    if (window.UI?.drawer?.open) {
+      window.UI.drawer.open({
+        title: drawerTitle,
+        render: (container) => {
+          container.innerHTML = `
+            <div class="subject-form-drawer flex flex-col h-full space-y-4">
+              <div class="flex-1 overflow-y-auto">
+                ${modalContent}
+              </div>
+            </div>
+          `;
+
+          const modalEl = container;
+
+          modalEl.querySelector('#btn-auto-code')?.addEventListener('click', async () => {
+            const codeInput = modalEl.querySelector('#modal-subject-code');
+            if (codeInput) {
+              codeInput.value = await SubjectService.generateCode();
+              codeInput.classList.add('ring-2', 'ring-primary/40');
+              setTimeout(() => codeInput.classList.remove('ring-2', 'ring-primary/40'), 600);
+            }
+          });
+
+          modalEl.querySelectorAll('.btn-quick-fill').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const val = btn.getAttribute('data-fill');
+              GRADES.forEach(g => {
+                const inp = modalEl.querySelector(`#modal-grade-${g}`);
+                if (inp) inp.value = val;
+              });
+            });
+          });
+
+          modalEl.querySelector('#modal-btn-cancel')?.addEventListener('click', () => {
+            window.UI.drawer.close();
+          });
+
+          modalEl.querySelector('#modal-btn-save')?.addEventListener('click', async () => {
+            const codeInput = modalEl.querySelector('#modal-subject-code');
+            const nameInput = modalEl.querySelector('#modal-subject-name');
+            const descInput = modalEl.querySelector('#modal-subject-desc');
+            const sumInput = modalEl.querySelector('#modal-subject-sum');
+            const codeErr = modalEl.querySelector('#modal-code-err');
+            const nameErr = modalEl.querySelector('#modal-name-err');
+
+            if (codeErr) codeErr.classList.add('hidden');
+            if (nameErr) nameErr.classList.add('hidden');
+
+            const code = codeInput?.value.trim().toUpperCase();
+            const name = nameInput?.value.trim();
+
+            if (!code) {
+              const msg = t('subjects.enterCode') || 'សូមបញ្ចូលកូដមុខវិជ្ជា';
+              if (window.UI?.toast) {
+                window.UI.toast('error', msg);
+              }
+              if (codeErr) {
+                codeErr.textContent = msg;
+                codeErr.classList.remove('hidden');
+              }
+              codeInput?.focus();
+              return;
+            }
+
+            if (!name) {
+              const msg = t('subjects.nameRequired') || 'សូមបញ្ចូលឈ្មោះមុខវិជ្ជា';
+              if (window.UI?.toast) {
+                window.UI.toast('error', msg);
+              }
+              if (nameErr) {
+                nameErr.textContent = msg;
+                nameErr.classList.remove('hidden');
+              }
+              nameInput?.focus();
+              return;
+            }
+
+            const scoreByGrade = {};
+            let maxScore = 0;
+            GRADES.forEach(g => {
+              const inp = modalEl.querySelector(`#modal-grade-${g}`);
+              const val = Number(inp?.value || 0);
+              scoreByGrade[g] = !isNaN(val) && val >= 0 ? val : 0;
+              if (scoreByGrade[g] > maxScore) maxScore = scoreByGrade[g];
+            });
+
+            const subjectData = {
+              code,
+              name,
+              nameEn: existingSubject?.nameEn || name,
+              description: descInput?.value.trim() || '',
+              notes: descInput?.value.trim() || '',
+              sumOfCourses: sumInput?.value.trim() || '',
+              maxScore: maxScore > 0 ? maxScore : 100,
+              scoreByGrade,
+              creditHours: existingSubject?.creditHours || 2
+            };
+
+            try {
+              if (isEdit) {
+                await SubjectService.update(existingSubject.id, subjectData);
+                const sMsg = t('subjects.updatedSuccess') || 'បានកែប្រែមុខវិជ្ជាដោយជោគជ័យ';
+                if (window.UI?.toast) {
+                  window.UI.toast('success', sMsg);
+                } else {
+                  toast.success(sMsg);
+                }
+              } else {
+                await SubjectService.create(subjectData);
+                const sMsg = t('subjects.savedSuccess') || 'បានរក្សាទុកមុខវិជ្ជាដោយជោគជ័យ';
+                if (window.UI?.toast) {
+                  window.UI.toast('success', sMsg);
+                } else {
+                  toast.success(sMsg);
+                }
+              }
+              window.UI.drawer.close();
+              await this.loadData();
+              this.renderLayout();
+            } catch (err) {
+              if (window.UI?.toast) {
+                window.UI.toast('error', err.message);
+              } else {
+                toast.error(err.message);
+              }
+              if (err.message.includes('already exists') || err.message.includes('already used')) {
+                if (codeErr) {
+                  codeErr.textContent = err.message;
+                  codeErr.classList.remove('hidden');
+                }
+                codeInput?.focus();
+              }
+            }
+          });
+        }
+      });
+      return;
+    }
+
     const modal = Modal.open({
       title: '', // Custom styled top header inside content
       content: modalContent,
