@@ -61,7 +61,7 @@ export const TeacherFormModal = {
    * @param {Object} [options.teacher=null] - Existing teacher record (if editing)
    * @param {Function} options.onSave - Callback when saved
    */
-  async open({ teacher = null, onSave }) {
+  async open({ teacher = null, onSave, container = null, close = null }) {
     const isEdit = !!teacher;
     const isKm = i18n.getLocale() === 'km';
     const title = isEdit ? (isKm ? 'កែប្រែព័ត៌មានគ្រូបង្រៀន' : 'Edit Teacher Profile') : (isKm ? 'បន្ថែមគ្រូបង្រៀនថ្មី' : 'Add New Teacher');
@@ -716,12 +716,33 @@ export const TeacherFormModal = {
       </div>
     `;
 
-    const modal = Modal.open({
-      title,
-      content: modalContent,
-      footer,
-      maxWidth: 'max-w-4xl'
-    });
+    let modal;
+    if (container) {
+      container.innerHTML = `
+        <div class="teacher-form-drawer flex flex-col h-full space-y-4">
+          <div class="flex-1">
+            ${modalContent}
+          </div>
+          <div class="sticky bottom-0 bg-card/95 backdrop-blur-md border-t border-border pt-4 pb-2 mt-6 z-20">
+            ${footer}
+          </div>
+        </div>
+      `;
+      modal = {
+        element: container,
+        close: () => {
+          if (typeof close === 'function') close();
+          else if (window.UI?.drawer?.close) window.UI.drawer.close();
+        }
+      };
+    } else {
+      modal = Modal.open({
+        title,
+        content: modalContent,
+        footer,
+        maxWidth: 'max-w-4xl'
+      });
+    }
 
     // 1. Live DOB Engine -> Age and Retirement Date Auto-calculation
     const dobInput = modal.element.querySelector('#form-t-dob');

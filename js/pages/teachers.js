@@ -648,12 +648,7 @@ export const TeachersPage = {
           onClick: async () => {
             const teacher = await TeacherService.getById(tchr.id);
             if (teacher) {
-              await TeacherFormModal.open({
-                teacher,
-                onSave: async () => {
-                  await this.refreshData();
-                }
-              });
+              await this.openTeacherForm(teacher);
             }
           }
         }
@@ -938,12 +933,7 @@ export const TeachersPage = {
         toast.warning(t('teachers.limitReachedToast'));
         return;
       }
-      await TeacherFormModal.open({
-        teacher: null,
-        onSave: async () => {
-          await this.refreshData();
-        }
-      });
+      await this.openTeacherForm(null);
     });
 
     this.container.querySelectorAll('th[data-sort]').forEach(th => {
@@ -1725,6 +1715,42 @@ export const TeachersPage = {
   },
 
   /**
+   * Open Add or Edit Teacher Drawer with unified 44-field layout
+   */
+  async openTeacherForm(teacher = null) {
+    const isEdit = !!teacher;
+    const isKm = i18n.getLocale() === 'km';
+    const drawerTitle = isEdit 
+      ? (isKm ? 'កែប្រែព័ត៌មានគ្រូបង្រៀន' : 'Edit Teacher Profile') 
+      : (isKm ? 'បន្ថែមគ្រូបង្រៀនថ្មី' : 'Add New Teacher');
+
+    if (window.UI?.drawer?.open) {
+      window.UI.drawer.open({
+        title: drawerTitle,
+        render: async (container) => {
+          await TeacherFormModal.open({
+            teacher,
+            container,
+            close: () => window.UI.drawer.close(),
+            onSave: async () => {
+              window.UI.drawer.close();
+              await this.refreshData();
+            }
+          });
+        }
+      });
+      return;
+    }
+
+    await TeacherFormModal.open({
+      teacher,
+      onSave: async () => {
+        await this.refreshData();
+      }
+    });
+  },
+
+  /**
    * Official MoEYS 44-Field Teacher Profile Modal Viewer
    */
   openTeacherProfileModal(teacher) {
@@ -2044,12 +2070,7 @@ export const TeachersPage = {
 
     modal.element.querySelector('#btn-edit-from-profile')?.addEventListener('click', async () => {
       modal.close();
-      await TeacherFormModal.open({
-        teacher,
-        onSave: async () => {
-          await this.refreshData();
-        }
-      });
+      await this.openTeacherForm(teacher);
     });
   }
 };
