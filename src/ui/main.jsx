@@ -8,6 +8,7 @@ import './styles.css';
 
 // Ensure global UI namespace exists
 window.UI = window.UI || {};
+globalThis.UI = window.UI;
 
 let triggerOpenDrawer = null;
 let triggerCloseDrawer = null;
@@ -15,20 +16,24 @@ let pendingDrawerRequest = null;
 
 // window.UI.toast(type, title, description)
 window.UI.toast = (type, title, description) => {
+  // If called like UI.toast('Single message string')
+  if (title === undefined && description === undefined && typeof type === 'string') {
+    return toast(type);
+  }
   const opts = description ? { description } : {};
   if (type === 'success') {
-    return toast.success(title, opts);
+    return toast.success(title || '', opts);
   }
   if (type === 'error') {
-    return toast.error(title, opts);
+    return toast.error(title || '', opts);
   }
   if (type === 'info') {
-    return toast.info(title, opts);
+    return toast.info(title || '', opts);
   }
   if (type === 'warning') {
-    return toast.warning(title, opts);
+    return toast.warning(title || '', opts);
   }
-  return toast(title, opts);
+  return toast(title || type || '', opts);
 };
 
 // Shorthand helpers

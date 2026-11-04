@@ -1347,8 +1347,12 @@ export const TeachersPage = {
           : `Confirm Import (${parsedResult.validRows.length})`;
       } catch (err) {
         console.error('Excel parse error:', err);
+        const errMsg = err.message || 'Failed to parse Excel file.';
+        if (typeof window !== 'undefined' && window.UI?.toast) {
+          window.UI.toast('error', errMsg);
+        }
         if (errorBox) {
-          errorBox.textContent = err.message || 'Failed to parse Excel file.';
+          errorBox.textContent = errMsg;
           errorBox.classList.remove('hidden');
         }
         confirmBtn.disabled = true;
@@ -1585,8 +1589,12 @@ export const TeachersPage = {
           : `Confirm Import (${parsedResult.validRows.length})`;
       } catch (err) {
         console.error('JSON parse error:', err);
+        const errMsg = err.message || 'Failed to parse JSON file.';
+        if (typeof window !== 'undefined' && window.UI?.toast) {
+          window.UI.toast('error', errMsg);
+        }
         if (errorBox) {
-          errorBox.textContent = err.message || 'Failed to parse JSON file.';
+          errorBox.textContent = errMsg;
           errorBox.classList.remove('hidden');
         }
         confirmBtn.disabled = true;

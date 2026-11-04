@@ -1071,9 +1071,13 @@ export const SettingsPage = {
     testBtn?.addEventListener('click', async () => {
       const url = cloudUrlInput?.value?.trim() || '';
       if (!url) {
+        const reqMsg = t('cloudSync.configRequired');
+        if (typeof window !== 'undefined' && window.UI?.toast) {
+          window.UI.toast('warning', reqMsg);
+        }
         if (cloudFeedback) {
           cloudFeedback.className = 'p-2.5 rounded-md text-xs bg-amber-500/10 text-amber-600 border border-amber-500/20';
-          cloudFeedback.textContent = t('cloudSync.configRequired');
+          cloudFeedback.textContent = reqMsg;
           cloudFeedback.classList.remove('hidden');
         }
         return;
@@ -1090,6 +1094,17 @@ export const SettingsPage = {
       const res = await CloudSyncService.testConnection(url);
       testBtn.disabled = false;
       if (testText) testText.textContent = t('cloudSync.testConnection');
+
+      if (res.success) {
+        if (typeof window !== 'undefined' && window.UI?.toast) {
+          window.UI.toast('success', res.message);
+        }
+      } else {
+        const failMsg = `${t('cloudSync.testFailed')} ${res.message}`;
+        if (typeof window !== 'undefined' && window.UI?.toast) {
+          window.UI.toast('error', failMsg);
+        }
+      }
 
       if (cloudFeedback) {
         if (res.success) {

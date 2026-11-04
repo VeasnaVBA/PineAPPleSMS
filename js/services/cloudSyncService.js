@@ -987,6 +987,9 @@ export const CloudSyncService = {
    * Display user-friendly alert modal for permission errors or network issues
    */
   showErrorModal(errorMessage) {
+    if (typeof window !== 'undefined' && window.UI?.toast) {
+      window.UI.toast('error', errorMessage);
+    }
     const isAccessOrFetchError = 
       errorMessage.includes('Failed to fetch') || 
       errorMessage.includes('permission') || 

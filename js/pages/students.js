@@ -90,8 +90,12 @@ function openAddLocationPrompt({ title, placeholder, isKm, onAdd }) {
   const handleSubmit = async () => {
     const val = input?.value.trim();
     if (!val) {
+      const msg = isKm ? 'សូមបញ្ចូលឈ្មោះទីតាំង' : 'Please enter a location name';
+      if (typeof window !== 'undefined' && window.UI?.toast) {
+        window.UI.toast('error', msg);
+      }
       if (errorEl) {
-        errorEl.textContent = isKm ? 'សូមបញ្ចូលឈ្មោះទីតាំង' : 'Please enter a location name';
+        errorEl.textContent = msg;
         errorEl.classList.remove('hidden');
       }
       input?.focus();
@@ -101,8 +105,12 @@ function openAddLocationPrompt({ title, placeholder, isKm, onAdd }) {
       await onAdd(val);
       closePrompt();
     } catch (err) {
+      const msg = err.message === 'ALREADY_EXISTS' ? t('locations.alreadyExists') : err.message;
+      if (typeof window !== 'undefined' && window.UI?.toast) {
+        window.UI.toast('error', msg);
+      }
       if (errorEl) {
-        errorEl.textContent = err.message === 'ALREADY_EXISTS' ? t('locations.alreadyExists') : err.message;
+        errorEl.textContent = msg;
         errorEl.classList.remove('hidden');
       }
     }
@@ -5093,8 +5101,12 @@ export const StudentsPage = {
         confirmBtn.textContent = t('students.btnConfirmImport', { count: parsedResult.validRows.length });
       } catch (err) {
         console.error('Excel parse error:', err);
+        const errMsg = err.message || 'Failed to parse Excel file.';
+        if (typeof window !== 'undefined' && window.UI?.toast) {
+          window.UI.toast('error', errMsg);
+        }
         if (errorBox) {
-          errorBox.textContent = err.message || 'Failed to parse Excel file.';
+          errorBox.textContent = errMsg;
           errorBox.classList.remove('hidden');
         }
         confirmBtn.disabled = true;

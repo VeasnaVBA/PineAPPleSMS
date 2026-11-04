@@ -866,8 +866,12 @@ export const SubjectsPage = {
       const name = nameInput?.value.trim();
 
       if (!code) {
+        const msg = t('subjects.enterCode') || 'សូមបញ្ចូលកូដមុខវិជ្ជា';
+        if (typeof window !== 'undefined' && window.UI?.toast) {
+          window.UI.toast('error', msg);
+        }
         if (codeErr) {
-          codeErr.textContent = t('subjects.enterCode') || 'សូមបញ្ចូលកូដមុខវិជ្ជា';
+          codeErr.textContent = msg;
           codeErr.classList.remove('hidden');
         }
         codeInput?.focus();
@@ -875,8 +879,12 @@ export const SubjectsPage = {
       }
 
       if (!name) {
+        const msg = t('subjects.nameRequired') || 'សូមបញ្ចូលឈ្មោះមុខវិជ្ជា';
+        if (typeof window !== 'undefined' && window.UI?.toast) {
+          window.UI.toast('error', msg);
+        }
         if (nameErr) {
-          nameErr.textContent = t('subjects.nameRequired') || 'សូមបញ្ចូលឈ្មោះមុខវិជ្ជា';
+          nameErr.textContent = msg;
           nameErr.classList.remove('hidden');
         }
         nameInput?.focus();

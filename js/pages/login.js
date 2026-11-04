@@ -264,11 +264,14 @@ export class LoginPage {
       }
 
       const user = await authService.login(username, password);
-      toast.success(
-        isKm
-          ? `សូមស្វាគមន៍មកកាន់ប្រព័ន្ធ, ${user.displayName}!`
-          : `Welcome back, ${user.displayName}!`
-      );
+      const welcomeMsg = isKm
+        ? `សូមស្វាគមន៍មកកាន់ប្រព័ន្ធ, ${user.displayName}!`
+        : `Welcome back, ${user.displayName}!`;
+      if (typeof window !== 'undefined' && window.UI?.toast) {
+        window.UI.toast('success', welcomeMsg);
+      } else {
+        toast.success(welcomeMsg);
+      }
 
       if (this.onLoginSuccess) {
         this.onLoginSuccess(user);
@@ -289,6 +292,9 @@ export class LoginPage {
 
   showError(msg) {
     this.errorMessage = msg;
+    if (typeof window !== 'undefined' && window.UI?.toast) {
+      window.UI.toast('error', msg);
+    }
     const errorAlert = document.getElementById('login-error-alert');
     const errorText = document.getElementById('login-error-text');
     if (errorAlert && errorText) {

@@ -595,8 +595,12 @@ export const SchoolsPage = {
       const name = nameInput?.value.trim();
 
       if (!code) {
+        const msg = t('schools.codeRequired');
+        if (typeof window !== 'undefined' && window.UI?.toast) {
+          window.UI.toast('error', msg);
+        }
         if (codeErr) {
-          codeErr.textContent = t('schools.codeRequired');
+          codeErr.textContent = msg;
           codeErr.classList.remove('hidden');
         }
         codeInput?.focus();
@@ -604,8 +608,12 @@ export const SchoolsPage = {
       }
 
       if (!name) {
+        const msg = t('schools.nameRequired');
+        if (typeof window !== 'undefined' && window.UI?.toast) {
+          window.UI.toast('error', msg);
+        }
         if (nameErr) {
-          nameErr.textContent = t('schools.nameRequired');
+          nameErr.textContent = msg;
           nameErr.classList.remove('hidden');
         }
         nameInput?.focus();

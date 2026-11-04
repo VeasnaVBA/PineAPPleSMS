@@ -22,6 +22,12 @@ class ToastManager {
   }
 
   show({ message, title = '', type = 'info', duration = 3500, action = null }) {
+    if (typeof window !== 'undefined' && window.UI && typeof window.UI.toast === 'function') {
+      const msg = message || '';
+      const head = title && title !== 'Success' && title !== 'Error' && title !== 'Warning' && title !== 'Notification' ? title : '';
+      return window.UI.toast(type, head || msg, head ? msg : undefined);
+    }
+
     this.init();
 
     const toast = document.createElement('div');
@@ -92,21 +98,46 @@ class ToastManager {
     }
   }
 
-  success(message, title = 'Success') {
-    this.show({ message, title, type: 'success' });
+  success(message, title = '') {
+    if (typeof window !== 'undefined' && window.UI && typeof window.UI.toast === 'function') {
+      return window.UI.toast('success', title || message, title ? message : undefined);
+    }
+    this.show({ message, title: title || 'Success', type: 'success' });
   }
 
-  error(message, title = 'Error') {
-    this.show({ message, title, type: 'error' });
+  error(message, title = '') {
+    if (typeof window !== 'undefined' && window.UI && typeof window.UI.toast === 'function') {
+      return window.UI.toast('error', title || message, title ? message : undefined);
+    }
+    this.show({ message, title: title || 'Error', type: 'error' });
   }
 
-  warning(message, title = 'Warning') {
-    this.show({ message, title, type: 'warning' });
+  warning(message, title = '') {
+    if (typeof window !== 'undefined' && window.UI && typeof window.UI.toast === 'function') {
+      return window.UI.toast('warning', title || message, title ? message : undefined);
+    }
+    this.show({ message, title: title || 'Warning', type: 'warning' });
   }
 
-  info(message, title = 'Notification') {
-    this.show({ message, title, type: 'info' });
+  info(message, title = '') {
+    if (typeof window !== 'undefined' && window.UI && typeof window.UI.toast === 'function') {
+      return window.UI.toast('info', title || message, title ? message : undefined);
+    }
+    this.show({ message, title: title || 'Notification', type: 'info' });
   }
 }
 
 export const toast = new ToastManager();
+
+export const UI = typeof window !== 'undefined' && window.UI ? window.UI : {
+  toast: (type, title, description) => {
+    if (typeof window !== 'undefined' && window.UI?.toast) {
+      return window.UI.toast(type, title, description);
+    }
+    if (['success', 'error', 'warning', 'info'].includes(type)) {
+      toast[type](title, description);
+    } else {
+      toast.show({ message: type, title });
+    }
+  }
+};

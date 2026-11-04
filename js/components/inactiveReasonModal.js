@@ -148,6 +148,10 @@ export function openInactiveReasonPrompt({ initialData = null, isKm = true, onCo
   overlay.querySelector('#btn-dropout-submit')?.addEventListener('click', () => {
     const reasonVal = reasonInput?.value.trim();
     if (!reasonVal) {
+      const errMsg = 'សូមជ្រើសរើស ឬបញ្ចូលមូលហេតុ';
+      if (typeof window !== 'undefined' && window.UI?.toast) {
+        window.UI.toast('error', errMsg);
+      }
       errReason?.classList.remove('hidden');
       reasonInput?.focus();
       return;

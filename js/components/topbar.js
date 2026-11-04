@@ -518,6 +518,9 @@ export class Topbar {
     });
 
     const showError = (msg) => {
+      if (typeof window !== 'undefined' && window.UI?.toast) {
+        window.UI.toast('error', msg);
+      }
       if (!errEl) return;
       errEl.textContent = msg;
       errEl.classList.remove('hidden');
