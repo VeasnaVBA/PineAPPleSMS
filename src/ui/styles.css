@@ -15,11 +15,14 @@
   right: 0;
   z-index: 9999;
   max-height: 92vh;
+  max-width: 56rem;
+  margin-left: auto;
+  margin-right: auto;
   display: flex;
   flex-direction: column;
   border-top-left-radius: 1.25rem;
   border-top-right-radius: 1.25rem;
-  box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.1), 0 -8px 10px -6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.15), 0 -8px 10px -6px rgba(0, 0, 0, 0.1);
   outline: none;
 }
 

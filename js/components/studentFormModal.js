@@ -72,7 +72,9 @@ export const StudentFormModal = {
     mode = 'STUDENT_MANAGEMENT',
     student = null,
     onSave,
-    onEnroll = null
+    onEnroll = null,
+    container = null,
+    close = null
   }) {
     const isEdit = !!student;
     const isKm = i18n.getLocale() === 'km';
@@ -832,14 +834,35 @@ export const StudentFormModal = {
       `;
     }
 
-    const modal = Modal.open({
-      title: headerContent,
-      content: modalContent,
-      footer,
-      maxWidth: 'max-w-4xl',
-      backdropClose: false,
-      preventUnsavedClose: true
-    });
+    let modal;
+    if (container) {
+      container.innerHTML = `
+        <div class="student-form-drawer flex flex-col h-full space-y-4">
+          <div class="flex-1">
+            ${modalContent}
+          </div>
+          <div class="sticky bottom-0 bg-card/95 backdrop-blur-md border-t border-border pt-4 pb-2 mt-6 z-20">
+            ${footer}
+          </div>
+        </div>
+      `;
+      modal = {
+        element: container,
+        close: () => {
+          if (typeof close === 'function') close();
+          else if (window.UI?.drawer?.close) window.UI.drawer.close();
+        }
+      };
+    } else {
+      modal = Modal.open({
+        title: headerContent,
+        content: modalContent,
+        footer,
+        maxWidth: 'max-w-4xl',
+        backdropClose: false,
+        preventUnsavedClose: true
+      });
+    }
 
     const updateHeaderPhoto = (url) => {
       const headerPhotoEl = modal.element.querySelector('#modal-header-photo');

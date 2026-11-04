@@ -2039,14 +2039,54 @@ export const StudentsPage = {
   },
 
   /**
-   * Open Add or Edit Student Modal with unified vertical scrolling sectional layout containing all 29 fields
+   * Open Add or Edit Student Drawer with unified vertical scrolling sectional layout containing all 29 fields
    */
   async openStudentFormModal(existingStudent = null) {
+    const isEdit = !!existingStudent;
+    const isKm = i18n.getLocale() === 'km';
+    const drawerTitle = isEdit ? t('students.editStudent') : t('students.addStudent');
+
+    if (window.UI?.drawer?.open) {
+      window.UI.drawer.open({
+        title: drawerTitle,
+        render: async (container) => {
+          await StudentFormModal.open({
+            mode: 'STUDENT_MANAGEMENT',
+            student: existingStudent,
+            container,
+            close: () => window.UI.drawer.close(),
+            onSave: async (data, modal) => {
+              if (isEdit) {
+                await StudentService.update(existingStudent.id, data);
+                if (window.UI?.toast) {
+                  window.UI.toast('success', t('students.updatedSuccess'));
+                } else {
+                  toast.success(t('students.updatedSuccess'));
+                }
+              } else {
+                await StudentService.create(data);
+                if (window.UI?.toast) {
+                  window.UI.toast('success', t('students.savedSuccess'));
+                } else {
+                  toast.success(t('students.savedSuccess'));
+                }
+              }
+              window.UI.drawer.close();
+              modal?.close?.();
+              await this.loadData(true);
+              this.populateFilterValuesDropdown();
+              syncStateManager.scheduleAutoSync(100);
+            }
+          });
+        }
+      });
+      return;
+    }
+
     await StudentFormModal.open({
       mode: 'STUDENT_MANAGEMENT',
       student: existingStudent,
       onSave: async (data, modal) => {
-        const isEdit = !!existingStudent;
         if (isEdit) {
           await StudentService.update(existingStudent.id, data);
           toast.success(t('students.updatedSuccess'));
