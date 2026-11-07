@@ -9,7 +9,7 @@
  */
 
 import { TeacherService } from '../services/teacherService.js';
-import { OfficerTeacherFormModal } from '../components/officerTeacherFormModal.js?v=3.2.00';
+import { OfficerTeacherFormModal } from '../components/officerTeacherFormModal.js?v=3.2.01';
 import { TeacherCvTemplate } from '../components/teacherCvTemplate.js';
 import { ReportViewer } from '../components/reportViewer.js';
 import { photoService } from '../services/photoService.js';
@@ -784,31 +784,6 @@ export const OfficerTeachersPage = {
   },
 
   openTeacherForm(teacher = null) {
-    const isEdit = !!teacher;
-    const isKm = i18n.getLocale() === 'km';
-    const drawerTitle = isEdit 
-      ? (isKm ? 'កែប្រែព័ត៌មានមន្ត្រី/គ្រូបង្រៀន (ការិយាល័យ)' : 'Edit Teacher Record (Office)') 
-      : (isKm ? 'បន្ថែមមន្ត្រី/គ្រូបង្រៀនថ្មី (ការិយាល័យ)' : 'Add New Teacher (Office)');
-
-    if (window.UI?.drawer?.open) {
-      window.UI.drawer.open({
-        title: drawerTitle,
-        render: async (container) => {
-          await OfficerTeacherFormModal.open({
-            teacher,
-            container,
-            close: () => window.UI.drawer.close(),
-            onSave: async () => {
-              window.UI.drawer.close();
-              this.cachedTeachers = await TeacherService.getAll();
-              await this.loadData();
-            }
-          });
-        }
-      });
-      return;
-    }
-
     OfficerTeacherFormModal.open({
       teacher,
       onSave: async () => {

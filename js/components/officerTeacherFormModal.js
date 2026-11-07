@@ -714,6 +714,9 @@ export const OfficerTeacherFormModal = {
     // Close handlers
     overlay.querySelector('#btn-officer-modal-close')?.addEventListener('click', closeModal);
     overlay.querySelector('#btn-officer-modal-cancel')?.addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeModal();
+    });
 
     // Tabs removed - direct single form
 
