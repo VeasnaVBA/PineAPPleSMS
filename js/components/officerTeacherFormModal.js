@@ -79,7 +79,8 @@ export const OfficerTeacherFormModal = {
     const initialFirstNameKm = teacher?.firstNameKhmer || teacher?.firstNameKh || '';
     const initialLastNameEn = (teacher?.lastNameLatin || '').toUpperCase();
     const initialFirstNameEn = (teacher?.firstNameLatin || '').toUpperCase();
-    const initialCivilId = teacher?.civilServantId || teacher?.teacherId || '';
+    const initialTeacherId = teacher?.teacherId || teacher?.code || '';
+    const initialCivilId = teacher?.civilServantId || '';
     const initialPhone = teacher?.phone || teacher?.phone1 || '';
     const initialEmail = teacher?.email || '';
     const initialUnit = teacher?.unit || 'ការិយាល័យ អប់រំ យុវជន និងកីឡា';
@@ -193,6 +194,28 @@ export const OfficerTeacherFormModal = {
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <!-- លេខកូដ (Teacher Code) * -->
+                  <div>
+                    <label class="block text-xs font-semibold text-foreground mb-1">
+                      ${isKm ? 'លេខកូដ' : 'Code'} <span class="text-rose-500 font-bold">*</span>
+                    </label>
+                    <input type="text" id="officer-teacher-id" required
+                           value="${initialTeacherId}"
+                           placeholder="${isKm ? 'ឧ. TCH-001' : 'e.g. TCH-001'}"
+                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono shadow-2xs font-semibold" />
+                  </div>
+
+                  <!-- អត្តលេខមន្រ្តីរាជការ (Civil Servant ID) -->
+                  <div>
+                    <label class="block text-xs font-semibold text-foreground mb-1">
+                      ${isKm ? 'អត្តលេខមន្រ្តីរាជការ' : 'Civil Servant ID'}
+                    </label>
+                    <input type="text" id="officer-civil-servant-id"
+                           value="${initialCivilId}"
+                           placeholder="1950200078"
+                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono shadow-2xs font-semibold text-primary" />
+                  </div>
+
                   <!-- នាមត្រកូល * -->
                   <div>
                     <label class="block text-xs font-semibold text-foreground mb-1">
@@ -543,18 +566,7 @@ export const OfficerTeacherFormModal = {
                   </span>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <!-- អត្តលេខមន្ត្រី * -->
-                  <div>
-                    <label class="block text-xs font-semibold text-foreground mb-1">
-                      ${isKm ? 'អត្តលេខមន្ត្រី' : 'Civil Servant ID'} <span class="text-rose-500 font-bold">*</span>
-                    </label>
-                    <input type="text" id="officer-civil-servant-id" required
-                           value="${initialCivilId}"
-                           placeholder="1950200078"
-                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono shadow-2xs" />
-                  </div>
-
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <!-- ថ្ងៃខែឆ្នាំចូលបម្រើការងារ * -->
                   <div>
                     <label class="block text-xs font-semibold text-foreground mb-1">
@@ -865,17 +877,18 @@ export const OfficerTeacherFormModal = {
       const form = overlay.querySelector('#officer-main-form');
       if (!form.reportValidity()) return;
 
+      const teacherId = overlay.querySelector('#officer-teacher-id')?.value.trim();
+      const civilServantId = overlay.querySelector('#officer-civil-servant-id')?.value.trim() || '';
       const lastNameKhmer = overlay.querySelector('#officer-last-name-km')?.value.trim();
       const firstNameKhmer = overlay.querySelector('#officer-first-name-km')?.value.trim();
-      const civilServantId = overlay.querySelector('#officer-civil-servant-id')?.value.trim();
 
-      if (!lastNameKhmer || !firstNameKhmer) {
-        toast.error(isKm ? 'សូមបំពេញគោត្តនាម និងនាមខ្លួនជាភាសាខ្មែរ (*)' : 'Please fill Khmer Last and First names (*)');
+      if (!teacherId) {
+        toast.error(isKm ? 'សូមបំពេញលេខកូដសម្គាល់គ្រូ (*)' : 'Please fill Teacher Code (*)');
         return;
       }
 
-      if (!civilServantId) {
-        toast.error(isKm ? 'សូមបំពេញអត្តលេខមន្ត្រី (*)' : 'Please fill Civil Servant ID (*)');
+      if (!lastNameKhmer || !firstNameKhmer) {
+        toast.error(isKm ? 'សូមបំពេញគោត្តនាម និងនាមខ្លួនជាភាសាខ្មែរ (*)' : 'Please fill Khmer Last and First names (*)');
         return;
       }
 
@@ -918,8 +931,9 @@ export const OfficerTeacherFormModal = {
         currentCommune: overlay.querySelector('#officer-current-commune')?.value.trim() || '',
         currentVillage: overlay.querySelector('#officer-current-village')?.value.trim() || '',
 
-        // Employment
-        teacherId: teacher?.teacherId || civilServantId,
+        // Employment & Identity Code
+        teacherId,
+        code: teacherId,
         civilServantId,
         joinedDate: overlay.querySelector('#officer-joined-date')?.value || '',
         permanentAppointmentDate: overlay.querySelector('#officer-permanent-date')?.value || '',

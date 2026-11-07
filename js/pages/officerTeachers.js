@@ -9,7 +9,7 @@
  */
 
 import { TeacherService } from '../services/teacherService.js';
-import { OfficerTeacherFormModal } from '../components/officerTeacherFormModal.js?v=3.1.42';
+import { OfficerTeacherFormModal } from '../components/officerTeacherFormModal.js?v=3.1.43';
 import { TeacherCvTemplate } from '../components/teacherCvTemplate.js';
 import { ReportViewer } from '../components/reportViewer.js';
 import { photoService } from '../services/photoService.js';
@@ -172,7 +172,8 @@ export const OfficerTeachersPage = {
                 <tr>
                   <th class="w-10 px-3 py-3 text-center sticky left-0 z-10 bg-muted/90 backdrop-blur-xs">#</th>
                   <th class="w-12 px-2 py-3 text-center">${isKm ? 'រូបថត' : 'Photo'}</th>
-                  <th class="px-3.5 py-3 font-bold text-primary">${isKm ? 'អត្តលេខមន្ត្រី' : 'Civil ID'}</th>
+                  <th class="px-3.5 py-3 font-bold text-foreground font-khmer">${isKm ? 'លេខកូដ' : 'Code'}</th>
+                  <th class="px-3.5 py-3 font-bold text-primary font-khmer">${isKm ? 'អត្តលេខមន្ត្រីរាជការ' : 'Civil Servant ID'}</th>
                   <th class="px-4 py-3">${isKm ? 'គោត្តនាម-នាម' : 'Full Name (Khmer)'}</th>
                   <th class="px-3.5 py-3">${isKm ? 'ឈ្មោះឡាតាំង' : 'Latin Name'}</th>
                   <th class="px-2.5 py-3 text-center">${isKm ? 'ភេទ' : 'Gender'}</th>
@@ -318,7 +319,8 @@ export const OfficerTeachersPage = {
       teachers = teachers.filter(t => {
         const fullNameKm = `${t.lastNameKhmer || ''} ${t.firstNameKhmer || ''}`.toLowerCase();
         const fullNameEn = `${t.lastNameLatin || ''} ${t.firstNameLatin || ''}`.toLowerCase();
-        const cId = (t.civilServantId || t.teacherId || '').toLowerCase();
+        const tCode = (t.code || t.teacherId || '').toLowerCase();
+        const cId = (t.civilServantId || '').toLowerCase();
         const nId = (t.nationalId || '').toLowerCase();
         const phone = (t.phone || t.phone1 || '').toLowerCase();
         const email = (t.email || '').toLowerCase();
@@ -329,6 +331,7 @@ export const OfficerTeachersPage = {
 
         return fullNameKm.includes(this.state.search) ||
                fullNameEn.includes(this.state.search) ||
+               tCode.includes(this.state.search) ||
                cId.includes(this.state.search) ||
                nId.includes(this.state.search) ||
                phone.includes(this.state.search) ||
@@ -376,7 +379,7 @@ export const OfficerTeachersPage = {
     if (pageItems.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="20" class="px-4 py-12 text-center text-muted-foreground">
+          <td colspan="21" class="px-4 py-12 text-center text-muted-foreground">
             <div class="flex flex-col items-center justify-center gap-2">
               ${getIcon('teachers', 'w-9 h-9 text-muted-foreground/40')}
               <p class="font-medium ${isKm ? 'font-khmer' : ''}">${isKm ? 'រកមិនឃើញទិន្នន័យគ្រូបង្រៀន ឬមន្ត្រីទេ' : 'No teacher or officer records found'}</p>
@@ -393,7 +396,8 @@ export const OfficerTeachersPage = {
       const fullNameKm = `${t.lastNameKhmer || ''} ${t.firstNameKhmer || ''}`.trim() || t.khmerName || '—';
       const fullNameEn = `${t.lastNameLatin || ''} ${t.firstNameLatin || ''}`.trim() || t.englishName || '—';
       const photoSrc = t.photo || '';
-      const civilId = t.civilServantId || t.teacherId || '—';
+      const teacherCode = t.code || t.teacherId || '—';
+      const civilId = t.civilServantId || '—';
       const dobFormatted = t.dob ? formatDisplayDate(t.dob) : '—';
       const joinedFormatted = t.joinedDate ? formatDisplayDate(t.joinedDate) : '—';
       const permFormatted = t.permanentAppointmentDate ? formatDisplayDate(t.permanentAppointmentDate) : '—';
@@ -451,7 +455,12 @@ export const OfficerTeachersPage = {
             </div>
           </td>
 
-          <!-- Civil ID -->
+          <!-- Teacher Code (លេខកូដ) -->
+          <td class="px-3.5 py-2.5 font-mono text-xs font-semibold text-foreground">
+            ${teacherCode !== '—' ? `<span class="px-1.5 py-0.5 rounded bg-muted font-bold text-foreground border border-border/80">${teacherCode}</span>` : '—'}
+          </td>
+
+          <!-- Civil ID (អត្តលេខមន្ត្រីរាជការ) -->
           <td class="px-3.5 py-2.5 font-mono text-xs font-bold text-primary">
             ${civilId}
           </td>
@@ -683,7 +692,8 @@ export const OfficerTeachersPage = {
       // Setup Headers
       sheet.columns = [
         { header: isKm ? 'ល.រ' : 'No', key: 'no', width: 6 },
-        { header: isKm ? 'អត្តលេខមន្ត្រី' : 'Civil ID', key: 'civilServantId', width: 16 },
+        { header: isKm ? 'លេខកូដ' : 'Code', key: 'teacherId', width: 14 },
+        { header: isKm ? 'អត្តលេខមន្ត្រីរាជការ' : 'Civil Servant ID', key: 'civilServantId', width: 18 },
         { header: isKm ? 'គោត្តនាម' : 'Last Name (KM)', key: 'lastNameKhmer', width: 14 },
         { header: isKm ? 'នាមខ្លួន' : 'First Name (KM)', key: 'firstNameKhmer', width: 14 },
         { header: isKm ? 'គោត្តនាម-នាម' : 'Full Name (KM)', key: 'fullNameKm', width: 20 },
@@ -720,7 +730,8 @@ export const OfficerTeachersPage = {
       list.forEach((t, idx) => {
         const row = sheet.addRow({
           no: idx + 1,
-          civilServantId: t.civilServantId || t.teacherId || '',
+          teacherId: t.code || t.teacherId || '',
+          civilServantId: t.civilServantId || '',
           lastNameKhmer: t.lastNameKhmer || '',
           firstNameKhmer: t.firstNameKhmer || '',
           fullNameKm: `${t.lastNameKhmer || ''} ${t.firstNameKhmer || ''}`.trim() || t.khmerName || '',
