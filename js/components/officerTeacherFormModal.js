@@ -194,10 +194,11 @@ export const OfficerTeacherFormModal = {
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <!-- លេខកូដ (Teacher Code) * -->
+                  <!-- Row 1, Col 1: លេខកូដ (Teacher Code) * -->
                   <div>
-                    <label class="block text-xs font-semibold text-foreground mb-1">
-                      ${isKm ? 'លេខកូដ' : 'Code'} <span class="text-rose-500 font-bold">*</span>
+                    <label class="flex items-center gap-1 text-xs font-semibold text-foreground mb-1.5 h-6 font-khmer">
+                      <span>${isKm ? 'លេខកូដ' : 'Code'}</span>
+                      <span class="text-rose-500 font-bold">*</span>
                     </label>
                     <input type="text" id="officer-teacher-id" required
                            value="${initialTeacherId}"
@@ -205,10 +206,10 @@ export const OfficerTeacherFormModal = {
                            class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono shadow-2xs font-semibold" />
                   </div>
 
-                  <!-- អត្តលេខមន្រ្តីរាជការ (Civil Servant ID) -->
+                  <!-- Row 1, Col 2: អត្តលេខមន្រ្តីរាជការ (Civil Servant ID) -->
                   <div>
-                    <label class="block text-xs font-semibold text-foreground mb-1">
-                      ${isKm ? 'អត្តលេខមន្រ្តីរាជការ' : 'Civil Servant ID'}
+                    <label class="flex items-center gap-1 text-xs font-semibold text-foreground mb-1.5 h-6 font-khmer">
+                      <span>${isKm ? 'អត្តលេខមន្រ្តីរាជការ' : 'Civil Servant ID'}</span>
                     </label>
                     <input type="text" id="officer-civil-servant-id"
                            value="${initialCivilId}"
@@ -216,10 +217,11 @@ export const OfficerTeacherFormModal = {
                            class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono shadow-2xs font-semibold text-primary" />
                   </div>
 
-                  <!-- នាមត្រកូល * -->
+                  <!-- Row 1, Col 3: នាមត្រកូល * -->
                   <div>
-                    <label class="block text-xs font-semibold text-foreground mb-1">
-                      ${isKm ? 'នាមត្រកូល' : 'Khmer Surname'} <span class="text-rose-500 font-bold">*</span>
+                    <label class="flex items-center gap-1 text-xs font-semibold text-foreground mb-1.5 h-6 font-khmer">
+                      <span>${isKm ? 'នាមត្រកូល' : 'Khmer Surname'}</span>
+                      <span class="text-rose-500 font-bold">*</span>
                     </label>
                     <input type="text" id="officer-last-name-km" required
                            value="${initialLastNameKm}"
@@ -227,10 +229,11 @@ export const OfficerTeacherFormModal = {
                            class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-khmer shadow-2xs" />
                   </div>
 
-                  <!-- នាមខ្លួន * -->
+                  <!-- Row 1, Col 4: នាមខ្លួន * -->
                   <div>
-                    <label class="block text-xs font-semibold text-foreground mb-1">
-                      ${isKm ? 'នាមខ្លួន' : 'Khmer First Name'} <span class="text-rose-500 font-bold">*</span>
+                    <label class="flex items-center gap-1 text-xs font-semibold text-foreground mb-1.5 h-6 font-khmer">
+                      <span>${isKm ? 'នាមខ្លួន' : 'Khmer First Name'}</span>
+                      <span class="text-rose-500 font-bold">*</span>
                     </label>
                     <input type="text" id="officer-first-name-km" required
                            value="${initialFirstNameKm}"
@@ -238,32 +241,11 @@ export const OfficerTeacherFormModal = {
                            class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-khmer shadow-2xs" />
                   </div>
 
-                  <!-- នាមត្រកូល (ឡាតាំង) -->
+                  <!-- Row 2, Col 1: ភេទ * -->
                   <div>
-                    <label class="block text-xs font-semibold text-foreground mb-1">
-                      ${isKm ? 'នាមត្រកូល (ឡាតាំង)' : 'Latin Surname'}
-                    </label>
-                    <input type="text" id="officer-last-name-en"
-                           value="${initialLastNameEn}"
-                           placeholder="SOK"
-                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary uppercase font-mono shadow-2xs" />
-                  </div>
-
-                  <!-- នាមខ្លួន (ឡាតាំង) -->
-                  <div>
-                    <label class="block text-xs font-semibold text-foreground mb-1">
-                      ${isKm ? 'នាមខ្លួន (ឡាតាំង)' : 'Latin First Name'}
-                    </label>
-                    <input type="text" id="officer-first-name-en"
-                           value="${initialFirstNameEn}"
-                           placeholder="SOPHAL"
-                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary uppercase font-mono shadow-2xs" />
-                  </div>
-
-                  <!-- ភេទ * -->
-                  <div>
-                    <label class="block text-xs font-semibold text-foreground mb-1">
-                      ${isKm ? 'ភេទ' : 'Gender'} <span class="text-rose-500 font-bold">*</span>
+                    <label class="flex items-center gap-1 text-xs font-semibold text-foreground mb-1.5 h-6 font-khmer">
+                      <span>${isKm ? 'ភេទ' : 'Gender'}</span>
+                      <span class="text-rose-500 font-bold">*</span>
                     </label>
                     <select id="officer-gender" required
                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs">
@@ -272,20 +254,43 @@ export const OfficerTeacherFormModal = {
                     </select>
                   </div>
 
-                  <!-- ថ្ងៃខែឆ្នាំកំណើត * -->
+                  <!-- Row 2, Col 2: ថ្ងៃខែឆ្នាំកំណើត * -->
                   <div>
-                    <label class="block text-xs font-semibold text-foreground mb-1">
-                      ${isKm ? 'ថ្ងៃខែឆ្នាំកំណើត' : 'Date of Birth'} <span class="text-rose-500 font-bold">*</span>
+                    <label class="flex items-center gap-1 text-xs font-semibold text-foreground mb-1.5 h-6 font-khmer">
+                      <span>${isKm ? 'ថ្ងៃខែឆ្នាំកំណើត' : 'Date of Birth'}</span>
+                      <span class="text-rose-500 font-bold">*</span>
                     </label>
                     <input type="date" id="officer-dob" required
                            value="${initialDob}"
                            class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs font-mono" />
                   </div>
 
-                  <!-- ជនជាតិ -->
+                  <!-- Row 2, Col 3: នាមត្រកូល (ឡាតាំង) - Aligned directly below Khmer Surname -->
+                  <div>
+                    <label class="flex items-center gap-1 text-xs font-semibold text-foreground mb-1.5 h-6 font-khmer">
+                      <span>${isKm ? 'នាមត្រកូល (ឡាតាំង)' : 'Latin Surname'}</span>
+                    </label>
+                    <input type="text" id="officer-last-name-en"
+                           value="${initialLastNameEn}"
+                           placeholder="SOK"
+                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary uppercase font-mono shadow-2xs" />
+                  </div>
+
+                  <!-- Row 2, Col 4: នាមខ្លួន (ឡាតាំង) - Aligned directly below Khmer First Name -->
+                  <div>
+                    <label class="flex items-center gap-1 text-xs font-semibold text-foreground mb-1.5 h-6 font-khmer">
+                      <span>${isKm ? 'នាមខ្លួន (ឡាតាំង)' : 'Latin First Name'}</span>
+                    </label>
+                    <input type="text" id="officer-first-name-en"
+                           value="${initialFirstNameEn}"
+                           placeholder="SOPHAL"
+                           class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary uppercase font-mono shadow-2xs" />
+                  </div>
+
+                  <!-- Row 3, Col 1-2: ជនជាតិ -->
                   <div class="sm:col-span-2">
-                    <label class="block text-xs font-semibold text-foreground mb-1">
-                      ${isKm ? 'ជនជាតិ' : 'Ethnicity'}
+                    <label class="flex items-center gap-1 text-xs font-semibold text-foreground mb-1.5 h-6 font-khmer">
+                      <span>${isKm ? 'ជនជាតិ' : 'Ethnicity'}</span>
                     </label>
                     <select id="officer-ethnicity"
                             class="w-full h-9 px-3 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs">
