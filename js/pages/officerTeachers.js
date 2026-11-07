@@ -9,7 +9,7 @@
  */
 
 import { TeacherService } from '../services/teacherService.js';
-import { OfficerTeacherFormModal } from '../components/officerTeacherFormModal.js?v=3.1.43';
+import { OfficerTeacherFormModal } from '../components/officerTeacherFormModal.js?v=3.2.00';
 import { TeacherCvTemplate } from '../components/teacherCvTemplate.js';
 import { ReportViewer } from '../components/reportViewer.js';
 import { photoService } from '../services/photoService.js';
