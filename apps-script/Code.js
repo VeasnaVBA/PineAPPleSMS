@@ -879,6 +879,19 @@ function handlePullToDrive(fileName, username, data, payload) {
     { name: 'settings', data: data.settings || [] }
   ];
   
+  // Dynamically include any extra tables sent in data (e.g. card_settings or custom tables)
+  for (var k in data) {
+    if (data.hasOwnProperty(k) && Array.isArray(data[k])) {
+      var exists = false;
+      for (var d = 0; d < sheetsDef.length; d++) {
+        if (sheetsDef[d].name === k) { exists = true; break; }
+      }
+      if (!exists) {
+        sheetsDef.push({ name: k, data: data[k] });
+      }
+    }
+  }
+
   var counts = {};
   
   for (var i = 0; i < sheetsDef.length; i++) {
@@ -977,6 +990,17 @@ function handlePushToApp(fileName, username) {
     'registration_queue',
     'settings'
   ];
+
+  // Dynamically include any extra sheet tabs that exist in this spreadsheet
+  var allSheets = spreadsheet.getSheets();
+  for (var es = 0; es < allSheets.length; es++) {
+    var esName = allSheets[es].getName();
+    if (esName === 'Sheet1') continue;
+    if (sheetNames.indexOf(esName) === -1) {
+      sheetNames.push(esName);
+    }
+  }
+
   var resultData = {};
   
   for (var s = 0; s < sheetNames.length; s++) {
