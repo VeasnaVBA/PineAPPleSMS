@@ -909,6 +909,9 @@ function handlePullToDrive(fileName, username, data, payload) {
           var val = rowObj[headers[h]];
           if (val === null || val === undefined) val = '';
           else if (typeof val === 'object') val = JSON.stringify(val);
+          if (typeof val === 'string' && val.length > 49000) {
+            val = val.substring(0, 49000);
+          }
           rowValues.push(val);
         }
         matrix.push(rowValues);

@@ -28,6 +28,56 @@ import { syncStateManager } from './syncStateManager.js';
 import { photoService } from './photoService.js';
 import { WorkspaceSetupService } from './workspaceSetupService.js';
 
+const SETTING_CHUNK_SIZE = 35000; // Safe threshold well below Google Sheets 50,000 char per-cell limit
+
+/**
+ * Safely prepare settings records for Google Drive export.
+ * If any setting's serialized value exceeds 35,000 characters (e.g. ID card studio designs with custom logos/stamps),
+ * it is automatically split into multi-row chunks so Google Sheets never throws cell limit exceptions.
+ */
+export function prepareSettingsForDrive(rawSettings) {
+  if (!Array.isArray(rawSettings)) return [];
+  const processed = [];
+
+  for (const item of rawSettings) {
+    if (!item || !item.key) continue;
+    const key = String(item.key).trim();
+    if (key.includes('__chunk_') || key.endsWith('__manifest')) continue;
+
+    let val = item.value;
+    let serializedVal = typeof val === 'object' ? JSON.stringify(val) : String(val !== undefined && val !== null ? val : '');
+
+    if (serializedVal.length > SETTING_CHUNK_SIZE) {
+      const totalChunks = Math.ceil(serializedVal.length / SETTING_CHUNK_SIZE);
+      for (let c = 0; c < totalChunks; c++) {
+        processed.push({
+          id: `${key}__chunk_${c}`,
+          key: `${key}__chunk_${c}`,
+          value: serializedVal.substring(c * SETTING_CHUNK_SIZE, (c + 1) * SETTING_CHUNK_SIZE)
+        });
+      }
+      processed.push({
+        id: `${key}__manifest`,
+        key: `${key}__manifest`,
+        value: JSON.stringify({
+          isChunked: true,
+          totalChunks,
+          isJsonObject: typeof val === 'object',
+          origKey: key
+        })
+      });
+    } else {
+      processed.push({
+        id: item.id || key,
+        key: key,
+        value: val
+      });
+    }
+  }
+
+  return processed;
+}
+
 export const CloudSyncService = {
   _isRestoring: false,
   _isPushInProgress: false,
@@ -258,7 +308,8 @@ export const CloudSyncService = {
         delete clean.photoBlob;
         return clean;
       }));
-      const settings = await db.getAll('settings');
+      const rawSettings = await db.getAll('settings');
+      const settings = prepareSettingsForDrive(rawSettings);
 
       // 5. Construct payload matching specification
       const payload = {
@@ -742,13 +793,64 @@ export const CloudSyncService = {
         }
       }
 
-      // 12. Settings (User Workspace preferences)
+      // 12. Settings (User Workspace preferences & ID Card design settings)
       if (Array.isArray(data.settings)) {
+        // Collect chunks and manifests if any settings were chunked for Google Sheets 50k limit
+        const chunkMap = new Map();
+        const incomingSettings = [];
+
         for (const item of data.settings) {
+          if (!item || !item.key) continue;
+          const key = String(item.key).trim();
+
+          if (key.endsWith('__manifest')) {
+            const baseKey = key.replace(/__manifest$/, '');
+            let manifest = item.value;
+            if (typeof manifest === 'string') {
+              try { manifest = JSON.parse(manifest); } catch (_) {}
+            }
+            if (!chunkMap.has(baseKey)) chunkMap.set(baseKey, { manifest: null, chunks: [] });
+            chunkMap.get(baseKey).manifest = manifest;
+          } else if (key.includes('__chunk_')) {
+            const parts = key.split('__chunk_');
+            const baseKey = parts[0];
+            const chunkIndex = parseInt(parts[1], 10);
+            if (!chunkMap.has(baseKey)) chunkMap.set(baseKey, { manifest: null, chunks: [] });
+            chunkMap.get(baseKey).chunks[chunkIndex] = String(item.value || '');
+          } else {
+            incomingSettings.push(item);
+          }
+        }
+
+        // Reconstruct chunked settings
+        for (const [baseKey, bundle] of chunkMap.entries()) {
+          if (bundle.chunks && bundle.chunks.length > 0) {
+            const fullStr = bundle.chunks.join('');
+            let parsedVal = fullStr;
+            if (bundle.manifest?.isJsonObject || fullStr.startsWith('{') || fullStr.startsWith('[')) {
+              try {
+                parsedVal = JSON.parse(fullStr);
+              } catch (_) {}
+            }
+            incomingSettings.push({
+              key: baseKey,
+              value: parsedVal
+            });
+          }
+        }
+
+        // Store into IndexedDB with automatic JSON string parsing for structured objects
+        for (const item of incomingSettings) {
           if (!item.key) continue;
+          let val = item.value !== undefined ? item.value : '';
+          if (typeof val === 'string' && ((val.startsWith('{') && val.endsWith('}')) || (val.startsWith('[') && val.endsWith(']')))) {
+            try {
+              val = JSON.parse(val);
+            } catch (_) {}
+          }
           const cleanItem = {
             key: String(item.key).trim(),
-            value: item.value !== undefined ? item.value : ''
+            value: val
           };
           await db.put('settings', cleanItem);
           settingCount++;

@@ -12,6 +12,8 @@ import { SchoolService } from '../services/schoolService.js';
 import { toast } from './toast.js';
 import { getIcon } from './icons.js';
 import { i18n } from '../i18n/i18n.js';
+import { CloudSyncService } from '../services/cloudSyncService.js';
+import { getCloudSyncUrl } from '../config/cloudSync.js';
 
 export const IDCardStudioModal = {
   activeOverlay: null,
@@ -221,7 +223,12 @@ export const IDCardStudioModal = {
       const defaultSchoolKh = appSchoolKh || 'ឈ្មោះសាលារៀន';
       const defaultSchoolEn = appSchoolEn || 'SCHOOL NAME';
 
-      const saved = await SettingsService.get('id_card_studio_config');
+      let saved = await SettingsService.get('id_card_studio_config');
+      if (typeof saved === 'string') {
+        try {
+          saved = JSON.parse(saved);
+        } catch (_) {}
+      }
       if (saved && typeof saved === 'object') {
         this.config = {
           ...DEFAULT_CARD_CONFIG,
@@ -369,6 +376,23 @@ export const IDCardStudioModal = {
                   <div class="text-[11px] text-muted-foreground truncate">${isKm ? 'រក្សាទុកជាការរចនាលំនាំដើមក្នុង DB' : 'Save as default active design in DB'}</div>
                 </div>
               </button>
+              <!-- Cloud Sync: Push Design to Drive -->
+              <button id="btn-sync-to-google-drive" type="button" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent text-foreground text-left transition-colors cursor-pointer">
+                <span class="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 shrink-0">${getIcon('cloudUpload', 'w-4 h-4')}</span>
+                <div class="min-w-0">
+                  <div class="font-semibold">${isKm ? 'ធ្វើសមកាលកម្មទៅ Google Drive' : 'Sync Design to Google Drive'}</div>
+                  <div class="text-[11px] text-muted-foreground truncate">${isKm ? 'បញ្ជូនការរចនានិងគំរូទាំងអស់ទៅ Drive' : 'Push design & templates to Drive'}</div>
+                </div>
+              </button>
+              <!-- Cloud Sync: Pull Design from Drive -->
+              <button id="btn-pull-from-google-drive" type="button" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent text-foreground text-left transition-colors cursor-pointer">
+                <span class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 shrink-0">${getIcon('cloudDownload', 'w-4 h-4')}</span>
+                <div class="min-w-0">
+                  <div class="font-semibold">${isKm ? 'ទាញយកពី Google Drive' : 'Pull Design from Google Drive'}</div>
+                  <div class="text-[11px] text-muted-foreground truncate">${isKm ? 'ទាញយកការរចនាពីកុំព្យូទ័រមកប្រើលើទូរសព្ទ' : 'Fetch design saved from laptop to phone'}</div>
+                </div>
+              </button>
+              <div class="border-t border-border/80 my-1"></div>
               <button id="btn-save-as-named-template" type="button" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent text-foreground text-left transition-colors cursor-pointer">
                 <span class="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">${getIcon('plus', 'w-4 h-4')}</span>
                 <div class="min-w-0">
@@ -2079,16 +2103,12 @@ export const IDCardStudioModal = {
     // Custom Background Image Upload & Opacity
     const bgImageInput = overlay.querySelector('#input-file-bg-image');
     overlay.querySelector('#btn-upload-bg-image')?.addEventListener('click', () => bgImageInput?.click());
-    bgImageInput?.addEventListener('change', (e) => {
+    bgImageInput?.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (file) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          this.config.backgroundImage = ev.target.result;
-          this.savePersistedSettings();
-          this.renderModal();
-        };
-        reader.readAsDataURL(file);
+        this.config.backgroundImage = await this.compressImageToDataUrl(file, 700, 1100, 0.82);
+        this.savePersistedSettings();
+        this.renderModal();
       }
     });
 
@@ -2196,16 +2216,12 @@ export const IDCardStudioModal = {
     // Logo Upload
     const logoInput = overlay.querySelector('#input-file-logo');
     overlay.querySelector('#btn-upload-logo')?.addEventListener('click', () => logoInput?.click());
-    logoInput?.addEventListener('change', (e) => {
+    logoInput?.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (file) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          this.config.schoolLogo = ev.target.result;
-          this.savePersistedSettings();
-          this.renderModal();
-        };
-        reader.readAsDataURL(file);
+        this.config.schoolLogo = await this.compressImageToDataUrl(file, 400, 400, 0.85);
+        this.savePersistedSettings();
+        this.renderModal();
       }
     });
 
@@ -2263,17 +2279,13 @@ export const IDCardStudioModal = {
     // Signature Upload
     const sigInput = overlay.querySelector('#input-file-signature');
     overlay.querySelector('#btn-upload-signature')?.addEventListener('click', () => sigInput?.click());
-    sigInput?.addEventListener('change', (e) => {
+    sigInput?.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (file) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          this.config.signatureImage = ev.target.result;
-          this.config.showSignature = true;
-          this.savePersistedSettings();
-          this.renderModal();
-        };
-        reader.readAsDataURL(file);
+        this.config.signatureImage = await this.compressImageToDataUrl(file, 400, 200, 0.85);
+        this.config.showSignature = true;
+        this.savePersistedSettings();
+        this.renderModal();
       }
     });
 
@@ -2292,17 +2304,13 @@ export const IDCardStudioModal = {
     // Stamp Upload
     const stampInput = overlay.querySelector('#input-file-stamp');
     overlay.querySelector('#btn-upload-stamp')?.addEventListener('click', () => stampInput?.click());
-    stampInput?.addEventListener('change', (e) => {
+    stampInput?.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (file) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          this.config.stampImage = ev.target.result;
-          this.config.showStamp = true;
-          this.savePersistedSettings();
-          this.renderModal();
-        };
-        reader.readAsDataURL(file);
+        this.config.stampImage = await this.compressImageToDataUrl(file, 400, 400, 0.85);
+        this.config.showStamp = true;
+        this.savePersistedSettings();
+        this.renderModal();
       }
     });
 
@@ -2583,16 +2591,12 @@ export const IDCardStudioModal = {
     overlay.querySelector('#btn-upload-back-bg')?.addEventListener('click', () => {
       overlay.querySelector('#file-back-bg')?.click();
     });
-    overlay.querySelector('#file-back-bg')?.addEventListener('change', (e) => {
+    overlay.querySelector('#file-back-bg')?.addEventListener('change', async (e) => {
       const file = e.target.files?.[0];
       if (file) {
-        const reader = new FileReader();
-        reader.onload = (re) => {
-          this.config.backBackgroundImage = re.target.result;
-          this.savePersistedSettings();
-          this.renderModal();
-        };
-        reader.readAsDataURL(file);
+        this.config.backBackgroundImage = await this.compressImageToDataUrl(file, 700, 1100, 0.82);
+        this.savePersistedSettings();
+        this.renderModal();
       }
     });
     overlay.querySelector('#btn-remove-back-bg')?.addEventListener('click', () => {
@@ -2750,6 +2754,16 @@ export const IDCardStudioModal = {
     overlay.querySelector('#btn-save-design-direct')?.addEventListener('click', () => {
       saveDesignDropdownMenu?.classList.add('hidden');
       this.saveDesignToDatabase();
+    });
+
+    overlay.querySelector('#btn-sync-to-google-drive')?.addEventListener('click', () => {
+      saveDesignDropdownMenu?.classList.add('hidden');
+      this.syncDesignToGoogleDrive();
+    });
+
+    overlay.querySelector('#btn-pull-from-google-drive')?.addEventListener('click', () => {
+      saveDesignDropdownMenu?.classList.add('hidden');
+      this.pullDesignFromGoogleDrive();
     });
 
     overlay.querySelector('#btn-save-as-named-template')?.addEventListener('click', () => {
@@ -3580,6 +3594,15 @@ export const IDCardStudioModal = {
       await this.savePersistedSettings();
       await SettingsService.set('id_card_last_saved_at', new Date().toISOString());
 
+      // Automatically sync card design changes to Google Drive in background if connected
+      try {
+        if (CloudSyncService.isOnline && CloudSyncService.isOnline() && getCloudSyncUrl()) {
+          CloudSyncService.pullToDrive(null, { silent: true }).catch(err => {
+            console.warn('[IDCardStudio] Auto-sync to Google Drive warning:', err);
+          });
+        }
+      } catch (_) {}
+
       // Show success toast
       toast.success(
         isKm 
@@ -3613,6 +3636,114 @@ export const IDCardStudioModal = {
         btn.disabled = false;
         btn.classList.remove('opacity-80', 'pointer-events-none');
       }
+    }
+  },
+
+  /**
+   * Helper: Compress and optimize user-uploaded image files to compact base64 data URLs.
+   * Keeps card render snappy, prevents local DB bloat, and fits safely within cloud sync limits.
+   */
+  async compressImageToDataUrl(file, maxWidth = 800, maxHeight = 1200, quality = 0.82) {
+    if (!file) return '';
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+          if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = Math.round(width * ratio);
+            height = Math.round(height * ratio);
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(width, 1);
+          canvas.height = Math.max(height, 1);
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const isPng = file.type === 'image/png';
+          let dataUrl = canvas.toDataURL(isPng ? 'image/png' : 'image/jpeg', quality);
+          // If PNG is over 70KB, convert to JPEG for high efficiency
+          if (isPng && dataUrl.length > 70000) {
+            dataUrl = canvas.toDataURL('image/jpeg', quality);
+          }
+          resolve(dataUrl);
+        };
+        img.onerror = () => resolve(e.target.result);
+        img.src = e.target.result;
+      };
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
+  },
+
+  /**
+   * Explicitly push current card design and templates to Google Drive
+   */
+  async syncDesignToGoogleDrive() {
+    const isKm = i18n.getLocale() === 'km';
+    try {
+      if (!CloudSyncService.isOnline()) {
+        toast.error(isKm ? 'គ្មានការតភ្ជាប់អ៊ីនធឺណិតទេ សូមពិនិត្យមើលបណ្តាញរបស់អ្នក' : 'No internet connection. Please check your network.');
+        return;
+      }
+
+      const endpoint = getCloudSyncUrl();
+      if (!endpoint) {
+        toast.warning(isKm ? 'មិនទាន់បានកំណត់ Google Apps Script URL នៅឡើយទេ' : 'Google Apps Script URL is not configured yet.');
+        CloudSyncService.openConfigModal();
+        return;
+      }
+
+      toast.info(isKm ? 'កំពុងធ្វើសមកាលកម្មការរចនាកាតទៅ Google Drive...' : 'Syncing card design to Google Drive...');
+
+      // Save current configuration first
+      await this.savePersistedSettings();
+
+      // Trigger Drive sync
+      const success = await CloudSyncService.pullToDrive(null, { silent: false });
+      if (success) {
+        toast.success(isKm ? 'បានធ្វើសមកាលកម្មការរចនាកាតទៅ Google Drive ដោយជោគជ័យ!' : 'Card design synced to Google Drive successfully!');
+      }
+    } catch (err) {
+      console.error('Error syncing design to Drive:', err);
+      toast.error(isKm ? 'បរាជ័យក្នុងការធ្វើសមកាលកម្មទៅ Drive: ' + (err.message || '') : 'Failed to sync to Drive: ' + (err.message || ''));
+    }
+  },
+
+  /**
+   * Pull latest card design and templates from Google Drive onto this device (e.g. Phone)
+   */
+  async pullDesignFromGoogleDrive() {
+    const isKm = i18n.getLocale() === 'km';
+    try {
+      if (!CloudSyncService.isOnline()) {
+        toast.error(isKm ? 'គ្មានការតភ្ជាប់អ៊ីនធឺណិតទេ សូមពិនិត្យមើលបណ្តាញរបស់អ្នក' : 'No internet connection. Please check your network.');
+        return;
+      }
+
+      const endpoint = getCloudSyncUrl();
+      if (!endpoint) {
+        toast.warning(isKm ? 'មិនទាន់បានកំណត់ Google Apps Script URL នៅឡើយទេ' : 'Google Apps Script URL is not configured yet.');
+        CloudSyncService.openConfigModal();
+        return;
+      }
+
+      toast.info(isKm ? 'កំពុងទាញយកការរចនាកាតពី Google Drive...' : 'Pulling card design from Google Drive...');
+
+      // Fetch from Drive and restore into local IndexedDB
+      const success = await CloudSyncService.pushToApp(null, { force: true, silent: false });
+      if (success) {
+        // Reload settings and re-render modal
+        await this.loadPersistedSettings();
+        this.renderModal();
+        toast.success(isKm ? 'បានទាញយកការរចនាកាតពី Google Drive ដោយជោគជ័យ!' : 'Card design pulled from Google Drive successfully!');
+      }
+    } catch (err) {
+      console.error('Error pulling design from Drive:', err);
+      toast.error(isKm ? 'បរាជ័យក្នុងការទាញយកពី Drive: ' + (err.message || '') : 'Failed to pull from Drive: ' + (err.message || ''));
     }
   },
 
@@ -3687,7 +3818,10 @@ export const IDCardStudioModal = {
       }
 
       try {
-        const existing = (await SettingsService.get('id_card_saved_templates')) || [];
+        let existing = (await SettingsService.get('id_card_saved_templates')) || [];
+        if (typeof existing === 'string') {
+          try { existing = JSON.parse(existing); } catch (_) {}
+        }
         const templates = Array.isArray(existing) ? existing : [];
         const newTpl = {
           id: 'tpl_' + Date.now(),
@@ -3724,7 +3858,10 @@ export const IDCardStudioModal = {
 
     let templates = [];
     try {
-      const raw = await SettingsService.get('id_card_saved_templates');
+      let raw = await SettingsService.get('id_card_saved_templates');
+      if (typeof raw === 'string') {
+        try { raw = JSON.parse(raw); } catch (_) {}
+      }
       templates = Array.isArray(raw) ? raw : [];
     } catch (_) {
       templates = [];
