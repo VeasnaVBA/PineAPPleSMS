@@ -5,7 +5,7 @@
  * theme color schemes, signature & stamp uploaders, toggleable field checklist,
  * and 1-to-1 A4 print fidelity.
  */
-import { DEFAULT_CARD_CONFIG, DEFAULT_FIELD_STYLES, DIMENSION_PRESETS, THEME_COLOR_PRESETS, renderCardSheetHtml, renderIDCardHtml, renderIDCardBackHtml, chunkStudentsForPages, resolveCardDateText } from './idCardTemplate.js';
+import { DEFAULT_CARD_CONFIG, DEFAULT_FIELD_STYLES, DEFAULT_FIELD_ORDER, DIMENSION_PRESETS, THEME_COLOR_PRESETS, renderCardSheetHtml, renderIDCardHtml, renderIDCardBackHtml, chunkStudentsForPages, resolveCardDateText } from './idCardTemplate.js';
 import { formatKhmerLunarDate, formatKhmerSolarDate } from '../utils/khmerLunar.js';
 import { SettingsService } from '../services/settingsService.js';
 import { SchoolService } from '../services/schoolService.js';
@@ -240,7 +240,13 @@ export const IDCardStudioModal = {
           fieldStyles: {
             ...DEFAULT_FIELD_STYLES,
             ...(saved.fieldStyles || {})
-          }
+          },
+          fieldOrder: Array.isArray(saved.fieldOrder) && saved.fieldOrder.length > 0
+            ? [
+                ...saved.fieldOrder,
+                ...DEFAULT_FIELD_ORDER.filter(k => !saved.fieldOrder.includes(k))
+              ]
+            : [...DEFAULT_FIELD_ORDER]
         };
 
         // If saved still has old placeholder names, replace with app school or default
@@ -1211,71 +1217,15 @@ export const IDCardStudioModal = {
               })}
 
               <div class="pt-2 border-t border-border space-y-2.5">
-                <p class="text-[11px] text-muted-foreground font-khmer">${isKm ? 'កំណត់ពុម្ពអក្សរ ទំហំ ពណ៌ និងការបង្ហាញទិន្នន័យនីមួយៗ៖' : 'Customize Font, Size, Color & Visibility for each field:'}</p>
-              ${[
-                { key: 'nameKh', labelKh: 'ឈ្មោះភាសាខ្មែរ', labelEn: 'Khmer Name', fixed: true },
-                { key: 'nameLatin', labelKh: 'ឈ្មោះឡាតាំង', labelEn: 'Latin Name' },
-                { key: 'className', labelKh: 'ថ្នាក់រៀន', labelEn: 'Class Name' },
-                { key: 'studentId', labelKh: 'អត្តលេខសិស្ស', labelEn: 'Student ID' },
-                { key: 'academicYear', labelKh: 'ឆ្នាំសិក្សា', labelEn: 'Academic Year' },
-                { key: 'dob', labelKh: 'ថ្ងៃខែឆ្នាំកំណើត', labelEn: 'Date of Birth' },
-                { key: 'gender', labelKh: 'ភេទ', labelEn: 'Gender' },
-                { key: 'fatherName', labelKh: 'ឈ្មោះឪពុក', labelEn: 'Father Name' },
-                { key: 'motherName', labelKh: 'ឈ្មោះម្តាយ', labelEn: 'Mother Name' },
-                { key: 'phone', labelKh: 'លេខទូរសព្ទ', labelEn: 'Phone Number' }
-              ].map(f => {
-                const fs = (this.config.fieldStyles && this.config.fieldStyles[f.key]) || (DEFAULT_FIELD_STYLES[f.key] || { font: 'Kantumruy Pro', size: 7.5, color: '#0f172a', bold: false });
-                const isChecked = this.config.fields[f.key] !== false;
-                return `
-                  <div class="p-2.5 rounded-xl bg-muted/20 border border-border space-y-2">
-                    <!-- Top row: Checkbox & Name -->
-                    <div class="flex items-center justify-between">
-                      <label class="flex items-center gap-2 cursor-pointer font-khmer text-xs select-none">
-                        <input type="checkbox" data-field="${f.key}" class="field-toggle-checkbox h-4 w-4 rounded border-input text-primary focus:ring-primary cursor-pointer" ${isChecked ? 'checked' : ''} ${f.fixed ? 'disabled' : ''} />
-                        <span class="font-semibold ${f.fixed ? 'text-primary font-bold' : 'text-foreground'}">
-                          ${isKm ? f.labelKh : f.labelEn} ${f.fixed ? (isKm ? '*(ជាប់)' : '*(Req)') : ''}
-                        </span>
-                      </label>
-                      <span class="text-[10px] text-muted-foreground font-mono font-medium">
-                        ${fs.size}px
-                      </span>
-                    </div>
-
-                    <!-- Bottom row: Font dropdown, Size input, Color picker, Bold toggle -->
-                    <div class="grid grid-cols-12 gap-1.5 pt-1 border-t border-border/50 items-center">
-                      <!-- Font selector -->
-                      <div class="col-span-5">
-                        <select data-style-field="${f.key}" data-style-prop="font" class="input-field-style-font w-full h-7 px-1.5 rounded-md border border-input bg-background text-[10px] font-medium text-foreground cursor-pointer shadow-2xs">
-                          <option value="Kantumruy Pro" ${fs.font === 'Kantumruy Pro' ? 'selected' : ''}>Kantumruy</option>
-                          <option value="Siemreap" ${fs.font === 'Siemreap' ? 'selected' : ''}>Siemreap</option>
-                          <option value="Moul" ${fs.font === 'Moul' ? 'selected' : ''}>Moul (មូល)</option>
-                          <option value="Inter" ${fs.font === 'Inter' ? 'selected' : ''}>Inter</option>
-                          <option value="Roboto" ${fs.font === 'Roboto' ? 'selected' : ''}>Roboto</option>
-                          <option value="Plus Jakarta Sans" ${fs.font === 'Plus Jakarta Sans' ? 'selected' : ''}>Jakarta</option>
-                          <option value="monospace" ${fs.font === 'monospace' ? 'selected' : ''}>Monospace</option>
-                        </select>
-                      </div>
-
-                      <!-- Size selector -->
-                      <div class="col-span-3">
-                        <input type="number" min="4" max="24" step="0.5" data-style-field="${f.key}" data-style-prop="size" value="${fs.size}" title="${isKm ? 'ទំហំអក្សរ (px)' : 'Font Size (px)'}" class="input-field-style-size w-full h-7 px-1.5 rounded-md border border-input bg-background font-mono text-[11px] text-center shadow-2xs" />
-                      </div>
-
-                      <!-- Color picker -->
-                      <div class="col-span-2 flex items-center justify-center">
-                        <input type="color" data-style-field="${f.key}" data-style-prop="color" value="${fs.color || '#0f172a'}" title="${isKm ? 'ពណ៌អក្សរ' : 'Text Color'}" class="input-field-style-color w-7 h-7 rounded-md cursor-pointer border border-input p-0.5 bg-background shrink-0 shadow-2xs" />
-                      </div>
-
-                      <!-- Bold toggle button -->
-                      <div class="col-span-2 flex items-center justify-center">
-                        <button type="button" data-style-field="${f.key}" data-style-prop="bold" class="btn-field-style-bold w-7 h-7 rounded-md border text-xs font-bold transition-all cursor-pointer shadow-2xs ${fs.bold ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-muted text-foreground border-input'}" title="Bold">
-                          B
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                `;
-              }).join('')}
+                <div class="flex items-center justify-between gap-2">
+                  <p class="text-[11px] text-muted-foreground font-khmer leading-snug">${isKm ? 'អូស (Drag ↕) ឬចុចព្រួញដើម្បីប្តូរលំដាប់ទិន្នន័យលើកាត៖' : 'Drag (↕) or click arrows to reorder fields on card:'}</p>
+                  <button type="button" id="btn-reset-field-order" class="text-[10px] text-primary hover:underline font-khmer font-semibold cursor-pointer shrink-0" title="${isKm ? 'កំណត់លំដាប់ឡើងវិញដូចដើម' : 'Reset to default order'}">
+                    ${isKm ? 'លំដាប់ដើម' : 'Reset Order'}
+                  </button>
+                </div>
+                <div id="fields-list-container" class="space-y-2">
+                  ${this.renderFieldsListHtml()}
+                </div>
               </div>
             </div>
 
@@ -2442,73 +2392,16 @@ export const IDCardStudioModal = {
       this.updatePreview();
     });
 
-    // Field Toggles
-    overlay.querySelectorAll('.field-toggle-checkbox').forEach(cb => {
-      cb.addEventListener('change', () => {
-        const fieldKey = cb.getAttribute('data-field');
-        if (fieldKey) {
-          this.config.fields[fieldKey] = cb.checked;
-          this.savePersistedSettings();
-          this.updatePreview();
-        }
-      });
-    });
+    // Bind Reorderable Field List Events (Drag & Drop, Move Up/Down, Styling)
+    this.bindFieldsListEvents();
 
-    // Field Font Style
-    overlay.querySelectorAll('.input-field-style-font').forEach(sel => {
-      sel.addEventListener('change', (e) => {
-        const field = sel.getAttribute('data-style-field');
-        if (!this.config.fieldStyles) this.config.fieldStyles = { ...DEFAULT_FIELD_STYLES };
-        if (!this.config.fieldStyles[field]) this.config.fieldStyles[field] = { ...(DEFAULT_FIELD_STYLES[field] || {}) };
-        this.config.fieldStyles[field].font = e.target.value;
-        this.savePersistedSettings();
-        this.updatePreview();
-      });
-    });
-
-    // Field Font Size
-    overlay.querySelectorAll('.input-field-style-size').forEach(inp => {
-      inp.addEventListener('input', (e) => {
-        const field = inp.getAttribute('data-style-field');
-        const val = parseFloat(e.target.value);
-        if (val > 0) {
-          if (!this.config.fieldStyles) this.config.fieldStyles = { ...DEFAULT_FIELD_STYLES };
-          if (!this.config.fieldStyles[field]) this.config.fieldStyles[field] = { ...(DEFAULT_FIELD_STYLES[field] || {}) };
-          this.config.fieldStyles[field].size = val;
-          this.savePersistedSettings();
-          this.updatePreview();
-        }
-      });
-    });
-
-    // Field Color Picker
-    overlay.querySelectorAll('.input-field-style-color').forEach(inp => {
-      inp.addEventListener('input', (e) => {
-        const field = inp.getAttribute('data-style-field');
-        if (!this.config.fieldStyles) this.config.fieldStyles = { ...DEFAULT_FIELD_STYLES };
-        if (!this.config.fieldStyles[field]) this.config.fieldStyles[field] = { ...(DEFAULT_FIELD_STYLES[field] || {}) };
-        this.config.fieldStyles[field].color = e.target.value;
-        this.savePersistedSettings();
-        this.updatePreview();
-      });
-    });
-
-    // Field Bold Toggle
-    overlay.querySelectorAll('.btn-field-style-bold').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const field = btn.getAttribute('data-style-field');
-        if (!this.config.fieldStyles) this.config.fieldStyles = { ...DEFAULT_FIELD_STYLES };
-        if (!this.config.fieldStyles[field]) this.config.fieldStyles[field] = { ...(DEFAULT_FIELD_STYLES[field] || {}) };
-        const isBold = !this.config.fieldStyles[field].bold;
-        this.config.fieldStyles[field].bold = isBold;
-        if (isBold) {
-          btn.className = 'btn-field-style-bold w-7 h-7 rounded-md border text-xs font-bold transition-all cursor-pointer shadow-2xs bg-primary text-primary-foreground border-primary';
-        } else {
-          btn.className = 'btn-field-style-bold w-7 h-7 rounded-md border text-xs font-bold transition-all cursor-pointer shadow-2xs bg-background hover:bg-muted text-foreground border-input';
-        }
-        this.savePersistedSettings();
-        this.updatePreview();
-      });
+    // Reset Field Order to Default
+    overlay.querySelector('#btn-reset-field-order')?.addEventListener('click', () => {
+      this.config.fieldOrder = [...DEFAULT_FIELD_ORDER];
+      this.savePersistedSettings();
+      this.updatePreview();
+      this.refreshFieldsListUI();
+      toast.info(i18n.getLocale() === 'km' ? 'បានកំណត់លំដាប់ទិន្នន័យឡើងវិញ' : 'Field order reset to default');
     });
 
     // Tab: Back Side Controls Event Listeners
@@ -3517,7 +3410,13 @@ export const IDCardStudioModal = {
           fieldStyles: {
             ...DEFAULT_FIELD_STYLES,
             ...(importedConfig.fieldStyles || {})
-          }
+          },
+          fieldOrder: Array.isArray(importedConfig.fieldOrder) && importedConfig.fieldOrder.length > 0
+            ? [
+                ...importedConfig.fieldOrder,
+                ...DEFAULT_FIELD_ORDER.filter(k => !importedConfig.fieldOrder.includes(k))
+              ]
+            : [...DEFAULT_FIELD_ORDER]
         };
 
         await this.savePersistedSettings();
@@ -3637,6 +3536,300 @@ export const IDCardStudioModal = {
         btn.classList.remove('opacity-80', 'pointer-events-none');
       }
     }
+  },
+
+  /**
+   * Render reorderable list of student metadata fields with drag handles & move buttons
+   */
+  renderFieldsListHtml() {
+    const isKm = i18n.getLocale() === 'km';
+    const fieldsMetaMap = {
+      nameKh: { key: 'nameKh', labelKh: 'ឈ្មោះភាសាខ្មែរ', labelEn: 'Khmer Name', fixed: true },
+      nameLatin: { key: 'nameLatin', labelKh: 'ឈ្មោះឡាតាំង', labelEn: 'Latin Name' },
+      className: { key: 'className', labelKh: 'ថ្នាក់រៀន', labelEn: 'Class Name' },
+      studentId: { key: 'studentId', labelKh: 'អត្តលេខសិស្ស', labelEn: 'Student ID' },
+      academicYear: { key: 'academicYear', labelKh: 'ឆ្នាំសិក្សា', labelEn: 'Academic Year' },
+      dob: { key: 'dob', labelKh: 'ថ្ងៃខែឆ្នាំកំណើត', labelEn: 'Date of Birth' },
+      gender: { key: 'gender', labelKh: 'ភេទ', labelEn: 'Gender' },
+      fatherName: { key: 'fatherName', labelKh: 'ឈ្មោះឪពុក', labelEn: 'Father Name' },
+      motherName: { key: 'motherName', labelKh: 'ឈ្មោះម្តាយ', labelEn: 'Mother Name' },
+      phone: { key: 'phone', labelKh: 'លេខទូរសព្ទ', labelEn: 'Phone Number' }
+    };
+
+    const currentOrder = (Array.isArray(this.config.fieldOrder) && this.config.fieldOrder.length > 0)
+      ? this.config.fieldOrder
+      : DEFAULT_FIELD_ORDER;
+
+    // Ensure all 10 fields are present in currentOrder
+    const fullOrder = [
+      ...currentOrder,
+      ...DEFAULT_FIELD_ORDER.filter(k => !currentOrder.includes(k))
+    ];
+
+    return fullOrder.map((fKey, index) => {
+      const f = fieldsMetaMap[fKey];
+      if (!f) return '';
+      const fs = (this.config.fieldStyles && this.config.fieldStyles[f.key]) || (DEFAULT_FIELD_STYLES[f.key] || { font: 'Kantumruy Pro', size: 7.5, color: '#0f172a', bold: false });
+      const isChecked = this.config.fields[f.key] !== false;
+      const isFirst = index === 0;
+      const isLast = index === fullOrder.length - 1;
+
+      return `
+        <div class="field-item-card p-2.5 rounded-xl bg-card border border-border/80 shadow-2xs space-y-2 transition-all relative group hover:border-primary/50" data-field-key="${f.key}" data-field-index="${index}" draggable="true">
+          <!-- Top row: Drag Grip, Move Up/Down, Checkbox, Name, and Font Size -->
+          <div class="flex items-center justify-between gap-1.5">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <!-- Drag Grip Handle -->
+              <div class="field-drag-handle p-1 text-muted-foreground/60 hover:text-foreground cursor-grab active:cursor-grabbing rounded hover:bg-muted shrink-0 transition-colors" title="${isKm ? 'ចុចអូសឡើងលើ/ចុះក្រោមដើម្បីប្តូរលំដាប់' : 'Drag up/down to reorder'}">
+                ${getIcon('gripVertical', 'w-3.5 h-3.5')}
+              </div>
+
+              <!-- Reorder Up / Down Buttons for Easy Touch/Click Navigation -->
+              <div class="flex flex-col gap-0.5 shrink-0">
+                <button type="button" class="btn-field-reorder-up w-4 h-3.5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer ${isFirst ? 'opacity-20 pointer-events-none' : ''}" data-field="${f.key}" title="${isKm ? 'រំកិលឡើងលើ' : 'Move Up'}">
+                  ${getIcon('chevronUp', 'w-3 h-3')}
+                </button>
+                <button type="button" class="btn-field-reorder-down w-4 h-3.5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer ${isLast ? 'opacity-20 pointer-events-none' : ''}" data-field="${f.key}" title="${isKm ? 'រំកិលចុះក្រោម' : 'Move Down'}">
+                  ${getIcon('chevronDown', 'w-3 h-3')}
+                </button>
+              </div>
+
+              <!-- Checkbox & Field Label -->
+              <label class="flex items-center gap-2 cursor-pointer font-khmer text-xs select-none min-w-0">
+                <input type="checkbox" data-field="${f.key}" class="field-toggle-checkbox h-4 w-4 rounded border-input text-primary focus:ring-primary cursor-pointer shrink-0" ${isChecked ? 'checked' : ''} ${f.fixed ? 'disabled' : ''} />
+                <span class="font-semibold truncate ${f.fixed ? 'text-primary font-bold' : 'text-foreground'}">
+                  ${isKm ? f.labelKh : f.labelEn} ${f.fixed ? (isKm ? '*(ជាប់)' : '*(Req)') : ''}
+                </span>
+              </label>
+            </div>
+
+            <span class="text-[10px] text-muted-foreground font-mono font-medium shrink-0">
+              ${fs.size}px
+            </span>
+          </div>
+
+          <!-- Bottom row: Font dropdown, Size input, Color picker, Bold toggle -->
+          <div class="grid grid-cols-12 gap-1.5 pt-1 border-t border-border/50 items-center">
+            <!-- Font selector -->
+            <div class="col-span-5">
+              <select data-style-field="${f.key}" data-style-prop="font" class="input-field-style-font w-full h-7 px-1.5 rounded-md border border-input bg-background text-[10px] font-medium text-foreground cursor-pointer shadow-2xs">
+                <option value="Kantumruy Pro" ${fs.font === 'Kantumruy Pro' ? 'selected' : ''}>Kantumruy</option>
+                <option value="Siemreap" ${fs.font === 'Siemreap' ? 'selected' : ''}>Siemreap</option>
+                <option value="Moul" ${fs.font === 'Moul' ? 'selected' : ''}>Moul (មូល)</option>
+                <option value="Inter" ${fs.font === 'Inter' ? 'selected' : ''}>Inter</option>
+                <option value="Roboto" ${fs.font === 'Roboto' ? 'selected' : ''}>Roboto</option>
+                <option value="Plus Jakarta Sans" ${fs.font === 'Plus Jakarta Sans' ? 'selected' : ''}>Jakarta</option>
+                <option value="monospace" ${fs.font === 'monospace' ? 'selected' : ''}>Monospace</option>
+              </select>
+            </div>
+
+            <!-- Size selector -->
+            <div class="col-span-3">
+              <input type="number" min="4" max="24" step="0.5" data-style-field="${f.key}" data-style-prop="size" value="${fs.size}" title="${isKm ? 'ទំហំអក្សរ (px)' : 'Font Size (px)'}" class="input-field-style-size w-full h-7 px-1.5 rounded-md border border-input bg-background font-mono text-[11px] text-center shadow-2xs" />
+            </div>
+
+            <!-- Color picker -->
+            <div class="col-span-2 flex items-center justify-center">
+              <input type="color" data-style-field="${f.key}" data-style-prop="color" value="${fs.color || '#0f172a'}" title="${isKm ? 'ពណ៌អក្សរ' : 'Text Color'}" class="input-field-style-color w-7 h-7 rounded-md cursor-pointer border border-input p-0.5 bg-background shrink-0 shadow-2xs" />
+            </div>
+
+            <!-- Bold toggle button -->
+            <div class="col-span-2 flex items-center justify-center">
+              <button type="button" data-style-field="${f.key}" data-style-prop="bold" class="btn-field-style-bold w-7 h-7 rounded-md border text-xs font-bold transition-all cursor-pointer shadow-2xs ${fs.bold ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-muted text-foreground border-input'}" title="Bold">
+                B
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  },
+
+  /**
+   * Bind event listeners for the reorderable fields list
+   */
+  bindFieldsListEvents() {
+    const overlay = this.activeOverlay || document.getElementById('id-card-studio-overlay');
+    if (!overlay) return;
+    const container = overlay.querySelector('#fields-list-container');
+    if (!container) return;
+
+    // 1. Move Up button
+    container.querySelectorAll('.btn-field-reorder-up').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const fKey = btn.getAttribute('data-field');
+        const order = Array.isArray(this.config.fieldOrder) ? [...this.config.fieldOrder] : [...DEFAULT_FIELD_ORDER];
+        const idx = order.indexOf(fKey);
+        if (idx > 0) {
+          const item = order.splice(idx, 1)[0];
+          order.splice(idx - 1, 0, item);
+          this.config.fieldOrder = order;
+          this.savePersistedSettings();
+          this.updatePreview();
+          this.refreshFieldsListUI();
+        }
+      });
+    });
+
+    // 2. Move Down button
+    container.querySelectorAll('.btn-field-reorder-down').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const fKey = btn.getAttribute('data-field');
+        const order = Array.isArray(this.config.fieldOrder) ? [...this.config.fieldOrder] : [...DEFAULT_FIELD_ORDER];
+        const idx = order.indexOf(fKey);
+        if (idx !== -1 && idx < order.length - 1) {
+          const item = order.splice(idx, 1)[0];
+          order.splice(idx + 1, 0, item);
+          this.config.fieldOrder = order;
+          this.savePersistedSettings();
+          this.updatePreview();
+          this.refreshFieldsListUI();
+        }
+      });
+    });
+
+    // 3. HTML5 Drag & Drop Reordering
+    let draggedKey = null;
+
+    container.querySelectorAll('.field-item-card').forEach(card => {
+      card.addEventListener('dragstart', (e) => {
+        draggedKey = card.getAttribute('data-field-key');
+        e.dataTransfer.setData('text/plain', draggedKey);
+        e.dataTransfer.effectAllowed = 'move';
+        card.classList.add('opacity-40', 'scale-[0.98]', 'border-primary', 'border-dashed');
+      });
+
+      card.addEventListener('dragend', () => {
+        card.classList.remove('opacity-40', 'scale-[0.98]', 'border-primary', 'border-dashed');
+        container.querySelectorAll('.field-item-card').forEach(c => {
+          c.classList.remove('ring-2', 'ring-primary', 'border-primary');
+        });
+        draggedKey = null;
+      });
+
+      card.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+      });
+
+      card.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        const targetKey = card.getAttribute('data-field-key');
+        if (draggedKey && targetKey !== draggedKey) {
+          card.classList.add('ring-2', 'ring-primary');
+        }
+      });
+
+      card.addEventListener('dragleave', () => {
+        card.classList.remove('ring-2', 'ring-primary');
+      });
+
+      card.addEventListener('drop', (e) => {
+        e.preventDefault();
+        card.classList.remove('ring-2', 'ring-primary');
+        const targetKey = card.getAttribute('data-field-key');
+        const srcKey = e.dataTransfer.getData('text/plain') || draggedKey;
+
+        if (srcKey && targetKey && srcKey !== targetKey) {
+          const order = Array.isArray(this.config.fieldOrder) ? [...this.config.fieldOrder] : [...DEFAULT_FIELD_ORDER];
+          const fromIdx = order.indexOf(srcKey);
+          const toIdx = order.indexOf(targetKey);
+          if (fromIdx !== -1 && toIdx !== -1) {
+            order.splice(fromIdx, 1);
+            order.splice(toIdx, 0, srcKey);
+            this.config.fieldOrder = order;
+            this.savePersistedSettings();
+            this.updatePreview();
+            this.refreshFieldsListUI();
+          }
+        }
+      });
+    });
+
+    // 4. Field Visibility Checkbox Toggles
+    container.querySelectorAll('.field-toggle-checkbox').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const fieldKey = cb.getAttribute('data-field');
+        if (fieldKey) {
+          this.config.fields[fieldKey] = cb.checked;
+          this.savePersistedSettings();
+          this.updatePreview();
+        }
+      });
+    });
+
+    // 5. Field Font Style
+    container.querySelectorAll('.input-field-style-font').forEach(sel => {
+      sel.addEventListener('change', (e) => {
+        const field = sel.getAttribute('data-style-field');
+        if (!this.config.fieldStyles) this.config.fieldStyles = { ...DEFAULT_FIELD_STYLES };
+        if (!this.config.fieldStyles[field]) this.config.fieldStyles[field] = { ...(DEFAULT_FIELD_STYLES[field] || {}) };
+        this.config.fieldStyles[field].font = e.target.value;
+        this.savePersistedSettings();
+        this.updatePreview();
+      });
+    });
+
+    // 6. Field Font Size
+    container.querySelectorAll('.input-field-style-size').forEach(inp => {
+      inp.addEventListener('input', (e) => {
+        const field = inp.getAttribute('data-style-field');
+        const val = parseFloat(e.target.value);
+        if (val > 0) {
+          if (!this.config.fieldStyles) this.config.fieldStyles = { ...DEFAULT_FIELD_STYLES };
+          if (!this.config.fieldStyles[field]) this.config.fieldStyles[field] = { ...(DEFAULT_FIELD_STYLES[field] || {}) };
+          this.config.fieldStyles[field].size = val;
+          const badge = inp.closest('.field-item-card')?.querySelector('.text-mono');
+          if (badge) badge.textContent = `${val}px`;
+          this.savePersistedSettings();
+          this.updatePreview();
+        }
+      });
+    });
+
+    // 7. Field Color Picker
+    container.querySelectorAll('.input-field-style-color').forEach(inp => {
+      inp.addEventListener('input', (e) => {
+        const field = inp.getAttribute('data-style-field');
+        if (!this.config.fieldStyles) this.config.fieldStyles = { ...DEFAULT_FIELD_STYLES };
+        if (!this.config.fieldStyles[field]) this.config.fieldStyles[field] = { ...(DEFAULT_FIELD_STYLES[field] || {}) };
+        this.config.fieldStyles[field].color = e.target.value;
+        this.savePersistedSettings();
+        this.updatePreview();
+      });
+    });
+
+    // 8. Field Bold Toggle
+    container.querySelectorAll('.btn-field-style-bold').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const field = btn.getAttribute('data-style-field');
+        if (!this.config.fieldStyles) this.config.fieldStyles = { ...DEFAULT_FIELD_STYLES };
+        if (!this.config.fieldStyles[field]) this.config.fieldStyles[field] = { ...(DEFAULT_FIELD_STYLES[field] || {}) };
+        const isBold = !this.config.fieldStyles[field].bold;
+        this.config.fieldStyles[field].bold = isBold;
+        if (isBold) {
+          btn.className = 'btn-field-style-bold w-7 h-7 rounded-md border text-xs font-bold transition-all cursor-pointer shadow-2xs bg-primary text-primary-foreground border-primary';
+        } else {
+          btn.className = 'btn-field-style-bold w-7 h-7 rounded-md border text-xs font-bold transition-all cursor-pointer shadow-2xs bg-background hover:bg-muted text-foreground border-input';
+        }
+        this.savePersistedSettings();
+        this.updatePreview();
+      });
+    });
+  },
+
+  /**
+   * Re-render the fields list inside the sidebar tab
+   */
+  refreshFieldsListUI() {
+    const overlay = this.activeOverlay || document.getElementById('id-card-studio-overlay');
+    if (!overlay) return;
+    const container = overlay.querySelector('#fields-list-container');
+    if (!container) return;
+    container.innerHTML = this.renderFieldsListHtml();
+    this.bindFieldsListEvents();
   },
 
   /**

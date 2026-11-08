@@ -41,6 +41,19 @@ export function getFontFamilyCSS(fontName) {
   }
 }
 
+export const DEFAULT_FIELD_ORDER = [
+  'nameKh',
+  'nameLatin',
+  'className',
+  'studentId',
+  'academicYear',
+  'dob',
+  'gender',
+  'fatherName',
+  'motherName',
+  'phone'
+];
+
 export const DEFAULT_CARD_CONFIG = {
   // Orientation & Dimensions
   cardOrientation: 'portrait', // 'portrait' | 'landscape'
@@ -143,6 +156,20 @@ export const DEFAULT_CARD_CONFIG = {
     motherName: false,
     phone: false
   },
+
+  // Field Reordering Order
+  fieldOrder: [
+    'nameKh',
+    'nameLatin',
+    'className',
+    'studentId',
+    'academicYear',
+    'dob',
+    'gender',
+    'fatherName',
+    'motherName',
+    'phone'
+  ],
 
   // Per-field Text Styling: Font, Size, Color, Bold
   fieldStyles: {
@@ -330,6 +357,107 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
     return `font-family: ${getFontFamilyCSS(font)}; font-size: ${size}px; color: ${color}; font-weight: ${bold ? '700' : '500'}; line-height: 1.2;`;
   };
 
+  // Helper: render fields in dynamic user-defined order
+  const getRenderedFieldsHtml = () => {
+    const activeOrder = (Array.isArray(cfg.fieldOrder) && cfg.fieldOrder.length > 0)
+      ? cfg.fieldOrder
+      : DEFAULT_FIELD_ORDER;
+
+    const fullOrder = [
+      ...activeOrder,
+      ...DEFAULT_FIELD_ORDER.filter(k => !activeOrder.includes(k))
+    ];
+
+    const colClass = isLandscape ? 'grid grid-cols-[38%_62%] items-baseline' : 'grid grid-cols-[36%_64%] items-baseline';
+
+    return fullOrder.map(fKey => {
+      switch (fKey) {
+        case 'nameKh':
+          if (!cfg.fields.nameKh) return '';
+          return `
+            <div class="${colClass}">
+              <span class="text-slate-500 font-semibold font-khmer">ឈ្មោះ</span>
+              <span class="truncate" style="${getFieldValStyle('nameKh', 'Kantumruy Pro', isLandscape ? 7.5 : 8, '#0f172a', true)}">: ${fullNameKh}</span>
+            </div>
+          `;
+        case 'nameLatin':
+          if (!cfg.fields.nameLatin || !fullNameLatin) return '';
+          return `
+            <div class="${colClass}">
+              <span class="text-slate-500 font-semibold font-khmer ${isLandscape ? 'text-[6px]' : 'text-[6.5px]'}">ឈ្មោះឡាតាំង</span>
+              <span class="uppercase tracking-tight truncate" style="${getFieldValStyle('nameLatin', 'Inter', isLandscape ? 6.5 : 7, '#1e293b', true)}">: ${fullNameLatin}</span>
+            </div>
+          `;
+        case 'className':
+          if (!cfg.fields.className) return '';
+          return `
+            <div class="${colClass}">
+              <span class="text-slate-500 font-semibold font-khmer">ថ្នាក់</span>
+              <span class="truncate" style="${getFieldValStyle('className', 'Kantumruy Pro', 7.5, '#0f172a', true)}">: ${className}</span>
+            </div>
+          `;
+        case 'studentId':
+          if (!cfg.fields.studentId) return '';
+          return `
+            <div class="${colClass}">
+              <span class="text-slate-500 font-semibold font-khmer">អត្តលេខ</span>
+              <span class="truncate" style="${getFieldValStyle('studentId', 'monospace', 7.5, accent, true)}">: ${studentId}</span>
+            </div>
+          `;
+        case 'academicYear':
+          if (!cfg.fields.academicYear) return '';
+          return `
+            <div class="${colClass}">
+              <span class="text-slate-500 font-semibold font-khmer">ឆ្នាំសិក្សា</span>
+              <span class="truncate" style="${getFieldValStyle('academicYear', 'monospace', isLandscape ? 7 : 7.5, '#1e293b', false)}">: ${academicYear}</span>
+            </div>
+          `;
+        case 'dob':
+          if (!cfg.fields.dob || !dob) return '';
+          return `
+            <div class="${colClass}">
+              <span class="text-slate-500 font-semibold font-khmer">ថ្ងៃកំណើត</span>
+              <span class="truncate" style="${getFieldValStyle('dob', 'monospace', isLandscape ? 7 : 7.5, '#1e293b', false)}">: ${dob}</span>
+            </div>
+          `;
+        case 'gender':
+          if (!cfg.fields.gender) return '';
+          return `
+            <div class="${colClass}">
+              <span class="text-slate-500 font-semibold font-khmer">ភេទ</span>
+              <span class="truncate" style="${getFieldValStyle('gender', 'Kantumruy Pro', isLandscape ? 7 : 7.5, '#1e293b', false)}">: ${gender}</span>
+            </div>
+          `;
+        case 'fatherName':
+          if (!cfg.fields.fatherName || !fatherName) return '';
+          return `
+            <div class="${colClass}">
+              <span class="text-slate-500 font-semibold font-khmer">ឪពុក</span>
+              <span class="truncate" style="${getFieldValStyle('fatherName', 'Kantumruy Pro', 7.5, '#1e293b', false)}">: ${fatherName}</span>
+            </div>
+          `;
+        case 'motherName':
+          if (!cfg.fields.motherName || !motherName) return '';
+          return `
+            <div class="${colClass}">
+              <span class="text-slate-500 font-semibold font-khmer">ម្តាយ</span>
+              <span class="truncate" style="${getFieldValStyle('motherName', 'Kantumruy Pro', 7.5, '#1e293b', false)}">: ${motherName}</span>
+            </div>
+          `;
+        case 'phone':
+          if (!cfg.fields.phone || !phone) return '';
+          return `
+            <div class="${colClass}">
+              <span class="text-slate-500 font-semibold font-khmer">ទូរសព្ទ</span>
+              <span class="truncate" style="${getFieldValStyle('phone', 'monospace', 7.5, '#1e293b', false)}">: ${phone}</span>
+            </div>
+          `;
+        default:
+          return '';
+      }
+    }).filter(Boolean).join('');
+  };
+
   // LANDSCAPE CARD LAYOUT
   if (isLandscape) {
     return `
@@ -384,79 +512,11 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
               </div>
             </div>
 
-            <!-- Metadata Key-Value Field List -->
+            <!-- Metadata Key-Value Field List (Reorderable) -->
             <div class="flex-1 min-w-0 text-[7px] leading-tight space-y-0.5 text-slate-700 font-medium px-0.5 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 rounded select-none z-20"
                  data-asset-type="fields"
                  style="${fieldsTransform}">
-              ${cfg.fields.nameKh ? `
-                <div class="grid grid-cols-[38%_62%] items-baseline">
-                  <span class="text-slate-500 font-semibold font-khmer">ឈ្មោះ</span>
-                  <span class="truncate" style="${getFieldValStyle('nameKh', 'Kantumruy Pro', 7.5, '#0f172a', true)}">: ${fullNameKh}</span>
-                </div>
-              ` : ''}
-
-              ${cfg.fields.nameLatin && fullNameLatin ? `
-                <div class="grid grid-cols-[38%_62%] items-baseline">
-                  <span class="text-slate-500 font-semibold font-khmer text-[6px]">ឈ្មោះឡាតាំង</span>
-                  <span class="uppercase tracking-tight truncate" style="${getFieldValStyle('nameLatin', 'Inter', 6.5, '#1e293b', true)}">: ${fullNameLatin}</span>
-                </div>
-              ` : ''}
-
-              ${cfg.fields.className ? `
-                <div class="grid grid-cols-[38%_62%] items-baseline">
-                  <span class="text-slate-500 font-semibold font-khmer">ថ្នាក់</span>
-                  <span class="truncate" style="${getFieldValStyle('className', 'Kantumruy Pro', 7.5, '#0f172a', true)}">: ${className}</span>
-                </div>
-              ` : ''}
-
-              ${cfg.fields.studentId ? `
-                <div class="grid grid-cols-[38%_62%] items-baseline">
-                  <span class="text-slate-500 font-semibold font-khmer">អត្តលេខ</span>
-                  <span class="truncate" style="${getFieldValStyle('studentId', 'monospace', 7.5, accent, true)}">: ${studentId}</span>
-                </div>
-              ` : ''}
-
-              ${cfg.fields.academicYear ? `
-                <div class="grid grid-cols-[38%_62%] items-baseline">
-                  <span class="text-slate-500 font-semibold font-khmer">ឆ្នាំសិក្សា</span>
-                  <span class="truncate" style="${getFieldValStyle('academicYear', 'monospace', 7, '#1e293b', false)}">: ${academicYear}</span>
-                </div>
-              ` : ''}
-
-              ${cfg.fields.dob && dob ? `
-                <div class="grid grid-cols-[38%_62%] items-baseline">
-                  <span class="text-slate-500 font-semibold font-khmer">ថ្ងៃកំណើត</span>
-                  <span class="truncate" style="${getFieldValStyle('dob', 'monospace', 7, '#1e293b', false)}">: ${dob}</span>
-                </div>
-              ` : ''}
-
-              ${cfg.fields.gender ? `
-                <div class="grid grid-cols-[38%_62%] items-baseline">
-                  <span class="text-slate-500 font-semibold font-khmer">ភេទ</span>
-                  <span class="truncate" style="${getFieldValStyle('gender', 'Kantumruy Pro', 7, '#1e293b', false)}">: ${gender}</span>
-                </div>
-              ` : ''}
-
-              ${cfg.fields.fatherName && fatherName ? `
-                <div class="grid grid-cols-[38%_62%] items-baseline">
-                  <span class="text-slate-500 font-semibold font-khmer">ឪពុក</span>
-                  <span class="truncate" style="${getFieldValStyle('fatherName', 'Kantumruy Pro', 7.5, '#1e293b', false)}">: ${fatherName}</span>
-                </div>
-              ` : ''}
-
-              ${cfg.fields.motherName && motherName ? `
-                <div class="grid grid-cols-[38%_62%] items-baseline">
-                  <span class="text-slate-500 font-semibold font-khmer">ម្តាយ</span>
-                  <span class="truncate" style="${getFieldValStyle('motherName', 'Kantumruy Pro', 7.5, '#1e293b', false)}">: ${motherName}</span>
-                </div>
-              ` : ''}
-
-              ${cfg.fields.phone && phone ? `
-                <div class="grid grid-cols-[38%_62%] items-baseline">
-                  <span class="text-slate-500 font-semibold font-khmer">ទូរសព្ទ</span>
-                  <span class="truncate" style="${getFieldValStyle('phone', 'monospace', 7.5, '#1e293b', false)}">: ${phone}</span>
-                </div>
-              ` : ''}
+              ${getRenderedFieldsHtml()}
             </div>
 
             <!-- Right Column: Date, Stamp & Signature Section -->
@@ -540,79 +600,11 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
           </div>
         </div>
 
-        <!-- Metadata Key-Value Field List -->
+        <!-- Metadata Key-Value Field List (Reorderable) -->
         <div class="w-full text-[7.5px] leading-tight space-y-0.5 text-slate-700 font-medium my-0.5 px-0.5 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 rounded select-none z-20"
              data-asset-type="fields"
              style="${fieldsTransform}">
-          ${cfg.fields.nameKh ? `
-            <div class="grid grid-cols-[36%_64%] items-baseline">
-              <span class="text-slate-500 font-semibold font-khmer">ឈ្មោះ</span>
-              <span class="truncate" style="${getFieldValStyle('nameKh', 'Kantumruy Pro', 8, '#0f172a', true)}">: ${fullNameKh}</span>
-            </div>
-          ` : ''}
-
-          ${cfg.fields.nameLatin && fullNameLatin ? `
-            <div class="grid grid-cols-[36%_64%] items-baseline">
-              <span class="text-slate-500 font-semibold font-khmer text-[6.5px]">ឈ្មោះឡាតាំង</span>
-              <span class="uppercase tracking-tight truncate" style="${getFieldValStyle('nameLatin', 'Inter', 7, '#1e293b', true)}">: ${fullNameLatin}</span>
-            </div>
-          ` : ''}
-
-          ${cfg.fields.className ? `
-            <div class="grid grid-cols-[36%_64%] items-baseline">
-              <span class="text-slate-500 font-semibold font-khmer">ថ្នាក់</span>
-              <span class="truncate" style="${getFieldValStyle('className', 'Kantumruy Pro', 7.5, '#0f172a', true)}">: ${className}</span>
-            </div>
-          ` : ''}
-
-          ${cfg.fields.studentId ? `
-            <div class="grid grid-cols-[36%_64%] items-baseline">
-              <span class="text-slate-500 font-semibold font-khmer">អត្តលេខ</span>
-              <span class="truncate" style="${getFieldValStyle('studentId', 'monospace', 7.5, accent, true)}">: ${studentId}</span>
-            </div>
-          ` : ''}
-
-          ${cfg.fields.academicYear ? `
-            <div class="grid grid-cols-[36%_64%] items-baseline">
-              <span class="text-slate-500 font-semibold font-khmer">ឆ្នាំសិក្សា</span>
-              <span class="truncate" style="${getFieldValStyle('academicYear', 'monospace', 7.5, '#1e293b', false)}">: ${academicYear}</span>
-            </div>
-          ` : ''}
-
-          ${cfg.fields.dob && dob ? `
-            <div class="grid grid-cols-[36%_64%] items-baseline">
-              <span class="text-slate-500 font-semibold font-khmer">ថ្ងៃកំណើត</span>
-              <span class="truncate" style="${getFieldValStyle('dob', 'monospace', 7.5, '#1e293b', false)}">: ${dob}</span>
-            </div>
-          ` : ''}
-
-          ${cfg.fields.gender ? `
-            <div class="grid grid-cols-[36%_64%] items-baseline">
-              <span class="text-slate-500 font-semibold font-khmer">ភេទ</span>
-              <span class="truncate" style="${getFieldValStyle('gender', 'Kantumruy Pro', 7.5, '#1e293b', false)}">: ${gender}</span>
-            </div>
-          ` : ''}
-
-          ${cfg.fields.fatherName && fatherName ? `
-            <div class="grid grid-cols-[36%_64%] items-baseline">
-              <span class="text-slate-500 font-semibold font-khmer">ឪពុក</span>
-              <span class="truncate" style="${getFieldValStyle('fatherName', 'Kantumruy Pro', 7.5, '#1e293b', false)}">: ${fatherName}</span>
-            </div>
-          ` : ''}
-
-          ${cfg.fields.motherName && motherName ? `
-            <div class="grid grid-cols-[36%_64%] items-baseline">
-              <span class="text-slate-500 font-semibold font-khmer">ម្តាយ</span>
-              <span class="truncate" style="${getFieldValStyle('motherName', 'Kantumruy Pro', 7.5, '#1e293b', false)}">: ${motherName}</span>
-            </div>
-          ` : ''}
-
-          ${cfg.fields.phone && phone ? `
-            <div class="grid grid-cols-[36%_64%] items-baseline">
-              <span class="text-slate-500 font-semibold font-khmer">ទូរសព្ទ</span>
-              <span class="truncate" style="${getFieldValStyle('phone', 'monospace', 7.5, '#1e293b', false)}">: ${phone}</span>
-            </div>
-          ` : ''}
+          ${getRenderedFieldsHtml()}
         </div>
 
         <!-- Footer: Date, Signature, Stamp, and Signatory Title -->
