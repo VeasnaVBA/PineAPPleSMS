@@ -4,7 +4,7 @@
  * Enforces route-level RBAC permissions (ADMIN, DIRECTOR, TEACHER)
  */
 import { DashboardPage } from './pages/dashboard.js?v=3.0.99';
-import { StudentsPage } from './pages/students.js?v=3.1.37';
+import { StudentsPage } from './pages/students.js?v=3.2.03';
 import { TeachersPage } from './pages/teachers.js?v=3.1.19';
 import { OfficerTeachersPage } from './pages/officerTeachers.js?v=3.2.02';
 import { ClassesPage } from './pages/classes.js?v=3.1.37';

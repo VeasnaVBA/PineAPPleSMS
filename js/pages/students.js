@@ -19,7 +19,7 @@ import { toast } from '../components/toast.js';
 import { t, i18n } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
 import { ReportViewer } from '../components/reportViewer.js';
-import { IDCardStudioModal } from '../components/idCardStudioModal.js';
+import { IDCardStudioModal } from '../components/idCardStudioModal.js?v=3.2.03';
 import { renderActionDropdown } from '../components/actionDropdown.js';
 import { formatKhmerLunarDate, getKhmerDateDetails } from '../utils/khmerLunar.js';
 export { formatKhmerLunarDate, getKhmerDateDetails };

@@ -348,6 +348,45 @@ export const IDCardStudioModal = {
             <span class="hidden md:inline">${isKm ? 'កំណត់ឡើងវិញ' : 'Reset Design'}</span>
           </button>
 
+          <!-- Save Design Dropdown Component -->
+          <div class="relative inline-block text-left" id="save-design-dropdown-wrapper">
+            <div class="inline-flex rounded-lg shadow-sm">
+              <button id="btn-studio-save-design" type="button" class="inline-flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-l-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs sm:text-sm font-semibold transition-all shadow-sm cursor-pointer font-khmer" title="${isKm ? 'រក្សាទុកការរចនាកាតទៅក្នុងមូលដ្ឋានទិន្នន័យ (Ctrl+S)' : 'Save Card Design to Database (Ctrl+S)'}">
+                ${getIcon('save', 'w-4 h-4 text-white shrink-0')}
+                <span id="btn-studio-save-design-label" class="whitespace-nowrap">${isKm ? (i18n.t('students.idCardSaveDesign') || 'រក្សាទុកការរចនា') : 'Save Design'}</span>
+              </button>
+              <button id="btn-studio-save-dropdown-toggle" type="button" class="px-2 py-2 rounded-r-lg bg-emerald-600 hover:bg-emerald-700 text-white border-l border-emerald-500/30 cursor-pointer transition-all" title="${isKm ? 'ជម្រើសរក្សាទុកគំរូ' : 'Template Options'}">
+                ${getIcon('chevronDown', 'w-3.5 h-3.5')}
+              </button>
+            </div>
+
+            <!-- Save Design Dropdown Menu -->
+            <div id="save-design-dropdown-menu" class="hidden absolute right-0 mt-2 w-72 rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl z-50 p-2 text-xs font-khmer animate-fade-in space-y-1">
+              <button id="btn-save-design-direct" type="button" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent text-foreground text-left transition-colors cursor-pointer">
+                <span class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 shrink-0">${getIcon('save', 'w-4 h-4')}</span>
+                <div class="min-w-0">
+                  <div class="font-semibold">${isKm ? 'រក្សាទុកការរចនាបច្ចុប្បន្ន' : 'Save Current Design'}</div>
+                  <div class="text-[11px] text-muted-foreground truncate">${isKm ? 'រក្សាទុកជាការរចនាលំនាំដើមក្នុង DB' : 'Save as default active design in DB'}</div>
+                </div>
+              </button>
+              <button id="btn-save-as-named-template" type="button" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent text-foreground text-left transition-colors cursor-pointer">
+                <span class="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">${getIcon('plus', 'w-4 h-4')}</span>
+                <div class="min-w-0">
+                  <div class="font-semibold">${isKm ? (i18n.t('students.idCardSaveNewTemplate') || 'រក្សាទុកជាគំរូថ្មី...') : 'Save as New Template...'}</div>
+                  <div class="text-[11px] text-muted-foreground truncate">${isKm ? 'ដាក់ឈ្មោះគំរូដើម្បីប្រើពេលក្រោយ' : 'Name and save this design preset'}</div>
+                </div>
+              </button>
+              <div class="border-t border-border/80 my-1"></div>
+              <button id="btn-manage-saved-templates" type="button" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent text-foreground text-left transition-colors cursor-pointer">
+                <span class="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 shrink-0">${getIcon('folder', 'w-4 h-4')}</span>
+                <div class="min-w-0">
+                  <div class="font-semibold">${isKm ? (i18n.t('students.idCardLoadTemplate') || 'បើកគំរូដែលបានរក្សាទុក...') : 'Load Saved Template...'}</div>
+                  <div class="text-[11px] text-muted-foreground truncate">${isKm ? 'ជ្រើសរើស ឬលុបគំរូដែលបានរក្សាទុក' : 'Browse or apply saved presets'}</div>
+                </div>
+              </button>
+            </div>
+          </div>
+
           <!-- Export PDF Button -->
           <button id="btn-studio-pdf" type="button" class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-input bg-card hover:bg-muted text-xs sm:text-sm font-medium transition-all shadow-2xs cursor-pointer font-khmer" title="${isKm ? 'នាំចេញជាទម្រង់ PDF' : 'Export PDF'}">
             ${getIcon('download', 'w-4 h-4')}
@@ -2670,6 +2709,55 @@ export const IDCardStudioModal = {
       });
     });
 
+    // Save Design Dropdown & Actions
+    const saveDesignDropdownWrapper = overlay.querySelector('#save-design-dropdown-wrapper');
+    const saveDesignDropdownMenu = overlay.querySelector('#save-design-dropdown-menu');
+    const btnSaveDropdownToggle = overlay.querySelector('#btn-studio-save-dropdown-toggle');
+
+    btnSaveDropdownToggle?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      saveDesignDropdownMenu?.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (saveDesignDropdownWrapper && !saveDesignDropdownWrapper.contains(e.target)) {
+        saveDesignDropdownMenu?.classList.add('hidden');
+      }
+    });
+
+    overlay.querySelector('#btn-studio-save-design')?.addEventListener('click', () => {
+      this.saveDesignToDatabase();
+    });
+
+    overlay.querySelector('#btn-save-design-direct')?.addEventListener('click', () => {
+      saveDesignDropdownMenu?.classList.add('hidden');
+      this.saveDesignToDatabase();
+    });
+
+    overlay.querySelector('#btn-save-as-named-template')?.addEventListener('click', () => {
+      saveDesignDropdownMenu?.classList.add('hidden');
+      this.openSaveTemplateDialog();
+    });
+
+    overlay.querySelector('#btn-manage-saved-templates')?.addEventListener('click', () => {
+      saveDesignDropdownMenu?.classList.add('hidden');
+      this.openManageTemplatesModal();
+    });
+
+    // Keyboard shortcut (Ctrl+S / Cmd+S)
+    if (this._keydownCleanup) {
+      this._keydownCleanup();
+      this._keydownCleanup = null;
+    }
+    const handleStudioKeydown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        this.saveDesignToDatabase();
+      }
+    };
+    window.addEventListener('keydown', handleStudioKeydown);
+    this._keydownCleanup = () => window.removeEventListener('keydown', handleStudioKeydown);
+
     // Print Dropdown Toggle
     const printDropdownWrapper = overlay.querySelector('#print-dropdown-wrapper');
     const printDropdownMenu = overlay.querySelector('#print-dropdown-menu');
@@ -3355,9 +3443,314 @@ export const IDCardStudioModal = {
   },
 
   /**
+   * Explicitly save current card design configuration to database
+   * with visual toast notification and button feedback
+   */
+  async saveDesignToDatabase() {
+    const isKm = i18n.getLocale() === 'km';
+    const overlay = this.activeOverlay || document.getElementById('id-card-studio-overlay');
+    const btn = overlay?.querySelector('#btn-studio-save-design');
+    const origHtml = btn ? btn.innerHTML : null;
+
+    try {
+      if (btn) {
+        btn.disabled = true;
+        btn.classList.add('opacity-80', 'pointer-events-none');
+        btn.innerHTML = `
+          <svg class="animate-spin w-4 h-4 text-white inline shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+          <span class="whitespace-nowrap">${isKm ? 'កំពុងរក្សាទុក...' : 'Saving...'}</span>
+        `;
+      }
+
+      await this.savePersistedSettings();
+      await SettingsService.set('id_card_last_saved_at', new Date().toISOString());
+
+      // Show success toast
+      toast.success(
+        isKm 
+          ? (i18n.t('students.idCardSaveDesignSuccess') || 'បានរក្សាទុកការរចនាកាតទៅក្នុងមូលដ្ឋានទិន្នន័យដោយជោគជ័យ!') 
+          : 'Card design saved to database successfully!'
+      );
+
+      // Temporary saved checkmark state on button
+      if (btn) {
+        btn.innerHTML = `
+          ${getIcon('check', 'w-4 h-4 inline text-white shrink-0')}
+          <span class="whitespace-nowrap font-bold">${isKm ? 'បានរក្សាទុក!' : 'Saved!'}</span>
+        `;
+        setTimeout(() => {
+          if (btn && origHtml) {
+            btn.innerHTML = origHtml;
+            btn.disabled = false;
+            btn.classList.remove('opacity-80', 'pointer-events-none');
+          }
+        }, 1800);
+      }
+    } catch (err) {
+      console.error('Error saving card design to database:', err);
+      toast.error(
+        isKm 
+          ? 'បរាជ័យក្នុងការរក្សាទុកការរចនាកាត: ' + (err.message || '') 
+          : 'Failed to save card design: ' + (err.message || '')
+      );
+      if (btn && origHtml) {
+        btn.innerHTML = origHtml;
+        btn.disabled = false;
+        btn.classList.remove('opacity-80', 'pointer-events-none');
+      }
+    }
+  },
+
+  /**
+   * Open dialog to save current design as a new named template preset
+   */
+  async openSaveTemplateDialog() {
+    const isKm = i18n.getLocale() === 'km';
+    const dialog = document.createElement('div');
+    dialog.className = 'dialog-overlay fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in font-khmer';
+    dialog.id = 'save-template-dialog';
+
+    dialog.innerHTML = `
+      <div class="relative w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl p-5 space-y-4 animate-slide-down">
+        <div class="flex items-center justify-between pb-3 border-b border-border">
+          <div class="flex items-center gap-2">
+            <span class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600">
+              ${getIcon('save', 'w-4 h-4')}
+            </span>
+            <h3 class="text-sm font-bold text-foreground">
+              ${isKm ? 'រក្សាទុកជាគំរូថ្មី' : 'Save as New Template'}
+            </h3>
+          </div>
+          <button type="button" id="btn-close-save-tpl-dialog" class="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+            ${getIcon('x', 'w-4 h-4')}
+          </button>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="block text-xs font-semibold text-foreground">
+            ${isKm ? 'ឈ្មោះគំរូរចនា' : 'Template Name'} <span class="text-destructive">*</span>
+          </label>
+          <input type="text" id="input-new-template-name"
+                 placeholder="${isKm ? 'ឧ. គំរូកាតសិស្ស 2024-2025' : 'e.g. Student Card 2024-2025'}"
+                 class="w-full h-10 px-3 rounded-lg border border-input bg-background text-xs sm:text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs" />
+          <p class="text-[11px] text-muted-foreground">
+            ${isKm ? 'គំរូនេះនឹងត្រូវបានរក្សាទុកក្នុងមូលដ្ឋានទិន្នន័យដើម្បីប្រើឡើងវិញនៅពេលក្រោយ។' : 'This template will be saved to the database for future reuse.'}
+          </p>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-border">
+          <button type="button" id="btn-cancel-save-tpl" class="px-3.5 py-2 rounded-lg border border-border hover:bg-muted text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+            ${isKm ? 'បោះបង់' : 'Cancel'}
+          </button>
+          <button type="button" id="btn-confirm-save-tpl" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5">
+            ${getIcon('check', 'w-3.5 h-3.5')}
+            <span>${isKm ? 'រក្សាទុក' : 'Save'}</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(dialog);
+
+    const input = dialog.querySelector('#input-new-template-name');
+    input?.focus();
+
+    const closeDialog = () => dialog.remove();
+
+    dialog.querySelector('#btn-close-save-tpl-dialog')?.addEventListener('click', closeDialog);
+    dialog.querySelector('#btn-cancel-save-tpl')?.addEventListener('click', closeDialog);
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) closeDialog();
+    });
+
+    const handleSave = async () => {
+      const name = input?.value?.trim();
+      if (!name) {
+        toast.error(isKm ? 'សូមបញ្ចូលឈ្មោះគំរូរចនា!' : 'Please enter a template name!');
+        input?.focus();
+        return;
+      }
+
+      try {
+        const existing = (await SettingsService.get('id_card_saved_templates')) || [];
+        const templates = Array.isArray(existing) ? existing : [];
+        const newTpl = {
+          id: 'tpl_' + Date.now(),
+          name,
+          createdAt: new Date().toISOString(),
+          config: JSON.parse(JSON.stringify(this.config))
+        };
+        templates.push(newTpl);
+        await SettingsService.set('id_card_saved_templates', templates);
+        await this.savePersistedSettings();
+
+        closeDialog();
+        toast.success(isKm ? `បានរក្សាទុកគំរូ "${name}" ដោយជោគជ័យ!` : `Template "${name}" saved successfully!`);
+      } catch (err) {
+        toast.error(isKm ? 'បរាជ័យក្នុងការរក្សាទុកគំរូ: ' + err.message : 'Failed to save template: ' + err.message);
+      }
+    };
+
+    dialog.querySelector('#btn-confirm-save-tpl')?.addEventListener('click', handleSave);
+    input?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleSave();
+      if (e.key === 'Escape') closeDialog();
+    });
+  },
+
+  /**
+   * Open modal to browse, apply, or delete saved design templates
+   */
+  async openManageTemplatesModal() {
+    const isKm = i18n.getLocale() === 'km';
+    const dialog = document.createElement('div');
+    dialog.className = 'dialog-overlay fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in font-khmer';
+    dialog.id = 'manage-templates-modal';
+
+    let templates = [];
+    try {
+      const raw = await SettingsService.get('id_card_saved_templates');
+      templates = Array.isArray(raw) ? raw : [];
+    } catch (_) {
+      templates = [];
+    }
+
+    const renderListHtml = () => {
+      if (templates.length === 0) {
+        return `
+          <div class="py-12 text-center text-muted-foreground space-y-2">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground/60">
+              ${getIcon('folder', 'w-6 h-6')}
+            </div>
+            <p class="text-xs font-semibold text-foreground">
+              ${isKm ? 'មិនទាន់មានគំរូដែលបានរក្សាទុកនៅឡើយទេ' : 'No saved templates found'}
+            </p>
+            <p class="text-[11px] max-w-xs mx-auto">
+              ${isKm ? 'អ្នកអាចរក្សាទុកការរចនាបច្ចុប្បន្នជាគំរូថ្មី ដោយចុចលើជម្រើស "រក្សាទុកជាគំរូថ្មី..."' : 'You can save the current card design by choosing "Save as New Template..."'}
+            </p>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1">
+          ${templates.map((tpl) => {
+            const dateStr = tpl.createdAt ? new Date(tpl.createdAt).toLocaleDateString(isKm ? 'km-KH' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+            const orient = tpl.config?.cardOrientation === 'landscape' ? (isKm ? 'បណ្តោយ' : 'Landscape') : (isKm ? 'បញ្ឈរ' : 'Portrait');
+            const dim = (tpl.config?.dimensions || 'cr80').toUpperCase();
+
+            return `
+              <div class="p-3.5 rounded-xl border border-border bg-card hover:border-primary/40 transition-all flex items-center justify-between gap-3 shadow-2xs group">
+                <div class="min-w-0 flex-1 space-y-1">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-foreground truncate">${tpl.name || (isKm ? 'គំរូគ្មានឈ្មោះ' : 'Untitled Template')}</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">${dim} • ${orient}</span>
+                  </div>
+                  <div class="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                    ${getIcon('calendar', 'w-3 h-3 text-muted-foreground/60')}
+                    <span>${dateStr}</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <button type="button" class="btn-apply-tpl px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold shadow-2xs transition-colors cursor-pointer" data-id="${tpl.id}">
+                    ${isKm ? 'ប្រើប្រាស់' : 'Apply'}
+                  </button>
+                  <button type="button" class="btn-delete-tpl p-1.5 rounded-lg border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 text-muted-foreground transition-colors cursor-pointer" data-id="${tpl.id}" title="${isKm ? 'លុបគំរូ' : 'Delete'}">
+                    ${getIcon('trash2', 'w-3.5 h-3.5')}
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    };
+
+    dialog.innerHTML = `
+      <div class="relative w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl p-5 space-y-4 animate-slide-down">
+        <div class="flex items-center justify-between pb-3 border-b border-border">
+          <div class="flex items-center gap-2">
+            <span class="p-1.5 rounded-lg bg-amber-500/10 text-amber-600">
+              ${getIcon('folder', 'w-4 h-4')}
+            </span>
+            <h3 class="text-sm font-bold text-foreground">
+              ${isKm ? 'គំរូរចនាកាតដែលបានរក្សាទុក' : 'Saved Design Templates'}
+            </h3>
+          </div>
+          <button type="button" id="btn-close-manage-tpl" class="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+            ${getIcon('x', 'w-4 h-4')}
+          </button>
+        </div>
+
+        <div id="manage-tpl-body">
+          ${renderListHtml()}
+        </div>
+
+        <div class="flex items-center justify-end pt-2 border-t border-border">
+          <button type="button" id="btn-done-manage-tpl" class="px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 text-foreground text-xs font-semibold transition-colors cursor-pointer">
+            ${isKm ? 'បិទ' : 'Close'}
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(dialog);
+
+    const closeDialog = () => dialog.remove();
+    dialog.querySelector('#btn-close-manage-tpl')?.addEventListener('click', closeDialog);
+    dialog.querySelector('#btn-done-manage-tpl')?.addEventListener('click', closeDialog);
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) closeDialog();
+    });
+
+    const bindListActions = () => {
+      dialog.querySelectorAll('.btn-apply-tpl').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const tId = btn.dataset.id;
+          const found = templates.find(t => t.id === tId);
+          if (found && found.config) {
+            this.config = JSON.parse(JSON.stringify(found.config));
+            await this.savePersistedSettings();
+            closeDialog();
+            this.renderModal();
+            toast.success(isKm ? `បានបើក និងអនុវត្តគំរូ "${found.name}" ដោយជោគជ័យ!` : `Template "${found.name}" applied successfully!`);
+          }
+        });
+      });
+
+      dialog.querySelectorAll('.btn-delete-tpl').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const tId = btn.dataset.id;
+          const found = templates.find(t => t.id === tId);
+          const confirmMsg = isKm 
+            ? `តើអ្នកពិតជាចង់លុបគំរូ "${found?.name || ''}" មែនទេ?` 
+            : `Are you sure you want to delete template "${found?.name || ''}"?`;
+          if (window.confirm(confirmMsg)) {
+            templates = templates.filter(t => t.id !== tId);
+            await SettingsService.set('id_card_saved_templates', templates);
+            dialog.querySelector('#manage-tpl-body').innerHTML = renderListHtml();
+            bindListActions();
+            toast.success(isKm ? 'បានលុបគំរូដោយជោគជ័យ' : 'Template deleted successfully');
+          }
+        });
+      });
+    };
+
+    bindListActions();
+  },
+
+  /**
    * Close and destroy the modal
    */
   close() {
+    if (this._keydownCleanup) {
+      this._keydownCleanup();
+      this._keydownCleanup = null;
+    }
     document.body.classList.remove('printing-id-cards', 'landscape-print');
     document.getElementById('id-card-print-container')?.remove();
     document.getElementById('id-card-print-page-style')?.remove();
