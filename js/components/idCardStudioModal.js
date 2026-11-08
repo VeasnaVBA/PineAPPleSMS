@@ -333,7 +333,7 @@ export const IDCardStudioModal = {
           <div class="min-w-0">
             <h2 class="text-base font-bold text-foreground font-khmer flex items-center gap-2 flex-wrap truncate">
               <span>${isKm ? (i18n.t('students.idCardStudioTitle') || 'ប័ណ្ណសម្គាល់ខ្លួនសិស្ស') : 'Student ID Card Studio'}</span>
-              <span id="header-selected-count-badge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+              <span id="header-selected-count-badge" class="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
                 ${isKm ? `បានជ្រើស ${selectedCount}/${totalStudents} សិស្ស` : `Selected ${selectedCount}/${totalStudents}`}
               </span>
             </h2>
@@ -353,7 +353,7 @@ export const IDCardStudioModal = {
             <div class="inline-flex rounded-lg shadow-sm">
               <button id="btn-studio-save-design" type="button" class="inline-flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-l-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs sm:text-sm font-semibold transition-all shadow-sm cursor-pointer font-khmer" title="${isKm ? 'រក្សាទុកការរចនាកាតទៅក្នុងមូលដ្ឋានទិន្នន័យ (Ctrl+S)' : 'Save Card Design to Database (Ctrl+S)'}">
                 ${getIcon('save', 'w-4 h-4 text-white shrink-0')}
-                <span id="btn-studio-save-design-label" class="whitespace-nowrap">${isKm ? (i18n.t('students.idCardSaveDesign') || 'រក្សាទុកការរចនា') : 'Save Design'}</span>
+                <span id="btn-studio-save-design-label" class="whitespace-nowrap"><span class="inline">${isKm ? 'រក្សាទុក' : 'Save'}</span><span class="hidden sm:inline">${isKm ? 'ការរចនា' : ' Design'}</span></span>
               </button>
               <button id="btn-studio-save-dropdown-toggle" type="button" class="px-2 py-2 rounded-r-lg bg-emerald-600 hover:bg-emerald-700 text-white border-l border-emerald-500/30 cursor-pointer transition-all" title="${isKm ? 'ជម្រើសរក្សាទុកគំរូ' : 'Template Options'}">
                 ${getIcon('chevronDown', 'w-3.5 h-3.5')}
@@ -384,6 +384,24 @@ export const IDCardStudioModal = {
                   <div class="text-[11px] text-muted-foreground truncate">${isKm ? 'ជ្រើសរើស ឬលុបគំរូដែលបានរក្សាទុក' : 'Browse or apply saved presets'}</div>
                 </div>
               </button>
+              <div class="border-t border-border/80 my-1"></div>
+              <!-- Export Design to JSON file -->
+              <button id="btn-export-design-json" type="button" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent text-foreground text-left transition-colors cursor-pointer">
+                <span class="p-1.5 rounded-lg bg-sky-500/10 text-sky-600 shrink-0">${getIcon('download', 'w-4 h-4')}</span>
+                <div class="min-w-0">
+                  <div class="font-semibold">${isKm ? 'នាំចេញឯកសាររចនា (JSON)' : 'Export Design File (JSON)'}</div>
+                  <div class="text-[11px] text-muted-foreground truncate">${isKm ? 'ទាញយកឯកសារដើម្បីផ្ញើទៅទូរសព្ទ ឬកុំព្យូទ័រ' : 'Download file to transfer to phone/PC'}</div>
+                </div>
+              </button>
+              <!-- Import Design from JSON file -->
+              <button id="btn-import-design-json" type="button" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent text-foreground text-left transition-colors cursor-pointer">
+                <span class="p-1.5 rounded-lg bg-violet-500/10 text-violet-600 shrink-0">${getIcon('upload', 'w-4 h-4')}</span>
+                <div class="min-w-0">
+                  <div class="font-semibold">${isKm ? 'នាំចូលឯកសាររចនា (JSON)...' : 'Import Design File (JSON)...'}</div>
+                  <div class="text-[11px] text-muted-foreground truncate">${isKm ? 'ជ្រើសរើសឯកសារដែលបានរក្សាទុកពីកុំព្យូទ័រ' : 'Select design file from laptop'}</div>
+                </div>
+              </button>
+              <input type="file" id="input-import-design-file" accept=".json" class="hidden" />
             </div>
           </div>
 
@@ -2744,6 +2762,27 @@ export const IDCardStudioModal = {
       this.openManageTemplatesModal();
     });
 
+    // Export Design to JSON file
+    overlay.querySelector('#btn-export-design-json')?.addEventListener('click', () => {
+      saveDesignDropdownMenu?.classList.add('hidden');
+      this.exportDesignJson();
+    });
+
+    // Import Design from JSON file
+    const inputImportDesignFile = overlay.querySelector('#input-import-design-file');
+    overlay.querySelector('#btn-import-design-json')?.addEventListener('click', () => {
+      saveDesignDropdownMenu?.classList.add('hidden');
+      inputImportDesignFile?.click();
+    });
+
+    inputImportDesignFile?.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        this.importDesignJson(file);
+        inputImportDesignFile.value = '';
+      }
+    });
+
     // Keyboard shortcut (Ctrl+S / Cmd+S)
     if (this._keydownCleanup) {
       this._keydownCleanup();
@@ -3405,6 +3444,79 @@ export const IDCardStudioModal = {
 
       window.print();
     }, 150);
+  },
+
+  /**
+   * Export current card design configuration as a JSON file download
+   */
+  exportDesignJson() {
+    const isKm = i18n.getLocale() === 'km';
+    try {
+      const dataStr = JSON.stringify({
+        version: '1.0',
+        appName: 'PineAPPleSMS',
+        exportedAt: new Date().toISOString(),
+        config: this.config
+      }, null, 2);
+
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const filename = `student_card_design_${new Date().toISOString().slice(0, 10)}.json`;
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success(isKm ? 'បានទាញយកឯកសាររចនាកាត (JSON) ដោយជោគជ័យ' : 'Card design exported as JSON successfully');
+    } catch (err) {
+      console.error('Error exporting design JSON:', err);
+      toast.error(isKm ? 'បរាជ័យក្នុងការនាំចេញ: ' + err.message : 'Export failed: ' + err.message);
+    }
+  },
+
+  /**
+   * Import card design configuration from a selected JSON file
+   */
+  importDesignJson(file) {
+    const isKm = i18n.getLocale() === 'km';
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const json = JSON.parse(e.target.result);
+        const importedConfig = json.config || json;
+        if (!importedConfig || typeof importedConfig !== 'object') {
+          throw new Error('Invalid card design JSON format');
+        }
+
+        this.config = {
+          ...DEFAULT_CARD_CONFIG,
+          ...importedConfig,
+          fields: {
+            ...DEFAULT_CARD_CONFIG.fields,
+            ...(importedConfig.fields || {})
+          },
+          fieldStyles: {
+            ...DEFAULT_FIELD_STYLES,
+            ...(importedConfig.fieldStyles || {})
+          }
+        };
+
+        await this.savePersistedSettings();
+        await SettingsService.set('id_card_last_saved_at', new Date().toISOString());
+
+        this.renderModal();
+        toast.success(isKm ? 'បាននាំចូល និងរក្សាទុកការរចនាកាតទៅក្នុងមូលដ្ឋានទិន្នន័យដោយជោគជ័យ!' : 'Card design imported and saved to database successfully!');
+      } catch (err) {
+        console.error('Error importing design JSON:', err);
+        toast.error(isKm ? 'បរាជ័យក្នុងការនាំចូលឯកសារ: ' + err.message : 'Import failed: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
   },
 
   /**
