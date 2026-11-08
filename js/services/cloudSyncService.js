@@ -35,13 +35,15 @@ const SETTING_CHUNK_SIZE = 35000; // Safe threshold well below Google Sheets 50,
  * If any setting's serialized value exceeds 35,000 characters (e.g. ID card studio designs with custom logos/stamps),
  * it is automatically split into multi-row chunks so Google Sheets never throws cell limit exceptions.
  */
-export function prepareSettingsForDrive(rawSettings) {
+export function prepareSettingsForDrive(rawSettings, isCardSettings = false) {
   if (!Array.isArray(rawSettings)) return [];
   const processed = [];
 
   for (const item of rawSettings) {
     if (!item || !item.key) continue;
     const key = String(item.key).trim();
+    // Do NOT include id_card_* settings in general settings sheet tab; they belong to card_settings
+    if (!isCardSettings && key.startsWith('id_card_')) continue;
     if (key.includes('__chunk_') || key.endsWith('__manifest')) continue;
 
     let val = item.value;
@@ -308,8 +310,12 @@ export const CloudSyncService = {
         delete clean.photoBlob;
         return clean;
       }));
+      const { SettingsService } = await import('./settingsService.js');
+      const rawCardSettings = await SettingsService.getAllCardSettings();
+      const card_settings = prepareSettingsForDrive(rawCardSettings, true);
+
       const rawSettings = await db.getAll('settings');
-      const settings = prepareSettingsForDrive(rawSettings);
+      const settings = prepareSettingsForDrive(rawSettings, false);
 
       // 5. Construct payload matching specification
       const payload = {
@@ -328,6 +334,7 @@ export const CloudSyncService = {
           subjects,
           groups,
           report_settings,
+          card_settings,
           registration_queue,
           settings
         }
@@ -793,7 +800,60 @@ export const CloudSyncService = {
         }
       }
 
-      // 12. Settings (User Workspace preferences & ID Card design settings)
+      // 11.5 Card Settings (Dedicated sheet in Google Drive for Student ID Card designs & presets)
+      const { SettingsService: syncSettingsService } = await import('./settingsService.js');
+      if (Array.isArray(data.card_settings)) {
+        const chunkMap = new Map();
+        const incomingCardSettings = [];
+
+        for (const item of data.card_settings) {
+          if (!item || !item.key) continue;
+          const key = String(item.key).trim();
+
+          if (key.endsWith('__manifest')) {
+            const baseKey = key.replace(/__manifest$/, '');
+            let manifest = item.value;
+            if (typeof manifest === 'string') {
+              try { manifest = JSON.parse(manifest); } catch (_) {}
+            }
+            if (!chunkMap.has(baseKey)) chunkMap.set(baseKey, { manifest: null, chunks: [] });
+            chunkMap.get(baseKey).manifest = manifest;
+          } else if (key.includes('__chunk_')) {
+            const parts = key.split('__chunk_');
+            const baseKey = parts[0];
+            const chunkIndex = parseInt(parts[1], 10);
+            if (!chunkMap.has(baseKey)) chunkMap.set(baseKey, { manifest: null, chunks: [] });
+            chunkMap.get(baseKey).chunks[chunkIndex] = String(item.value || '');
+          } else {
+            incomingCardSettings.push(item);
+          }
+        }
+
+        for (const [baseKey, bundle] of chunkMap.entries()) {
+          if (bundle.chunks && bundle.chunks.length > 0) {
+            const fullStr = bundle.chunks.join('');
+            let parsedVal = fullStr;
+            if (bundle.manifest?.isJsonObject || fullStr.startsWith('{') || fullStr.startsWith('[')) {
+              try { parsedVal = JSON.parse(fullStr); } catch (_) {}
+            }
+            incomingCardSettings.push({
+              key: baseKey,
+              value: parsedVal
+            });
+          }
+        }
+
+        for (const item of incomingCardSettings) {
+          if (!item.key) continue;
+          let val = item.value !== undefined ? item.value : '';
+          if (typeof val === 'string' && ((val.startsWith('{') && val.endsWith('}')) || (val.startsWith('[') && val.endsWith(']')))) {
+            try { val = JSON.parse(val); } catch (_) {}
+          }
+          await syncSettingsService.setCardSetting(item.key, val);
+        }
+      }
+
+      // 12. Settings (User Workspace preferences)
       if (Array.isArray(data.settings)) {
         // Collect chunks and manifests if any settings were chunked for Google Sheets 50k limit
         const chunkMap = new Map();
@@ -847,6 +907,11 @@ export const CloudSyncService = {
             try {
               val = JSON.parse(val);
             } catch (_) {}
+          }
+          // If any legacy id_card_* key exists in incoming settings, migrate to card_settings and do not store in settings
+          if (String(item.key).trim().startsWith('id_card_')) {
+            await syncSettingsService.setCardSetting(String(item.key).trim(), val);
+            continue;
           }
           const cleanItem = {
             key: String(item.key).trim(),

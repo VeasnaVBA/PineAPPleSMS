@@ -713,6 +713,7 @@ function getOrCreateUserSpreadsheet(fileName, username) {
     'subjects',
     'groups',
     'report_settings',
+    'card_settings',
     'registration_queue',
     'settings'
   ];
@@ -728,6 +729,7 @@ function getOrCreateUserSpreadsheet(fileName, username) {
     subjects: ['id', 'code', 'name', 'nameEn', 'coefficient', 'passingScore', 'type', 'status', 'createdAt', 'updatedAt'],
     groups: ['id', 'name', 'classId', 'academicYear', 'leaderStudentId', 'members', 'description', 'status', 'createdAt', 'updatedAt'],
     report_settings: ['id', 'key', 'value', 'type', 'description', 'updatedAt'],
+    card_settings: ['id', 'key', 'value', 'updatedAt'],
     registration_queue: ['id', 'studentId', 'name', 'gender', 'dateOfBirth', 'grade', 'appliedDate', 'status', 'photo', 'notes', 'createdAt', 'updatedAt'],
     settings: ['id', 'key', 'value', 'category', 'updatedAt']
   };
@@ -872,6 +874,7 @@ function handlePullToDrive(fileName, username, data, payload) {
     { name: 'subjects', data: data.subjects || [] },
     { name: 'groups', data: data.groups || [] },
     { name: 'report_settings', data: data.report_settings || [] },
+    { name: 'card_settings', data: data.card_settings || [] },
     { name: 'registration_queue', data: data.registration_queue || [] },
     { name: 'settings', data: data.settings || [] }
   ];
@@ -970,6 +973,7 @@ function handlePushToApp(fileName, username) {
     'subjects',
     'groups',
     'report_settings',
+    'card_settings',
     'registration_queue',
     'settings'
   ];

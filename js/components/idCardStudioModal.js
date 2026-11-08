@@ -223,7 +223,7 @@ export const IDCardStudioModal = {
       const defaultSchoolKh = appSchoolKh || 'ឈ្មោះសាលារៀន';
       const defaultSchoolEn = appSchoolEn || 'SCHOOL NAME';
 
-      let saved = await SettingsService.get('id_card_studio_config');
+      let saved = await SettingsService.getCardSetting('id_card_studio_config');
       if (typeof saved === 'string') {
         try {
           saved = JSON.parse(saved);
@@ -274,7 +274,7 @@ export const IDCardStudioModal = {
    */
   async savePersistedSettings() {
     try {
-      await SettingsService.set('id_card_studio_config', this.config);
+      await SettingsService.setCardSetting('id_card_studio_config', this.config);
     } catch (err) {
       console.warn('Failed to save ID card studio settings:', err);
     }
@@ -3521,7 +3521,7 @@ export const IDCardStudioModal = {
         };
 
         await this.savePersistedSettings();
-        await SettingsService.set('id_card_last_saved_at', new Date().toISOString());
+        await SettingsService.setCardSetting('id_card_last_saved_at', new Date().toISOString());
 
         this.renderModal();
         toast.success(isKm ? 'បាននាំចូល និងរក្សាទុកការរចនាកាតទៅក្នុងមូលដ្ឋានទិន្នន័យដោយជោគជ័យ!' : 'Card design imported and saved to database successfully!');
@@ -3818,7 +3818,7 @@ export const IDCardStudioModal = {
       }
 
       try {
-        let existing = (await SettingsService.get('id_card_saved_templates')) || [];
+        let existing = (await SettingsService.getCardSetting('id_card_saved_templates')) || [];
         if (typeof existing === 'string') {
           try { existing = JSON.parse(existing); } catch (_) {}
         }
@@ -3830,7 +3830,7 @@ export const IDCardStudioModal = {
           config: JSON.parse(JSON.stringify(this.config))
         };
         templates.push(newTpl);
-        await SettingsService.set('id_card_saved_templates', templates);
+        await SettingsService.setCardSetting('id_card_saved_templates', templates);
         await this.savePersistedSettings();
 
         closeDialog();
@@ -3858,7 +3858,7 @@ export const IDCardStudioModal = {
 
     let templates = [];
     try {
-      let raw = await SettingsService.get('id_card_saved_templates');
+      let raw = await SettingsService.getCardSetting('id_card_saved_templates');
       if (typeof raw === 'string') {
         try { raw = JSON.parse(raw); } catch (_) {}
       }

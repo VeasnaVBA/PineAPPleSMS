@@ -41,6 +41,7 @@ export const CLOUD_SYNC_SHEET_NAMES = {
   SUBJECTS: 'subjects',
   GROUPS: 'groups',
   REPORT_SETTINGS: 'report_settings',
+  CARD_SETTINGS: 'card_settings',
   REGISTRATION_QUEUE: 'registration_queue',
   SETTINGS: 'settings'
 };

@@ -19,6 +19,66 @@ export const SettingsService = {
     }
   },
 
+  /**
+   * Dedicated Card Settings Store (card_settings table)
+   * Separates all ID card layout designs, logos, stamps, and presets
+   * into a dedicated 'card_settings' sheet in Google Drive instead of generic 'settings'.
+   */
+  async getCardSetting(key) {
+    try {
+      const item = await db.get('card_settings', key);
+      if (item && item.value !== undefined) return item.value;
+    } catch (_) {}
+    // Legacy migration: check if previously stored in 'settings' table
+    try {
+      const legacyItem = await db.get('settings', key);
+      if (legacyItem && legacyItem.value !== undefined) {
+        await this.setCardSetting(key, legacyItem.value);
+        return legacyItem.value;
+      }
+    } catch (_) {}
+    return null;
+  },
+
+  async setCardSetting(key, value) {
+    const record = {
+      id: key,
+      key,
+      value,
+      updatedAt: new Date().toISOString()
+    };
+    try {
+      await db.put('card_settings', record);
+    } catch (_) {
+      // If store not ready yet during upgrades, fallback to settings
+      await db.put('settings', { key, value });
+    }
+    // Clean up from legacy 'settings' store so it no longer pollutes the settings sheet tab
+    try {
+      await db.delete('settings', key);
+    } catch (_) {}
+    return record;
+  },
+
+  async getAllCardSettings() {
+    try {
+      const items = await db.getAll('card_settings');
+      if (items && items.length > 0) return items;
+    } catch (_) {}
+    // If empty, check if legacy settings store has any id_card_* items and migrate them
+    try {
+      const allSettings = await db.getAll('settings');
+      const legacyCardSettings = (allSettings || []).filter(s => s && s.key && s.key.startsWith('id_card_'));
+      if (legacyCardSettings.length > 0) {
+        for (const item of legacyCardSettings) {
+          await this.setCardSetting(item.key, item.value);
+        }
+        return await db.getAll('card_settings');
+      }
+    } catch (_) {}
+    return [];
+  },
+
   async getAcademicYears() {
     let years = await db.getAll('academicYears');
     const isTeacher = authService.isTeacher();

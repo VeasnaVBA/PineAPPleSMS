@@ -26,7 +26,7 @@
 
 export const GLOBAL_DB_NAME = 'SchoolSystem_Global';
 export const GLOBAL_DB_VERSION = 1;
-export const WORKSPACE_DB_VERSION = 7;
+export const WORKSPACE_DB_VERSION = 8;
 export const LEGACY_DB_NAME = 'SchoolManagementDB';
 
 /**
@@ -373,6 +373,7 @@ export const WORKSPACE_SYNCABLE_STORES = new Set([
   'subjects',
   'groups',
   'report_settings',
+  'card_settings',
   'registration_queue',
   'settings'
 ]);
@@ -533,6 +534,11 @@ class WorkspaceDatabase {
           // 12. Report Settings / Presets
           if (!db.objectStoreNames.contains('report_settings')) {
             db.createObjectStore('report_settings', { keyPath: 'id' });
+          }
+
+          // 14. Card Settings (Dedicated store for ID Card studio designs, presets, templates)
+          if (!db.objectStoreNames.contains('card_settings')) {
+            db.createObjectStore('card_settings', { keyPath: 'key' });
           }
 
           // 13. Registration Queue (Admissions & Transfer Staging)
