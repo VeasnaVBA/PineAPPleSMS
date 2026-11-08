@@ -980,9 +980,16 @@ export const IDCardStudioModal = {
                       <span>${isKm ? 'ផ្ទុកឡូហ្គោ' : 'Upload Logo'}</span>
                     </button>
                     ${this.config.schoolLogo ? `
-                      <button type="button" id="btn-remove-logo" class="text-[11px] text-destructive hover:underline font-khmer block cursor-pointer pt-0.5">
-                        ${isKm ? 'លុបឡូហ្គោចេញ' : 'Remove Logo'}
-                      </button>
+                      <div class="flex items-center gap-2 pt-0.5">
+                        <button type="button" id="btn-remove-black-bg-logo" class="text-[11px] text-primary hover:underline font-khmer flex items-center gap-1 cursor-pointer">
+                          <span>✨</span>
+                          <span>${isKm ? 'លុបផ្ទៃខ្មៅចេញ' : 'Remove Black BG'}</span>
+                        </button>
+                        <span class="text-muted-foreground text-[10px]">•</span>
+                        <button type="button" id="btn-remove-logo" class="text-[11px] text-destructive hover:underline font-khmer cursor-pointer">
+                          ${isKm ? 'លុបចេញ' : 'Remove'}
+                        </button>
+                      </div>
                     ` : ''}
                   </div>
                   <input type="file" id="input-file-logo" accept="image/*" class="hidden" />
@@ -1074,7 +1081,13 @@ export const IDCardStudioModal = {
                     ${getIcon('upload', 'w-3 h-3')}
                     <span>${isKm ? 'ផ្ទុកហត្ថលេខា' : 'Upload PNG'}</span>
                   </button>
-                  ${this.config.signatureImage ? `<button type="button" id="btn-remove-signature" class="text-[11px] text-destructive hover:underline font-khmer cursor-pointer">${isKm ? 'លុប' : 'Remove'}</button>` : ''}
+                  ${this.config.signatureImage ? `
+                    <button type="button" id="btn-remove-black-bg-sig" class="text-[11px] text-primary hover:underline font-khmer cursor-pointer">
+                      ✨ ${isKm ? 'លុបផ្ទៃខ្មៅ' : 'Remove Black BG'}
+                    </button>
+                    <span class="text-muted-foreground text-[10px]">•</span>
+                    <button type="button" id="btn-remove-signature" class="text-[11px] text-destructive hover:underline font-khmer cursor-pointer">${isKm ? 'លុប' : 'Remove'}</button>
+                  ` : ''}
                   <input type="file" id="input-file-signature" accept="image/*" class="hidden" />
                 </div>
                 
@@ -1107,7 +1120,13 @@ export const IDCardStudioModal = {
                     ${getIcon('upload', 'w-3 h-3')}
                     <span>${isKm ? 'ផ្ទុកត្រា' : 'Upload PNG'}</span>
                   </button>
-                  ${this.config.stampImage ? `<button type="button" id="btn-remove-stamp" class="text-[11px] text-destructive hover:underline font-khmer cursor-pointer">${isKm ? 'លុប' : 'Remove'}</button>` : ''}
+                  ${this.config.stampImage ? `
+                    <button type="button" id="btn-remove-black-bg-stamp" class="text-[11px] text-primary hover:underline font-khmer cursor-pointer">
+                      ✨ ${isKm ? 'លុបផ្ទៃខ្មៅ' : 'Remove Black BG'}
+                    </button>
+                    <span class="text-muted-foreground text-[10px]">•</span>
+                    <button type="button" id="btn-remove-stamp" class="text-[11px] text-destructive hover:underline font-khmer cursor-pointer">${isKm ? 'លុប' : 'Remove'}</button>
+                  ` : ''}
                   <input type="file" id="input-file-stamp" accept="image/*" class="hidden" />
                 </div>
                 
@@ -2165,13 +2184,26 @@ export const IDCardStudioModal = {
 
     // Logo Upload
     const logoInput = overlay.querySelector('#input-file-logo');
-    overlay.querySelector('#btn-upload-logo')?.addEventListener('click', () => logoInput?.click());
+    overlay.querySelector('#btn-upload-logo')?.addEventListener('click', () => {
+      if (logoInput) logoInput.value = '';
+      logoInput?.click();
+    });
     logoInput?.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (file) {
         this.config.schoolLogo = await this.compressImageToDataUrl(file, 400, 400, 0.85);
-        this.savePersistedSettings();
+        await this.savePersistedSettings();
         this.renderModal();
+      }
+    });
+
+    overlay.querySelector('#btn-remove-black-bg-logo')?.addEventListener('click', async () => {
+      if (this.config.schoolLogo) {
+        toast.info(isKm ? 'កំពុងលុបផ្ទៃខាងក្រោយពណ៌ខ្មៅ...' : 'Removing black background...');
+        this.config.schoolLogo = await this.removeBlackBackgroundFromDataUrl(this.config.schoolLogo, 35);
+        await this.savePersistedSettings();
+        this.renderModal();
+        toast.success(isKm ? 'បានលុបផ្ទៃខាងក្រោយពណ៌ខ្មៅរួចរាល់!' : 'Black background removed successfully!');
       }
     });
 
@@ -2228,14 +2260,27 @@ export const IDCardStudioModal = {
 
     // Signature Upload
     const sigInput = overlay.querySelector('#input-file-signature');
-    overlay.querySelector('#btn-upload-signature')?.addEventListener('click', () => sigInput?.click());
+    overlay.querySelector('#btn-upload-signature')?.addEventListener('click', () => {
+      if (sigInput) sigInput.value = '';
+      sigInput?.click();
+    });
     sigInput?.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (file) {
         this.config.signatureImage = await this.compressImageToDataUrl(file, 400, 200, 0.85);
         this.config.showSignature = true;
-        this.savePersistedSettings();
+        await this.savePersistedSettings();
         this.renderModal();
+      }
+    });
+
+    overlay.querySelector('#btn-remove-black-bg-sig')?.addEventListener('click', async () => {
+      if (this.config.signatureImage) {
+        toast.info(isKm ? 'កំពុងលុបផ្ទៃខាងក្រោយពណ៌ខ្មៅ...' : 'Removing black background...');
+        this.config.signatureImage = await this.removeBlackBackgroundFromDataUrl(this.config.signatureImage, 35);
+        await this.savePersistedSettings();
+        this.renderModal();
+        toast.success(isKm ? 'បានលុបផ្ទៃខាងក្រោយពណ៌ខ្មៅរួចរាល់!' : 'Black background removed successfully!');
       }
     });
 
@@ -2253,14 +2298,27 @@ export const IDCardStudioModal = {
 
     // Stamp Upload
     const stampInput = overlay.querySelector('#input-file-stamp');
-    overlay.querySelector('#btn-upload-stamp')?.addEventListener('click', () => stampInput?.click());
+    overlay.querySelector('#btn-upload-stamp')?.addEventListener('click', () => {
+      if (stampInput) stampInput.value = '';
+      stampInput?.click();
+    });
     stampInput?.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (file) {
         this.config.stampImage = await this.compressImageToDataUrl(file, 400, 400, 0.85);
         this.config.showStamp = true;
-        this.savePersistedSettings();
+        await this.savePersistedSettings();
         this.renderModal();
+      }
+    });
+
+    overlay.querySelector('#btn-remove-black-bg-stamp')?.addEventListener('click', async () => {
+      if (this.config.stampImage) {
+        toast.info(isKm ? 'កំពុងលុបផ្ទៃខាងក្រោយពណ៌ខ្មៅ...' : 'Removing black background...');
+        this.config.stampImage = await this.removeBlackBackgroundFromDataUrl(this.config.stampImage, 35);
+        await this.savePersistedSettings();
+        this.renderModal();
+        toast.success(isKm ? 'បានលុបផ្ទៃខាងក្រោយពណ៌ខ្មៅរួចរាល់!' : 'Black background removed successfully!');
       }
     });
 
@@ -3836,7 +3894,11 @@ export const IDCardStudioModal = {
    * Helper: Compress and optimize user-uploaded image files to compact base64 data URLs.
    * Keeps card render snappy, prevents local DB bloat, and fits safely within cloud sync limits.
    */
-  async compressImageToDataUrl(file, maxWidth = 800, maxHeight = 1200, quality = 0.82) {
+  /**
+   * Helper: Compress and optimize user-uploaded image files to compact base64 data URLs.
+   * Keeps card render snappy, prevents local DB bloat, and guarantees 100% alpha transparency for PNG/WebP/SVG.
+   */
+  async compressImageToDataUrl(file, maxWidth = 800, maxHeight = 1200, quality = 0.85) {
     if (!file) return '';
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -3856,13 +3918,19 @@ export const IDCardStudioModal = {
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
 
-          const isPng = file.type === 'image/png';
-          let dataUrl = canvas.toDataURL(isPng ? 'image/png' : 'image/jpeg', quality);
-          // If PNG is over 70KB, convert to JPEG for high efficiency
-          if (isPng && dataUrl.length > 70000) {
-            dataUrl = canvas.toDataURL('image/jpeg', quality);
+          const isPng = file.type === 'image/png' || (file.name && file.name.toLowerCase().endsWith('.png'));
+          const isSvg = file.type === 'image/svg+xml' || (file.name && file.name.toLowerCase().endsWith('.svg'));
+          const isWebp = file.type === 'image/webp' || (file.name && file.name.toLowerCase().endsWith('.webp'));
+
+          // For PNG, WebP, or SVG, ALWAYS preserve transparency!
+          // NEVER convert to JPEG which turns transparent pixels solid black!
+          if (isPng || isSvg || isWebp) {
+            resolve(canvas.toDataURL('image/png'));
+            return;
           }
-          resolve(dataUrl);
+
+          // For standard JPEGs without transparency, use JPEG compression
+          resolve(canvas.toDataURL('image/jpeg', quality));
         };
         img.onerror = () => resolve(e.target.result);
         img.src = e.target.result;
@@ -3870,6 +3938,106 @@ export const IDCardStudioModal = {
       reader.onerror = () => resolve('');
       reader.readAsDataURL(file);
     });
+  },
+
+  /**
+   * Remove solid black / near-black background from an existing image data URL using edge flood fill.
+   * Preserves any black text/lines inside the logo emblem.
+   */
+  async removeBlackBackgroundFromDataUrl(dataUrl, threshold = 35) {
+    if (!dataUrl) return '';
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        this.removeBlackBackgroundFromCanvas(ctx, img.width, img.height, threshold);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  },
+
+  removeBlackBackgroundFromCanvas(ctx, width, height, threshold = 35) {
+    try {
+      const imgData = ctx.getImageData(0, 0, width, height);
+      const data = imgData.data;
+      const visited = new Uint8Array(width * height);
+      const queue = [];
+
+      function isNearBlack(idx) {
+        const r = data[idx];
+        const g = data[idx + 1];
+        const b = data[idx + 2];
+        const a = data[idx + 3];
+        return a > 0 && r <= threshold && g <= threshold && b <= threshold;
+      }
+
+      // Check all 4 outer borders to seed the flood fill
+      for (let x = 0; x < width; x++) {
+        const topIdx = x * 4;
+        if (isNearBlack(topIdx)) {
+          queue.push(x, 0);
+          visited[x] = 1;
+        }
+        const btmIdx = ((height - 1) * width + x) * 4;
+        if (isNearBlack(btmIdx)) {
+          queue.push(x, height - 1);
+          visited[(height - 1) * width + x] = 1;
+        }
+      }
+
+      for (let y = 0; y < height; y++) {
+        const leftIdx = (y * width) * 4;
+        if (!visited[y * width] && isNearBlack(leftIdx)) {
+          queue.push(0, y);
+          visited[y * width] = 1;
+        }
+        const rightIdx = (y * width + (width - 1)) * 4;
+        if (!visited[y * width + (width - 1)] && isNearBlack(rightIdx)) {
+          queue.push(width - 1, y);
+          visited[y * width + (width - 1)] = 1;
+        }
+      }
+
+      let head = 0;
+      while (head < queue.length) {
+        const cx = queue[head++];
+        const cy = queue[head++];
+        const pIdx = (cy * width + cx) * 4;
+        data[pIdx + 3] = 0; // Set alpha to 0 (transparent!)
+
+        const neighbors = [
+          [cx + 1, cy],
+          [cx - 1, cy],
+          [cx, cy + 1],
+          [cx, cy - 1]
+        ];
+
+        for (let i = 0; i < 4; i++) {
+          const nx = neighbors[i][0];
+          const ny = neighbors[i][1];
+          if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+            const nPos = ny * width + nx;
+            if (!visited[nPos]) {
+              visited[nPos] = 1;
+              const nIdx = nPos * 4;
+              if (isNearBlack(nIdx)) {
+                queue.push(nx, ny);
+              }
+            }
+          }
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+    } catch (e) {
+      console.warn('[IDCardStudio] Error removing black background:', e);
+    }
   },
 
   /**
