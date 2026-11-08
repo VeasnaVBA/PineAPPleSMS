@@ -173,6 +173,147 @@ export const CloudSyncService = {
   },
 
   /**
+   * Dedicated Card Settings Sync: sends ONLY 'card_settings' to the dedicated Google Sheet tab.
+   * NEVER reads, touches, clears, or sends 'students', 'teachers', 'classes', or any other sheet.
+   */
+  async syncCardSettingsToDrive(user = null, options = {}) {
+    const isSilent = options?.silent === true;
+    if (!this.isOnline()) {
+      if (!isSilent) toast.error(t('cloudSync.offlineError'), t('cloudSync.errorTitle'));
+      return false;
+    }
+
+    const currentUser = user || authService.getCurrentUser();
+    if (!currentUser || !currentUser.username) {
+      if (!isSilent) toast.error('No active logged-in user account found.', t('cloudSync.errorTitle'));
+      return false;
+    }
+
+    const endpoint = getCloudSyncUrl();
+    if (!endpoint) {
+      if (!isSilent) this.openConfigModal();
+      return false;
+    }
+
+    try {
+      const { SettingsService } = await import('./settingsService.js');
+      const rawCardSettings = await SettingsService.getAllCardSettings();
+      const card_settings = prepareSettingsForDrive(rawCardSettings, true);
+
+      const payload = {
+        action: 'SYNC_CARD_SETTINGS',
+        username: currentUser.username,
+        data: card_settings
+      };
+
+      const result = await this.dispatchGoogleScriptRequest(endpoint, payload);
+      if (!result || !result.success) {
+        throw new Error(result?.error || 'Failed to sync card settings to Google Drive.');
+      }
+      return true;
+    } catch (err) {
+      console.error('[CloudSync] syncCardSettingsToDrive error:', err);
+      if (!isSilent) toast.error(err.message || 'Error syncing card settings to Drive', 'Sync Error');
+      return false;
+    }
+  },
+
+  /**
+   * Dedicated Card Settings Fetch: fetches ONLY 'card_settings' from Google Drive.
+   * Restores ONLY into the local 'card_settings' table in IndexedDB.
+   * NEVER touches, clears, or modifies local 'students', 'teachers', 'classes', or any other table.
+   */
+  async pullCardSettingsFromDrive(user = null, options = {}) {
+    const isSilent = options?.silent === true;
+    if (!this.isOnline()) {
+      if (!isSilent) toast.error(t('cloudSync.offlineError'), t('cloudSync.errorTitle'));
+      return false;
+    }
+
+    const currentUser = user || authService.getCurrentUser();
+    if (!currentUser || !currentUser.username) {
+      if (!isSilent) toast.error('No active logged-in user account found.', t('cloudSync.errorTitle'));
+      return false;
+    }
+
+    const endpoint = getCloudSyncUrl();
+    if (!endpoint) {
+      if (!isSilent) this.openConfigModal();
+      return false;
+    }
+
+    try {
+      const payload = {
+        action: 'FETCH_CARD_SETTINGS',
+        username: currentUser.username
+      };
+
+      const result = await this.dispatchGoogleScriptRequest(endpoint, payload);
+      if (!result || !result.success) {
+        throw new Error(result?.error || 'Failed to fetch card settings from Google Drive.');
+      }
+
+      const incomingData = result.data || [];
+      if (Array.isArray(incomingData)) {
+        const { SettingsService } = await import('./settingsService.js');
+        const chunkMap = new Map();
+        const incomingSettings = [];
+
+        for (const item of incomingData) {
+          if (!item || !item.key) continue;
+          const key = String(item.key).trim();
+
+          if (key.endsWith('__manifest')) {
+            const baseKey = key.replace(/__manifest$/, '');
+            let manifest = item.value;
+            if (typeof manifest === 'string') {
+              try { manifest = JSON.parse(manifest); } catch (_) {}
+            }
+            if (!chunkMap.has(baseKey)) chunkMap.set(baseKey, { manifest: null, chunks: [] });
+            chunkMap.get(baseKey).manifest = manifest;
+          } else if (key.includes('__chunk_')) {
+            const parts = key.split('__chunk_');
+            const baseKey = parts[0];
+            const chunkIndex = parseInt(parts[1], 10);
+            if (!chunkMap.has(baseKey)) chunkMap.set(baseKey, { manifest: null, chunks: [] });
+            chunkMap.get(baseKey).chunks[chunkIndex] = String(item.value || '');
+          } else {
+            incomingSettings.push(item);
+          }
+        }
+
+        for (const [baseKey, bundle] of chunkMap.entries()) {
+          if (bundle.chunks && bundle.chunks.length > 0) {
+            const fullStr = bundle.chunks.join('');
+            let parsedVal = fullStr;
+            if (bundle.manifest?.isJsonObject || fullStr.startsWith('{') || fullStr.startsWith('[')) {
+              try { parsedVal = JSON.parse(fullStr); } catch (_) {}
+            }
+            incomingSettings.push({
+              key: baseKey,
+              value: parsedVal
+            });
+          }
+        }
+
+        for (const item of incomingSettings) {
+          if (!item.key) continue;
+          let val = item.value !== undefined ? item.value : '';
+          if (typeof val === 'string' && ((val.startsWith('{') && val.endsWith('}')) || (val.startsWith('[') && val.endsWith(']')))) {
+            try { val = JSON.parse(val); } catch (_) {}
+          }
+          await SettingsService.setCardSetting(item.key, val);
+        }
+      }
+      return true;
+    } catch (err) {
+      console.error('[CloudSync] pullCardSettingsFromDrive error:', err);
+      if (!isSilent) toast.error(err.message || 'Error pulling card settings from Drive', 'Sync Error');
+      return false;
+    }
+  },
+
+  /**
    * 1. Pull Data to Drive (Export local IndexedDB to Google Sheets)
    * @param {Object} [user=null] - Active user account
    * @param {Object} [options={}] - Options (e.g. { silent: true } for background auto-sync)
@@ -544,17 +685,20 @@ export const CloudSyncService = {
 
       // 1. Students (Sync exact state from Drive sheet)
       if (Array.isArray(data.students)) {
-        // Collect existing local student photo blobs so we NEVER discard local photos
         const existingStudents = await db.getAll('students');
-        const existingStudentPhotoMap = new Map();
-        for (const s of existingStudents) {
-          if (s.photoBlob instanceof Blob) {
-            existingStudentPhotoMap.set(s.id, s.photoBlob);
-            if (s.studentId) existingStudentPhotoMap.set(s.studentId, s.photoBlob);
+        if (existingStudents.length > 0 && data.students.length === 0 && !options?.allowEmptyWipe) {
+          console.warn('[CloudSync] Safety Guard: Incoming student data from Drive is empty while local DB has ' + existingStudents.length + ' students. Preserving local students.');
+        } else {
+          // Collect existing local student photo blobs so we NEVER discard local photos
+          const existingStudentPhotoMap = new Map();
+          for (const s of existingStudents) {
+            if (s.photoBlob instanceof Blob) {
+              existingStudentPhotoMap.set(s.id, s.photoBlob);
+              if (s.studentId) existingStudentPhotoMap.set(s.studentId, s.photoBlob);
+            }
           }
-        }
 
-        await db.clear('students');
+          await db.clear('students');
         for (const item of data.students) {
           if (!item.id && !item.studentId) continue;
           let dob = item.dateOfBirth;
@@ -583,10 +727,15 @@ export const CloudSyncService = {
           await db.put('students', cleanItem);
           studentCount++;
         }
+        }
       }
 
       // 2. Schools
       if (Array.isArray(data.schools)) {
+        const existingSchools = await db.getAll('schools');
+        if (existingSchools.length > 0 && data.schools.length === 0 && !options?.allowEmptyWipe) {
+          console.warn('[CloudSync] Safety Guard: Incoming school list from Drive is empty. Preserving local schools.');
+        } else {
         await db.clear('schools');
         for (const item of data.schools) {
           if (!item.id && !item.code && !item.name) continue;
@@ -621,10 +770,15 @@ export const CloudSyncService = {
           await db.put('schools', cleanItem);
           schoolCount++;
         }
+        }
       }
 
       // 3. Classes
       if (Array.isArray(data.classes)) {
+        const existingClasses = await db.getAll('classes');
+        if (existingClasses.length > 0 && data.classes.length === 0 && !options?.allowEmptyWipe) {
+          console.warn('[CloudSync] Safety Guard: Incoming class list from Drive is empty. Preserving local classes.');
+        } else {
         await db.clear('classes');
         for (const item of data.classes) {
           if (!item.id && !item.name) continue;
@@ -635,12 +789,16 @@ export const CloudSyncService = {
           await db.put('classes', cleanItem);
           classCount++;
         }
+        }
       }
 
       // 4. Teachers
       if (Array.isArray(data.teachers)) {
-        // Collect existing local teacher photo blobs so we NEVER discard local photos
         const existingTeachers = await db.getAll('teachers');
+        if (existingTeachers.length > 0 && data.teachers.length === 0 && !options?.allowEmptyWipe) {
+          console.warn('[CloudSync] Safety Guard: Incoming teacher list from Drive is empty. Preserving local teachers.');
+        } else {
+        // Collect existing local teacher photo blobs so we NEVER discard local photos
         const existingTeacherPhotoMap = new Map();
         for (const t of existingTeachers) {
           if (t.photoBlob instanceof Blob) {
@@ -672,6 +830,7 @@ export const CloudSyncService = {
           });
           await db.put('teachers', cleanItem);
           teacherCount++;
+        }
         }
       }
 

@@ -147,6 +147,10 @@ function doPost(e) {
       return handleGetAdminData();
     } else if (action === 'CREATE_USER_WORKSPACE' || action === 'INIT_USER_WORKSPACE') {
       return handleCreateUserWorkspace(fileName, username);
+    } else if (action === 'SYNC_CARD_SETTINGS' || action === 'SAVE_CARD_SETTINGS') {
+      return handleSyncCardSettings(fileName, username, payload.data || payload.card_settings || []);
+    } else if (action === 'FETCH_CARD_SETTINGS' || action === 'GET_CARD_SETTINGS') {
+      return handleFetchCardSettings(fileName, username);
     } else if (action === 'PULL_TO_DRIVE') {
       return handlePullToDrive(fileName, username, payload.data || {}, payload);
     } else if (action === 'PUSH_TO_APP') {
@@ -896,6 +900,10 @@ function handlePullToDrive(fileName, username, data, payload) {
   
   for (var i = 0; i < sheetsDef.length; i++) {
     var def = sheetsDef[i];
+    // CRITICAL: Only touch sheets that were EXPLICITLY provided in data payload!
+    if (data[def.name] === undefined) {
+      continue;
+    }
     var sheet = spreadsheet.getSheetByName(def.name);
     if (!sheet) {
       sheet = spreadsheet.insertSheet(def.name);
@@ -939,16 +947,16 @@ function handlePullToDrive(fileName, username, data, payload) {
       // If client sends 0 records for this sheet, check if Google Drive already has data rows.
       // Auto-sync or fresh device connections must NEVER wipe out existing valid data in Drive!
       var lastRow = sheet.getLastRow();
-      var firstCellVal = lastRow > 0 ? String(sheet.getRange(1, 1).getValue()).trim() : '';
-      var hasExistingData = lastRow > 1 && firstCellVal !== 'No records' && firstCellVal !== '';
-      
-      if (hasExistingData && !payload.allowEmptyWipe) {
-        // PRESERVE existing data!
+      if (lastRow > 1 && !payload.allowEmptyWipe) {
+        // PRESERVE existing data in Drive!
         counts[def.name] = lastRow - 1;
-      } else {
+      } else if (payload.allowEmptyWipe === true) {
         sheet.clear();
         sheet.getRange(1, 1).setValue('No records');
         counts[def.name] = 0;
+      } else {
+        // Safe preserve when sheet already has headers or empty state
+        counts[def.name] = lastRow > 1 ? lastRow - 1 : 0;
       }
     }
   }
@@ -967,6 +975,117 @@ function handlePullToDrive(fileName, username, data, payload) {
     fileName: spreadsheet.getName(),
     spreadsheetUrl: spreadsheet.getUrl(),
     counts: counts
+  });
+}
+
+/**
+ * Dedicated Card Settings Sync: writes ONLY to the 'card_settings' sheet tab.
+ * NEVER reads, touches, or clears 'students', 'teachers', 'classes', or any other sheet.
+ */
+function handleSyncCardSettings(fileName, username, cardSettingsData) {
+  var fileInfo = getOrCreateUserSpreadsheet(fileName, username);
+  var spreadsheet = fileInfo.spreadsheet;
+  var sheet = spreadsheet.getSheetByName('card_settings');
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet('card_settings');
+  }
+
+  var rows = Array.isArray(cardSettingsData) ? cardSettingsData : [];
+  if (rows.length > 0) {
+    sheet.clear();
+    var headerMap = {};
+    var headers = [];
+    for (var r = 0; r < rows.length; r++) {
+      for (var k in rows[r]) {
+        if (!headerMap[k]) {
+          headerMap[k] = true;
+          headers.push(k);
+        }
+      }
+    }
+    if (headers.indexOf('id') === -1) headers.unshift('id');
+    if (headers.indexOf('key') === -1) headers.push('key');
+    if (headers.indexOf('value') === -1) headers.push('value');
+    if (headers.indexOf('updatedAt') === -1) headers.push('updatedAt');
+
+    var matrix = [headers];
+    for (var r = 0; r < rows.length; r++) {
+      var rowObj = rows[r];
+      var rowValues = [];
+      for (var h = 0; h < headers.length; h++) {
+        var val = rowObj[headers[h]];
+        if (val === null || val === undefined) val = '';
+        else if (typeof val === 'object') val = JSON.stringify(val);
+        if (typeof val === 'string' && val.length > 49000) {
+          val = val.substring(0, 49000);
+        }
+        rowValues.push(val);
+      }
+      matrix.push(rowValues);
+    }
+    sheet.getRange(1, 1, matrix.length, headers.length).setValues(matrix);
+    formatSheetHeader(sheet, headers.length);
+  }
+
+  return jsonResponse({
+    success: true,
+    action: 'SYNC_CARD_SETTINGS',
+    username: username,
+    count: rows.length
+  });
+}
+
+/**
+ * Dedicated Card Settings Fetch: reads ONLY from the 'card_settings' sheet tab.
+ * NEVER touches or affects 'students', 'teachers', or any other sheet.
+ */
+function handleFetchCardSettings(fileName, username) {
+  var fileInfo = getOrCreateUserSpreadsheet(fileName, username);
+  var spreadsheet = fileInfo.spreadsheet;
+  var sheet = spreadsheet.getSheetByName('card_settings');
+  if (!sheet) {
+    return jsonResponse({
+      success: true,
+      action: 'FETCH_CARD_SETTINGS',
+      username: username,
+      data: []
+    });
+  }
+
+  var values = sheet.getDataRange().getValues();
+  if (values.length <= 1) {
+    return jsonResponse({
+      success: true,
+      action: 'FETCH_CARD_SETTINGS',
+      username: username,
+      data: []
+    });
+  }
+
+  var headers = values[0];
+  var items = [];
+  for (var r = 1; r < values.length; r++) {
+    var row = values[r];
+    var item = {};
+    for (var c = 0; c < headers.length; c++) {
+      var colKey = headers[c];
+      if (!colKey) continue;
+      var val = row[c];
+      if (val !== '' && val !== null && val !== undefined) {
+        if (typeof val === 'string' && ((val.startsWith('{') && val.endsWith('}')) || (val.startsWith('[') && val.endsWith(']')))) {
+          try { val = JSON.parse(val); } catch (_) {}
+        }
+      }
+      item[colKey] = val;
+    }
+    if (item.key) items.push(item);
+  }
+
+  return jsonResponse({
+    success: true,
+    action: 'FETCH_CARD_SETTINGS',
+    username: username,
+    data: items
   });
 }
 

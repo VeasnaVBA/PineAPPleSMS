@@ -3496,7 +3496,7 @@ export const IDCardStudioModal = {
       // Automatically sync card design changes to Google Drive in background if connected
       try {
         if (CloudSyncService.isOnline && CloudSyncService.isOnline() && getCloudSyncUrl()) {
-          CloudSyncService.pullToDrive(null, { silent: true }).catch(err => {
+          CloudSyncService.syncCardSettingsToDrive(null, { silent: true }).catch(err => {
             console.warn('[IDCardStudio] Auto-sync to Google Drive warning:', err);
           });
         }
@@ -3896,7 +3896,7 @@ export const IDCardStudioModal = {
       await this.savePersistedSettings();
 
       // Trigger Drive sync
-      const success = await CloudSyncService.pullToDrive(null, { silent: false });
+      const success = await CloudSyncService.syncCardSettingsToDrive(null, { silent: false });
       if (success) {
         toast.success(isKm ? 'បានធ្វើសមកាលកម្មការរចនាកាតទៅ Google Drive ដោយជោគជ័យ!' : 'Card design synced to Google Drive successfully!');
       }
@@ -3927,7 +3927,7 @@ export const IDCardStudioModal = {
       toast.info(isKm ? 'កំពុងទាញយកការរចនាកាតពី Google Drive...' : 'Pulling card design from Google Drive...');
 
       // Fetch from Drive and restore into local IndexedDB
-      const success = await CloudSyncService.pushToApp(null, { force: true, silent: false });
+      const success = await CloudSyncService.pullCardSettingsFromDrive(null, { silent: false });
       if (success) {
         // Reload settings and re-render modal
         await this.loadPersistedSettings();
