@@ -316,7 +316,9 @@ export const ClassesPage = {
    */
   async openClassFormModal(existingClass = null) {
     const currentUser = authService.getCurrentUser();
-    const isTeacher = currentUser?.role === 'TEACHER';
+    const cleanRole = (currentUser?.role || '').trim().toUpperCase();
+    const isTeacher = cleanRole === 'TEACHER';
+    const isOfficer = cleanRole === 'OFFICER';
 
     // Prevent Teacher bypass if 1-class limit is reached
     if (!existingClass && isTeacher && this.state.isLimitReached) {
@@ -385,8 +387,8 @@ export const ClassesPage = {
             <input type="text" id="form-cls-room" value="${existingClass?.room || ''}" placeholder="e.g. Room 204" class="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring box-border shadow-xs" />
           </div>
 
-          ${isTeacher ? `
-            <div class="col-span-1 sm:col-span-2">
+          ${(isTeacher || isOfficer) ? `
+            <div class="${isTeacher ? 'col-span-1 sm:col-span-2' : ''}">
               <label class="block text-xs font-semibold text-foreground mb-1">
                 ${t('common.academicYear')} <span class="text-destructive">*</span>
               </label>
@@ -405,9 +407,13 @@ export const ClassesPage = {
                 </datalist>
               </div>
               <p class="text-[11px] text-muted-foreground mt-1 font-khmer">
-                ${isKm 
-                  ? 'គណនីគ្រូបង្រៀនមានឆ្នាំសិក្សាតែ ១ ប៉ុណ្ណោះ។ អ្នកអាចកំណត់ ឬកែប្រែឆ្នាំសិក្សារបស់អ្នកនៅទីនេះបាន។' 
-                  : 'Teacher accounts have only 1 study year. You can set or edit your study year here.'}
+                ${isTeacher
+                  ? (isKm 
+                    ? 'គណនីគ្រូបង្រៀនមានឆ្នាំសិក្សាតែ ១ ប៉ុណ្ណោះ។ អ្នកអាចកំណត់ ឬកែប្រែឆ្នាំសិក្សារបស់អ្នកនៅទីនេះបាន។' 
+                    : 'Teacher accounts have only 1 study year. You can set or edit your study year here.')
+                  : (isKm
+                    ? 'អាចជ្រើសរើស ឬវាយបញ្ចូលឆ្នាំសិក្សាថ្មីដោយផ្ទាល់'
+                    : 'Select from suggestions or type a new study year')}
               </p>
             </div>
           ` : `
@@ -479,7 +485,7 @@ export const ClassesPage = {
             }
 
             let academicYear = '';
-            if (isTeacher) {
+            if (isTeacher || isOfficer) {
               academicYear = container.querySelector('#form-cls-year-input')?.value.trim();
               if (!academicYear) {
                 const reqMsg = isKm ? 'សូមបញ្ចូលឆ្នាំសិក្សា' : 'Academic year is required';
@@ -490,7 +496,14 @@ export const ClassesPage = {
                 }
                 return;
               }
-              await SettingsService.setTeacherStudyYear(academicYear);
+              if (isTeacher) {
+                await SettingsService.setTeacherStudyYear(academicYear);
+              } else if (isOfficer) {
+                const normDash = y => String(y || '').replace(/[–—−]/g, '-').trim().toLowerCase();
+                if (!academicYearsList.some(y => normDash(y) === normDash(academicYear))) {
+                  await SettingsService.createAcademicYear({ name: academicYear, startDate: '', endDate: '' }).catch(() => {});
+                }
+              }
             } else {
               academicYear = container.querySelector('#form-cls-year')?.value;
             }
@@ -557,13 +570,20 @@ export const ClassesPage = {
       }
 
       let academicYear = '';
-      if (isTeacher) {
+      if (isTeacher || isOfficer) {
         academicYear = modal.element.querySelector('#form-cls-year-input')?.value.trim();
         if (!academicYear) {
           toast.error(isKm ? 'សូមបញ្ចូលឆ្នាំសិក្សា' : 'Academic year is required');
           return;
         }
-        await SettingsService.setTeacherStudyYear(academicYear);
+        if (isTeacher) {
+          await SettingsService.setTeacherStudyYear(academicYear);
+        } else if (isOfficer) {
+          const normDash = y => String(y || '').replace(/[–—−]/g, '-').trim().toLowerCase();
+          if (!academicYearsList.some(y => normDash(y) === normDash(academicYear))) {
+            await SettingsService.createAcademicYear({ name: academicYear, startDate: '', endDate: '' }).catch(() => {});
+          }
+        }
       } else {
         academicYear = modal.element.querySelector('#form-cls-year')?.value;
       }
