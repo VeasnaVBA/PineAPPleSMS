@@ -416,7 +416,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
     const size = s.size !== undefined ? s.size : defaultSize;
     const color = s.color || defaultColor;
     const bold = s.bold !== undefined ? s.bold : defaultBold;
-    return `font-family: ${getFontFamilyCSS(font)}; font-size: ${size}px; color: ${color}; font-weight: ${bold ? '700' : '500'}; line-height: 1.2;`;
+    return `font-family: ${getFontFamilyCSS(font)}; font-size: ${size}px; color: ${color}; font-weight: ${bold ? '700' : '500'}; line-height: 1.55; padding-top: 1px; padding-bottom: 1px;`;
   };
 
   // Helper: render fields in dynamic user-defined order
