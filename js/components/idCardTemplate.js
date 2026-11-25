@@ -264,6 +264,7 @@ export const DEFAULT_CARD_CONFIG = {
   backCustomImageOffsetY: 0,
   backPrintOffsetXMm: 0,
   backPrintOffsetYMm: 0,
+  backSizeAdjustMm: 0,
   backAccentColor: ''
 };
 
@@ -353,6 +354,9 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
   const accent = cfg.accentColor || '#1E40AF';
   const widthMm = cfg.widthMm || (isLandscape ? 85.6 : 54);
   const heightMm = cfg.heightMm || (isLandscape ? 54 : 85.6);
+  const backSizeAdj = Number(cfg.backSizeAdjustMm) || 0;
+  const backWidthMm = Math.max(20, +(widthMm + backSizeAdj).toFixed(2));
+  const backHeightMm = Math.max(20, +(heightMm + backSizeAdj).toFixed(2));
 
   // Resolve Student Info
   const studentId = student.studentId || 'STU-000';
@@ -607,7 +611,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
   if (isLandscape) {
     return `
       <div class="id-card-item id-card-landscape relative overflow-hidden bg-white text-slate-800 select-none box-border flex font-sans border border-slate-300 shadow-sm print:border-slate-400 print:shadow-none"
-           style="width: ${widthMm}mm; height: ${heightMm}mm; max-width: ${widthMm}mm; max-height: ${heightMm}mm; --card-accent: ${accent};">
+           style="width: ${widthMm}mm; height: ${heightMm}mm; min-width: ${widthMm}mm; min-height: ${heightMm}mm; max-width: ${widthMm}mm; max-height: ${heightMm}mm; box-sizing: border-box; --card-accent: ${accent};">
 
         ${cfg.backgroundImage ? `
           <!-- Custom Card Background Image -->
@@ -704,7 +708,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
   // PORTRAIT CARD LAYOUT (Default)
   return `
     <div class="id-card-item id-card-portrait relative overflow-hidden bg-white text-slate-800 select-none box-border flex flex-col justify-between font-sans border border-slate-300 shadow-sm print:border-slate-400 print:shadow-none"
-         style="width: ${widthMm}mm; height: ${heightMm}mm; max-width: ${widthMm}mm; max-height: ${heightMm}mm; --card-accent: ${accent};">
+         style="width: ${widthMm}mm; height: ${heightMm}mm; min-width: ${widthMm}mm; min-height: ${heightMm}mm; max-width: ${widthMm}mm; max-height: ${heightMm}mm; box-sizing: border-box; --card-accent: ${accent};">
       
       <!-- Background: Custom Image -->
       ${cfg.backgroundImage ? `
@@ -801,6 +805,9 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
   const accent = cfg.backAccentColor || cfg.accentColor || '#1E40AF';
   const widthMm = cfg.widthMm || (isLandscape ? 85.6 : 54);
   const heightMm = cfg.heightMm || (isLandscape ? 54 : 85.6);
+  const backSizeAdj = Number(cfg.backSizeAdjustMm) || 0;
+  const backWidthMm = Math.max(20, +(widthMm + backSizeAdj).toFixed(2));
+  const backHeightMm = Math.max(20, +(heightMm + backSizeAdj).toFixed(2));
 
   const studentId = student.studentId || student.id || 'STU-000';
   const academicYear = student.academicYear || '2024–2025';
@@ -906,7 +913,7 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
   if (isLandscape) {
     return `
       <div class="id-card-item id-card-back id-card-landscape relative overflow-hidden bg-white text-slate-800 select-none box-border flex flex-col justify-between font-sans border border-slate-300 shadow-sm print:border-slate-400 print:shadow-none"
-           style="width: ${widthMm}mm; height: ${heightMm}mm; max-width: ${widthMm}mm; max-height: ${heightMm}mm; --card-accent: ${accent};">
+           style="width: ${backWidthMm}mm; height: ${backHeightMm}mm; min-width: ${backWidthMm}mm; min-height: ${backHeightMm}mm; max-width: ${backWidthMm}mm; max-height: ${backHeightMm}mm; box-sizing: border-box; --card-accent: ${accent};">
         
         ${bgHtml}
         ${backCustomImageHtml}
@@ -988,7 +995,7 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
   // PORTRAIT BACK SIDE (Default)
   return `
     <div class="id-card-item id-card-back id-card-portrait relative overflow-hidden bg-white text-slate-800 select-none box-border flex flex-col justify-between font-sans border border-slate-300 shadow-sm print:border-slate-400 print:shadow-none"
-         style="width: ${widthMm}mm; height: ${heightMm}mm; max-width: ${widthMm}mm; max-height: ${heightMm}mm; --card-accent: ${accent};">
+         style="width: ${backWidthMm}mm; height: ${backHeightMm}mm; min-width: ${backWidthMm}mm; min-height: ${backHeightMm}mm; max-width: ${backWidthMm}mm; max-height: ${backHeightMm}mm; box-sizing: border-box; --card-accent: ${accent};">
       
       ${bgHtml}
       ${backCustomImageHtml}

@@ -523,6 +523,7 @@
   }
 
   body.printing-id-cards .id-card-item {
+    box-sizing: border-box !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     -webkit-print-color-adjust: exact !important;

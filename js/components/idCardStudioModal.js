@@ -849,6 +849,14 @@ export const IDCardStudioModal = {
                   </div>
                   <input type="range" id="range-back-print-offset-x" min="-15" max="15" step="0.5" value="${this.config.backPrintOffsetXMm || 0}" class="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary" />
                 </div>
+
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between text-[11px] font-khmer">
+                    <span class="text-muted-foreground">${isKm ? 'ទំហំខាងក្រោយធៀបខាងមុខ (Size +/-)' : 'Back Card Size Adjust (+/-)'}</span>
+                    <span id="label-back-size-adjust" class="font-mono font-bold">${this.config.backSizeAdjustMm || 0} mm</span>
+                  </div>
+                  <input type="range" id="range-back-size-adjust" min="-3" max="3" step="0.5" value="${this.config.backSizeAdjustMm || 0}" class="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary" />
+                </div>
               </div>
             </div>
 
@@ -1916,7 +1924,7 @@ export const IDCardStudioModal = {
           </div>
         `;
       } else {
-        const frontHtml = renderIDCardHtml(currentStudent, this.config, this.classMap);
+        const frontHtml = renderIDCardHtml(currentStudent, effectiveCfg, this.classMap);
         cardPreviewContent = `
           <div class="single-card-viewport shadow-2xl rounded-sm transition-all bg-white relative">
             ${frontHtml}
@@ -2365,17 +2373,30 @@ export const IDCardStudioModal = {
       this.savePersistedSettings();
       this.updatePreview();
     });
+    overlay.querySelector('#range-back-size-adjust')?.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value) || 0;
+      this.config.backSizeAdjustMm = val;
+      const lbl = overlay.querySelector('#label-back-size-adjust');
+      if (lbl) lbl.textContent = `${val} mm`;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
     overlay.querySelector('#btn-reset-back-print-offset')?.addEventListener('click', () => {
       this.config.backPrintOffsetXMm = 0;
       this.config.backPrintOffsetYMm = 0;
+      this.config.backSizeAdjustMm = 0;
       const ry = overlay.querySelector('#range-back-print-offset-y');
       const rx = overlay.querySelector('#range-back-print-offset-x');
+      const rs = overlay.querySelector('#range-back-size-adjust');
       const ly = overlay.querySelector('#label-back-print-offset-y');
       const lx = overlay.querySelector('#label-back-print-offset-x');
+      const ls = overlay.querySelector('#label-back-size-adjust');
       if (ry) ry.value = 0;
       if (rx) rx.value = 0;
+      if (rs) rs.value = 0;
       if (ly) ly.textContent = '0 mm';
       if (lx) lx.textContent = '0 mm';
+      if (ls) ls.textContent = '0 mm';
       this.savePersistedSettings();
       this.updatePreview();
     });
