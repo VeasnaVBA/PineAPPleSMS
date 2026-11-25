@@ -187,6 +187,8 @@ export const DEFAULT_CARD_CONFIG = {
   backValidityText: '', // e.g. 'សុពលភាព៖ ២០២៤–២០២៥'
   backShowBarcode: true,
   backBarcodeHeight: 28,
+  backShowQr: false,
+  backQrSizeMm: 16,
   backShowEmergency: true,
   backShowAddress: true,
   backShowCardholderSign: true,
@@ -712,6 +714,26 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
     <img src="${cfg.backBackgroundImage}" alt="Back Background" class="absolute inset-0 w-full h-full object-cover pointer-events-none z-0 select-none" style="opacity: ${(cfg.backBackgroundOpacity !== undefined ? cfg.backBackgroundOpacity : 100) / 100};" />
   ` : '';
 
+  // Student QR Code (matched by studentId or id from uploaded QR folder)
+  const normId = String(student.studentId || '').trim().toLowerCase();
+  const normDbId = String(student.id || '').trim().toLowerCase();
+  const qrSrc = student.qrCode ||
+    (cfg.backQrMap && (cfg.backQrMap[normId] || cfg.backQrMap[normDbId])) ||
+    '';
+  const qrSizeMm = Number(cfg.backQrSizeMm) || 16;
+  const qrHtml = cfg.backShowQr ? (
+    qrSrc ? `
+      <div class="card-back-qr flex flex-col items-center justify-center shrink-0">
+        <img src="${qrSrc}" alt="QR ${studentId}" class="object-contain bg-white p-0.5 rounded border border-slate-200/80 shadow-2xs select-none" style="width: ${qrSizeMm}mm; height: ${qrSizeMm}mm;" />
+      </div>
+    ` : `
+      <div class="card-back-qr flex flex-col items-center justify-center rounded border border-dashed border-slate-300 bg-slate-50/80 text-slate-400 text-[5px] font-mono text-center p-0.5 shrink-0 select-none" style="width: ${qrSizeMm}mm; height: ${qrSizeMm}mm;">
+        <span class="font-bold">QR</span>
+        <span class="truncate max-w-full">${studentId}</span>
+      </div>
+    `
+  ) : '';
+
   // LANDSCAPE BACK SIDE
   if (isLandscape) {
     return `
@@ -758,14 +780,20 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
               ` : ''}
             </div>
 
-            <!-- Right Column (Signature & Barcode) -->
+            <!-- Right Column (QR, Signature & Barcode) -->
             <div class="flex-1 min-w-0 flex flex-col justify-between items-center border-l border-slate-100 pl-2 py-0.5">
+              ${qrHtml ? `
+                <div class="w-full flex items-center justify-center my-auto">
+                  ${qrHtml}
+                </div>
+              ` : ''}
+
               ${cfg.backShowCardholderSign ? `
                 <div class="w-full text-center text-[5.8px] font-khmer text-slate-500 mb-0.5">
                   <div class="border-b border-dotted border-slate-400 h-3 mb-0.5 mx-auto w-24"></div>
                   <span>${cfg.backCardholderSignLabel || 'ហត្ថលេខាកាន់ប័ណ្ណ'}</span>
                 </div>
-              ` : '<div class="h-1"></div>'}
+              ` : (!qrHtml ? '<div class="h-1"></div>' : '')}
 
               ${cfg.backShowBarcode && barcodeSvg ? `
                 <div class="w-full flex flex-col items-center justify-center my-auto">
@@ -828,8 +856,14 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
           </div>
         ` : ''}
 
-        <!-- Footer: Cardholder Sign & Barcode -->
+        <!-- Footer: QR, Cardholder Sign & Barcode -->
         <div class="pt-0.5 flex flex-col items-center w-full shrink-0 mt-auto">
+          ${qrHtml ? `
+            <div class="w-full flex items-center justify-center my-1">
+              ${qrHtml}
+            </div>
+          ` : ''}
+
           ${cfg.backShowCardholderSign ? `
             <div class="w-full flex justify-between items-end px-1 mb-1 text-[6px] font-khmer text-slate-500">
               <div class="text-center w-24">

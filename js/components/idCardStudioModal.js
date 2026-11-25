@@ -31,6 +31,17 @@ export const IDCardStudioModal = {
   studentSearchQuery: '',
   studentClassFilter: 'all',
   onlyShowSelectedInSheet: true,
+  qrCodeMap: {},
+
+  /**
+   * Returns config merged with transient in-memory QR code map
+   */
+  getEffectiveConfig() {
+    return {
+      ...this.config,
+      backQrMap: this.qrCodeMap || {}
+    };
+  },
 
   /**
    * Helper to get unique student identifier key
@@ -1357,6 +1368,56 @@ export const IDCardStudioModal = {
                 </div>
               </div>
 
+              <!-- QR Code Folder Upload (Matched by Student ID) -->
+              <div class="space-y-3 p-3 rounded-xl bg-card border border-border/80 shadow-2xs">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-xs font-khmer text-foreground">${isKm ? 'QR Code ពីថតរូបភាព (Folder)' : 'QR Code (From Folder)'}</span>
+                  <span class="text-[10px] text-muted-foreground font-mono">QR PNG</span>
+                </div>
+
+                <div class="flex items-center justify-between pb-1 border-b border-border/50">
+                  <div>
+                    <span class="text-[11px] font-semibold font-khmer block">${isKm ? 'បង្ហាញ QR Code លើខ្នងកាត' : 'Show QR Code on Back'}</span>
+                    <span class="text-[9.5px] text-muted-foreground font-khmer block">${isKm ? 'ផ្គូផ្គងឈ្មោះរូបភាព (ឧ. STU-001.png) តាមអត្តលេខសិស្ស' : 'Matches image filename (e.g. STU-001.png) to Student ID'}</span>
+                  </div>
+                  <input type="checkbox" id="chk-back-qr" class="h-4 w-4 rounded border-input text-primary focus:ring-primary cursor-pointer accent-primary" ${this.config.backShowQr ? 'checked' : ''} />
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <input type="file" id="file-back-qr-folder" webkitdirectory="" directory="" multiple accept="image/png,image/*" class="hidden" />
+                  <button type="button" id="btn-upload-back-qr-folder" class="flex-1 py-1.5 px-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-khmer text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
+                    ${getIcon('upload', 'w-3.5 h-3.5')}
+                    <span>${isKm ? 'ជ្រើសរើសថតរូប QR (.png)' : 'Upload QR Folder (.png)'}</span>
+                  </button>
+                  <button type="button" id="btn-clear-back-qr" class="${Object.keys(this.qrCodeMap || {}).length > 0 ? '' : 'hidden'} py-1.5 px-2.5 rounded-lg border border-destructive/30 bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs cursor-pointer transition-colors" title="${isKm ? 'សម្អាត QR Code' : 'Clear QR Codes'}">
+                    ${getIcon('trash', 'w-3.5 h-3.5')}
+                  </button>
+                </div>
+
+                <div id="back-qr-match-status" class="text-[11px] font-khmer text-muted-foreground flex items-center justify-between bg-muted/40 px-2.5 py-1.5 rounded-lg">
+                  ${(() => {
+                    const matchedCount = (this.students || []).filter(s => {
+                      const k1 = String(s.studentId || '').trim().toLowerCase();
+                      const k2 = String(s.id || '').trim().toLowerCase();
+                      return (k1 && this.qrCodeMap?.[k1]) || (k2 && this.qrCodeMap?.[k2]);
+                    }).length;
+                    const total = (this.students || []).length;
+                    if (Object.keys(this.qrCodeMap || {}).length === 0) {
+                      return `<span>${isKm ? 'មិនទាន់មានរូបភាព QR នៅឡើយទេ' : 'No QR folder uploaded yet'}</span><span class="font-mono text-[10px]">0/${total}</span>`;
+                    }
+                    return `<span class="text-emerald-600 dark:text-emerald-400 font-semibold">${isKm ? 'បានផ្គូផ្គង QR រួចរាល់' : 'Matched QR codes'}</span><span class="font-mono font-bold text-emerald-600 dark:text-emerald-400">${matchedCount}/${total}</span>`;
+                  })()}
+                </div>
+
+                <div class="space-y-1 pt-0.5">
+                  <div class="flex items-center justify-between text-[11px] font-khmer">
+                    <span class="text-muted-foreground">${isKm ? 'ទំហំ QR Code (mm)' : 'QR Code Size (mm)'}</span>
+                    <span id="label-back-qr-size" class="font-mono font-bold">${this.config.backQrSizeMm || 16} mm</span>
+                  </div>
+                  <input type="range" id="range-back-qr-size" min="10" max="28" step="1" value="${this.config.backQrSizeMm || 16}" class="w-full accent-primary cursor-pointer" />
+                </div>
+              </div>
+
               <!-- Back Side Background Image -->
               <div class="space-y-3 p-3 rounded-xl bg-card border border-border/80 shadow-2xs">
                 <div class="flex items-center justify-between">
@@ -1587,16 +1648,17 @@ export const IDCardStudioModal = {
 
       // Render Single Card with Master Framing Wrapper
       let cardPreviewContent = '';
+      const effectiveCfg = this.getEffectiveConfig();
       if (this.cardSide === 'back') {
-        const backHtml = renderIDCardBackHtml(currentStudent, this.config, this.classMap);
+        const backHtml = renderIDCardBackHtml(currentStudent, effectiveCfg, this.classMap);
         cardPreviewContent = `
           <div class="single-card-viewport shadow-2xl rounded-sm transition-all bg-white relative">
             ${backHtml}
           </div>
         `;
       } else if (this.cardSide === 'both') {
-        const frontHtml = renderIDCardHtml(currentStudent, this.config, this.classMap);
-        const backHtml = renderIDCardBackHtml(currentStudent, this.config, this.classMap);
+        const frontHtml = renderIDCardHtml(currentStudent, effectiveCfg, this.classMap);
+        const backHtml = renderIDCardBackHtml(currentStudent, effectiveCfg, this.classMap);
         cardPreviewContent = `
           <div class="flex flex-wrap items-center justify-center gap-6">
             <div class="flex flex-col items-center gap-1.5">
@@ -1693,7 +1755,7 @@ export const IDCardStudioModal = {
       }
 
       const currentSlice = pages[this.currentPage] || [];
-      sheetContainer.innerHTML = renderCardSheetHtml(currentSlice, this.config, this.currentPage, totalPages, this.classMap, { side: this.sheetSide || 'front', duplexMirror: true });
+      sheetContainer.innerHTML = renderCardSheetHtml(currentSlice, this.getEffectiveConfig(), this.currentPage, totalPages, this.classMap, { side: this.sheetSide || 'front', duplexMirror: true });
 
       // Update pagination label
       const pagerLabel = this.activeOverlay?.querySelector('#sheet-pager-label');
@@ -2538,6 +2600,45 @@ export const IDCardStudioModal = {
       this.updatePreview();
     });
 
+    // 5b. QR Code Folder Upload (Matched by Student ID)
+    overlay.querySelector('#chk-back-qr')?.addEventListener('change', (e) => {
+      this.config.backShowQr = e.target.checked;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+
+    overlay.querySelector('#range-back-qr-size')?.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10) || 16;
+      this.config.backQrSizeMm = val;
+      const label = overlay.querySelector('#label-back-qr-size');
+      if (label) label.textContent = `${val} mm`;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+
+    overlay.querySelector('#btn-upload-back-qr-folder')?.addEventListener('click', () => {
+      overlay.querySelector('#file-back-qr-folder')?.click();
+    });
+
+    overlay.querySelector('#file-back-qr-folder')?.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      e.target.value = '';
+      if (files.length === 0) return;
+      await this.handleBackQrFolderUpload(files);
+    });
+
+    overlay.querySelector('#btn-clear-back-qr')?.addEventListener('click', () => {
+      this.qrCodeMap = {};
+      const statusEl = overlay.querySelector('#back-qr-match-status');
+      const total = (this.students || []).length;
+      if (statusEl) {
+        statusEl.innerHTML = `<span>${isKm ? 'មិនទាន់មានរូបភាព QR នៅឡើយទេ' : 'No QR folder uploaded yet'}</span><span class="font-mono text-[10px]">0/${total}</span>`;
+      }
+      overlay.querySelector('#btn-clear-back-qr')?.classList.add('hidden');
+      this.updatePreview();
+      toast.info(isKm ? 'បានសម្អាតរូបភាព QR Code រួចរាល់' : 'QR codes cleared');
+    });
+
     // 6. Back Background Image & Opacity
     overlay.querySelector('#btn-upload-back-bg')?.addEventListener('click', () => {
       overlay.querySelector('#file-back-bg')?.click();
@@ -3345,27 +3446,28 @@ export const IDCardStudioModal = {
 
     let allSheetsHtml = '';
 
+    const effectiveCfg = this.getEffectiveConfig();
     if (printMode === 'pairs') {
       // Foldable Pairs: prints Front & Back side-by-side on the SAME sheet with a central fold line
       pages.forEach((slice, idx) => {
-        allSheetsHtml += renderCardSheetHtml(slice, this.config, idx, totalPages, this.classMap, { side: 'pairs' });
+        allSheetsHtml += renderCardSheetHtml(slice, effectiveCfg, idx, totalPages, this.classMap, { side: 'pairs' });
       });
     } else if (printMode === 'duplex') {
       // Duplex: prints Sheet Front then Sheet Back (mirrored) for each chunk
       const totalSheets = totalPages * 2;
       pages.forEach((slice, idx) => {
-        allSheetsHtml += renderCardSheetHtml(slice, this.config, idx * 2, totalSheets, this.classMap, { side: 'front', isSingleCard });
-        allSheetsHtml += renderCardSheetHtml(slice, this.config, idx * 2 + 1, totalSheets, this.classMap, { side: 'back', duplexMirror: true, isSingleCard });
+        allSheetsHtml += renderCardSheetHtml(slice, effectiveCfg, idx * 2, totalSheets, this.classMap, { side: 'front', isSingleCard });
+        allSheetsHtml += renderCardSheetHtml(slice, effectiveCfg, idx * 2 + 1, totalSheets, this.classMap, { side: 'back', duplexMirror: true, isSingleCard });
       });
     } else if (printMode === 'back') {
       // Back sheets only
       pages.forEach((slice, idx) => {
-        allSheetsHtml += renderCardSheetHtml(slice, this.config, idx, totalPages, this.classMap, { side: 'back', duplexMirror: true, isSingleCard });
+        allSheetsHtml += renderCardSheetHtml(slice, effectiveCfg, idx, totalPages, this.classMap, { side: 'back', duplexMirror: true, isSingleCard });
       });
     } else {
       // Front sheets only
       pages.forEach((slice, idx) => {
-        allSheetsHtml += renderCardSheetHtml(slice, this.config, idx, totalPages, this.classMap, { side: 'front', isSingleCard });
+        allSheetsHtml += renderCardSheetHtml(slice, effectiveCfg, idx, totalPages, this.classMap, { side: 'front', isSingleCard });
       });
     }
 
@@ -4351,6 +4453,100 @@ export const IDCardStudioModal = {
     };
 
     bindListActions();
+  },
+
+  /**
+   * Handle uploading a folder of QR code images (e.g. STU-001.png)
+   * and matching each filename (without extension) to Student ID.
+   */
+  async handleBackQrFolderUpload(rawFiles) {
+    const isKm = i18n.getLocale() === 'km';
+    const files = Array.from(rawFiles || []);
+    const isImage = (f) => {
+      const name = f.name || '';
+      if (name.startsWith('.') || name === 'Thumbs.db' || name === 'desktop.ini') return false;
+      if (f.type && f.type.startsWith('image/')) return true;
+      return /\.(png|jpe?g|webp|bmp|gif)$/i.test(name);
+    };
+
+    const imageFiles = files.filter(isImage);
+    if (imageFiles.length === 0) {
+      toast.error(isKm ? 'មិនមានរូបភាព QR (.png) នៅក្នុងថតនេះទេ!' : 'No image files found in the selected folder.');
+      return;
+    }
+
+    // Build lookup set of normalized studentId and db id
+    const validIds = new Set();
+    (this.students || []).forEach(s => {
+      if (s.studentId) validIds.add(String(s.studentId).trim().toLowerCase());
+      if (s.id) validIds.add(String(s.id).trim().toLowerCase());
+    });
+
+    const readAsDataUrl = (file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error || new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+
+    const newMap = { ...(this.qrCodeMap || {}) };
+    let matchedFiles = 0;
+
+    for (const file of imageFiles) {
+      const baseName = String(file.name || '').replace(/\.[^/.]+$/, '').trim().toLowerCase();
+      if (!baseName) continue;
+      if (validIds.has(baseName)) {
+        try {
+          newMap[baseName] = await readAsDataUrl(file);
+          matchedFiles++;
+        } catch (err) {
+          console.warn(`Failed reading QR image ${file.name}:`, err);
+        }
+      }
+    }
+
+    this.qrCodeMap = newMap;
+    const totalStudents = (this.students || []).length;
+    const matchedStudents = (this.students || []).filter(s => {
+      const k1 = String(s.studentId || '').trim().toLowerCase();
+      const k2 = String(s.id || '').trim().toLowerCase();
+      return (k1 && this.qrCodeMap[k1]) || (k2 && this.qrCodeMap[k2]);
+    }).length;
+
+    if (matchedFiles > 0) {
+      this.config.backShowQr = true;
+      const chkQr = this.activeOverlay?.querySelector('#chk-back-qr');
+      if (chkQr) chkQr.checked = true;
+      await this.savePersistedSettings();
+
+      // Switch to back side preview if currently viewing front only
+      if (this.viewMode === 'card' && this.cardSide === 'front') {
+        this.cardSide = 'back';
+      }
+      this.activeOverlay?.querySelector('#btn-clear-back-qr')?.classList.remove('hidden');
+      toast.success(
+        isKm
+          ? `បានផ្គូផ្គង QR Code ចំនួន ${matchedStudents} / ${totalStudents} សិស្សដោយជោគជ័យ!`
+          : `Matched QR codes for ${matchedStudents} / ${totalStudents} students!`
+      );
+    } else {
+      toast.warning(
+        isKm
+          ? `មិនមានឈ្មោះរូបភាពណាត្រូវនឹងអត្តលេខសិស្សទេ (${imageFiles.length} រូបភាព)`
+          : `No filenames matched any Student ID (${imageFiles.length} images scanned).`
+      );
+    }
+
+    const statusEl = this.activeOverlay?.querySelector('#back-qr-match-status');
+    if (statusEl) {
+      if (matchedStudents > 0) {
+        statusEl.innerHTML = `<span class="text-emerald-600 dark:text-emerald-400 font-semibold">${isKm ? 'បានផ្គូផ្គង QR រួចរាល់' : 'Matched QR codes'}</span><span class="font-mono font-bold text-emerald-600 dark:text-emerald-400">${matchedStudents}/${totalStudents}</span>`;
+      } else {
+        statusEl.innerHTML = `<span>${isKm ? 'មិនទាន់មានរូបភាព QR ត្រូវគ្នាទេ' : 'No matching QR codes found'}</span><span class="font-mono text-[10px]">0/${totalStudents}</span>`;
+      }
+    }
+
+    this.updatePreview();
   },
 
   /**
