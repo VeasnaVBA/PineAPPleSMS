@@ -547,9 +547,6 @@ export const IDCardStudioModal = {
           <button type="button" data-tab="fields" class="studio-tab-btn px-3.5 py-1.5 rounded-lg ${this.activeTab === 'fields' ? 'bg-primary text-primary-foreground font-bold shadow-xs border border-primary' : 'bg-card hover:bg-muted text-muted-foreground hover:text-foreground font-medium border border-input shadow-2xs'} font-khmer transition-all cursor-pointer text-xs whitespace-nowrap">
             <span>${isKm ? 'ទិន្នន័យលើកាត' : 'Card Fields'}</span>
           </button>
-          <button type="button" data-tab="back" class="studio-tab-btn px-3.5 py-1.5 rounded-lg ${this.activeTab === 'back' ? 'bg-primary text-primary-foreground font-bold shadow-xs border border-primary' : 'bg-card hover:bg-muted text-muted-foreground hover:text-foreground font-medium border border-input shadow-2xs'} font-khmer transition-all cursor-pointer text-xs whitespace-nowrap">
-            <span>${isKm ? 'ផ្នែកខាងក្រោយ' : 'Back Side'}</span>
-          </button>
           <button type="button" data-tab="students" class="studio-tab-btn px-3.5 py-1.5 rounded-lg ${this.activeTab === 'students' ? 'bg-primary text-primary-foreground font-bold shadow-xs border border-primary' : 'bg-card hover:bg-muted text-muted-foreground hover:text-foreground font-medium border border-input shadow-2xs'} font-khmer transition-all cursor-pointer text-xs whitespace-nowrap flex items-center gap-1.5">
             <span>${isKm ? 'ជ្រើសរើសសិស្ស' : 'Select Students'}</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-primary/20 text-primary-foreground border border-primary-foreground/30">${selectedCount}</span>
@@ -1973,30 +1970,27 @@ export const IDCardStudioModal = {
     const sidebarPanel = overlay.querySelector('#studio-sidebar-panel');
     const sidebarTitle = overlay.querySelector('#sidebar-tab-title');
 
-    overlay.querySelectorAll('.studio-tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const tabKey = btn.getAttribute('data-tab');
-        this.activeTab = tabKey;
+    this.activateSidebarTab = (tabKey, { skipPreviewSync = false } = {}) => {
+      this.activeTab = tabKey;
 
-        const activeClass = 'studio-tab-btn px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground font-bold shadow-xs border border-primary font-khmer transition-all cursor-pointer flex items-center gap-1.5 text-xs whitespace-nowrap';
-        const inactiveClass = 'studio-tab-btn px-3.5 py-1.5 rounded-lg bg-card hover:bg-muted text-muted-foreground hover:text-foreground font-medium border border-input shadow-2xs font-khmer transition-all cursor-pointer flex items-center gap-1.5 text-xs whitespace-nowrap';
+      const activeClass = 'studio-tab-btn px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground font-bold shadow-xs border border-primary font-khmer transition-all cursor-pointer flex items-center gap-1.5 text-xs whitespace-nowrap';
+      const inactiveClass = 'studio-tab-btn px-3.5 py-1.5 rounded-lg bg-card hover:bg-muted text-muted-foreground hover:text-foreground font-medium border border-input shadow-2xs font-khmer transition-all cursor-pointer flex items-center gap-1.5 text-xs whitespace-nowrap';
 
-        overlay.querySelectorAll('.studio-tab-btn').forEach(b => {
-          b.className = inactiveClass;
-        });
-        btn.className = activeClass;
+      overlay.querySelectorAll('.studio-tab-btn').forEach(b => {
+        b.className = (b.getAttribute('data-tab') === tabKey) ? activeClass : inactiveClass;
+      });
 
-        if (sidebarTitle && tabMeta[tabKey]) {
-          const meta = tabMeta[tabKey];
-          sidebarTitle.textContent = isKm ? meta.titleKm : meta.titleEn;
-        }
+      if (sidebarTitle && tabMeta[tabKey]) {
+        const meta = tabMeta[tabKey];
+        sidebarTitle.textContent = isKm ? meta.titleKm : meta.titleEn;
+      }
 
-        sidebarPanel?.classList.remove('hidden');
+      sidebarPanel?.classList.remove('hidden');
 
-        overlay.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-        overlay.querySelector(`#tab-panel-${tabKey}`)?.classList.remove('hidden');
+      overlay.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      overlay.querySelector(`#tab-panel-${tabKey}`)?.classList.remove('hidden');
 
-        // Auto-switch preview when clicking Back Side tab or Front Side tabs
+      if (!skipPreviewSync) {
         if (tabKey === 'back') {
           if (this.viewMode === 'card' && this.cardSide === 'front') {
             this.cardSide = 'back';
@@ -2014,6 +2008,13 @@ export const IDCardStudioModal = {
             this.updatePreview();
           }
         }
+      }
+    };
+
+    overlay.querySelectorAll('.studio-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabKey = btn.getAttribute('data-tab');
+        this.activateSidebarTab(tabKey);
       });
     });
 
@@ -3074,18 +3075,14 @@ export const IDCardStudioModal = {
     overlay.querySelector('#btn-side-front')?.addEventListener('click', () => {
       this.cardSide = 'front';
       if (this.activeTab === 'back') {
-        overlay.querySelector('.studio-tab-btn[data-tab="style"]')?.click();
-      } else {
-        this.updatePreview();
+        this.activateSidebarTab('style', { skipPreviewSync: true });
       }
+      this.updatePreview();
     });
     overlay.querySelector('#btn-side-back')?.addEventListener('click', () => {
       this.cardSide = 'back';
-      if (this.activeTab !== 'back') {
-        overlay.querySelector('.studio-tab-btn[data-tab="back"]')?.click();
-      } else {
-        this.updatePreview();
-      }
+      this.activateSidebarTab('back', { skipPreviewSync: true });
+      this.updatePreview();
     });
     overlay.querySelector('#btn-side-both')?.addEventListener('click', () => {
       this.cardSide = 'both';
@@ -3096,18 +3093,14 @@ export const IDCardStudioModal = {
     overlay.querySelector('#btn-sheet-side-front')?.addEventListener('click', () => {
       this.sheetSide = 'front';
       if (this.activeTab === 'back') {
-        overlay.querySelector('.studio-tab-btn[data-tab="style"]')?.click();
-      } else {
-        this.updatePreview();
+        this.activateSidebarTab('style', { skipPreviewSync: true });
       }
+      this.updatePreview();
     });
     overlay.querySelector('#btn-sheet-side-back')?.addEventListener('click', () => {
       this.sheetSide = 'back';
-      if (this.activeTab !== 'back') {
-        overlay.querySelector('.studio-tab-btn[data-tab="back"]')?.click();
-      } else {
-        this.updatePreview();
-      }
+      this.activateSidebarTab('back', { skipPreviewSync: true });
+      this.updatePreview();
     });
     overlay.querySelector('#btn-sheet-side-pairs')?.addEventListener('click', () => {
       this.sheetSide = 'pairs';
@@ -3384,12 +3377,8 @@ export const IDCardStudioModal = {
           cardDate: 'signature'
         };
         const targetTab = tabMap[assetType];
-        if (targetTab && this.activeOverlay) {
-          this.activeOverlay.querySelectorAll('.studio-tab-btn').forEach(b => {
-            if (b.getAttribute('data-tab') === targetTab) {
-              b.click();
-            }
-          });
+        if (targetTab && this.activateSidebarTab) {
+          this.activateSidebarTab(targetTab, { skipPreviewSync: true });
         }
 
         document.body.style.cursor = 'grabbing';
