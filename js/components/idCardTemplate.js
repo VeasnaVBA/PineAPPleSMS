@@ -262,6 +262,8 @@ export const DEFAULT_CARD_CONFIG = {
   backCustomImageScale: 100,
   backCustomImageOffsetX: 0,
   backCustomImageOffsetY: 0,
+  backPrintOffsetXMm: 0,
+  backPrintOffsetYMm: 0,
   backAccentColor: ''
 };
 
@@ -1163,6 +1165,11 @@ export function renderCardSheetHtml(studentsSlice = [], config = DEFAULT_CARD_CO
   const isBack = side === 'back';
   const isPairs = side === 'pairs';
   const isSingleCard = options?.isSingleCard === true || (studentsSlice.length === 1 && options?.centerSingleCard === true);
+  const backPrintOffsetX = isBack ? (Number(cfg.backPrintOffsetXMm) || 0) : 0;
+  const backPrintOffsetY = isBack ? (Number(cfg.backPrintOffsetYMm) || 0) : 0;
+  const backPrintOffsetStyle = (backPrintOffsetX !== 0 || backPrintOffsetY !== 0)
+    ? `transform: translate(${backPrintOffsetX}mm, ${backPrintOffsetY}mm);`
+    : '';
 
   // CASE 1: Single Student Card Centered on A4 Sheet (Dead Center Match)
   if (isSingleCard && studentsSlice.length === 1) {
@@ -1172,13 +1179,13 @@ export function renderCardSheetHtml(studentsSlice = [], config = DEFAULT_CARD_CO
       : renderIDCardHtml(student, cfg, classMap);
 
     return `
-      <div class="a4-card-sheet relative bg-white mx-auto shadow-xl print:shadow-none box-border flex flex-col justify-between overflow-hidden print:overflow-visible font-sans ${isSheetLandscape ? 'a4-sheet-landscape' : 'a4-sheet-portrait'}"
+      <div class="a4-card-sheet relative bg-white mx-auto shadow-xl print:shadow-none box-border flex items-center justify-center overflow-hidden print:overflow-visible font-sans ${isSheetLandscape ? 'a4-sheet-landscape' : 'a4-sheet-portrait'}"
            data-page="${pageIndex + 1}"
            data-sheet-side="${side}"
            style="width: ${sheetWidthMm}mm; min-height: ${sheetHeightMm}mm; height: ${sheetHeightMm}mm; padding: 0; box-sizing: border-box;">
         
-        <!-- Top Cutting Guide Markings -->
-        <div class="pt-4 px-6 flex justify-between text-[8px] text-slate-400 select-none print:flex">
+        <!-- Top Cutting Guide Markings (absolute so center is exact 50%) -->
+        <div class="absolute top-2.5 left-6 right-6 flex justify-between text-[8px] text-slate-400 select-none print:flex">
           <span class="flex items-center gap-1">
             ${getIcon('scissors', 'w-3 h-3 text-slate-400')}
             <span>Single Card Precision Center Alignment (${isBack ? 'BACK SIDE / ខាងក្រោយ' : 'FRONT SIDE / ខាងមុខ'})</span>
@@ -1187,7 +1194,7 @@ export function renderCardSheetHtml(studentsSlice = [], config = DEFAULT_CARD_CO
         </div>
 
         <!-- Dead Center of A4 Sheet: Card lands in exact identical millimeter coordinates on both sides -->
-        <div class="single-card-center-container flex-1 flex items-center justify-center m-auto relative">
+        <div class="single-card-center-container flex items-center justify-center relative" style="${backPrintOffsetStyle}">
           <div class="relative">
             <!-- Corner Crosshair Crop Marks -->
             <div class="absolute -top-3 -left-3 text-slate-400 font-mono text-[9px] leading-none select-none pointer-events-none">┌</div>
@@ -1199,8 +1206,8 @@ export function renderCardSheetHtml(studentsSlice = [], config = DEFAULT_CARD_CO
           </div>
         </div>
 
-        <!-- Bottom Sheet Footer -->
-        <div class="pb-3 px-6 text-center text-[7.5px] text-slate-400 select-none flex justify-between items-center print:flex">
+        <!-- Bottom Sheet Footer (absolute so center is exact 50%) -->
+        <div class="absolute bottom-2.5 left-6 right-6 text-center text-[7.5px] text-slate-400 select-none flex justify-between items-center print:flex">
           <span>SmartSchool ID Card Studio • Center Duplex Mode</span>
           <span>A4 ${cfg.sheetOrientation.toUpperCase()} • ${isBack ? 'Back Side (ខ្នង)' : 'Front Side (មុខ)'}</span>
           <span>Page ${pageIndex + 1} of ${totalPages}</span>
@@ -1327,12 +1334,12 @@ export function renderCardSheetHtml(studentsSlice = [], config = DEFAULT_CARD_CO
 
       <!-- Centered Cards Grid with Fixed Millimeter Tracks -->
       <div class="id-cards-grid grid justify-center items-center h-full w-full my-auto"
-           style="display: grid; grid-template-columns: repeat(${cols}, ${widthMm}mm); grid-template-rows: repeat(${rows}, ${heightMm}mm); gap: ${gapMm}mm; justify-content: center; align-content: center;">
+           style="display: grid; grid-template-columns: repeat(${cols}, ${widthMm}mm); grid-template-rows: repeat(${rows}, ${heightMm}mm); gap: ${gapMm}mm; justify-content: center; align-content: center; ${backPrintOffsetStyle}">
         ${cardsHtml}
       </div>
 
-      <!-- Bottom Sheet Footer -->
-      <div class="text-center text-[7.5px] text-slate-400 select-none pt-1.5 flex justify-between items-center print:flex">
+      <!-- Bottom Sheet Footer (absolute so front & back grid center is exact 50% top/bottom) -->
+      <div class="absolute bottom-2 left-4 right-4 text-center text-[7.5px] text-slate-400 select-none flex justify-between items-center print:flex">
         <span>SmartSchool ID Card Studio</span>
         <span>A4 ${cfg.sheetOrientation.toUpperCase()} • ${studentsSlice.length} Cards${isBack ? ' (Back Side)' : ''}</span>
         <span>Page ${pageIndex + 1} of ${totalPages}</span>

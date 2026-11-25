@@ -790,6 +790,33 @@ export const IDCardStudioModal = {
                   <span class="text-xs font-semibold font-khmer">${isKm ? 'បង្ហាញសញ្ញាកាត់ (Crop Marks)' : 'Show Cutting Guides / Crop Marks'}</span>
                 </label>
               </div>
+
+              <!-- Back-Side Manual Print Alignment Offset (mm) -->
+              <div class="p-3 rounded-xl border border-border bg-muted/20 space-y-2.5">
+                <div class="flex items-center justify-between gap-2">
+                  <div>
+                    <span class="font-bold text-xs font-khmer text-foreground block">${isKm ? 'តម្រឹមខាងក្រោយពេលព្រីនត្រឡប់ក្រដាស (mm)' : 'Back Print Alignment Offset (mm)'}</span>
+                    <span class="text-[10px] text-muted-foreground font-khmer block">${isKm ? 'កែតម្រូវគម្លាត លើ/ក្រោម ឬ ឆ្វេង/ស្តាំ សម្រាប់ម៉ាស៊ីនព្រីនដៃ' : 'Fine-tune front vs back alignment when flipping paper'}</span>
+                  </div>
+                  <button type="button" id="btn-reset-back-print-offset" class="text-[10px] px-2 py-1 rounded border border-border bg-card hover:bg-muted text-muted-foreground font-khmer cursor-pointer shrink-0">${isKm ? 'កំណត់ 0mm' : 'Reset 0'}</button>
+                </div>
+
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between text-[11px] font-khmer">
+                    <span class="text-muted-foreground">${isKm ? 'រំកិល លើ / ក្រោម (Top / Bottom)' : 'Vertical Offset (Top / Bottom)'}</span>
+                    <span id="label-back-print-offset-y" class="font-mono font-bold">${this.config.backPrintOffsetYMm || 0} mm</span>
+                  </div>
+                  <input type="range" id="range-back-print-offset-y" min="-15" max="15" step="0.5" value="${this.config.backPrintOffsetYMm || 0}" class="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary" />
+                </div>
+
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between text-[11px] font-khmer">
+                    <span class="text-muted-foreground">${isKm ? 'រំកិល ឆ្វេង / ស្តាំ (Left / Right)' : 'Horizontal Offset (Left / Right)'}</span>
+                    <span id="label-back-print-offset-x" class="font-mono font-bold">${this.config.backPrintOffsetXMm || 0} mm</span>
+                  </div>
+                  <input type="range" id="range-back-print-offset-x" min="-15" max="15" step="0.5" value="${this.config.backPrintOffsetXMm || 0}" class="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary" />
+                </div>
+              </div>
             </div>
 
             <!-- Tab 2: Theme & Photo Controls -->
@@ -2284,6 +2311,38 @@ export const IDCardStudioModal = {
     // Crop marks toggle
     overlay.querySelector('#toggle-crop-marks')?.addEventListener('change', (e) => {
       this.config.showCropMarks = e.target.checked;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+
+    // Back-side manual print alignment offset (mm)
+    overlay.querySelector('#range-back-print-offset-y')?.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value) || 0;
+      this.config.backPrintOffsetYMm = val;
+      const lbl = overlay.querySelector('#label-back-print-offset-y');
+      if (lbl) lbl.textContent = `${val} mm`;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+    overlay.querySelector('#range-back-print-offset-x')?.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value) || 0;
+      this.config.backPrintOffsetXMm = val;
+      const lbl = overlay.querySelector('#label-back-print-offset-x');
+      if (lbl) lbl.textContent = `${val} mm`;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+    overlay.querySelector('#btn-reset-back-print-offset')?.addEventListener('click', () => {
+      this.config.backPrintOffsetXMm = 0;
+      this.config.backPrintOffsetYMm = 0;
+      const ry = overlay.querySelector('#range-back-print-offset-y');
+      const rx = overlay.querySelector('#range-back-print-offset-x');
+      const ly = overlay.querySelector('#label-back-print-offset-y');
+      const lx = overlay.querySelector('#label-back-print-offset-x');
+      if (ry) ry.value = 0;
+      if (rx) rx.value = 0;
+      if (ly) ly.textContent = '0 mm';
+      if (lx) lx.textContent = '0 mm';
       this.savePersistedSettings();
       this.updatePreview();
     });
