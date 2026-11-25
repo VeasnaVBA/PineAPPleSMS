@@ -221,6 +221,19 @@ export const DEFAULT_CARD_CONFIG = {
   },
 
   // Back Side Settings & Personalization
+  backShowBackSide: true,
+  backHeaderScale: 100,
+  backHeaderOffsetX: 0,
+  backHeaderOffsetY: 0,
+  backRulesScale: 100,
+  backRulesOffsetX: 0,
+  backRulesOffsetY: 0,
+  backContactScale: 100,
+  backContactOffsetX: 0,
+  backContactOffsetY: 0,
+  backSignatureScale: 100,
+  backSignatureOffsetX: 0,
+  backSignatureOffsetY: 0,
   showBackSide: true,
   backSideTitleKh: 'បទបញ្ជាផ្ទៃក្នុង និងលក្ខខណ្ឌប្រើប្រាស់',
   backSideTitleEn: 'School Regulations & Card Policy',
@@ -836,6 +849,10 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
   const backQrBorderColor = cfg.backQrBorderColor || '#cbd5e1';
   const backQrBorderRadius = cfg.backQrBorderRadius !== undefined ? cfg.backQrBorderRadius : 4;
   const backQrTransform = `transform: translate(${cfg.backQrOffsetX || 0}px, ${cfg.backQrOffsetY || 0}px) scale(${(cfg.backQrScale || 100) / 100}); transform-origin: center center;`;
+  const backHeaderTransform = `transform: translate(${cfg.backHeaderOffsetX || 0}px, ${cfg.backHeaderOffsetY || 0}px) scale(${(cfg.backHeaderScale || 100) / 100}); transform-origin: center top;`;
+  const backRulesTransform = `transform: translate(${cfg.backRulesOffsetX || 0}px, ${cfg.backRulesOffsetY || 0}px) scale(${(cfg.backRulesScale || 100) / 100}); transform-origin: center center;`;
+  const backContactTransform = `transform: translate(${cfg.backContactOffsetX || 0}px, ${cfg.backContactOffsetY || 0}px) scale(${(cfg.backContactScale || 100) / 100}); transform-origin: center center;`;
+  const backSignatureTransform = `transform: translate(${cfg.backSignatureOffsetX || 0}px, ${cfg.backSignatureOffsetY || 0}px) scale(${(cfg.backSignatureScale || 100) / 100}); transform-origin: center bottom;`;
   const qrHtml = cfg.backShowQr ? (
     qrSrc ? `
       <div class="card-back-qr flex flex-col items-center justify-center shrink-0 relative z-20 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 select-none"
@@ -865,15 +882,17 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
         <div class="card-body-content relative z-10 mx-2 my-1 flex flex-col justify-between flex-1 h-full min-w-0">
           
           <!-- Top Header: Mini Branding & Title -->
-          <div class="border-b border-slate-200/90 pb-0.5 flex items-center justify-between w-full shrink-0">
-            <div class="flex items-center gap-1.5 min-w-0">
+          <div class="border-b border-slate-200/90 pb-0.5 flex items-center justify-between w-full shrink-0 relative z-20 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 rounded select-none"
+               data-asset-type="backHeader"
+               style="${backHeaderTransform}">
+            <div class="flex items-center gap-1.5 min-w-0 pointer-events-none">
               ${schoolLogoMiniHtml}
               <div class="min-w-0">
                 <h5 class="text-[7px] font-bold font-khmer uppercase text-slate-800 truncate leading-tight">${cfg.schoolNameKh || 'សាលារៀន'}</h5>
                 ${cfg.schoolNameEn ? `<p class="text-[5.5px] font-semibold uppercase text-slate-400 tracking-tight leading-none">${cfg.schoolNameEn}</p>` : ''}
               </div>
             </div>
-            <span class="px-1.5 py-0.2 rounded text-[6px] font-bold font-khmer text-white shrink-0" style="background: ${accent};">
+            <span class="px-1.5 py-0.2 rounded text-[6px] font-bold font-khmer text-white shrink-0 pointer-events-none" style="background: ${accent};">
               ${cfg.backSideTitleKh || 'លក្ខខណ្ឌប្រើប្រាស់'}
             </span>
           </div>
@@ -883,17 +902,21 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
             
             <!-- Left Column (Rules & Contact) -->
             <div class="flex-[1.35] min-w-0 flex flex-col justify-between text-[6px] leading-snug text-slate-700 font-khmer py-0.5">
-              <div class="space-y-0.5">
-                ${khRules.slice(0, 4).map(r => `<div class="leading-tight text-slate-700">${r}</div>`).join('')}
+              <div class="space-y-0.5 relative z-20 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 rounded p-0.5 select-none"
+                   data-asset-type="backRules"
+                   style="${backRulesTransform}">
+                ${khRules.slice(0, 4).map(r => `<div class="leading-tight text-slate-700 pointer-events-none">${r}</div>`).join('')}
                 ${enRules.length > 0 ? `
-                  <div class="pt-0.5 border-t border-slate-100 text-[5px] text-slate-400 font-sans leading-none truncate">
+                  <div class="pt-0.5 border-t border-slate-100 text-[5px] text-slate-400 font-sans leading-none truncate pointer-events-none">
                     ${enRules[0]}
                   </div>
                 ` : ''}
               </div>
 
               ${(emergencyHtml || addressHtml) ? `
-                <div class="space-y-0.5 pt-0.5 mt-auto border-t border-slate-100 bg-slate-50/70 p-0.5 rounded">
+                <div class="space-y-0.5 pt-0.5 mt-auto border-t border-slate-100 bg-slate-50/70 p-0.5 rounded relative z-20 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 select-none"
+                     data-asset-type="backContact"
+                     style="${backContactTransform}">
                   ${emergencyHtml}
                   ${addressHtml}
                 </div>
@@ -909,9 +932,11 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
               ` : ''}
 
               ${cfg.backShowCardholderSign ? `
-                <div class="w-full text-center text-[5.8px] font-khmer text-slate-500 mb-0.5">
-                  <div class="border-b border-dotted border-slate-400 h-3 mb-0.5 mx-auto w-24"></div>
-                  <span>${cfg.backCardholderSignLabel || 'ហត្ថលេខាកាន់ប័ណ្ណ'}</span>
+                <div class="w-full text-center text-[5.8px] font-khmer text-slate-500 mb-0.5 relative z-20 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 rounded select-none"
+                     data-asset-type="backSignature"
+                     style="${backSignatureTransform}">
+                  <div class="border-b border-dotted border-slate-400 h-3 mb-0.5 mx-auto w-24 pointer-events-none"></div>
+                  <span class="pointer-events-none">${cfg.backCardholderSignLabel || 'ហត្ថលេខាកាន់ប័ណ្ណ'}</span>
                 </div>
               ` : (!qrHtml ? '<div class="h-1"></div>' : '')}
 
@@ -923,7 +948,7 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
                 </div>
               ` : ''}
 
-              <div class="text-[5px] text-slate-400 font-medium text-center mt-auto">
+              <div class="text-[5px] text-slate-400 font-medium text-center mt-auto relative z-20">
                 <span>${cfg.backValidityText || (academicYear ? `ឆ្នាំសិក្សា ${academicYear}` : '')}</span>
               </div>
             </div>
@@ -945,24 +970,28 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
       <div class="card-body-content relative z-10 mx-2 my-1.5 flex flex-col justify-between flex-1 h-full min-w-0">
         
         <!-- Top Bar: Logo & School & Title -->
-        <div class="border-b border-slate-200/90 pb-1 text-center w-full shrink-0">
-          <div class="flex items-center justify-center gap-1.5 mb-0.5">
+        <div class="border-b border-slate-200/90 pb-1 text-center w-full shrink-0 relative z-20 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 rounded select-none"
+             data-asset-type="backHeader"
+             style="${backHeaderTransform}">
+          <div class="flex items-center justify-center gap-1.5 mb-0.5 pointer-events-none">
             ${schoolLogoMiniHtml}
             <div class="text-left min-w-0">
               <h5 class="text-[7.5px] font-bold font-khmer uppercase text-slate-800 truncate leading-tight">${cfg.schoolNameKh || 'សាលារៀន'}</h5>
               ${cfg.schoolNameEn ? `<p class="text-[5.5px] font-semibold uppercase text-slate-400 tracking-tight leading-none">${cfg.schoolNameEn}</p>` : ''}
             </div>
           </div>
-          <div class="inline-block px-2 py-0.5 rounded-full text-[6px] font-bold font-khmer text-white tracking-wide" style="background: ${accent};">
+          <div class="inline-block px-2 py-0.5 rounded-full text-[6px] font-bold font-khmer text-white tracking-wide pointer-events-none" style="background: ${accent};">
             ${cfg.backSideTitleKh || 'បទបញ្ជាផ្ទៃក្នុង & លក្ខខណ្ឌ'}
           </div>
         </div>
 
         <!-- Rules Body -->
-        <div class="card-back-rules-container my-1 px-0.5 flex-1 min-h-0 flex flex-col justify-center space-y-1 text-[6.2px] leading-relaxed text-slate-700 font-khmer">
-          ${khRules.map(r => `<div class="text-left leading-snug">${r}</div>`).join('')}
+        <div class="card-back-rules-container my-1 px-0.5 flex-1 min-h-0 flex flex-col justify-center space-y-1 text-[6.2px] leading-relaxed text-slate-700 font-khmer relative z-20 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 rounded select-none"
+             data-asset-type="backRules"
+             style="${backRulesTransform}">
+          ${khRules.map(r => `<div class="text-left leading-snug pointer-events-none">${r}</div>`).join('')}
           ${enRules.length > 0 ? `
-            <div class="pt-0.5 border-t border-slate-100 text-[5px] text-slate-500 font-sans leading-tight space-y-0.5">
+            <div class="pt-0.5 border-t border-slate-100 text-[5px] text-slate-500 font-sans leading-tight space-y-0.5 pointer-events-none">
               ${enRules.map(r => `<div class="text-left leading-tight">${r}</div>`).join('')}
             </div>
           ` : ''}
@@ -970,7 +999,9 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
 
         <!-- Info & Contact Section -->
         ${(emergencyHtml || addressHtml) ? `
-          <div class="space-y-0.5 px-1 py-1 rounded bg-slate-50/90 border border-slate-200/60 my-0.5 shrink-0">
+          <div class="space-y-0.5 px-1 py-1 rounded bg-slate-50/90 border border-slate-200/60 my-0.5 shrink-0 relative z-20 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 select-none"
+               data-asset-type="backContact"
+               style="${backContactTransform}">
             ${emergencyHtml}
             ${addressHtml}
           </div>
@@ -985,12 +1016,14 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
           ` : ''}
 
           ${cfg.backShowCardholderSign ? `
-            <div class="w-full flex justify-between items-end px-1 mb-1 text-[6px] font-khmer text-slate-500">
-              <div class="text-center w-24">
+            <div class="w-full flex justify-between items-end px-1 mb-1 text-[6px] font-khmer text-slate-500 relative z-20 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 rounded select-none"
+                 data-asset-type="backSignature"
+                 style="${backSignatureTransform}">
+              <div class="text-center w-24 pointer-events-none">
                 <div class="border-b border-dotted border-slate-400 h-3 mb-0.5"></div>
                 <span>${cfg.backCardholderSignLabel || 'ហត្ថលេខាកាន់ប័ណ្ណ'}</span>
               </div>
-              <div class="text-right text-[5.5px] text-slate-400 font-medium">
+              <div class="text-right text-[5.5px] text-slate-400 font-medium pointer-events-none">
                 <span>${cfg.backValidityText || (academicYear ? `ឆ្នាំសិក្សា ${academicYear}` : '')}</span>
               </div>
             </div>

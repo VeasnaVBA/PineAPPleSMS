@@ -1331,6 +1331,20 @@ export const IDCardStudioModal = {
                   <label class="block text-[11px] font-semibold font-khmer text-muted-foreground">${isKm ? 'ចំណងជើង (អង់គ្លេស)' : 'Title (English)'}</label>
                   <input type="text" id="inp-back-title-en" value="${this.config.backSideTitleEn || 'School Regulations & Card Policy'}" class="w-full px-2.5 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary focus:border-primary" />
                 </div>
+
+                ${this.renderTransformWidget({
+                  targetKey: 'backHeader',
+                  titleKh: 'ពង្រីក & រំកិលក្បាលកាតខាងក្រោយ',
+                  titleEn: 'Back Header Scale & Position',
+                  isKm,
+                  scale: this.config.backHeaderScale || 100,
+                  offsetX: this.config.backHeaderOffsetX || 0,
+                  offsetY: this.config.backHeaderOffsetY || 0,
+                  minScale: 40,
+                  maxScale: 250,
+                  minOffset: -200,
+                  maxOffset: 200
+                })}
               </div>
 
               <!-- Rules & Regulations Textarea -->
@@ -1349,6 +1363,20 @@ export const IDCardStudioModal = {
                   <label class="block text-[11px] font-semibold font-khmer text-muted-foreground">${isKm ? 'បទបញ្ជា (អង់គ្លេស - ស្រេចចិត្ត)' : 'Rules (English - Optional)'}</label>
                   <textarea id="txt-back-rules-en" rows="3" class="w-full px-2.5 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground focus:ring-1 focus:ring-primary focus:border-primary resize-y">${this.config.backSideRulesEn || ''}</textarea>
                 </div>
+
+                ${this.renderTransformWidget({
+                  targetKey: 'backRules',
+                  titleKh: 'ពង្រីក & រំកិលខ្លឹមសារបទបញ្ជា',
+                  titleEn: 'Rules Scale & Position',
+                  isKm,
+                  scale: this.config.backRulesScale || 100,
+                  offsetX: this.config.backRulesOffsetX || 0,
+                  offsetY: this.config.backRulesOffsetY || 0,
+                  minScale: 40,
+                  maxScale: 250,
+                  minOffset: -200,
+                  maxOffset: 200
+                })}
               </div>
 
               <!-- Emergency Contact & School Address -->
@@ -1377,6 +1405,20 @@ export const IDCardStudioModal = {
                   <label class="block text-[11px] font-semibold font-khmer text-muted-foreground">${isKm ? 'អាសយដ្ឋាន / ទីតាំងសាលា' : 'School Address'}</label>
                   <input type="text" id="inp-back-address" value="${this.config.backAddress || ''}" placeholder="រាជធានីភ្នំពេញ" class="w-full px-2.5 py-1.5 rounded-lg border border-input bg-background text-xs font-khmer text-foreground focus:ring-1 focus:ring-primary focus:border-primary" />
                 </div>
+
+                ${this.renderTransformWidget({
+                  targetKey: 'backContact',
+                  titleKh: 'ពង្រីក & រំកិលទំនាក់ទំនង & អាសយដ្ឋាន',
+                  titleEn: 'Contact & Address Scale & Position',
+                  isKm,
+                  scale: this.config.backContactScale || 100,
+                  offsetX: this.config.backContactOffsetX || 0,
+                  offsetY: this.config.backContactOffsetY || 0,
+                  minScale: 40,
+                  maxScale: 250,
+                  minOffset: -200,
+                  maxOffset: 200
+                })}
               </div>
 
               <!-- Barcode & Cardholder Signature -->
@@ -1408,6 +1450,20 @@ export const IDCardStudioModal = {
                   <label class="block text-[11px] font-semibold font-khmer text-muted-foreground">${isKm ? 'អត្ថបទសុពលភាព (ស្រេចចិត្ត)' : 'Validity Text (Optional)'}</label>
                   <input type="text" id="inp-back-validity" value="${this.config.backValidityText || ''}" placeholder="${isKm ? 'ឧទាហរណ៍៖ សុពលភាព ២០២៤–២០២៥' : 'e.g. Valid 2024-2025'}" class="w-full px-2.5 py-1.5 rounded-lg border border-input bg-background text-xs font-khmer text-foreground focus:ring-1 focus:ring-primary focus:border-primary" />
                 </div>
+
+                ${this.renderTransformWidget({
+                  targetKey: 'backSignature',
+                  titleKh: 'ពង្រីក & រំកិលហត្ថលេខា & សុពលភាព',
+                  titleEn: 'Back Signature Scale & Position',
+                  isKm,
+                  scale: this.config.backSignatureScale || 100,
+                  offsetX: this.config.backSignatureOffsetX || 0,
+                  offsetY: this.config.backSignatureOffsetY || 0,
+                  minScale: 40,
+                  maxScale: 250,
+                  minOffset: -200,
+                  maxOffset: 200
+                })}
               </div>
 
               <!-- QR Code Folder Upload (Matched by Student ID) -->
@@ -3370,6 +3426,10 @@ export const IDCardStudioModal = {
           photo: 'style',
           frontQr: 'style',
           backQr: 'back',
+          backHeader: 'back',
+          backRules: 'back',
+          backContact: 'back',
+          backSignature: 'back',
           fields: 'fields',
           title: 'signature',
           signature: 'signature',
