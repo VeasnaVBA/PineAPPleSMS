@@ -888,6 +888,66 @@ export const IDCardStudioModal = {
                   minOffset: -600,
                   maxOffset: 600
                 })}
+
+                <!-- Photo Border Color & Radius -->
+                <div class="mt-2.5 p-2.5 rounded-lg border border-border/70 bg-background/70 space-y-2">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-[11px] font-semibold font-khmer text-muted-foreground">${isKm ? 'ពណ៌ស៊ុមរូបថត' : 'Photo Border Color'}</span>
+                    <div class="flex items-center gap-1.5">
+                      <input type="color" id="inp-photo-border-color" value="${this.config.photoBorderColor || this.config.accentColor || '#1E40AF'}" class="w-7 h-7 rounded border border-input cursor-pointer bg-transparent p-0" />
+                      <button type="button" id="btn-reset-photo-border-color" class="text-[10px] px-1.5 py-0.5 rounded border border-border hover:bg-muted text-muted-foreground cursor-pointer font-khmer">${isKm ? 'លំនាំដើម' : 'Auto'}</button>
+                    </div>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="flex items-center justify-between text-[11px] font-khmer">
+                      <span class="text-muted-foreground">${isKm ? 'កម្រិតមូលជ្រុងស៊ុមរូបថត (Radius)' : 'Photo Border Radius'}</span>
+                      <span id="label-photo-border-radius" class="font-mono font-bold">${this.config.photoBorderRadius !== undefined ? this.config.photoBorderRadius : 4} px</span>
+                    </div>
+                    <input type="range" id="range-photo-border-radius" min="0" max="50" step="1" value="${this.config.photoBorderRadius !== undefined ? this.config.photoBorderRadius : 4}" class="w-full accent-primary cursor-pointer" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Front Side QR Code Controls -->
+              <div class="p-3 rounded-xl border border-border bg-muted/20 space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="font-bold text-xs font-khmer text-foreground block">${isKm ? 'QR Code ផ្នែកខាងមុខកាត' : 'Front Side QR Code'}</span>
+                    <span class="text-[10px] text-muted-foreground font-khmer block">${isKm ? 'បើកបង្ហាញ QR សិស្សនៅខាងមុខកាត' : 'Show student QR code on the front'}</span>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="chk-front-qr" class="sr-only peer" ${this.config.frontShowQr ? 'checked' : ''} />
+                    <div class="w-9 h-5 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
+
+                ${this.renderTransformWidget({
+                  targetKey: 'frontQr',
+                  titleKh: 'ទំហំ & ទីតាំង QR ខាងមុខ',
+                  titleEn: 'Front QR Scale & Position',
+                  isKm,
+                  scale: this.config.frontQrScale || 100,
+                  offsetX: this.config.frontQrOffsetX || 0,
+                  offsetY: this.config.frontQrOffsetY || 0,
+                  minScale: 30,
+                  maxScale: 300,
+                  minOffset: -300,
+                  maxOffset: 300
+                })}
+
+                <div class="p-2.5 rounded-lg border border-border/70 bg-background/70 space-y-2">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-[11px] font-semibold font-khmer text-muted-foreground">${isKm ? 'ពណ៌ស៊ុម QR ខាងមុខ' : 'Front QR Border Color'}</span>
+                    <input type="color" id="inp-front-qr-border-color" value="${this.config.frontQrBorderColor || '#cbd5e1'}" class="w-7 h-7 rounded border border-input cursor-pointer bg-transparent p-0" />
+                  </div>
+                  <div class="space-y-1">
+                    <div class="flex items-center justify-between text-[11px] font-khmer">
+                      <span class="text-muted-foreground">${isKm ? 'កម្រិតមូលជ្រុងស៊ុម QR (Radius)' : 'Front QR Border Radius'}</span>
+                      <span id="label-front-qr-border-radius" class="font-mono font-bold">${this.config.frontQrBorderRadius !== undefined ? this.config.frontQrBorderRadius : 4} px</span>
+                    </div>
+                    <input type="range" id="range-front-qr-border-radius" min="0" max="30" step="1" value="${this.config.frontQrBorderRadius !== undefined ? this.config.frontQrBorderRadius : 4}" class="w-full accent-primary cursor-pointer" />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1420,6 +1480,34 @@ export const IDCardStudioModal = {
                     <span id="label-back-qr-size" class="font-mono font-bold">${this.config.backQrSizeMm || 16} mm</span>
                   </div>
                   <input type="range" id="range-back-qr-size" min="10" max="28" step="1" value="${this.config.backQrSizeMm || 16}" class="w-full accent-primary cursor-pointer" />
+                </div>
+
+                ${this.renderTransformWidget({
+                  targetKey: 'backQr',
+                  titleKh: 'ពង្រីក & រំកិល QR ខាងក្រោយ',
+                  titleEn: 'Back QR Scale & Position',
+                  isKm,
+                  scale: this.config.backQrScale || 100,
+                  offsetX: this.config.backQrOffsetX || 0,
+                  offsetY: this.config.backQrOffsetY || 0,
+                  minScale: 30,
+                  maxScale: 300,
+                  minOffset: -300,
+                  maxOffset: 300
+                })}
+
+                <div class="p-2.5 rounded-lg border border-border/70 bg-muted/20 space-y-2">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-[11px] font-semibold font-khmer text-muted-foreground">${isKm ? 'ពណ៌ស៊ុម QR ខាងក្រោយ' : 'Back QR Border Color'}</span>
+                    <input type="color" id="inp-back-qr-border-color" value="${this.config.backQrBorderColor || '#cbd5e1'}" class="w-7 h-7 rounded border border-input cursor-pointer bg-transparent p-0" />
+                  </div>
+                  <div class="space-y-1">
+                    <div class="flex items-center justify-between text-[11px] font-khmer">
+                      <span class="text-muted-foreground">${isKm ? 'កម្រិតមូលជ្រុងស៊ុម QR (Radius)' : 'Back QR Border Radius'}</span>
+                      <span id="label-back-qr-border-radius" class="font-mono font-bold">${this.config.backQrBorderRadius !== undefined ? this.config.backQrBorderRadius : 4} px</span>
+                    </div>
+                    <input type="range" id="range-back-qr-border-radius" min="0" max="30" step="1" value="${this.config.backQrBorderRadius !== undefined ? this.config.backQrBorderRadius : 4}" class="w-full accent-primary cursor-pointer" />
+                  </div>
                 </div>
               </div>
 
@@ -2601,6 +2689,61 @@ export const IDCardStudioModal = {
     });
     overlay.querySelector('#inp-back-validity')?.addEventListener('input', (e) => {
       this.config.backValidityText = e.target.value;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+
+    // 5a. Photo Border Color & Radius + Front QR Controls + Back QR Border/Radius
+    overlay.querySelector('#inp-photo-border-color')?.addEventListener('input', (e) => {
+      this.config.photoBorderColor = e.target.value;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+    overlay.querySelector('#btn-reset-photo-border-color')?.addEventListener('click', () => {
+      this.config.photoBorderColor = '';
+      const inp = overlay.querySelector('#inp-photo-border-color');
+      if (inp) inp.value = this.config.accentColor || '#1E40AF';
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+    overlay.querySelector('#range-photo-border-radius')?.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10) || 0;
+      this.config.photoBorderRadius = val;
+      const lbl = overlay.querySelector('#label-photo-border-radius');
+      if (lbl) lbl.textContent = `${val} px`;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+
+    overlay.querySelector('#chk-front-qr')?.addEventListener('change', (e) => {
+      this.config.frontShowQr = e.target.checked;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+    overlay.querySelector('#inp-front-qr-border-color')?.addEventListener('input', (e) => {
+      this.config.frontQrBorderColor = e.target.value;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+    overlay.querySelector('#range-front-qr-border-radius')?.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10) || 0;
+      this.config.frontQrBorderRadius = val;
+      const lbl = overlay.querySelector('#label-front-qr-border-radius');
+      if (lbl) lbl.textContent = `${val} px`;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+
+    overlay.querySelector('#inp-back-qr-border-color')?.addEventListener('input', (e) => {
+      this.config.backQrBorderColor = e.target.value;
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
+    overlay.querySelector('#range-back-qr-border-radius')?.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10) || 0;
+      this.config.backQrBorderRadius = val;
+      const lbl = overlay.querySelector('#label-back-qr-border-radius');
+      if (lbl) lbl.textContent = `${val} px`;
       this.savePersistedSettings();
       this.updatePreview();
     });
@@ -4171,10 +4314,19 @@ export const IDCardStudioModal = {
       // Save current configuration first
       await this.savePersistedSettings();
 
-      // Trigger Drive sync
+      // Trigger Drive sync for card templates/design AND student photos & QR codes to user's Drive sheet
       const success = await CloudSyncService.syncCardSettingsToDrive(null, { silent: false });
+      const dataSuccess = await CloudSyncService.syncToDrive(null, { silent: true });
       if (success) {
-        toast.success(isKm ? 'បានធ្វើសមកាលកម្មការរចនាកាតទៅ Google Drive ដោយជោគជ័យ!' : 'Card design synced to Google Drive successfully!');
+        toast.success(
+          isKm
+            ? (dataSuccess
+                ? 'បានរក្សាទុកគំរូកាត និងរូបថត/QR សិស្សទៅ Google Drive ដោយជោគជ័យ!'
+                : 'បានធ្វើសមកាលកម្មការរចនាកាតទៅ Google Drive ដោយជោគជ័យ!')
+            : (dataSuccess
+                ? 'Card template and student photos/QR synced to Google Drive!'
+                : 'Card design synced to Google Drive successfully!')
+        );
       }
     } catch (err) {
       console.error('Error syncing design to Drive:', err);

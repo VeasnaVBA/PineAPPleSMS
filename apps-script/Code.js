@@ -723,7 +723,7 @@ function getOrCreateUserSpreadsheet(fileName, username) {
   ];
   
   var defaultHeaders = {
-    students: ['id', 'studentId', 'name', 'latinName', 'gender', 'dateOfBirth', 'classId', 'grade', 'academicYear', 'photo', 'parentPhone', 'phone', 'address', 'status', 'createdAt', 'updatedAt'],
+    students: ['id', 'studentId', 'name', 'latinName', 'gender', 'dateOfBirth', 'classId', 'grade', 'academicYear', 'photo', 'qrCode', 'parentPhone', 'phone', 'address', 'status', 'createdAt', 'updatedAt'],
     schools: ['id', 'code', 'name', 'nameEn', 'address', 'director', 'phone', 'notes', 'updatedAt'],
     classes: ['id', 'name', 'grade', 'academicYear', 'room', 'teacherId', 'capacity', 'shift', 'status', 'createdAt', 'updatedAt'],
     teachers: ['id', 'teacherId', 'name', 'gender', 'phone', 'email', 'subject', 'role', 'status', 'photo', 'createdAt', 'updatedAt'],
@@ -831,14 +831,18 @@ function handlePullToDrive(fileName, username, data, payload) {
 
   var photoFolder = getOrCreatePhotosFolder(username);
 
-  // Save student photos to Drive folder (size ~100KB) and put Drive link in sheet
+  // Save student photos & QR codes to Drive folder and put Drive link in sheet
   if (Array.isArray(data.students)) {
     for (var s = 0; s < data.students.length; s++) {
       var std = data.students[s];
+      var sId = String(std.studentId || std.id || ('std_' + s)).replace(/[^a-zA-Z0-9_-]/g, '_');
       if (std.photo && typeof std.photo === 'string' && (std.photo.indexOf('data:image/') === 0 || std.photo.indexOf('base64,') > -1)) {
-        var sId = String(std.studentId || std.id || ('std_' + s)).replace(/[^a-zA-Z0-9_-]/g, '_');
         var sUrl = savePhotoFileToDrive(photoFolder, 'student_' + sId + '.jpg', std.photo);
         if (sUrl) std.photo = sUrl;
+      }
+      if (std.qrCode && typeof std.qrCode === 'string' && (std.qrCode.indexOf('data:image/') === 0 || std.qrCode.indexOf('base64,') > -1)) {
+        var qrUrl = savePhotoFileToDrive(photoFolder, 'student_qr_' + sId + '.png', std.qrCode);
+        if (qrUrl) std.qrCode = qrUrl;
       }
     }
   }

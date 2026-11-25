@@ -95,10 +95,21 @@ export const DEFAULT_CARD_CONFIG = {
   logoOffsetX: 0, // px
   logoOffsetY: 0, // px
 
-  // Student Photo Transforms
+  // Student Photo Transforms & Border
   photoScale: 100, // 80 - 200%
   photoOffsetX: 0, // px
   photoOffsetY: 0, // px
+  photoBorderColor: '',
+  photoBorderRadius: 4, // px
+
+  // Front Side QR Code
+  frontShowQr: false,
+  frontQrSizeMm: 14,
+  frontQrScale: 100,
+  frontQrOffsetX: 0,
+  frontQrOffsetY: 0,
+  frontQrBorderColor: '#cbd5e1',
+  frontQrBorderRadius: 4,
 
   // Signatures, Stamp & Signatory Title
   showSignature: true,
@@ -189,6 +200,11 @@ export const DEFAULT_CARD_CONFIG = {
   backBarcodeHeight: 28,
   backShowQr: false,
   backQrSizeMm: 16,
+  backQrScale: 100,
+  backQrOffsetX: 0,
+  backQrOffsetY: 0,
+  backQrBorderColor: '#cbd5e1',
+  backQrBorderRadius: 4,
   backShowEmergency: true,
   backShowAddress: true,
   backShowCardholderSign: true,
@@ -314,7 +330,36 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
   const headerTransform = `transform: translate(${cfg.headerOffsetX || 0}px, ${cfg.headerOffsetY || 0}px) scale(${(cfg.headerScale || 100) / 100}); transform-origin: center top;`;
   const logoTransform = `transform: translate(${cfg.logoOffsetX || 0}px, ${cfg.logoOffsetY || 0}px) scale(${(cfg.logoScale || 100) / 100}); transform-origin: center center;`;
   const photoTransform = `transform: translate(${cfg.photoOffsetX || 0}px, ${cfg.photoOffsetY || 0}px) scale(${(cfg.photoScale || 100) / 100}); transform-origin: center center;`;
+  const photoBorderColor = cfg.photoBorderColor || accent;
+  const photoBorderRadius = cfg.photoBorderRadius !== undefined ? cfg.photoBorderRadius : 4;
   const fieldsTransform = `transform: translate(${cfg.fieldsOffsetX || 0}px, ${cfg.fieldsOffsetY || 0}px) scale(${(cfg.fieldsScale || 100) / 100}); transform-origin: center center;`;
+
+  // Front Side QR Code
+  const normStuId = String(student.studentId || '').trim().toLowerCase();
+  const normDbId = String(student.id || '').trim().toLowerCase();
+  const frontQrSrc = student.qrCode ||
+    (cfg.backQrMap && (cfg.backQrMap[normStuId] || cfg.backQrMap[normDbId])) ||
+    '';
+  const frontQrSizeMm = Number(cfg.frontQrSizeMm) || 14;
+  const frontQrBorderColor = cfg.frontQrBorderColor || '#cbd5e1';
+  const frontQrBorderRadius = cfg.frontQrBorderRadius !== undefined ? cfg.frontQrBorderRadius : 4;
+  const frontQrTransform = `transform: translate(${cfg.frontQrOffsetX || 0}px, ${cfg.frontQrOffsetY || 0}px) scale(${(cfg.frontQrScale || 100) / 100}); transform-origin: center center;`;
+  const frontQrHtml = cfg.frontShowQr ? `
+    <div class="card-front-qr absolute bottom-1.5 left-1.5 z-30 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 select-none"
+         data-asset-type="frontQr"
+         style="${frontQrTransform}">
+      ${frontQrSrc ? `
+        <img src="${frontQrSrc}" alt="QR ${studentId}" class="object-contain bg-white p-0.5 border shadow-2xs pointer-events-none select-none"
+             style="width: ${frontQrSizeMm}mm; height: ${frontQrSizeMm}mm; border-color: ${frontQrBorderColor}; border-radius: ${frontQrBorderRadius}px;" />
+      ` : `
+        <div class="flex flex-col items-center justify-center border border-dashed bg-slate-50/90 text-slate-400 text-[5px] font-mono text-center p-0.5 pointer-events-none select-none"
+             style="width: ${frontQrSizeMm}mm; height: ${frontQrSizeMm}mm; border-color: ${frontQrBorderColor}; border-radius: ${frontQrBorderRadius}px;">
+          <span class="font-bold">QR</span>
+          <span class="truncate max-w-full">${studentId}</span>
+        </div>
+      `}
+    </div>
+  ` : '';
   const signatureTransform = `transform: translate(${cfg.signatureOffsetX || 0}px, ${cfg.signatureOffsetY || 0}px) scale(${(cfg.signatureScale || 100) / 100}); transform-origin: center bottom;`;
   const stampTransform = `transform: translate(${cfg.stampOffsetX || 0}px, ${cfg.stampOffsetY || 0}px) scale(${(cfg.stampScale || 100) / 100}); transform-origin: center center;`;
   const titleTransform = `transform: translate(${cfg.titleOffsetX || 0}px, ${cfg.titleOffsetY || 0}px) scale(${(cfg.titleScale || 100) / 100}); transform-origin: center center;`;
@@ -502,8 +547,8 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
             <div class="relative shrink-0 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 select-none z-20"
                  data-asset-type="photo"
                  style="${photoTransform}">
-              <div class="w-13 h-16 sm:w-14 sm:h-[68px] rounded-sm overflow-hidden bg-slate-100 flex items-center justify-center shadow-2xs border"
-                   style="border-color: ${accent};">
+              <div class="w-13 h-16 sm:w-14 sm:h-[68px] overflow-hidden bg-slate-100 flex items-center justify-center shadow-2xs border"
+                   style="border-color: ${photoBorderColor}; border-radius: ${photoBorderRadius}px;">
                 ${photoUrl ? `
                   <img src="${photoUrl}" alt="${fullNameLatin || fullNameKh}" class="w-full h-full object-cover pointer-events-none select-none" />
                 ` : `
@@ -553,6 +598,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
           </div>
 
         </div>
+        ${frontQrHtml}
       </div>
     `;
   }
@@ -590,8 +636,8 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
         <div class="relative my-1 shrink-0 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 select-none z-20"
              data-asset-type="photo"
              style="${photoTransform}">
-          <div class="w-14 h-16 sm:w-16 sm:h-[72px] rounded-sm overflow-hidden bg-slate-100 flex items-center justify-center shadow-xs border-2"
-               style="border-color: ${accent};">
+          <div class="w-14 h-16 sm:w-16 sm:h-[72px] overflow-hidden bg-slate-100 flex items-center justify-center shadow-xs border-2"
+               style="border-color: ${photoBorderColor}; border-radius: ${photoBorderRadius}px;">
             ${photoUrl ? `
               <img src="${photoUrl}" alt="${fullNameLatin || fullNameKh}" class="w-full h-full object-cover pointer-events-none select-none" />
             ` : `
@@ -639,6 +685,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
         </div>
 
       </div>
+      ${frontQrHtml}
     </div>
   `;
 }
@@ -721,15 +768,23 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
     (cfg.backQrMap && (cfg.backQrMap[normId] || cfg.backQrMap[normDbId])) ||
     '';
   const qrSizeMm = Number(cfg.backQrSizeMm) || 16;
+  const backQrBorderColor = cfg.backQrBorderColor || '#cbd5e1';
+  const backQrBorderRadius = cfg.backQrBorderRadius !== undefined ? cfg.backQrBorderRadius : 4;
+  const backQrTransform = `transform: translate(${cfg.backQrOffsetX || 0}px, ${cfg.backQrOffsetY || 0}px) scale(${(cfg.backQrScale || 100) / 100}); transform-origin: center center;`;
   const qrHtml = cfg.backShowQr ? (
     qrSrc ? `
-      <div class="card-back-qr flex flex-col items-center justify-center shrink-0">
-        <img src="${qrSrc}" alt="QR ${studentId}" class="object-contain bg-white p-0.5 rounded border border-slate-200/80 shadow-2xs select-none" style="width: ${qrSizeMm}mm; height: ${qrSizeMm}mm;" />
+      <div class="card-back-qr flex flex-col items-center justify-center shrink-0 relative z-20 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 select-none"
+           data-asset-type="backQr"
+           style="${backQrTransform}">
+        <img src="${qrSrc}" alt="QR ${studentId}" class="object-contain bg-white p-0.5 border shadow-2xs pointer-events-none select-none"
+             style="width: ${qrSizeMm}mm; height: ${qrSizeMm}mm; border-color: ${backQrBorderColor}; border-radius: ${backQrBorderRadius}px;" />
       </div>
     ` : `
-      <div class="card-back-qr flex flex-col items-center justify-center rounded border border-dashed border-slate-300 bg-slate-50/80 text-slate-400 text-[5px] font-mono text-center p-0.5 shrink-0 select-none" style="width: ${qrSizeMm}mm; height: ${qrSizeMm}mm;">
-        <span class="font-bold">QR</span>
-        <span class="truncate max-w-full">${studentId}</span>
+      <div class="card-back-qr flex flex-col items-center justify-center border border-dashed bg-slate-50/80 text-slate-400 text-[5px] font-mono text-center p-0.5 shrink-0 relative z-20 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 select-none"
+           data-asset-type="backQr"
+           style="width: ${qrSizeMm}mm; height: ${qrSizeMm}mm; border-color: ${backQrBorderColor}; border-radius: ${backQrBorderRadius}px; ${backQrTransform}">
+        <span class="font-bold pointer-events-none">QR</span>
+        <span class="truncate max-w-full pointer-events-none">${studentId}</span>
       </div>
     `
   ) : '';
