@@ -463,7 +463,9 @@ export const CloudSyncService = {
         action: 'PULL_TO_DRIVE',
         username: currentUser.username,
         isAutoSync: isSilent,
-        allowEmptyWipe: options?.allowEmptyWipe === true,
+        allowEmptyWipe: (options?.allowEmptyWipe === true || (Array.isArray(options?.allowEmptyWipe) && options.allowEmptyWipe.length > 0))
+          ? options.allowEmptyWipe
+          : false,
         data: {
           students,
           schools,

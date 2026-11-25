@@ -15,6 +15,8 @@ import { db } from '../database/db.js';
 import { Modal } from '../components/modal.js';
 import { StudentFormModal } from '../components/studentFormModal.js?v=3.1.28';
 import { syncStateManager } from '../services/syncStateManager.js';
+import { CloudSyncService } from '../services/cloudSyncService.js';
+import { getCloudSyncUrl } from '../config/cloudSync.js';
 import { toast } from '../components/toast.js';
 import { t, i18n } from '../i18n/i18n.js';
 import { getIcon } from '../components/icons.js';
@@ -1518,7 +1520,8 @@ export const StudentsPage = {
                         await StudentService.delete(student.id);
                         this.state.selectedIds.delete(student.id);
                         toast.success(t('students.deletedSuccess'));
-                        await this.loadData();
+                        await this.loadData(true);
+                        await this.syncStudentDeletionToSheet();
                       }
                     });
                   }
@@ -2082,6 +2085,7 @@ export const StudentsPage = {
           if (selectAllCheckbox) selectAllCheckbox.checked = false;
           toast.success(t('students.bulkDeleteSuccess', { count }));
           await this.loadData(true);
+          await this.syncStudentDeletionToSheet();
         }
       });
     });
@@ -2200,7 +2204,8 @@ export const StudentsPage = {
             await StudentService.delete(id);
             this.state.selectedIds.delete(id);
             toast.success(t('students.deletedSuccess'));
-            await this.loadData();
+            await this.loadData(true);
+            await this.syncStudentDeletionToSheet();
           }
         });
       });
@@ -6653,6 +6658,23 @@ export const StudentsPage = {
     });
 
     renderModalBody();
+  },
+
+  /**
+   * Immediately sync student deletions to Google Drive Sheet (allowing empty wipe of 'students' when 0 remain)
+   */
+  async syncStudentDeletionToSheet() {
+    try {
+      const remaining = await StudentService.getAll();
+      if (CloudSyncService.isOnline?.() && getCloudSyncUrl()) {
+        await CloudSyncService.pullToDrive(null, {
+          silent: true,
+          allowEmptyWipe: remaining.length === 0 ? ['students'] : false
+        });
+      }
+    } catch (err) {
+      console.warn('Could not sync student deletion to Sheet:', err);
+    }
   },
 
   /**

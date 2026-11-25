@@ -951,10 +951,12 @@ function handlePullToDrive(fileName, username, data, payload) {
       // If client sends 0 records for this sheet, check if Google Drive already has data rows.
       // Auto-sync or fresh device connections must NEVER wipe out existing valid data in Drive!
       var lastRow = sheet.getLastRow();
-      if (lastRow > 1 && !payload.allowEmptyWipe) {
+      var isWipeAllowed = (payload.allowEmptyWipe === true) ||
+        (Array.isArray(payload.allowEmptyWipe) && payload.allowEmptyWipe.indexOf(def.name) !== -1);
+      if (lastRow > 1 && !isWipeAllowed) {
         // PRESERVE existing data in Drive!
         counts[def.name] = lastRow - 1;
-      } else if (payload.allowEmptyWipe === true) {
+      } else if (isWipeAllowed) {
         sheet.clear();
         sheet.getRange(1, 1).setValue('No records');
         counts[def.name] = 0;
