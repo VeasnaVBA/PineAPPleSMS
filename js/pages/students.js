@@ -6661,16 +6661,19 @@ export const StudentsPage = {
   },
 
   /**
-   * Immediately sync student deletions to Google Drive Sheet (allowing empty wipe of 'students' when 0 remain)
+   * Immediately sync student deletions to Google Drive Sheet (allowing empty wipe when 0 remain)
    */
   async syncStudentDeletionToSheet() {
     try {
       const remaining = await StudentService.getAll();
       if (CloudSyncService.isOnline?.() && getCloudSyncUrl()) {
-        await CloudSyncService.pullToDrive(null, {
+        const ok = await CloudSyncService.pullToDrive(null, {
           silent: true,
-          allowEmptyWipe: remaining.length === 0 ? ['students'] : false
+          allowEmptyWipe: remaining.length === 0
         });
+        if (ok) {
+          syncStateManager.markClean();
+        }
       }
     } catch (err) {
       console.warn('Could not sync student deletion to Sheet:', err);
