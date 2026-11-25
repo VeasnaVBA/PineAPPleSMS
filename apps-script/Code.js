@@ -817,7 +817,7 @@ function savePhotoFileToDrive(folder, filename, photoData) {
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     } catch (_) {}
 
-    return file.getUrl();
+    return 'https://lh3.googleusercontent.com/d/' + file.getId();
   } catch (err) {
     Logger.log('Error saving photo file: ' + err);
     return '';

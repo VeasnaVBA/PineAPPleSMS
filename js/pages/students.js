@@ -1254,7 +1254,7 @@ export const StudentsPage = {
 
       // Gender representation
       const genderLabel = student.gender === 'Female' ? t('common.female') : t('common.male');
-      const photoUrl = student.photoBlob ? photoService.getUrlForBlob(student.photoBlob) : (student.photo && student.photo.startsWith('data:') ? student.photo : null);
+      const photoUrl = photoService.resolvePhotoUrl(student);
       const initialLetter = student.firstNameLatin ? student.firstNameLatin.charAt(0).toUpperCase() : (student.firstNameKh ? student.firstNameKh.charAt(0) : 'S');
 
       return `
@@ -1288,7 +1288,7 @@ export const StudentsPage = {
           <td class="px-3 py-2.5 text-center">
             <div class="w-8 h-8 rounded-full overflow-hidden mx-auto flex-shrink-0 bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs border border-border">
               ${photoUrl 
-                ? `<img src="${photoUrl}" alt="${student.firstNameLatin || ''}" class="w-full h-full object-cover" />` 
+                ? `<img src="${photoUrl}" referrerpolicy="no-referrer" alt="${student.firstNameLatin || ''}" class="w-full h-full object-cover" onerror="var m=this.src.match(/googleusercontent\\.com\\/d\\/([a-zA-Z0-9_-]+)/);if(m&&!this.dataset.fb){this.dataset.fb='1';this.src='https://drive.google.com/thumbnail?id='+m[1]+'&sz=w400';}else{this.parentElement.textContent='${initialLetter}';}" />` 
                 : initialLetter}
             </div>
           </td>
@@ -2321,7 +2321,7 @@ export const StudentsPage = {
     const isKm = i18n.getLocale() === 'km';
     const classObj = this.state.classes.find(c => c.id === student.classId);
     const className = classObj ? classObj.name : student.classId || '—';
-    const photoUrl = student.photoBlob ? photoService.getUrlForBlob(student.photoBlob) : (student.photo && student.photo.startsWith('data:') ? student.photo : null);
+    const photoUrl = photoService.resolvePhotoUrl(student);
     const genderLabel = student.gender === 'Female' ? t('common.female') : t('common.male');
     const initialLetter = student.firstNameLatin ? student.firstNameLatin.charAt(0).toUpperCase() : (student.firstNameKh ? student.firstNameKh.charAt(0) : 'S');
     const normDash = (str) => String(str || '').replace(/[–—−]/g, '-').trim().toLowerCase();
@@ -2347,7 +2347,7 @@ export const StudentsPage = {
         <div class="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border">
           <div class="w-20 h-20 rounded-xl overflow-hidden border-2 border-primary/20 bg-card flex items-center justify-center font-bold text-2xl text-primary shadow-sm flex-shrink-0">
             ${photoUrl 
-              ? `<img src="${photoUrl}" class="w-full h-full object-cover" />` 
+              ? `<img src="${photoUrl}" referrerpolicy="no-referrer" class="w-full h-full object-cover" onerror="var m=this.src.match(/googleusercontent\\.com\\/d\\/([a-zA-Z0-9_-]+)/);if(m&&!this.dataset.fb){this.dataset.fb='1';this.src='https://drive.google.com/thumbnail?id='+m[1]+'&sz=w600';}else{this.parentElement.textContent='${initialLetter}';}" />` 
               : initialLetter}
           </div>
           <div class="space-y-1 text-center sm:text-left flex-1 min-w-0">
@@ -6620,8 +6620,8 @@ export const StudentsPage = {
           tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-muted-foreground font-khmer">${isKm ? 'មិនមានទិន្នន័យសិស្សទេ' : 'No students match this filter'}</td></tr>`;
         } else {
           tbody.innerHTML = filtered.map((s, idx) => {
-            const pUrl = s.photoBlob ? photoService.getUrlForBlob(s.photoBlob) : (s.photo && String(s.photo).startsWith('data:') ? s.photo : null);
-            const qUrl = (s.qrCode && String(s.qrCode).trim()) ? s.qrCode : null;
+            const pUrl = photoService.resolvePhotoUrl(s);
+            const qUrl = photoService.normalizeImageUrl(s.qrCode) || ((s.qrCode && String(s.qrCode).trim()) ? s.qrCode : null);
             const fullName = `${s.lastNameKh || ''} ${s.firstNameKh || ''}`.trim() || s.khmerName || s.englishName || '—';
             const clsName = classMap.get(s.classId) || s.classId || '—';
             const ready = !!(pUrl && qUrl);

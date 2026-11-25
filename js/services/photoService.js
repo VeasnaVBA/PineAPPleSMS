@@ -61,12 +61,45 @@ class PhotoService {
   }
 
   /**
+   * Normalize a stored photo/QR string, converting Google Drive viewer links into direct image URLs.
+   */
+  normalizeImageUrl(url) {
+    if (!url || typeof url !== 'string') return null;
+    const trimmed = url.trim();
+    if (!trimmed || trimmed === '(Photo attached)') return null;
+    if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) return trimmed;
+
+    const driveMatch =
+      trimmed.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+      trimmed.match(/drive\.google\.com\/open\?[^#]*id=([a-zA-Z0-9_-]+)/) ||
+      trimmed.match(/drive\.google\.com\/uc\?[^#]*id=([a-zA-Z0-9_-]+)/);
+    if (driveMatch && driveMatch[1]) {
+      return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
+    }
+
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+    return null;
+  }
+
+  /**
+   * Resolve the best displayable image URL from a student/teacher record (local Blob or remote/data URL).
+   */
+  resolvePhotoUrl(record) {
+    if (!record) return null;
+    if (record.photoBlob) {
+      const blobUrl = this.getUrlForBlob(record.photoBlob);
+      if (blobUrl) return blobUrl;
+    }
+    return this.normalizeImageUrl(record.photo);
+  }
+
+  /**
    * Get an object URL or displayable URL for a given Blob or Data URL
    */
   getUrlForBlob(blob) {
     if (!blob) return null;
     if (typeof blob === 'string') {
-      return (blob.startsWith('data:') || blob.startsWith('http') || blob.startsWith('blob:')) ? blob : null;
+      return this.normalizeImageUrl(blob);
     }
     if (!(blob instanceof Blob)) return null;
 

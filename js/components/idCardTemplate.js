@@ -7,6 +7,7 @@ import { generateBarcodeSVG } from '../utils/barcode.js';
 import { getIcon } from './icons.js';
 import { formatKhmerLunarDate, formatKhmerSolarDate } from '../utils/khmerLunar.js';
 import { formatDisplayDate } from '../utils/dateUtils.js';
+import { photoService } from '../services/photoService.js';
 
 export const DEFAULT_FIELD_STYLES = {
   nameKh: { font: 'Kantumruy Pro', size: 8, color: '#0f172a', bold: true },
@@ -380,9 +381,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
   const phone = student.studentPhone || student.phone || student.fatherPhone || '';
 
   // Photo resolution
-  const photoUrl = student.photoBlob 
-    ? (typeof student.photoBlob === 'string' ? student.photoBlob : URL.createObjectURL(student.photoBlob)) 
-    : (student.photo && student.photo !== '(Photo attached)' ? student.photo : null);
+  const photoUrl = photoService.resolvePhotoUrl(student);
   
   const initial = firstNameLatin ? firstNameLatin.charAt(0).toUpperCase() : (firstNameKh ? firstNameKh.charAt(0) : 'S');
 
@@ -410,9 +409,10 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
   // Front Side QR Code
   const normStuId = String(student.studentId || '').trim().toLowerCase();
   const normDbId = String(student.id || '').trim().toLowerCase();
-  const frontQrSrc = student.qrCode ||
+  const rawFrontQr = student.qrCode ||
     (cfg.backQrMap && (cfg.backQrMap[normStuId] || cfg.backQrMap[normDbId])) ||
     '';
+  const frontQrSrc = photoService.normalizeImageUrl(rawFrontQr) || rawFrontQr;
   const frontQrSizeMm = Number(cfg.frontQrSizeMm) || 14;
   const frontQrBorderColor = cfg.frontQrBorderColor || '#cbd5e1';
   const frontQrBorderRadius = cfg.frontQrBorderRadius !== undefined ? cfg.frontQrBorderRadius : 4;
@@ -422,7 +422,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
          data-asset-type="frontQr"
          style="${frontQrTransform}">
       ${frontQrSrc ? `
-        <img src="${frontQrSrc}" alt="QR ${studentId}" class="object-contain bg-white p-0.5 border shadow-2xs pointer-events-none select-none"
+        <img src="${frontQrSrc}" referrerpolicy="no-referrer" alt="QR ${studentId}" class="object-contain bg-white p-0.5 border shadow-2xs pointer-events-none select-none"
              style="width: ${frontQrSizeMm}mm; height: ${frontQrSizeMm}mm; border-color: ${frontQrBorderColor}; border-radius: ${frontQrBorderRadius}px;" />
       ` : `
         <div class="flex flex-col items-center justify-center border border-dashed bg-slate-50/90 text-slate-400 text-[5px] font-mono text-center p-0.5 pointer-events-none select-none"
@@ -652,7 +652,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
               <div class="${photoBoxSizeClass} overflow-hidden bg-slate-100 flex items-center justify-center shadow-2xs border"
                    style="${photoBoxSizeStyle} border-color: ${photoBorderColor}; border-radius: ${photoBorderRadius}px;">
                 ${photoUrl ? `
-                  <img src="${photoUrl}" alt="${fullNameLatin || fullNameKh}" class="w-full h-full object-cover pointer-events-none select-none" />
+                  <img src="${photoUrl}" referrerpolicy="no-referrer" alt="${fullNameLatin || fullNameKh}" class="w-full h-full object-cover pointer-events-none select-none" />
                 ` : `
                   <div class="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50 font-bold text-sm">
                     <span style="color: ${accent};">${initial}</span>
@@ -741,7 +741,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
           <div class="${photoBoxSizeClass} overflow-hidden bg-slate-100 flex items-center justify-center shadow-xs border-2"
                style="${photoBoxSizeStyle} border-color: ${photoBorderColor}; border-radius: ${photoBorderRadius}px;">
             ${photoUrl ? `
-              <img src="${photoUrl}" alt="${fullNameLatin || fullNameKh}" class="w-full h-full object-cover pointer-events-none select-none" />
+              <img src="${photoUrl}" referrerpolicy="no-referrer" alt="${fullNameLatin || fullNameKh}" class="w-full h-full object-cover pointer-events-none select-none" />
             ` : `
               <div class="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50 font-bold text-base">
                 <span style="color: ${accent};">${initial}</span>
@@ -869,9 +869,10 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
   // Student QR Code (matched by studentId or id from uploaded QR folder)
   const normId = String(student.studentId || '').trim().toLowerCase();
   const normDbId = String(student.id || '').trim().toLowerCase();
-  const qrSrc = student.qrCode ||
+  const rawBackQr = student.qrCode ||
     (cfg.backQrMap && (cfg.backQrMap[normId] || cfg.backQrMap[normDbId])) ||
     '';
+  const qrSrc = photoService.normalizeImageUrl(rawBackQr) || rawBackQr;
   const qrSizeMm = Number(cfg.backQrSizeMm) || 16;
   const backQrBorderColor = cfg.backQrBorderColor || '#cbd5e1';
   const backQrBorderRadius = cfg.backQrBorderRadius !== undefined ? cfg.backQrBorderRadius : 4;
@@ -885,7 +886,7 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
       <div class="card-back-qr flex flex-col items-center justify-center shrink-0 relative z-20 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 select-none"
            data-asset-type="backQr"
            style="${backQrTransform}">
-        <img src="${qrSrc}" alt="QR ${studentId}" class="object-contain bg-white p-0.5 border shadow-2xs pointer-events-none select-none"
+        <img src="${qrSrc}" referrerpolicy="no-referrer" alt="QR ${studentId}" class="object-contain bg-white p-0.5 border shadow-2xs pointer-events-none select-none"
              style="width: ${qrSizeMm}mm; height: ${qrSizeMm}mm; border-color: ${backQrBorderColor}; border-radius: ${backQrBorderRadius}px;" />
       </div>
     ` : `

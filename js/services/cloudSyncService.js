@@ -708,10 +708,13 @@ export const CloudSyncService = {
             dob = dob.split('T')[0];
           }
 
+          const normalizedPhotoUrl = photoService.normalizeImageUrl(item.photo);
+          const normalizedQrUrl = photoService.normalizeImageUrl(item.qrCode);
+
           let restoredBlob = null;
-          if (item.photo && typeof item.photo === 'string' && item.photo.startsWith('data:image/')) {
+          if (normalizedPhotoUrl && normalizedPhotoUrl.startsWith('data:image/')) {
             try {
-              restoredBlob = await photoService.dataUrlToBlob(item.photo);
+              restoredBlob = await photoService.dataUrlToBlob(normalizedPhotoUrl);
             } catch (_) {}
           }
           if (!restoredBlob && (existingStudentPhotoMap.has(item.id) || existingStudentPhotoMap.has(item.studentId))) {
@@ -724,7 +727,8 @@ export const CloudSyncService = {
             studentId: item.studentId ? String(item.studentId).trim() : '',
             dateOfBirth: dob || '',
             photoBlob: restoredBlob || null,
-            photo: (item.photo && item.photo.startsWith('data:')) ? item.photo : (restoredBlob ? '(Photo attached)' : '')
+            photo: normalizedPhotoUrl || (restoredBlob ? '(Photo attached)' : ''),
+            qrCode: normalizedQrUrl || (item.qrCode ? String(item.qrCode).trim() : '')
           });
           await db.put('students', cleanItem);
           studentCount++;
@@ -813,10 +817,11 @@ export const CloudSyncService = {
         for (const item of data.teachers) {
           if (!item.id && !item.teacherId && !item.khmerName && !item.lastNameKhmer && !item.name) continue;
 
+          const normalizedTeacherPhotoUrl = photoService.normalizeImageUrl(item.photo);
           let restoredBlob = null;
-          if (item.photo && typeof item.photo === 'string' && item.photo.startsWith('data:image/')) {
+          if (normalizedTeacherPhotoUrl && normalizedTeacherPhotoUrl.startsWith('data:image/')) {
             try {
-              restoredBlob = await photoService.dataUrlToBlob(item.photo);
+              restoredBlob = await photoService.dataUrlToBlob(normalizedTeacherPhotoUrl);
             } catch (_) {}
           }
           if (!restoredBlob && (existingTeacherPhotoMap.has(item.id) || existingTeacherPhotoMap.has(item.teacherId))) {
@@ -828,7 +833,7 @@ export const CloudSyncService = {
             userId: item.userId || (currentUser?.role === 'TEACHER' ? currentUser.id : null),
             accountId: item.accountId || (currentUser?.role === 'TEACHER' ? currentUser.id : null),
             photoBlob: restoredBlob || null,
-            photo: (item.photo && item.photo.startsWith('data:')) ? item.photo : (restoredBlob ? '(Photo attached)' : '')
+            photo: normalizedTeacherPhotoUrl || (restoredBlob ? '(Photo attached)' : '')
           });
           await db.put('teachers', cleanItem);
           teacherCount++;
