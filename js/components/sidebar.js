@@ -2,25 +2,16 @@ import { i18n, t } from '../i18n/i18n.js';
 import { authService } from '../services/authService.js';
 import { fontService } from '../services/fontService.js';
 import { WorkspaceSetupService } from '../services/workspaceSetupService.js';
-import { ClassService } from '../services/classService.js';
 import { toast } from './toast.js';
 import { Modal } from './modal.js';
 import { getIcon } from './icons.js';
 import { APP_LOGO_BASE64 } from '../config/appLogo.js';
-
-const escapeHtml = (str) => String(str ?? '').replace(/[&<>"']/g, m => ({
-  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-}[m]));
 
 export class Sidebar {
   constructor(containerId) {
     this.container = document.getElementById(containerId);
     this.isCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
     this.activeRoute = 'dashboard';
-    this.activeHash = (typeof window !== 'undefined' && window.location.hash)
-      ? window.location.hash.replace('#', '').trim()
-      : '';
-    this.isClassesSubmenuOpen = localStorage.getItem('sidebar_classes_open') !== 'false';
 
     // Subscribe to language change, auth change, font appearance/scale, and data refresh
     i18n.subscribe(() => this.render());
@@ -28,12 +19,6 @@ export class Sidebar {
     fontService.subscribe(() => this.render());
     window.addEventListener('app:refresh-data', () => this.render());
     window.addEventListener('workspace:setup-updated', () => this.render());
-    window.addEventListener('classes:updated', () => this.render());
-    window.addEventListener('workspace:data-mutation', (e) => {
-      if (e.detail?.storeName === 'classes' || e.detail?.storeName === 'students') {
-        this.render();
-      }
-    });
   }
 
   async init(initialRoute = 'dashboard') {
@@ -50,17 +35,13 @@ export class Sidebar {
     } else {
       this.activeRoute = baseRoute;
     }
-    this.activeHash = rawHash;
     await this.render();
     this.applyCollapsedState();
   }
 
-  setActive(route, rawHash = '') {
+  setActive(route) {
     const [baseRoute] = (route || '').split('?');
     this.activeRoute = baseRoute;
-    this.activeHash = rawHash || (typeof window !== 'undefined' && window.location.hash
-      ? window.location.hash.replace('#', '').trim()
-      : '');
     this.updateActiveLinks();
   }
 
@@ -91,7 +72,7 @@ export class Sidebar {
     }
 
     // Toggle label visibility
-    const labels = this.container.querySelectorAll('.nav-label, .nav-badge, .setup-progress-card, .sidebar-submenu');
+    const labels = this.container.querySelectorAll('.nav-label, .nav-badge, .setup-progress-card');
     labels.forEach(el => {
       el.style.display = this.isCollapsed ? 'none' : '';
     });
@@ -157,27 +138,6 @@ export class Sidebar {
 
     // Check initial setup status for all accounts
     const setup = await WorkspaceSetupService.getSetupStatus();
-
-    // Load classes list for expandable sub-menu (especially for OFFICER and DIRECTOR accounts)
-    let sortedClasses = [];
-    if (isOfficer || cleanRole === 'DIRECTOR') {
-      try {
-        const classesList = await ClassService.getClassesWithDetails();
-        sortedClasses = [...(classesList || [])].sort((a, b) =>
-          String(a.name || '').localeCompare(String(b.name || ''), ['km', 'en'], { numeric: true, sensitivity: 'base' })
-        );
-      } catch (err) {
-        console.warn('Could not load classes in sidebar:', err);
-      }
-    }
-
-    let activeClassId = null;
-    const currentHash = this.activeHash || (typeof window !== 'undefined' && window.location.hash ? window.location.hash.replace('#', '').trim() : '');
-    if (currentHash.includes('?')) {
-      const params = new URLSearchParams(currentHash.substring(currentHash.indexOf('?') + 1));
-      activeClassId = params.get('classId') || params.get('class');
-    }
-    const isSubmenuOpen = this.isClassesSubmenuOpen || (this.activeRoute === 'students' && !!activeClassId);
 
     this.container.innerHTML = `
       <div class="flex flex-col h-full bg-card border-r border-border sidebar-transition select-none">
@@ -245,95 +205,6 @@ export class Sidebar {
               linkClasses += 'bg-accent text-accent-foreground font-medium';
             } else {
               linkClasses += 'text-muted-foreground hover:text-foreground hover:bg-accent/60';
-            }
-
-            if (item.id === 'classes' && (isOfficer || cleanRole === 'DIRECTOR')) {
-              return `
-                <div class="classes-nav-group space-y-1">
-                  <div class="flex items-center gap-0.5">
-                    <a href="${isLocked ? 'javascript:void(0)' : item.href}" 
-                       data-route="${item.id}"
-                       data-locked="${isLocked ? 'true' : 'false'}"
-                       title="${isLocked ? (isKm ? 'ម៉ឺនុយត្រូវបានចាក់សោ (ត្រូវបំពេញព័ត៌មានសាលារៀន គ្រូបង្រៀន និងថ្នាក់រៀនជាមុន)' : 'Menu locked (Please input school, teacher, and classroom info first)') : t(item.labelKey)}"
-                       class="${linkClasses} flex-1 min-w-0">
-                      <div class="flex-shrink-0 flex items-center justify-center w-5 h-5">
-                        ${getIcon(item.icon, 'w-4 h-4')}
-                      </div>
-                      <span class="nav-label truncate tracking-wide ${fontClass} text-sm leading-normal flex-1">
-                        ${t(item.labelKey)}
-                      </span>
-                      ${sortedClasses.length > 0 ? `
-                        <span class="nav-badge text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                          ${sortedClasses.length}
-                        </span>
-                      ` : ''}
-                      ${statusBadge}
-                      ${isActive ? `<span class="active-indicator absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-primary hidden"></span>` : ''}
-                    </a>
-                    ${!isLocked ? `
-                      <button type="button" 
-                              id="btn-toggle-classes-submenu"
-                              title="${isSubmenuOpen ? (isKm ? 'បង្រួមបញ្ជីថ្នាក់' : 'Collapse Classes') : (isKm ? 'ពង្រីកបញ្ជីថ្នាក់' : 'Expand Classes')}"
-                              class="nav-label h-8 w-7 flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors cursor-pointer shrink-0">
-                        <span class="inline-flex transform transition-transform duration-200 ${isSubmenuOpen ? 'rotate-90' : ''}">
-                          ${getIcon('chevronRight', 'w-3.5 h-3.5')}
-                        </span>
-                      </button>
-                    ` : ''}
-                  </div>
-
-                  ${!isLocked ? `
-                    <div id="classes-submenu-container" 
-                         class="sidebar-submenu pl-4 pr-1 space-y-1 ${isSubmenuOpen ? '' : 'hidden'}">
-                      ${sortedClasses.length > 5 ? `
-                        <div class="px-1.5 pt-0.5">
-                          <div class="relative">
-                            <input type="text" 
-                                   id="input-filter-sidebar-classes" 
-                                   placeholder="${isKm ? 'ស្វែងរកថ្នាក់...' : 'Filter classes...'}" 
-                                   class="w-full h-7 px-2 pl-6 text-xs bg-muted/60 border border-border/80 rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary ${fontClass}" />
-                            <span class="absolute left-1.5 top-1.5 text-muted-foreground pointer-events-none">
-                              ${getIcon('search', 'w-3.5 h-3.5')}
-                            </span>
-                          </div>
-                        </div>
-                      ` : ''}
-
-                      <div class="classes-submenu-list max-h-56 overflow-y-auto space-y-0.5 pr-0.5">
-                        ${sortedClasses.length === 0 ? `
-                          <a href="#classes" class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50 ${fontClass}">
-                            ${getIcon('plus', 'w-3 h-3 text-primary')}
-                            <span>${isKm ? 'បង្កើតថ្នាក់ដំបូង' : 'Create First Class'}</span>
-                          </a>
-                        ` : sortedClasses.map(cls => {
-                          const isClassActive = (this.activeRoute === 'students' && String(activeClassId) === String(cls.id));
-                          let subLinkClasses = 'sub-nav-link flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs transition-colors group cursor-pointer ';
-                          if (isClassActive) {
-                            subLinkClasses += 'bg-primary/10 text-primary font-semibold border-l-2 border-primary pl-2';
-                          } else {
-                            subLinkClasses += 'text-muted-foreground hover:text-foreground hover:bg-accent/60';
-                          }
-                          return `
-                            <a href="#students?classId=${encodeURIComponent(cls.id)}" 
-                               data-class-id="${cls.id}"
-                               data-class-name="${escapeHtml(cls.name || '')}"
-                               class="${subLinkClasses}"
-                               title="${escapeHtml(cls.name || '')}">
-                              <div class="flex items-center gap-2 min-w-0">
-                                <span class="w-1.5 h-1.5 rounded-full ${isClassActive ? 'bg-primary' : 'bg-muted-foreground/40 group-hover:bg-primary'} shrink-0"></span>
-                                <span class="truncate ${fontClass}">${escapeHtml(cls.name || '')}</span>
-                              </div>
-                              <span class="text-[10px] ${isClassActive ? 'text-primary font-bold' : 'text-muted-foreground/60 group-hover:text-muted-foreground'} px-1.5 py-0.5 rounded bg-muted/50 font-mono shrink-0 ml-1">
-                                ${cls.studentCount ?? 0}
-                              </span>
-                            </a>
-                          `;
-                        }).join('')}
-                      </div>
-                    </div>
-                  ` : ''}
-                </div>
-              `;
             }
 
             return `
@@ -459,59 +330,6 @@ export class Sidebar {
       });
     });
 
-    // Toggle classes submenu open/close
-    const toggleClassesBtn = this.container.querySelector('#btn-toggle-classes-submenu');
-    if (toggleClassesBtn) {
-      toggleClassesBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        this.isClassesSubmenuOpen = !this.isClassesSubmenuOpen;
-        localStorage.setItem('sidebar_classes_open', this.isClassesSubmenuOpen ? 'true' : 'false');
-        const submenu = this.container.querySelector('#classes-submenu-container');
-        const iconSpan = toggleClassesBtn.querySelector('span');
-        if (submenu) {
-          submenu.classList.toggle('hidden', !this.isClassesSubmenuOpen);
-        }
-        if (iconSpan) {
-          iconSpan.classList.toggle('rotate-90', this.isClassesSubmenuOpen);
-        }
-      });
-    }
-
-    // Automatically expand submenu when clicking main Classes link
-    const classesMainLink = this.container.querySelector('.nav-link[data-route="classes"][data-locked="false"]');
-    if (classesMainLink) {
-      classesMainLink.addEventListener('click', () => {
-        if (!this.isClassesSubmenuOpen) {
-          this.isClassesSubmenuOpen = true;
-          localStorage.setItem('sidebar_classes_open', 'true');
-        }
-      });
-    }
-
-    // Quick filter classrooms in sidebar submenu
-    const filterClassesInput = this.container.querySelector('#input-filter-sidebar-classes');
-    if (filterClassesInput) {
-      filterClassesInput.addEventListener('input', (e) => {
-        const term = (e.target.value || '').trim().toLowerCase();
-        this.container.querySelectorAll('.sub-nav-link').forEach(subLink => {
-          const className = (subLink.getAttribute('data-class-name') || '').toLowerCase();
-          subLink.style.display = (!term || className.includes(term)) ? '' : 'none';
-        });
-      });
-    }
-
-    // Clicking the already active classroom sub-link triggers a refresh
-    this.container.querySelectorAll('.sub-nav-link').forEach(subLink => {
-      subLink.addEventListener('click', (e) => {
-        const targetHref = subLink.getAttribute('href');
-        if (window.location.hash === targetHref) {
-          e.preventDefault();
-          window.dispatchEvent(new CustomEvent('app:refresh-data'));
-        }
-      });
-    });
-
     this.applyCollapsedState();
   }
 
@@ -523,44 +341,12 @@ export class Sidebar {
       const isLocked = link.getAttribute('data-locked') === 'true';
       const isActive = route === this.activeRoute;
       
-      let baseClasses = 'nav-link flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-all duration-150 group relative ';
-      if (route === 'classes' && link.closest('.classes-nav-group')) {
-        baseClasses += 'flex-1 min-w-0 ';
-      }
-
       if (isLocked) {
-        link.className = baseClasses + 'opacity-40 cursor-not-allowed text-muted-foreground hover:bg-transparent';
+        link.className = 'nav-link flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-all duration-150 group relative opacity-40 cursor-not-allowed text-muted-foreground hover:bg-transparent';
       } else if (isActive) {
-        link.className = baseClasses + 'bg-accent text-accent-foreground font-medium';
+        link.className = 'nav-link flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-all duration-150 group relative bg-accent text-accent-foreground font-medium';
       } else {
-        link.className = baseClasses + 'text-muted-foreground hover:text-foreground hover:bg-accent/60';
-      }
-    });
-
-    let activeClassId = null;
-    const hash = this.activeHash || (typeof window !== 'undefined' && window.location.hash ? window.location.hash.replace('#', '').trim() : '');
-    if (hash.includes('?')) {
-      const params = new URLSearchParams(hash.substring(hash.indexOf('?') + 1));
-      activeClassId = params.get('classId') || params.get('class');
-    }
-
-    const submenu = this.container.querySelector('#classes-submenu-container');
-    if (submenu && this.activeRoute === 'students' && activeClassId) {
-      submenu.classList.remove('hidden');
-      const iconSpan = this.container.querySelector('#btn-toggle-classes-submenu span');
-      if (iconSpan) iconSpan.classList.add('rotate-90');
-    }
-
-    this.container.querySelectorAll('.sub-nav-link').forEach(subLink => {
-      const classId = subLink.getAttribute('data-class-id');
-      const isClassActive = (this.activeRoute === 'students' && String(activeClassId) === String(classId));
-      const dot = subLink.querySelector('span.rounded-full');
-      if (isClassActive) {
-        subLink.className = 'sub-nav-link flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs transition-colors group cursor-pointer bg-primary/10 text-primary font-semibold border-l-2 border-primary pl-2';
-        if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-primary shrink-0';
-      } else {
-        subLink.className = 'sub-nav-link flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs transition-colors group cursor-pointer text-muted-foreground hover:text-foreground hover:bg-accent/60';
-        if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-muted-foreground/40 group-hover:bg-primary shrink-0';
+        link.className = 'nav-link flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-all duration-150 group relative text-muted-foreground hover:text-foreground hover:bg-accent/60';
       }
     });
   }
