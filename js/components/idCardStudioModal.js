@@ -2016,13 +2016,21 @@ export const IDCardStudioModal = {
         overlay.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
         overlay.querySelector(`#tab-panel-${tabKey}`)?.classList.remove('hidden');
 
-        // Auto-switch preview when clicking Back Side tab
+        // Auto-switch preview when clicking Back Side tab or Front Side tabs
         if (tabKey === 'back') {
-          if (this.viewMode === 'single' && this.cardSide === 'front') {
+          if (this.viewMode === 'card' && this.cardSide === 'front') {
             this.cardSide = 'back';
             this.updatePreview();
           } else if (this.viewMode === 'sheet' && this.sheetSide === 'front') {
             this.sheetSide = 'back';
+            this.updatePreview();
+          }
+        } else if (tabKey === 'style' || tabKey === 'branding' || tabKey === 'signature' || tabKey === 'fields') {
+          if (this.viewMode === 'card' && this.cardSide === 'back') {
+            this.cardSide = 'front';
+            this.updatePreview();
+          } else if (this.viewMode === 'sheet' && this.sheetSide === 'back') {
+            this.sheetSide = 'front';
             this.updatePreview();
           }
         }
@@ -3085,11 +3093,19 @@ export const IDCardStudioModal = {
     // Sub-toolbar: Single Card Side Switcher (Front / Back / Both)
     overlay.querySelector('#btn-side-front')?.addEventListener('click', () => {
       this.cardSide = 'front';
-      this.updatePreview();
+      if (this.activeTab === 'back') {
+        overlay.querySelector('.studio-tab-btn[data-tab="style"]')?.click();
+      } else {
+        this.updatePreview();
+      }
     });
     overlay.querySelector('#btn-side-back')?.addEventListener('click', () => {
       this.cardSide = 'back';
-      this.updatePreview();
+      if (this.activeTab !== 'back') {
+        overlay.querySelector('.studio-tab-btn[data-tab="back"]')?.click();
+      } else {
+        this.updatePreview();
+      }
     });
     overlay.querySelector('#btn-side-both')?.addEventListener('click', () => {
       this.cardSide = 'both';
@@ -3099,11 +3115,19 @@ export const IDCardStudioModal = {
     // Sub-toolbar: Sheet Side Switcher (Front Sheet / Back Sheet / Foldable Pairs)
     overlay.querySelector('#btn-sheet-side-front')?.addEventListener('click', () => {
       this.sheetSide = 'front';
-      this.updatePreview();
+      if (this.activeTab === 'back') {
+        overlay.querySelector('.studio-tab-btn[data-tab="style"]')?.click();
+      } else {
+        this.updatePreview();
+      }
     });
     overlay.querySelector('#btn-sheet-side-back')?.addEventListener('click', () => {
       this.sheetSide = 'back';
-      this.updatePreview();
+      if (this.activeTab !== 'back') {
+        overlay.querySelector('.studio-tab-btn[data-tab="back"]')?.click();
+      } else {
+        this.updatePreview();
+      }
     });
     overlay.querySelector('#btn-sheet-side-pairs')?.addEventListener('click', () => {
       this.sheetSide = 'pairs';
@@ -3371,6 +3395,8 @@ export const IDCardStudioModal = {
           header: 'branding',
           logo: 'branding',
           photo: 'style',
+          frontQr: 'style',
+          backQr: 'back',
           fields: 'fields',
           title: 'signature',
           signature: 'signature',
