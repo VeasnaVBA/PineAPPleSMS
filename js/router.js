@@ -45,6 +45,7 @@ export class Router {
     this.container = document.getElementById(contentContainerId);
     this.sidebar = sidebar;
     this.currentRoute = 'dashboard';
+    this.currentRawHash = '';
     this._refreshDebounce = null;
 
     window.addEventListener('hashchange', () => this.handleRoute());
@@ -90,15 +91,16 @@ export class Router {
 
   async handleRoute() {
     const rawHash = window.location.hash.replace('#', '').trim();
+    const [baseRoute] = rawHash.split('?');
     const currentUser = authService.getCurrentUser();
     const cleanRole = (currentUser?.role || '').trim().toUpperCase();
     let defaultRoute = 'dashboard';
     if (cleanRole === 'ADMIN') {
       defaultRoute = 'users';
     } else if (cleanRole === 'OFFICER') {
-      defaultRoute = (rawHash === 'students' || rawHash === 'classes') ? rawHash : 'teachers';
+      defaultRoute = (baseRoute === 'students' || baseRoute === 'classes') ? baseRoute : 'teachers';
     }
-    let route = routes[rawHash] ? rawHash : defaultRoute;
+    let route = routes[baseRoute] ? baseRoute : defaultRoute;
 
     // Automatic redirect if user does not have permission to access this route
     if (currentUser && !authService.canAccessRoute(route)) {
@@ -118,26 +120,32 @@ export class Router {
       }
     }
 
-    if (!window.location.hash || !routes[rawHash]) {
+    if (!window.location.hash || !routes[baseRoute]) {
       window.location.hash = `#${route}`;
       return;
     }
-    this.loadRoute(route);
+    this.loadRoute(route, false, rawHash);
   }
 
-  async loadRoute(routeKey, force = false) {
+  async loadRoute(routeKey, force = false, rawHash = '') {
+    if (!rawHash) {
+      rawHash = window.location.hash.replace('#', '').trim();
+    }
+    const [baseRoute] = rawHash.split('?');
+    const effectiveRouteKey = routeKey || baseRoute;
+
     const currentUser = authService.getCurrentUser();
     const cleanRole = (currentUser?.role || '').trim().toUpperCase();
     let defaultRoute = 'dashboard';
     if (cleanRole === 'ADMIN') {
       defaultRoute = 'users';
     } else if (cleanRole === 'OFFICER') {
-      defaultRoute = (routeKey === 'students' || routeKey === 'classes') ? routeKey : 'teachers';
+      defaultRoute = (effectiveRouteKey === 'students' || effectiveRouteKey === 'classes') ? effectiveRouteKey : 'teachers';
     }
 
     // Automatic redirect if user does not have permission to access this route
-    if (currentUser && !authService.canAccessRoute(routeKey)) {
-      if (!WorkspaceSetupService.isSetupAllowedRoute(routeKey)) {
+    if (currentUser && !authService.canAccessRoute(effectiveRouteKey)) {
+      if (!WorkspaceSetupService.isSetupAllowedRoute(effectiveRouteKey)) {
         window.location.hash = `#${defaultRoute}`;
         return;
       }
@@ -146,7 +154,7 @@ export class Router {
     // Check mandatory initial setup for Director & Teacher accounts
     if (currentUser && currentUser.role !== 'ADMIN' && currentUser.role !== 'OFFICER') {
       const setup = await WorkspaceSetupService.getSetupStatus();
-      if (!setup.isComplete && !WorkspaceSetupService.isSetupAllowedRoute(routeKey)) {
+      if (!setup.isComplete && !WorkspaceSetupService.isSetupAllowedRoute(effectiveRouteKey)) {
         const target = setup.firstIncompleteRoute || 'schools';
         window.location.hash = `#${target}`;
         return;
@@ -157,26 +165,29 @@ export class Router {
     if (cleanRole === 'ADMIN') {
       defaultFallback = routes.users;
     } else if (cleanRole === 'OFFICER') {
-      defaultFallback = (routeKey === 'students') ? routes.students : (routeKey === 'classes' ? routes.classes : OfficerTeachersPage);
+      defaultFallback = (effectiveRouteKey === 'students') ? routes.students : (effectiveRouteKey === 'classes' ? routes.classes : OfficerTeachersPage);
     }
-    let page = routes[routeKey] || defaultFallback;
-    if (routeKey === 'teachers' && cleanRole === 'OFFICER') {
+    let page = routes[effectiveRouteKey] || defaultFallback;
+    if (effectiveRouteKey === 'teachers' && cleanRole === 'OFFICER') {
       page = OfficerTeachersPage;
     }
 
-    // Prevent jarring re-render/blink if clicking on the already active tab
-    if (!force && this.currentRoute === routeKey && this.container?.children?.length > 0) {
-      this.sidebar?.setActive(routeKey);
+    const hashChanged = this.currentRawHash !== rawHash;
+    this.currentRawHash = rawHash;
+
+    // Prevent jarring re-render/blink if clicking on the already active tab with identical hash
+    if (!force && this.currentRoute === effectiveRouteKey && !hashChanged && this.container?.children?.length > 0) {
+      this.sidebar?.setActive(effectiveRouteKey, rawHash);
       return;
     }
 
-    this.currentRoute = routeKey;
-    this.sidebar?.setActive(routeKey);
+    this.currentRoute = effectiveRouteKey;
+    this.sidebar?.setActive(effectiveRouteKey, rawHash);
 
     if (!this.container) return;
 
     // Enforce Route-level Permission Guard (setup routes always allowed)
-    if (!WorkspaceSetupService.isSetupAllowedRoute(routeKey) && !authService.canAccessRoute(routeKey)) {
+    if (!WorkspaceSetupService.isSetupAllowedRoute(effectiveRouteKey) && !authService.canAccessRoute(effectiveRouteKey)) {
       const isKm = i18n.getLocale() === 'km';
       let backHref = '#dashboard';
       let backLabel = isKm ? 'ត្រឡប់ទៅផ្ទាំងព័ត៌មាន' : 'Back to Dashboard';

@@ -212,6 +212,21 @@ export const StudentsPage = {
       if (teacherClassId) {
         this.state.classId = teacherClassId;
       }
+    } else {
+      const hash = window.location.hash || '';
+      if (hash.includes('?')) {
+        const queryPart = hash.substring(hash.indexOf('?') + 1);
+        const params = new URLSearchParams(queryPart);
+        const targetClass = params.get('classId') || params.get('class');
+        if (targetClass) {
+          const matched = this.state.classes.find(c =>
+            c.id === targetClass || (c.name && c.name.toLowerCase() === targetClass.toLowerCase())
+          );
+          this.state.classId = matched ? matched.id : targetClass;
+          this.state.filterField = 'classId';
+          this.state.filterValue = this.state.classId;
+        }
+      }
     }
 
     this.renderLayout();
@@ -314,6 +329,37 @@ export const StudentsPage = {
             </button>
           </div>
         </div>
+
+        <!-- Active Classroom Scope Filter Banner (when navigated from class submenu) -->
+        ${(!authService.isTeacher() && this.state.classId && this.state.classId !== 'all') ? (() => {
+          const matchedClass = this.state.classes.find(c => c.id === this.state.classId || (c.name && c.name.toLowerCase() === String(this.state.classId).toLowerCase()));
+          const displayClassName = matchedClass?.name || this.state.classId;
+          const esc = (str) => String(str ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+          return `
+            <div id="active-class-scope-banner" class="p-3 sm:p-3.5 rounded-xl border border-primary/25 bg-primary/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in shadow-xs">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center shrink-0">
+                  ${getIcon('classes', 'w-4 h-4')}
+                </div>
+                <div>
+                  <p class="font-bold text-xs sm:text-sm text-foreground ${isKm ? 'font-khmer' : ''}">
+                    ${isKm ? 'បញ្ជីសិស្សប្រចាំថ្នាក់៖' : 'Students in Class:'} 
+                    <span class="text-primary font-extrabold underline underline-offset-2">${esc(displayClassName)}</span>
+                  </p>
+                  <p class="text-[11px] text-muted-foreground mt-0.5 ${isKm ? 'font-khmer' : ''}">
+                    ${isKm ? 'កំពុងបង្ហាញតែសិស្សក្នុងថ្នាក់រៀននេះប៉ុណ្ណោះ' : 'Showing only students enrolled in this classroom'}
+                  </p>
+                </div>
+              </div>
+              <button type="button" 
+                      id="btn-clear-active-class-scope" 
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-xs font-semibold text-foreground shadow-xs transition-colors cursor-pointer shrink-0 select-none ${isKm ? 'font-khmer' : ''}">
+                ${getIcon('x', 'w-3.5 h-3.5 text-muted-foreground')}
+                <span>${isKm ? 'បង្ហាញសិស្សទាំងអស់' : 'Show All Students'}</span>
+              </button>
+            </div>
+          `;
+        })() : ''}
 
         <!-- Persistent Interactive Unassigned Classroom Banner -->
         <div id="unassigned-classroom-banner" class="hidden p-3.5 sm:p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in">
@@ -728,6 +774,9 @@ export const StudentsPage = {
         if (s.gender?.trim()) set.add(s.gender.trim());
       });
     } else if (fieldKey === 'classId') {
+      (this.state.classes || []).forEach(c => {
+        if (c.id) set.add(c.id);
+      });
       students.forEach(s => {
         if (s.classId?.trim()) set.add(s.classId.trim());
       });
@@ -874,7 +923,15 @@ export const StudentsPage = {
 
     // 3. Class Filter
     if (this.state.classId && this.state.classId !== 'all') {
-      items = items.filter(s => String(s.classId || '').trim() === String(this.state.classId).trim());
+      const targetClass = (this.state.classes || []).find(c =>
+        c.id === this.state.classId || (c.name && c.name.toLowerCase() === String(this.state.classId).toLowerCase())
+      );
+      const targetClassName = targetClass?.name ? targetClass.name.trim().toLowerCase() : '';
+      const targetId = targetClass?.id || String(this.state.classId).trim();
+      items = items.filter(s => {
+        const sClass = String(s.classId || s.assignedClassId || '').trim();
+        return sClass === targetId || (targetClassName && sClass.toLowerCase() === targetClassName);
+      });
     }
 
     // 4. Academic Year Filter
@@ -909,7 +966,13 @@ export const StudentsPage = {
           return s.gender && s.gender.trim().toLowerCase() === targetVal;
         }
         if (field === 'classId') {
-          return s.classId && s.classId.trim() === this.state.filterValue.trim();
+          const targetClass = (this.state.classes || []).find(c =>
+            c.id === this.state.filterValue || (c.name && c.name.toLowerCase() === String(this.state.filterValue).toLowerCase())
+          );
+          const targetClassName = targetClass?.name ? targetClass.name.trim().toLowerCase() : '';
+          const targetId = targetClass?.id || this.state.filterValue.trim();
+          const sClass = String(s.classId || s.assignedClassId || '').trim();
+          return sClass === targetId || (targetClassName && sClass.toLowerCase() === targetClassName);
         }
         if (field === 'academicYear') {
           return s.academicYear && s.academicYear.trim().toLowerCase() === targetVal;
@@ -1490,10 +1553,26 @@ export const StudentsPage = {
       }, 250);
     });
 
+    // Active Classroom Scope Banner Clear Button
+    document.getElementById('btn-clear-active-class-scope')?.addEventListener('click', () => {
+      this.state.classId = 'all';
+      this.state.filterField = '';
+      this.state.filterValue = 'all';
+      this.state.page = 1;
+      window.location.hash = '#students';
+    });
+
     // Two-step Drill-down Filter: Field Dropdown
     document.getElementById('select-filter-field')?.addEventListener('change', (e) => {
       this.state.filterField = e.target.value;
       this.state.filterValue = 'all';
+      if (!authService.isTeacher() && this.state.classId !== 'all') {
+        this.state.classId = 'all';
+        document.getElementById('active-class-scope-banner')?.remove();
+        if (window.location.hash.includes('?')) {
+          history.replaceState(null, '', '#students');
+        }
+      }
       this.state.page = 1;
       this.populateFilterValuesDropdown();
       this.loadData();
@@ -1502,6 +1581,15 @@ export const StudentsPage = {
     // Two-step Drill-down Filter: Value Dropdown
     document.getElementById('select-filter-value')?.addEventListener('change', (e) => {
       this.state.filterValue = e.target.value;
+      if (this.state.filterField === 'classId' && !authService.isTeacher()) {
+        this.state.classId = e.target.value === 'all' ? 'all' : e.target.value;
+        if (e.target.value === 'all') {
+          document.getElementById('active-class-scope-banner')?.remove();
+          if (window.location.hash.includes('?')) {
+            history.replaceState(null, '', '#students');
+          }
+        }
+      }
       this.state.page = 1;
       this.loadData();
     });
@@ -1510,6 +1598,11 @@ export const StudentsPage = {
     document.getElementById('btn-clear-drilldown-filter')?.addEventListener('click', () => {
       this.state.filterField = '';
       this.state.filterValue = 'all';
+      if (!authService.isTeacher() && this.state.classId !== 'all') {
+        this.state.classId = 'all';
+        window.location.hash = '#students';
+        return;
+      }
       this.state.page = 1;
       const fieldSelect = document.getElementById('select-filter-field');
       if (fieldSelect) fieldSelect.value = '';

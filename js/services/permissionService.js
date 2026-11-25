@@ -202,9 +202,10 @@ class PermissionService {
   /**
    * Synchronous check using in-memory cache
    */
-  canRoleAccessRoute(role, routeKey) {
+  canRoleAccessRoute(role, rawRouteKey) {
     if (!role) return false;
     const cleanRole = (role || '').trim().toUpperCase();
+    const [routeKey] = String(rawRouteKey || '').trim().replace(/^#/, '').split('?');
     // Admin has access strictly to User Accounts, System Settings, and Download Data
     if (role === 'ADMIN') {
       return routeKey === 'users' || routeKey === 'settings' || routeKey === 'download-data';

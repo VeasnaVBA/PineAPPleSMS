@@ -223,6 +223,7 @@ export const ClassesPage = {
                                   toast.success(t('classes.deletedSuccess'));
                                   await this.loadData();
                                   this.renderLayout();
+                                  window.dispatchEvent(new CustomEvent('classes:updated'));
                                   syncStateManager.scheduleAutoSync(100);
                                 } catch (err) {
                                   toast.error(err.message);
@@ -299,6 +300,7 @@ export const ClassesPage = {
               toast.success(t('classes.deletedSuccess'));
               await this.loadData();
               this.renderLayout();
+              window.dispatchEvent(new CustomEvent('classes:updated'));
               syncStateManager.scheduleAutoSync(100);
             } catch (err) {
               toast.error(err.message);
@@ -523,6 +525,7 @@ export const ClassesPage = {
               window.UI.drawer.close();
               await this.loadData();
               this.renderLayout();
+              window.dispatchEvent(new CustomEvent('classes:updated'));
               syncStateManager.scheduleAutoSync(100);
             } catch (err) {
               if (window.UI?.toast) {
@@ -587,6 +590,7 @@ export const ClassesPage = {
         modal.close();
         await this.loadData();
         this.renderLayout();
+        window.dispatchEvent(new CustomEvent('classes:updated'));
         syncStateManager.scheduleAutoSync(100);
       } catch (err) {
         toast.error(err.message);
