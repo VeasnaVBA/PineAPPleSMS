@@ -286,6 +286,11 @@ export const IDCardStudioModal = {
       if (!this.config.cardDateLocation) {
         this.config.cardDateLocation = this.config.schoolNameKh && this.config.schoolNameKh !== 'ឈ្មោះសាលារៀន' ? this.config.schoolNameKh : '';
       }
+
+      if (this.config.viewMode) this.viewMode = this.config.viewMode;
+      if (this.config.cardSide) this.cardSide = this.config.cardSide;
+      if (this.config.sheetSide) this.sheetSide = this.config.sheetSide;
+      if (this.config.zoomScale) this.zoomScale = Number(this.config.zoomScale) || this.zoomScale;
     } catch (err) {
       console.warn('Failed to load ID card studio settings, using defaults:', err);
     }
@@ -296,6 +301,10 @@ export const IDCardStudioModal = {
    */
   async savePersistedSettings() {
     try {
+      this.config.viewMode = this.viewMode;
+      this.config.cardSide = this.cardSide;
+      this.config.sheetSide = this.sheetSide;
+      this.config.zoomScale = this.zoomScale;
       await SettingsService.setCardSetting('id_card_studio_config', this.config);
     } catch (err) {
       console.warn('Failed to save ID card studio settings:', err);
@@ -389,65 +398,36 @@ export const IDCardStudioModal = {
               </button>
             </div>
 
-            <!-- Save Design Dropdown Menu -->
+            <!-- Save Design Dropdown Menu (Clean & Focused on Account Sheet) -->
             <div id="save-design-dropdown-menu" class="hidden absolute right-0 mt-2 w-72 rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl z-50 p-2 text-xs font-khmer animate-fade-in space-y-1">
-              <button id="btn-save-design-direct" type="button" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent text-foreground text-left transition-colors cursor-pointer">
-                <span class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 shrink-0">${getIcon('save', 'w-4 h-4')}</span>
+              <!-- 1. Save current settings & template + photos/QR to account's Google Sheet -->
+              <button id="btn-sync-to-google-drive" type="button" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-accent text-foreground text-left transition-colors cursor-pointer">
+                <span class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 shrink-0">${getIcon('cloudUpload', 'w-4 h-4')}</span>
                 <div class="min-w-0">
-                  <div class="font-semibold">${isKm ? 'រក្សាទុកការរចនាបច្ចុប្បន្ន' : 'Save Current Design'}</div>
-                  <div class="text-[11px] text-muted-foreground truncate">${isKm ? 'រក្សាទុកជាការរចនាលំនាំដើមក្នុង DB' : 'Save as default active design in DB'}</div>
+                  <div class="font-semibold">${isKm ? 'រក្សាទុកការកំណត់ & គំរូទៅ Sheet' : 'Save Settings & Template to Sheet'}</div>
+                  <div class="text-[11px] text-muted-foreground truncate">${isKm ? 'រក្សាទុកលេខ ទំហំ ទីតាំង និងរូប/QR ទៅ Sheet គណនី' : 'Save all numbers, layout & photos/QR to account sheet'}</div>
                 </div>
               </button>
-              <!-- Cloud Sync: Push Design to Drive -->
-              <button id="btn-sync-to-google-drive" type="button" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent text-foreground text-left transition-colors cursor-pointer">
-                <span class="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 shrink-0">${getIcon('cloudUpload', 'w-4 h-4')}</span>
-                <div class="min-w-0">
-                  <div class="font-semibold">${isKm ? 'ធ្វើសមកាលកម្មទៅ Google Drive' : 'Sync Design to Google Drive'}</div>
-                  <div class="text-[11px] text-muted-foreground truncate">${isKm ? 'បញ្ជូនការរចនានិងគំរូទាំងអស់ទៅ Drive' : 'Push design & templates to Drive'}</div>
-                </div>
-              </button>
-              <!-- Cloud Sync: Pull Design from Drive -->
-              <button id="btn-pull-from-google-drive" type="button" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent text-foreground text-left transition-colors cursor-pointer">
-                <span class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 shrink-0">${getIcon('cloudDownload', 'w-4 h-4')}</span>
-                <div class="min-w-0">
-                  <div class="font-semibold">${isKm ? 'ទាញយកពី Google Drive' : 'Pull Design from Google Drive'}</div>
-                  <div class="text-[11px] text-muted-foreground truncate">${isKm ? 'ទាញយកការរចនាពីកុំព្យូទ័រមកប្រើលើទូរសព្ទ' : 'Fetch design saved from laptop to phone'}</div>
-                </div>
-              </button>
-              <div class="border-t border-border/80 my-1"></div>
-              <button id="btn-save-as-named-template" type="button" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent text-foreground text-left transition-colors cursor-pointer">
+
+              <!-- 2. Save as a named template to account's Google Sheet -->
+              <button id="btn-save-as-named-template" type="button" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-accent text-foreground text-left transition-colors cursor-pointer">
                 <span class="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">${getIcon('plus', 'w-4 h-4')}</span>
                 <div class="min-w-0">
-                  <div class="font-semibold">${isKm ? (i18n.t('students.idCardSaveNewTemplate') || 'រក្សាទុកជាគំរូថ្មី...') : 'Save as New Template...'}</div>
-                  <div class="text-[11px] text-muted-foreground truncate">${isKm ? 'ដាក់ឈ្មោះគំរូដើម្បីប្រើពេលក្រោយ' : 'Name and save this design preset'}</div>
+                  <div class="font-semibold">${isKm ? 'រក្សាទុកជាគំរូថ្មីទៅ Sheet...' : 'Save as New Template to Sheet...'}</div>
+                  <div class="text-[11px] text-muted-foreground truncate">${isKm ? 'ដាក់ឈ្មោះគំរូ ហើយរក្សាទុកក្នុង Sheet គណនី' : 'Name template and save to account sheet'}</div>
                 </div>
               </button>
+
               <div class="border-t border-border/80 my-1"></div>
-              <button id="btn-manage-saved-templates" type="button" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent text-foreground text-left transition-colors cursor-pointer">
-                <span class="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 shrink-0">${getIcon('folder', 'w-4 h-4')}</span>
+
+              <!-- 3. Load template from account's Google Sheet -->
+              <button id="btn-manage-saved-templates" type="button" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-accent text-foreground text-left transition-colors cursor-pointer">
+                <span class="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 shrink-0">${getIcon('cloudDownload', 'w-4 h-4')}</span>
                 <div class="min-w-0">
-                  <div class="font-semibold">${isKm ? (i18n.t('students.idCardLoadTemplate') || 'បើកគំរូដែលបានរក្សាទុក...') : 'Load Saved Template...'}</div>
-                  <div class="text-[11px] text-muted-foreground truncate">${isKm ? 'ជ្រើសរើស ឬលុបគំរូដែលបានរក្សាទុក' : 'Browse or apply saved presets'}</div>
+                  <div class="font-semibold">${isKm ? 'ទាញយក / បើកគំរូពី Sheet...' : 'Load Template from Sheet...'}</div>
+                  <div class="text-[11px] text-muted-foreground truncate">${isKm ? 'ផ្ទុកគំរូ និងការកំណត់ពី Sheet គណនី' : 'Pull & apply saved templates from account sheet'}</div>
                 </div>
               </button>
-              <div class="border-t border-border/80 my-1"></div>
-              <!-- Export Design to JSON file -->
-              <button id="btn-export-design-json" type="button" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent text-foreground text-left transition-colors cursor-pointer">
-                <span class="p-1.5 rounded-lg bg-sky-500/10 text-sky-600 shrink-0">${getIcon('download', 'w-4 h-4')}</span>
-                <div class="min-w-0">
-                  <div class="font-semibold">${isKm ? 'នាំចេញឯកសាររចនា (JSON)' : 'Export Design File (JSON)'}</div>
-                  <div class="text-[11px] text-muted-foreground truncate">${isKm ? 'ទាញយកឯកសារដើម្បីផ្ញើទៅទូរសព្ទ ឬកុំព្យូទ័រ' : 'Download file to transfer to phone/PC'}</div>
-                </div>
-              </button>
-              <!-- Import Design from JSON file -->
-              <button id="btn-import-design-json" type="button" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent text-foreground text-left transition-colors cursor-pointer">
-                <span class="p-1.5 rounded-lg bg-violet-500/10 text-violet-600 shrink-0">${getIcon('upload', 'w-4 h-4')}</span>
-                <div class="min-w-0">
-                  <div class="font-semibold">${isKm ? 'នាំចូលឯកសាររចនា (JSON)...' : 'Import Design File (JSON)...'}</div>
-                  <div class="text-[11px] text-muted-foreground truncate">${isKm ? 'ជ្រើសរើសឯកសារដែលបានរក្សាទុកពីកុំព្យូទ័រ' : 'Select design file from laptop'}</div>
-                </div>
-              </button>
-              <input type="file" id="input-import-design-file" accept=".json" class="hidden" />
             </div>
           </div>
 
@@ -4480,8 +4460,19 @@ export const IDCardStudioModal = {
         await SettingsService.setCardSetting('id_card_saved_templates', templates);
         await this.savePersistedSettings();
 
+        let syncedToSheet = false;
+        try {
+          if (CloudSyncService.isOnline?.() && getCloudSyncUrl()) {
+            syncedToSheet = await CloudSyncService.syncCardSettingsToDrive(null, { silent: true });
+          }
+        } catch (_) {}
+
         closeDialog();
-        toast.success(isKm ? `បានរក្សាទុកគំរូ "${name}" ដោយជោគជ័យ!` : `Template "${name}" saved successfully!`);
+        toast.success(
+          isKm
+            ? (syncedToSheet ? `បានរក្សាទុកគំរូ "${name}" ទៅ Sheet ដោយជោគជ័យ!` : `បានរក្សាទុកគំរូ "${name}" ដោយជោគជ័យ!`)
+            : (syncedToSheet ? `Template "${name}" saved to account Sheet!` : `Template "${name}" saved successfully!`)
+        );
       } catch (err) {
         toast.error(isKm ? 'បរាជ័យក្នុងការរក្សាទុកគំរូ: ' + err.message : 'Failed to save template: ' + err.message);
       }
@@ -4505,6 +4496,9 @@ export const IDCardStudioModal = {
 
     let templates = [];
     try {
+      if (CloudSyncService.isOnline?.() && getCloudSyncUrl()) {
+        await CloudSyncService.pullCardSettingsFromDrive(null, { silent: true }).catch(() => {});
+      }
       let raw = await SettingsService.getCardSetting('id_card_saved_templates');
       if (typeof raw === 'string') {
         try { raw = JSON.parse(raw); } catch (_) {}
