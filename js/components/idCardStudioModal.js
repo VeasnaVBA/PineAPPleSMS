@@ -257,6 +257,10 @@ export const IDCardStudioModal = {
             ...DEFAULT_FIELD_STYLES,
             ...(saved.fieldStyles || {})
           },
+          fieldLabels: {
+            ...(DEFAULT_CARD_CONFIG.fieldLabels || {}),
+            ...(saved.fieldLabels || {})
+          },
           fieldOrder: Array.isArray(saved.fieldOrder) && saved.fieldOrder.length > 0
             ? [
                 ...saved.fieldOrder,
@@ -291,13 +295,40 @@ export const IDCardStudioModal = {
       if (this.config.cardSide) this.cardSide = this.config.cardSide;
       if (this.config.sheetSide) this.sheetSide = this.config.sheetSide;
       if (this.config.zoomScale) this.zoomScale = Number(this.config.zoomScale) || this.zoomScale;
+      if (typeof this.config.onlyShowSelectedInSheet === 'boolean') {
+        this.onlyShowSelectedInSheet = this.config.onlyShowSelectedInSheet;
+      }
     } catch (err) {
       console.warn('Failed to load ID card studio settings, using defaults:', err);
     }
   },
 
   /**
-   * Persist current studio configuration to IndexedDB
+   * Debounced background sync of all ID card settings to the officer's Google Sheet in Drive
+   */
+  _scheduleDriveCardSettingsSync() {
+    if (this._driveSyncTimer) {
+      clearTimeout(this._driveSyncTimer);
+    }
+    this._driveSyncTimer = setTimeout(() => {
+      this._driveSyncTimer = null;
+      try {
+        if (
+          CloudSyncService.isOnline &&
+          CloudSyncService.isOnline() &&
+          getCloudSyncUrl() &&
+          !(CloudSyncService.isBusy && CloudSyncService.isBusy())
+        ) {
+          CloudSyncService.syncCardSettingsToDrive(null, { silent: true }).catch(err => {
+            console.warn('[IDCardStudio] Background sheet sync warning:', err);
+          });
+        }
+      } catch (_) {}
+    }, 1500);
+  },
+
+  /**
+   * Persist current studio configuration to IndexedDB and schedule Google Sheet sync
    */
   async savePersistedSettings() {
     try {
@@ -305,7 +336,9 @@ export const IDCardStudioModal = {
       this.config.cardSide = this.cardSide;
       this.config.sheetSide = this.sheetSide;
       this.config.zoomScale = this.zoomScale;
+      this.config.onlyShowSelectedInSheet = !!this.onlyShowSelectedInSheet;
       await SettingsService.setCardSetting('id_card_studio_config', this.config);
+      this._scheduleDriveCardSettingsSync();
     } catch (err) {
       console.warn('Failed to save ID card studio settings:', err);
     }
