@@ -60,6 +60,22 @@ export const DEFAULT_FIELD_ORDER = [
   'phone'
 ];
 
+export const DEFAULT_FIELD_LABELS = {
+  nameKh: 'ឈ្មោះ',
+  nameLatin: 'ឈ្មោះឡាតាំង',
+  className: 'ថ្នាក់',
+  studentId: 'អត្តលេខ',
+  academicYear: 'ឆ្នាំសិក្សា',
+  dob: 'ថ្ងៃកំណើត',
+  gender: 'ភេទ',
+  fatherName: 'ឪពុក',
+  motherName: 'ម្តាយ',
+  guardianName: 'អាណាព្យាបាល',
+  guardianOccupation: 'មុខរបរ',
+  guardianPhone: 'ទូរសព្ទអាណាព្យាបាល',
+  phone: 'ទូរសព្ទ'
+};
+
 export const DEFAULT_CARD_CONFIG = {
   // Orientation & Dimensions
   cardOrientation: 'portrait', // 'portrait' | 'landscape'
@@ -197,6 +213,11 @@ export const DEFAULT_CARD_CONFIG = {
   // Per-field Text Styling: Font, Size, Color, Bold
   fieldStyles: {
     ...DEFAULT_FIELD_STYLES
+  },
+
+  // Per-field Custom Labels (overrides default Khmer labels on card)
+  fieldLabels: {
+    ...DEFAULT_FIELD_LABELS
   },
 
   // Back Side Settings & Personalization
@@ -431,6 +452,11 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
     ];
 
     const colClass = isLandscape ? 'grid grid-cols-[38%_62%] items-baseline' : 'grid grid-cols-[36%_64%] items-baseline';
+    const getFieldLabel = (key) => {
+      const custom = cfg.fieldLabels && cfg.fieldLabels[key];
+      if (custom !== undefined && String(custom).trim() !== '') return custom;
+      return DEFAULT_FIELD_LABELS[key] || key;
+    };
 
     return fullOrder.map(fKey => {
       switch (fKey) {
@@ -438,7 +464,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
           if (!cfg.fields.nameKh) return '';
           return `
             <div class="${colClass}">
-              <span class="text-slate-500 font-semibold font-khmer">ឈ្មោះ</span>
+              <span class="text-slate-500 font-semibold font-khmer">${getFieldLabel('nameKh')}</span>
               <span class="truncate" style="${getFieldValStyle('nameKh', 'Kantumruy Pro', isLandscape ? 7.5 : 8, '#0f172a', true)}">: ${fullNameKh}</span>
             </div>
           `;
@@ -446,7 +472,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
           if (!cfg.fields.nameLatin || !fullNameLatin) return '';
           return `
             <div class="${colClass}">
-              <span class="text-slate-500 font-semibold font-khmer ${isLandscape ? 'text-[6px]' : 'text-[6.5px]'}">ឈ្មោះឡាតាំង</span>
+              <span class="text-slate-500 font-semibold font-khmer ${isLandscape ? 'text-[6px]' : 'text-[6.5px]'}">${getFieldLabel('nameLatin')}</span>
               <span class="uppercase tracking-tight truncate" style="${getFieldValStyle('nameLatin', 'Inter', isLandscape ? 6.5 : 7, '#1e293b', true)}">: ${fullNameLatin}</span>
             </div>
           `;
@@ -454,7 +480,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
           if (!cfg.fields.className) return '';
           return `
             <div class="${colClass}">
-              <span class="text-slate-500 font-semibold font-khmer">ថ្នាក់</span>
+              <span class="text-slate-500 font-semibold font-khmer">${getFieldLabel('className')}</span>
               <span class="truncate" style="${getFieldValStyle('className', 'Kantumruy Pro', 7.5, '#0f172a', true)}">: ${className}</span>
             </div>
           `;
@@ -462,7 +488,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
           if (!cfg.fields.studentId) return '';
           return `
             <div class="${colClass}">
-              <span class="text-slate-500 font-semibold font-khmer">អត្តលេខ</span>
+              <span class="text-slate-500 font-semibold font-khmer">${getFieldLabel('studentId')}</span>
               <span class="truncate" style="${getFieldValStyle('studentId', 'monospace', 7.5, accent, true)}">: ${studentId}</span>
             </div>
           `;
@@ -470,7 +496,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
           if (!cfg.fields.academicYear) return '';
           return `
             <div class="${colClass}">
-              <span class="text-slate-500 font-semibold font-khmer">ឆ្នាំសិក្សា</span>
+              <span class="text-slate-500 font-semibold font-khmer">${getFieldLabel('academicYear')}</span>
               <span class="truncate" style="${getFieldValStyle('academicYear', 'monospace', isLandscape ? 7 : 7.5, '#1e293b', false)}">: ${academicYear}</span>
             </div>
           `;
@@ -478,7 +504,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
           if (!cfg.fields.dob || !dob) return '';
           return `
             <div class="${colClass}">
-              <span class="text-slate-500 font-semibold font-khmer">ថ្ងៃកំណើត</span>
+              <span class="text-slate-500 font-semibold font-khmer">${getFieldLabel('dob')}</span>
               <span class="truncate" style="${getFieldValStyle('dob', 'monospace', isLandscape ? 7 : 7.5, '#1e293b', false)}">: ${dob}</span>
             </div>
           `;
@@ -486,7 +512,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
           if (!cfg.fields.gender) return '';
           return `
             <div class="${colClass}">
-              <span class="text-slate-500 font-semibold font-khmer">ភេទ</span>
+              <span class="text-slate-500 font-semibold font-khmer">${getFieldLabel('gender')}</span>
               <span class="truncate" style="${getFieldValStyle('gender', 'Kantumruy Pro', isLandscape ? 7 : 7.5, '#1e293b', false)}">: ${gender}</span>
             </div>
           `;
@@ -494,7 +520,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
           if (!cfg.fields.fatherName || !fatherName) return '';
           return `
             <div class="${colClass}">
-              <span class="text-slate-500 font-semibold font-khmer">ឪពុក</span>
+              <span class="text-slate-500 font-semibold font-khmer">${getFieldLabel('fatherName')}</span>
               <span class="truncate" style="${getFieldValStyle('fatherName', 'Kantumruy Pro', 7.5, '#1e293b', false)}">: ${fatherName}</span>
             </div>
           `;
@@ -502,7 +528,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
           if (!cfg.fields.motherName || !motherName) return '';
           return `
             <div class="${colClass}">
-              <span class="text-slate-500 font-semibold font-khmer">ម្តាយ</span>
+              <span class="text-slate-500 font-semibold font-khmer">${getFieldLabel('motherName')}</span>
               <span class="truncate" style="${getFieldValStyle('motherName', 'Kantumruy Pro', 7.5, '#1e293b', false)}">: ${motherName}</span>
             </div>
           `;
@@ -510,7 +536,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
           if (!cfg.fields.guardianName || !guardianName) return '';
           return `
             <div class="${colClass}">
-              <span class="text-slate-500 font-semibold font-khmer">អាណាព្យាបាល</span>
+              <span class="text-slate-500 font-semibold font-khmer">${getFieldLabel('guardianName')}</span>
               <span class="truncate" style="${getFieldValStyle('guardianName', 'Kantumruy Pro', 7.5, '#1e293b', false)}">: ${guardianName}</span>
             </div>
           `;
@@ -518,7 +544,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
           if (!cfg.fields.guardianOccupation || !guardianOccupation) return '';
           return `
             <div class="${colClass}">
-              <span class="text-slate-500 font-semibold font-khmer">មុខរបរ</span>
+              <span class="text-slate-500 font-semibold font-khmer">${getFieldLabel('guardianOccupation')}</span>
               <span class="truncate" style="${getFieldValStyle('guardianOccupation', 'Kantumruy Pro', 7.5, '#1e293b', false)}">: ${guardianOccupation}</span>
             </div>
           `;
@@ -526,7 +552,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
           if (!cfg.fields.guardianPhone || !guardianPhone) return '';
           return `
             <div class="${colClass}">
-              <span class="text-slate-500 font-semibold font-khmer">ទូរសព្ទអាណាព្យាបាល</span>
+              <span class="text-slate-500 font-semibold font-khmer">${getFieldLabel('guardianPhone')}</span>
               <span class="truncate font-mono" style="${getFieldValStyle('guardianPhone', 'monospace', 7.5, '#1e293b', false)}">: ${guardianPhone}</span>
             </div>
           `;
@@ -534,7 +560,7 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
           if (!cfg.fields.phone || !phone) return '';
           return `
             <div class="${colClass}">
-              <span class="text-slate-500 font-semibold font-khmer">ទូរសព្ទ</span>
+              <span class="text-slate-500 font-semibold font-khmer">${getFieldLabel('phone')}</span>
               <span class="truncate" style="${getFieldValStyle('phone', 'monospace', 7.5, '#1e293b', false)}">: ${phone}</span>
             </div>
           `;

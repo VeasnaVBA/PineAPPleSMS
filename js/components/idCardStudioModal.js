@@ -5,7 +5,7 @@
  * theme color schemes, signature & stamp uploaders, toggleable field checklist,
  * and 1-to-1 A4 print fidelity.
  */
-import { DEFAULT_CARD_CONFIG, DEFAULT_FIELD_STYLES, DEFAULT_FIELD_ORDER, DIMENSION_PRESETS, THEME_COLOR_PRESETS, renderCardSheetHtml, renderIDCardHtml, renderIDCardBackHtml, chunkStudentsForPages, resolveCardDateText } from './idCardTemplate.js';
+import { DEFAULT_CARD_CONFIG, DEFAULT_FIELD_STYLES, DEFAULT_FIELD_ORDER, DEFAULT_FIELD_LABELS, DIMENSION_PRESETS, THEME_COLOR_PRESETS, renderCardSheetHtml, renderIDCardHtml, renderIDCardBackHtml, chunkStudentsForPages, resolveCardDateText } from './idCardTemplate.js';
 import { formatKhmerLunarDate, formatKhmerSolarDate } from '../utils/khmerLunar.js';
 import { SettingsService } from '../services/settingsService.js';
 import { SchoolService } from '../services/schoolService.js';
@@ -3880,6 +3880,9 @@ export const IDCardStudioModal = {
       const isChecked = this.config.fields[f.key] !== false;
       const isFirst = index === 0;
       const isLast = index === fullOrder.length - 1;
+      const currentLabel = (this.config.fieldLabels && this.config.fieldLabels[f.key] !== undefined && String(this.config.fieldLabels[f.key]).trim() !== '')
+        ? this.config.fieldLabels[f.key]
+        : (DEFAULT_FIELD_LABELS[f.key] || '');
 
       return `
         <div class="field-item-card p-2.5 rounded-xl bg-card border border-border/80 shadow-2xs space-y-2 transition-all relative group hover:border-primary/50" data-field-key="${f.key}" data-field-index="${index}" draggable="true">
@@ -3913,6 +3916,16 @@ export const IDCardStudioModal = {
             <span class="text-[10px] text-muted-foreground font-mono font-medium shrink-0">
               ${fs.size}px
             </span>
+          </div>
+
+          <!-- Custom Label Text on Card -->
+          <div class="flex items-center gap-1.5">
+            <span class="text-[10px] text-muted-foreground font-khmer shrink-0">${isKm ? 'អក្សរលើកាត:' : 'Label:'}</span>
+            <input type="text"
+                   data-field="${f.key}"
+                   value="${String(currentLabel).replace(/"/g, '&quot;')}"
+                   placeholder="${DEFAULT_FIELD_LABELS[f.key] || ''}"
+                   class="field-custom-label-input flex-1 h-7 px-2 rounded-md border border-input bg-background text-[11px] font-khmer text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
           </div>
 
           <!-- Bottom row: Font dropdown, Size input, Color picker, Bold toggle -->
@@ -4061,6 +4074,19 @@ export const IDCardStudioModal = {
         const fieldKey = cb.getAttribute('data-field');
         if (fieldKey) {
           this.config.fields[fieldKey] = cb.checked;
+          this.savePersistedSettings();
+          this.updatePreview();
+        }
+      });
+    });
+
+    // 4b. Custom Field Label Text Inputs
+    container.querySelectorAll('.field-custom-label-input').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const fieldKey = inp.getAttribute('data-field');
+        if (fieldKey) {
+          if (!this.config.fieldLabels) this.config.fieldLabels = { ...DEFAULT_FIELD_LABELS };
+          this.config.fieldLabels[fieldKey] = inp.value;
           this.savePersistedSettings();
           this.updatePreview();
         }
