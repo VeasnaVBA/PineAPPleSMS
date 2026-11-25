@@ -199,6 +199,11 @@ export const IDCardStudioModal = {
     // Load persisted settings from IndexedDB
     await this.loadPersistedSettings();
 
+    // Auto-enable back QR display if students already have QR codes attached
+    if (this.students.some(s => !!s.qrCode) && !this.config._backQrExplicitlyDisabled) {
+      this.config.backShowQr = true;
+    }
+
     this.renderModal();
   },
 
@@ -2603,6 +2608,7 @@ export const IDCardStudioModal = {
     // 5b. QR Code Folder Upload (Matched by Student ID)
     overlay.querySelector('#chk-back-qr')?.addEventListener('change', (e) => {
       this.config.backShowQr = e.target.checked;
+      this.config._backQrExplicitlyDisabled = !e.target.checked;
       this.savePersistedSettings();
       this.updatePreview();
     });

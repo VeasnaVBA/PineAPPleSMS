@@ -439,6 +439,8 @@ export const StudentsPage = {
                   <option value="commune" ${this.state.filterField === 'commune' ? 'selected' : ''}>${t('students.filterFieldCommune')}</option>
                   <option value="district" ${this.state.filterField === 'district' ? 'selected' : ''}>${t('students.filterFieldDistrict')}</option>
                   <option value="province" ${this.state.filterField === 'province' ? 'selected' : ''}>${t('students.filterFieldProvince')}</option>
+                  <option value="photoStatus" ${this.state.filterField === 'photoStatus' ? 'selected' : ''}>${isKm ? 'ស្ថានភាពរូបថត' : 'Photo Status'}</option>
+                  <option value="qrStatus" ${this.state.filterField === 'qrStatus' ? 'selected' : ''}>${isKm ? 'ស្ថានភាព QR Code' : 'QR Status'}</option>
                 </select>
               </div>
 
@@ -496,6 +498,31 @@ export const StudentsPage = {
                    multiple 
                    accept="image/*" 
                    class="hidden" />
+
+            <!-- Bulk Import QR Codes (.png) Button -->
+            <button type="button" 
+                    id="btn-bulk-import-qrs"
+                    title="${isKm ? 'បញ្ចូលរូបភាព QR Code (.png) ពីថតឯកសារ ផ្គូផ្គងតាមអត្តលេខសិស្ស' : 'Import Student QR Codes (.png) matched by Student ID'}"
+                    class="h-10 px-3.5 rounded-md border border-input bg-card hover:bg-muted text-xs sm:text-sm font-normal text-foreground transition-colors shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer select-none">
+              ${getIcon('qrCode', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
+              <span class="font-khmer font-normal">${isKm ? 'បញ្ចូល QR Code' : 'Import QR'}</span>
+            </button>
+            <input type="file" 
+                   id="input-bulk-qr-folder" 
+                   webkitdirectory="" 
+                   directory="" 
+                   multiple 
+                   accept="image/png,image/*" 
+                   class="hidden" />
+
+            <!-- Check Photo & QR Status Button -->
+            <button type="button" 
+                    id="btn-check-photo-qr"
+                    title="${isKm ? 'ពិនិត្យ និងតម្រៀបសិស្សដែលមាន/គ្មានរូបថត និង QR Code' : 'Check & sort students with/without Photo & QR'}"
+                    class="h-10 px-3.5 rounded-md border border-input bg-card hover:bg-muted text-xs sm:text-sm font-normal text-foreground transition-colors shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer select-none">
+              ${getIcon('userCheck', 'w-4 h-4 text-purple-600 dark:text-purple-400')}
+              <span class="font-khmer font-normal">${isKm ? 'ពិនិត្យរូបថត & QR' : 'Check Photo & QR'}</span>
+            </button>
           </div>
         </div>
 
@@ -746,6 +773,20 @@ export const StudentsPage = {
 
   getUniqueValuesForField(students, fieldKey) {
     if (!students || !fieldKey) return [];
+    if (fieldKey === 'photoStatus') {
+      const isKm = i18n.getLocale() === 'km';
+      return [
+        { value: 'has_photo', label: isKm ? 'មានរូបថត' : 'Has Photo' },
+        { value: 'no_photo', label: isKm ? 'គ្មានរូបថត' : 'No Photo' }
+      ];
+    }
+    if (fieldKey === 'qrStatus') {
+      const isKm = i18n.getLocale() === 'km';
+      return [
+        { value: 'has_qr', label: isKm ? 'មាន QR Code' : 'Has QR Code' },
+        { value: 'no_qr', label: isKm ? 'គ្មាន QR Code' : 'No QR Code' }
+      ];
+    }
     const classMap = new Map(this.state.classes.map(c => [c.id, c.name]));
     const set = new Set();
 
@@ -976,6 +1017,14 @@ export const StudentsPage = {
         }
         if (field === 'academicYear') {
           return s.academicYear && s.academicYear.trim().toLowerCase() === targetVal;
+        }
+        if (field === 'photoStatus') {
+          const hasPhoto = !!(s.photoBlob || (s.photo && String(s.photo).startsWith('data:')));
+          return targetVal === 'has_photo' ? hasPhoto : !hasPhoto;
+        }
+        if (field === 'qrStatus') {
+          const hasQr = !!(s.qrCode && String(s.qrCode).trim() !== '');
+          return targetVal === 'has_qr' ? hasQr : !hasQr;
         }
         return s[field] && String(s[field]).trim().toLowerCase() === targetVal;
       });
@@ -1926,6 +1975,24 @@ export const StudentsPage = {
       if (files.length === 0) return;
       await this.handleBulkPhotoFolder(files);
       bulkPhotoInput.value = '';
+    });
+
+    // Bulk Import QR Codes (.png) from Folder Trigger
+    const bulkQrInput = document.getElementById('input-bulk-qr-folder');
+    document.getElementById('btn-bulk-import-qrs')?.addEventListener('click', () => {
+      bulkQrInput?.click();
+    });
+
+    bulkQrInput?.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      if (files.length === 0) return;
+      await this.handleBulkQrFolder(files);
+      bulkQrInput.value = '';
+    });
+
+    // Check Photo & QR Status Modal Trigger
+    document.getElementById('btn-check-photo-qr')?.addEventListener('click', () => {
+      this.openPhotoQrCheckModal();
     });
 
     // Import from Excel (.xlsx) Modal Trigger
@@ -6190,6 +6257,381 @@ export const StudentsPage = {
   },
 
   /**
+   * Bulk import student QR codes (.png) from a picked folder,
+   * matching each filename (without extension) to Student ID and saving on student.qrCode.
+   */
+  async handleBulkQrFolder(rawFiles) {
+    const isKm = i18n.getLocale() === 'km';
+    const files = Array.from(rawFiles || []);
+    if (files.length === 0) return;
+
+    const isImage = (f) => {
+      const name = f.name || '';
+      if (name.startsWith('.') || name === 'Thumbs.db' || name === 'desktop.ini') return false;
+      if (f.type && f.type.startsWith('image/')) return true;
+      return /\.(png|jpe?g|webp|bmp|gif)$/i.test(name);
+    };
+
+    const imageFiles = files.filter(isImage);
+    if (imageFiles.length === 0) {
+      toast.error(isKm ? 'មិនមានរូបភាព QR (.png) នៅក្នុងថតនេះទេ!' : 'No QR image files found in the selected folder.');
+      return;
+    }
+
+    let candidateStudents = await StudentService.getAll();
+    const isTeacher = authService.isTeacher();
+    const teacherClassId = authService.getAssignedClassId();
+    if (isTeacher && teacherClassId) {
+      candidateStudents = candidateStudents.filter(s => s.classId === teacherClassId);
+    }
+
+    const studentMap = new Map();
+    candidateStudents.forEach(s => {
+      if (s.studentId) {
+        studentMap.set(String(s.studentId).trim().toLowerCase(), s);
+      }
+      if (s.id) {
+        const idKey = String(s.id).trim().toLowerCase();
+        if (!studentMap.has(idKey)) studentMap.set(idKey, s);
+      }
+    });
+
+    const readAsDataUrl = (file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error || new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+
+    const progress = this.showBulkPhotoProgressModal(imageFiles.length);
+    let processed = 0;
+    let updatedCount = 0;
+    const unmatchedList = [];
+
+    for (const file of imageFiles) {
+      processed++;
+      progress.update(processed, imageFiles.length);
+      if (processed % 2 === 0 || processed === imageFiles.length) {
+        await new Promise(r => setTimeout(r, 0));
+      }
+
+      const baseName = (file.name || '').replace(/\.[^/.]+$/, '').trim();
+      const normalizedKey = baseName.toLowerCase();
+      const matchedStudent = studentMap.get(normalizedKey);
+
+      if (!matchedStudent) {
+        unmatchedList.push({
+          filename: file.name,
+          extractedId: baseName,
+          reason: isTeacher ? (isKm ? 'មិនស្ថិតក្នុងថ្នាក់របស់អ្នក' : 'Not in your assigned class') : undefined
+        });
+        continue;
+      }
+
+      try {
+        const dataUrl = await readAsDataUrl(file);
+        await StudentService.update(matchedStudent.id, { qrCode: dataUrl });
+        updatedCount++;
+      } catch (err) {
+        console.error(`Failed to save QR code for student ${baseName}:`, err);
+        unmatchedList.push({
+          filename: file.name,
+          extractedId: baseName,
+          reason: err.message || 'QR read failed'
+        });
+      }
+    }
+
+    progress.close();
+    await this.loadData(true);
+
+    if (updatedCount > 0) {
+      syncStateManager.scheduleAutoSync(100);
+      toast.success(
+        isKm
+          ? `បានភ្ជាប់ QR Code សិស្សចំនួន ${updatedCount} នាក់ដោយជោគជ័យ!${unmatchedList.length > 0 ? ` (មិនត្រូវគ្នា ${unmatchedList.length})` : ''}`
+          : `Successfully linked QR codes for ${updatedCount} students!${unmatchedList.length > 0 ? ` (${unmatchedList.length} unmatched)` : ''}`
+      );
+    } else {
+      toast.warning(
+        isKm
+          ? `មិនមានឈ្មោះរូបភាព QR ណាត្រូវនឹងអត្តលេខសិស្សឡើយ (${imageFiles.length} រូបភាព)`
+          : `No QR filenames matched student IDs (${imageFiles.length} images scanned)`
+      );
+    }
+  },
+
+  /**
+   * Open Photo & QR Status Checker Modal with filtering and sorting
+   */
+  async openPhotoQrCheckModal() {
+    const isKm = i18n.getLocale() === 'km';
+    if (!this.cachedStudents) {
+      this.cachedStudents = await StudentService.getAll();
+    }
+
+    const classes = this.state.classes || [];
+    const classMap = new Map(classes.map(c => [c.id, c.name]));
+    const esc = (str) => String(str ?? '').replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[m]));
+
+    let activeClassFilter = (this.state.classId && this.state.classId !== 'all') ? this.state.classId : 'all';
+    let activeStatusFilter = 'all'; // 'all' | 'has_photo' | 'no_photo' | 'has_qr' | 'no_qr' | 'missing_any' | 'ready'
+    let activeSort = 'photo_missing'; // 'photo_missing' | 'photo_has' | 'qr_missing' | 'qr_has' | 'studentId' | 'name'
+
+    const hasPhoto = (s) => !!(s.photoBlob || (s.photo && String(s.photo).startsWith('data:')));
+    const hasQr = (s) => !!(s.qrCode && String(s.qrCode).trim() !== '');
+
+    const getScopedStudents = () => {
+      let list = [...(this.cachedStudents || [])];
+      if (activeClassFilter && activeClassFilter !== 'all') {
+        const targetClass = classes.find(c =>
+          c.id === activeClassFilter || (c.name && c.name.toLowerCase() === String(activeClassFilter).toLowerCase())
+        );
+        const targetClassName = targetClass?.name ? targetClass.name.trim().toLowerCase() : '';
+        const targetId = targetClass?.id || String(activeClassFilter).trim();
+        list = list.filter(s => {
+          const sClass = String(s.classId || s.assignedClassId || '').trim();
+          return sClass === targetId || (targetClassName && sClass.toLowerCase() === targetClassName);
+        });
+      }
+      return list;
+    };
+
+    const modal = Modal.open({
+      title: isKm ? 'ពិនិត្យស្ថានភាព រូបថត & QR Code សិស្ស' : 'Check Student Photo & QR Code Status',
+      maxWidth: 'max-w-5xl',
+      content: `
+        <div class="space-y-4 text-xs">
+          <!-- Summary Stats -->
+          <div id="pq-summary-cards" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
+
+          <!-- Controls: Class Filter, Status Pills, Sort -->
+          <div class="flex flex-col gap-2.5 p-3 rounded-xl border border-border bg-muted/30">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
+                <label class="text-[11px] font-semibold text-muted-foreground font-khmer">${isKm ? 'ថ្នាក់រៀន:' : 'Class:'}</label>
+                <select id="pq-class-select" class="h-8 px-2.5 rounded-md border border-input bg-background text-xs font-khmer">
+                  <option value="all">${isKm ? 'គ្រប់ថ្នាក់ទាំងអស់' : 'All Classes'}</option>
+                  ${classes.map(c => `<option value="${c.id}" ${c.id === activeClassFilter ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
+                </select>
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-[11px] font-semibold text-muted-foreground font-khmer">${isKm ? 'តម្រៀបតាម:' : 'Sort by:'}</label>
+                <select id="pq-sort-select" class="h-8 px-2.5 rounded-md border border-input bg-background text-xs font-khmer">
+                  <option value="photo_missing">${isKm ? 'គ្មានរូបថត មុនគេ' : 'No Photo First'}</option>
+                  <option value="photo_has">${isKm ? 'មានរូបថត មុនគេ' : 'Has Photo First'}</option>
+                  <option value="qr_missing">${isKm ? 'គ្មាន QR មុនគេ' : 'No QR First'}</option>
+                  <option value="qr_has">${isKm ? 'មាន QR មុនគេ' : 'Has QR First'}</option>
+                  <option value="studentId">${isKm ? 'អត្តលេខ (A-Z)' : 'Student ID (A-Z)'}</option>
+                  <option value="name">${isKm ? 'ឈ្មោះសិស្ស (A-Z)' : 'Name (A-Z)'}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Filter Pills -->
+            <div id="pq-filter-pills" class="flex flex-wrap items-center gap-1.5">
+              ${[
+                { key: 'all', label: isKm ? 'ទាំងអស់' : 'All' },
+                { key: 'has_photo', label: isKm ? 'មានរូបថត' : 'Has Photo' },
+                { key: 'no_photo', label: isKm ? 'គ្មានរូបថត' : 'No Photo' },
+                { key: 'has_qr', label: isKm ? 'មាន QR' : 'Has QR' },
+                { key: 'no_qr', label: isKm ? 'គ្មាន QR' : 'No QR' },
+                { key: 'missing_any', label: isKm ? 'ខ្វះរូបថត ឬ QR' : 'Missing Photo/QR' },
+                { key: 'ready', label: isKm ? 'គ្រប់លក្ខណៈ (រូបថត + QR)' : 'Ready (Photo + QR)' }
+              ].map(p => `
+                <button type="button" data-pq-filter="${p.key}" class="pq-pill px-2.5 py-1 rounded-full text-[11px] font-khmer font-medium border transition-colors cursor-pointer ${p.key === 'all' ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground border-border hover:text-foreground'}">
+                  ${p.label}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Student List Table -->
+          <div class="rounded-xl border border-border overflow-hidden">
+            <div class="max-h-[48vh] overflow-y-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead class="sticky top-0 bg-muted/95 backdrop-blur-xs border-b border-border text-muted-foreground font-semibold z-10">
+                  <tr>
+                    <th class="px-3 py-2 text-center w-10">#</th>
+                    <th class="px-3 py-2 text-center w-16">${isKm ? 'រូបថត' : 'Photo'}</th>
+                    <th class="px-3 py-2 text-center w-16">${isKm ? 'QR Code' : 'QR'}</th>
+                    <th class="px-3 py-2">${isKm ? 'អត្តលេខ' : 'Student ID'}</th>
+                    <th class="px-3 py-2">${isKm ? 'ឈ្មោះសិស្ស' : 'Full Name'}</th>
+                    <th class="px-3 py-2">${isKm ? 'ថ្នាក់' : 'Class'}</th>
+                    <th class="px-3 py-2 text-center">${isKm ? 'ស្ថានភាពកាត' : 'ID Card Ready'}</th>
+                  </tr>
+                </thead>
+                <tbody id="pq-table-tbody" class="divide-y divide-border"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `,
+      footer: `
+        <div class="flex items-center justify-between w-full gap-2">
+          <span id="pq-footer-count" class="text-xs text-muted-foreground font-khmer"></span>
+          <div class="flex items-center gap-2">
+            <button type="button" id="btn-pq-close" class="px-3.5 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-xs font-medium cursor-pointer">${t('common.cancel')}</button>
+            <button type="button" id="btn-pq-open-id-card" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold shadow-xs cursor-pointer font-khmer">
+              ${getIcon('idCard', 'w-3.5 h-3.5')}
+              <span>${t('students.generateIdCard')}</span>
+            </button>
+          </div>
+        </div>
+      `
+    });
+
+    const el = modal.element;
+    const renderModalBody = () => {
+      const scoped = getScopedStudents();
+      const total = scoped.length;
+      const photoYes = scoped.filter(hasPhoto).length;
+      const photoNo = total - photoYes;
+      const qrYes = scoped.filter(hasQr).length;
+      const qrNo = total - qrYes;
+      const readyCount = scoped.filter(s => hasPhoto(s) && hasQr(s)).length;
+
+      const summaryEl = el.querySelector('#pq-summary-cards');
+      if (summaryEl) {
+        summaryEl.innerHTML = `
+          <div class="p-2.5 rounded-lg border border-border bg-card">
+            <div class="text-[10px] text-muted-foreground font-khmer">${isKm ? 'សិស្សសរុប' : 'Total Students'}</div>
+            <div class="text-lg font-bold font-mono text-foreground mt-0.5">${total}</div>
+          </div>
+          <div class="p-2.5 rounded-lg border border-blue-500/20 bg-blue-500/5">
+            <div class="text-[10px] text-muted-foreground font-khmer">${isKm ? 'រូបថត (មាន / គ្មាន)' : 'Photo (Yes / No)'}</div>
+            <div class="text-sm font-bold font-mono mt-0.5">
+              <span class="text-emerald-600 dark:text-emerald-400">${photoYes}</span>
+              <span class="text-muted-foreground mx-1">/</span>
+              <span class="text-rose-600 dark:text-rose-400">${photoNo}</span>
+            </div>
+          </div>
+          <div class="p-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/5">
+            <div class="text-[10px] text-muted-foreground font-khmer">${isKm ? 'QR Code (មាន / គ្មាន)' : 'QR Code (Yes / No)'}</div>
+            <div class="text-sm font-bold font-mono mt-0.5">
+              <span class="text-emerald-600 dark:text-emerald-400">${qrYes}</span>
+              <span class="text-muted-foreground mx-1">/</span>
+              <span class="text-rose-600 dark:text-rose-400">${qrNo}</span>
+            </div>
+          </div>
+          <div class="p-2.5 rounded-lg border border-primary/20 bg-primary/5">
+            <div class="text-[10px] text-muted-foreground font-khmer">${isKm ? 'រួចរាល់ធ្វើកាត (ទាំងពីរ)' : 'ID Card Ready'}</div>
+            <div class="text-lg font-bold font-mono text-primary mt-0.5">${readyCount} <span class="text-[11px] font-normal text-muted-foreground">/ ${total}</span></div>
+          </div>
+        `;
+      }
+
+      let filtered = scoped.filter(s => {
+        const p = hasPhoto(s);
+        const q = hasQr(s);
+        if (activeStatusFilter === 'has_photo') return p;
+        if (activeStatusFilter === 'no_photo') return !p;
+        if (activeStatusFilter === 'has_qr') return q;
+        if (activeStatusFilter === 'no_qr') return !q;
+        if (activeStatusFilter === 'missing_any') return !p || !q;
+        if (activeStatusFilter === 'ready') return p && q;
+        return true;
+      });
+
+      filtered.sort((a, b) => {
+        const pa = hasPhoto(a) ? 1 : 0;
+        const pb = hasPhoto(b) ? 1 : 0;
+        const qa = hasQr(a) ? 1 : 0;
+        const qb = hasQr(b) ? 1 : 0;
+        if (activeSort === 'photo_missing' && pa !== pb) return pa - pb;
+        if (activeSort === 'photo_has' && pa !== pb) return pb - pa;
+        if (activeSort === 'qr_missing' && qa !== qb) return qa - qb;
+        if (activeSort === 'qr_has' && qa !== qb) return qb - qa;
+        if (activeSort === 'studentId') {
+          return String(a.studentId || '').localeCompare(String(b.studentId || ''), ['km', 'en'], { numeric: true });
+        }
+        const nameA = `${a.lastNameKh || ''} ${a.firstNameKh || ''}`.trim();
+        const nameB = `${b.lastNameKh || ''} ${b.firstNameKh || ''}`.trim();
+        return nameA.localeCompare(nameB, ['km', 'en'], { numeric: true });
+      });
+
+      const tbody = el.querySelector('#pq-table-tbody');
+      if (tbody) {
+        if (filtered.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-muted-foreground font-khmer">${isKm ? 'មិនមានទិន្នន័យសិស្សទេ' : 'No students match this filter'}</td></tr>`;
+        } else {
+          tbody.innerHTML = filtered.map((s, idx) => {
+            const pUrl = s.photoBlob ? photoService.getUrlForBlob(s.photoBlob) : (s.photo && String(s.photo).startsWith('data:') ? s.photo : null);
+            const qUrl = (s.qrCode && String(s.qrCode).trim()) ? s.qrCode : null;
+            const fullName = `${s.lastNameKh || ''} ${s.firstNameKh || ''}`.trim() || s.khmerName || s.englishName || '—';
+            const clsName = classMap.get(s.classId) || s.classId || '—';
+            const ready = !!(pUrl && qUrl);
+            return `
+              <tr class="hover:bg-muted/30">
+                <td class="px-3 py-2 text-center font-mono text-muted-foreground">${idx + 1}</td>
+                <td class="px-3 py-2 text-center">
+                  ${pUrl
+                    ? `<img src="${pUrl}" class="w-8 h-9 object-cover rounded border border-border mx-auto" />`
+                    : `<span class="inline-block px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[10px] font-semibold font-khmer">${isKm ? 'គ្មាន' : 'None'}</span>`}
+                </td>
+                <td class="px-3 py-2 text-center">
+                  ${qUrl
+                    ? `<img src="${qUrl}" class="w-8 h-8 object-contain rounded border border-border bg-white p-0.5 mx-auto" />`
+                    : `<span class="inline-block px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[10px] font-semibold font-khmer">${isKm ? 'គ្មាន' : 'None'}</span>`}
+                </td>
+                <td class="px-3 py-2 font-mono font-semibold text-foreground">${esc(s.studentId || s.id || '—')}</td>
+                <td class="px-3 py-2 font-khmer font-medium text-foreground">${esc(fullName)}</td>
+                <td class="px-3 py-2 font-khmer text-muted-foreground">${esc(clsName)}</td>
+                <td class="px-3 py-2 text-center">
+                  ${ready
+                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold font-khmer">✓ ${isKm ? 'រួចរាល់' : 'Ready'}</span>`
+                    : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[10px] font-semibold font-khmer">${isKm ? 'មិនទាន់គ្រប់' : 'Incomplete'}</span>`}
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+
+      const footerCount = el.querySelector('#pq-footer-count');
+      if (footerCount) {
+        footerCount.textContent = isKm ? `បង្ហាញ ${filtered.length} / ${total} សិស្ស` : `Showing ${filtered.length} / ${total} students`;
+      }
+    };
+
+    el.querySelector('#pq-class-select')?.addEventListener('change', (e) => {
+      activeClassFilter = e.target.value;
+      renderModalBody();
+    });
+
+    el.querySelector('#pq-sort-select')?.addEventListener('change', (e) => {
+      activeSort = e.target.value;
+      renderModalBody();
+    });
+
+    el.querySelectorAll('.pq-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeStatusFilter = btn.getAttribute('data-pq-filter');
+        el.querySelectorAll('.pq-pill').forEach(b => {
+          const isAct = b.getAttribute('data-pq-filter') === activeStatusFilter;
+          b.className = `pq-pill px-2.5 py-1 rounded-full text-[11px] font-khmer font-medium border transition-colors cursor-pointer ${isAct ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground border-border hover:text-foreground'}`;
+        });
+        renderModalBody();
+      });
+    });
+
+    el.querySelector('#btn-pq-close')?.addEventListener('click', () => modal.close());
+    el.querySelector('#btn-pq-open-id-card')?.addEventListener('click', () => {
+      const scoped = getScopedStudents();
+      modal.close();
+      if (scoped.length > 0) {
+        IDCardStudioModal.open(scoped, classes);
+      } else {
+        toast.warning(isKm ? 'មិនមានទិន្នន័យសិស្សសម្រាប់បង្កើតកាតទេ' : 'No students found');
+      }
+    });
+
+    renderModalBody();
+  },
+
+  /**
    * Open the Student ID Card Studio for selected or filtered students
    */
   async openIDCardStudio() {
@@ -6284,6 +6726,14 @@ export const StudentsPage = {
           }
           if (field === 'academicYear') {
             return s.academicYear && s.academicYear.trim().toLowerCase() === targetVal;
+          }
+          if (field === 'photoStatus') {
+            const hasPhoto = !!(s.photoBlob || (s.photo && String(s.photo).startsWith('data:')));
+            return targetVal === 'has_photo' ? hasPhoto : !hasPhoto;
+          }
+          if (field === 'qrStatus') {
+            const hasQr = !!(s.qrCode && String(s.qrCode).trim() !== '');
+            return targetVal === 'has_qr' ? hasQr : !hasQr;
           }
           return s[field] && String(s[field]).trim().toLowerCase() === targetVal;
         });
