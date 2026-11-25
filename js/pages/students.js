@@ -484,45 +484,46 @@ export const StudentsPage = {
               <span class="font-khmer font-normal">${isKm ? 'តារាងស្រង់ពិន្ទុ' : 'Score Sheet'}</span>
             </button>
 
-            <button type="button" 
-                    id="btn-bulk-import-photos"
-                    title="${t('students.bulkImportPhotosTooltip')}"
-                    class="h-10 px-3.5 rounded-md border border-input bg-card hover:bg-muted text-xs sm:text-sm font-normal text-foreground transition-colors shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer select-none">
-              ${getIcon('folderImage', 'w-4 h-4 text-primary')}
-              <span class="font-khmer font-normal">${t('students.bulkImportPhotos')}</span>
-            </button>
-            <input type="file" 
-                   id="input-bulk-photo-folder" 
-                   webkitdirectory="" 
-                   directory="" 
-                   multiple 
-                   accept="image/*" 
-                   class="hidden" />
-
-            <!-- Bulk Import QR Codes (.png) Button -->
-            <button type="button" 
-                    id="btn-bulk-import-qrs"
-                    title="${isKm ? 'បញ្ចូលរូបភាព QR Code (.png) ពីថតឯកសារ ផ្គូផ្គងតាមអត្តលេខសិស្ស' : 'Import Student QR Codes (.png) matched by Student ID'}"
-                    class="h-10 px-3.5 rounded-md border border-input bg-card hover:bg-muted text-xs sm:text-sm font-normal text-foreground transition-colors shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer select-none">
-              ${getIcon('qrCode', 'w-4 h-4 text-emerald-600 dark:text-emerald-400')}
-              <span class="font-khmer font-normal">${isKm ? 'បញ្ចូល QR Code' : 'Import QR'}</span>
-            </button>
-            <input type="file" 
-                   id="input-bulk-qr-folder" 
-                   webkitdirectory="" 
-                   directory="" 
-                   multiple 
-                   accept="image/png,image/*" 
-                   class="hidden" />
-
-            <!-- Check Photo & QR Status Button -->
-            <button type="button" 
-                    id="btn-check-photo-qr"
-                    title="${isKm ? 'ពិនិត្យ និងតម្រៀបសិស្សដែលមាន/គ្មានរូបថត និង QR Code' : 'Check & sort students with/without Photo & QR'}"
-                    class="h-10 px-3.5 rounded-md border border-input bg-card hover:bg-muted text-xs sm:text-sm font-normal text-foreground transition-colors shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer select-none">
-              ${getIcon('userCheck', 'w-4 h-4 text-purple-600 dark:text-purple-400')}
-              <span class="font-khmer font-normal">${isKm ? 'ពិនិត្យរូបថត & QR' : 'Check Photo & QR'}</span>
-            </button>
+            <!-- Photo & QR Dropdown (Import Photos, Import QR, Check Photo & QR) -->
+            <div class="relative inline-block text-left" id="media-dropdown-wrapper">
+              <button type="button" 
+                      id="btn-media-dropdown"
+                      title="${isKm ? 'រូបថត និង QR Code សិស្ស' : 'Student Photos & QR Codes'}"
+                      class="h-10 px-3 sm:px-3.5 rounded-md border border-input bg-card hover:bg-muted text-xs sm:text-sm font-normal text-foreground transition-colors shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer select-none focus:outline-none focus:ring-1 focus:ring-ring">
+                ${getIcon('folderImage', 'w-4 h-4 text-primary')}
+                <span class="font-khmer font-normal">${isKm ? 'រូបថត & QR' : 'Photo & QR'}</span>
+                ${getIcon('chevronDown', 'w-3.5 h-3.5 text-muted-foreground ml-0.5')}
+              </button>
+              <div id="media-dropdown-menu" class="hidden absolute right-0 mt-1.5 w-60 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg z-50 p-1 text-xs sm:text-sm animate-in fade-in-0 zoom-in-95">
+                <button type="button" id="btn-bulk-import-photos" title="${t('students.bulkImportPhotosTooltip')}" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer font-khmer">
+                  ${getIcon('folderImage', 'w-4 h-4 shrink-0 text-primary')}
+                  <span>${t('students.bulkImportPhotos')}</span>
+                </button>
+                <button type="button" id="btn-bulk-import-qrs" title="${isKm ? 'បញ្ចូលរូបភាព QR Code (.png) ពីថតឯកសារ ផ្គូផ្គងតាមអត្តលេខសិស្ស' : 'Import Student QR Codes (.png) matched by Student ID'}" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer font-khmer">
+                  ${getIcon('qrCode', 'w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400')}
+                  <span>${isKm ? 'បញ្ចូល QR Code' : 'Import QR Code'}</span>
+                </button>
+                <div class="my-1 border-t border-border"></div>
+                <button type="button" id="btn-check-photo-qr" title="${isKm ? 'ពិនិត្យ និងតម្រៀបសិស្សដែលមាន/គ្មានរូបថត និង QR Code' : 'Check & sort students with/without Photo & QR'}" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer font-khmer">
+                  ${getIcon('userCheck', 'w-4 h-4 shrink-0 text-purple-600 dark:text-purple-400')}
+                  <span>${isKm ? 'ពិនិត្យរូបថត & QR' : 'Check Photo & QR'}</span>
+                </button>
+              </div>
+              <input type="file" 
+                     id="input-bulk-photo-folder" 
+                     webkitdirectory="" 
+                     directory="" 
+                     multiple 
+                     accept="image/*" 
+                     class="hidden" />
+              <input type="file" 
+                     id="input-bulk-qr-folder" 
+                     webkitdirectory="" 
+                     directory="" 
+                     multiple 
+                     accept="image/png,image/*" 
+                     class="hidden" />
+            </div>
           </div>
         </div>
 
@@ -1755,10 +1756,14 @@ export const StudentsPage = {
     // Excel Dropdown Toggle
     const excelBtn = document.getElementById('btn-excel-dropdown');
     const excelMenu = document.getElementById('excel-dropdown-menu');
+    const mediaBtn = document.getElementById('btn-media-dropdown');
+    const mediaMenu = document.getElementById('media-dropdown-menu');
+
     excelBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
       excelMenu?.classList.toggle('hidden');
       document.getElementById('json-dropdown-menu')?.classList.add('hidden');
+      mediaMenu?.classList.add('hidden');
     });
 
     // JSON Dropdown Toggle
@@ -1768,6 +1773,15 @@ export const StudentsPage = {
       e.stopPropagation();
       jsonMenu?.classList.toggle('hidden');
       document.getElementById('excel-dropdown-menu')?.classList.add('hidden');
+      mediaMenu?.classList.add('hidden');
+    });
+
+    // Photo & QR Dropdown Toggle
+    mediaBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      mediaMenu?.classList.toggle('hidden');
+      excelMenu?.classList.add('hidden');
+      jsonMenu?.classList.add('hidden');
     });
 
     // Close dropdowns when clicking option buttons
@@ -1781,16 +1795,23 @@ export const StudentsPage = {
         jsonMenu.classList.add('hidden');
       });
     });
+    mediaMenu?.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        mediaMenu.classList.add('hidden');
+      });
+    });
 
     // Close dropdowns on outside click or Escape key
     document.addEventListener('click', () => {
       excelMenu?.classList.add('hidden');
       jsonMenu?.classList.add('hidden');
+      mediaMenu?.classList.add('hidden');
     });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         excelMenu?.classList.add('hidden');
         jsonMenu?.classList.add('hidden');
+        mediaMenu?.classList.add('hidden');
       }
     });
 
