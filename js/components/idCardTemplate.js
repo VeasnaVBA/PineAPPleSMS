@@ -118,6 +118,7 @@ export const DEFAULT_CARD_CONFIG = {
   logoOffsetY: 0, // px
 
   // Student Photo Transforms & Border
+  photoAspectRatio: 'default', // 'default' | '3x4' | '4x6' | '2x3' | '1x1'
   photoScale: 100, // 80 - 200%
   photoOffsetX: 0, // px
   photoOffsetY: 0, // px
@@ -257,6 +258,10 @@ export const DEFAULT_CARD_CONFIG = {
   backCardholderSignLabel: 'ហត្ថលេខាកាន់ប័ណ្ណ',
   backBackgroundImage: '',
   backBackgroundOpacity: 100,
+  backCustomImage: '',
+  backCustomImageScale: 100,
+  backCustomImageOffsetX: 0,
+  backCustomImageOffsetY: 0,
   backAccentColor: ''
 };
 
@@ -381,6 +386,19 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
   const photoTransform = `transform: translate(${cfg.photoOffsetX || 0}px, ${cfg.photoOffsetY || 0}px) scale(${(cfg.photoScale || 100) / 100}); transform-origin: center center;`;
   const photoBorderColor = cfg.photoBorderColor || accent;
   const photoBorderRadius = cfg.photoBorderRadius !== undefined ? cfg.photoBorderRadius : 4;
+  const photoRatio = cfg.photoAspectRatio || 'default';
+  let photoBoxSizeStyle = '';
+  let photoBoxSizeClass = isLandscape ? 'w-13 h-16 sm:w-14 sm:h-[68px]' : 'w-14 h-16 sm:w-16 sm:h-[72px]';
+  if (photoRatio === '3x4') {
+    photoBoxSizeClass = '';
+    photoBoxSizeStyle = isLandscape ? 'width: 13.5mm; height: 18mm;' : 'width: 15mm; height: 20mm;';
+  } else if (photoRatio === '4x6' || photoRatio === '2x3') {
+    photoBoxSizeClass = '';
+    photoBoxSizeStyle = isLandscape ? 'width: 13mm; height: 19.5mm;' : 'width: 14mm; height: 21mm;';
+  } else if (photoRatio === '1x1') {
+    photoBoxSizeClass = '';
+    photoBoxSizeStyle = isLandscape ? 'width: 15mm; height: 15mm;' : 'width: 17mm; height: 17mm;';
+  }
   const fieldsTransform = `transform: translate(${cfg.fieldsOffsetX || 0}px, ${cfg.fieldsOffsetY || 0}px) scale(${(cfg.fieldsScale || 100) / 100}); transform-origin: center center;`;
 
   // Front Side QR Code
@@ -625,8 +643,8 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
             <div class="relative shrink-0 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 select-none z-20"
                  data-asset-type="photo"
                  style="${photoTransform}">
-              <div class="w-13 h-16 sm:w-14 sm:h-[68px] overflow-hidden bg-slate-100 flex items-center justify-center shadow-2xs border"
-                   style="border-color: ${photoBorderColor}; border-radius: ${photoBorderRadius}px;">
+              <div class="${photoBoxSizeClass} overflow-hidden bg-slate-100 flex items-center justify-center shadow-2xs border"
+                   style="${photoBoxSizeStyle} border-color: ${photoBorderColor}; border-radius: ${photoBorderRadius}px;">
                 ${photoUrl ? `
                   <img src="${photoUrl}" alt="${fullNameLatin || fullNameKh}" class="w-full h-full object-cover pointer-events-none select-none" />
                 ` : `
@@ -714,8 +732,8 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
         <div class="relative my-1 shrink-0 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 select-none z-20"
              data-asset-type="photo"
              style="${photoTransform}">
-          <div class="w-14 h-16 sm:w-16 sm:h-[72px] overflow-hidden bg-slate-100 flex items-center justify-center shadow-xs border-2"
-               style="border-color: ${photoBorderColor}; border-radius: ${photoBorderRadius}px;">
+          <div class="${photoBoxSizeClass} overflow-hidden bg-slate-100 flex items-center justify-center shadow-xs border-2"
+               style="${photoBoxSizeStyle} border-color: ${photoBorderColor}; border-radius: ${photoBorderRadius}px;">
             ${photoUrl ? `
               <img src="${photoUrl}" alt="${fullNameLatin || fullNameKh}" class="w-full h-full object-cover pointer-events-none select-none" />
             ` : `
@@ -871,6 +889,17 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
     `
   ) : '';
 
+  const backCustomImageTransform = `transform: translate(${cfg.backCustomImageOffsetX || 0}px, ${cfg.backCustomImageOffsetY || 0}px) scale(${(cfg.backCustomImageScale || 100) / 100}); transform-origin: center center;`;
+  const backCustomImageHtml = cfg.backCustomImage ? `
+    <div class="absolute inset-0 pointer-events-none flex items-center justify-center z-20">
+      <div class="pointer-events-auto draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 rounded select-none"
+           data-asset-type="backCustomImage"
+           style="${backCustomImageTransform}">
+        <img src="${cfg.backCustomImage}" alt="Back Custom PNG" class="max-w-[32mm] max-h-[32mm] object-contain pointer-events-none select-none" />
+      </div>
+    </div>
+  ` : '';
+
   // LANDSCAPE BACK SIDE
   if (isLandscape) {
     return `
@@ -878,15 +907,15 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
            style="width: ${widthMm}mm; height: ${heightMm}mm; max-width: ${widthMm}mm; max-height: ${heightMm}mm; --card-accent: ${accent};">
         
         ${bgHtml}
+        ${backCustomImageHtml}
 
         <div class="card-body-content relative z-10 mx-2 my-1 flex flex-col justify-between flex-1 h-full min-w-0">
           
-          <!-- Top Header: Mini Branding & Title -->
+          <!-- Top Header: School Name & Title (no front logo) -->
           <div class="border-b border-slate-200/90 pb-0.5 flex items-center justify-between w-full shrink-0 relative z-20 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 rounded select-none"
                data-asset-type="backHeader"
                style="${backHeaderTransform}">
             <div class="flex items-center gap-1.5 min-w-0 pointer-events-none">
-              ${schoolLogoMiniHtml}
               <div class="min-w-0">
                 <h5 class="text-[7px] font-bold font-khmer uppercase text-slate-800 truncate leading-tight">${cfg.schoolNameKh || 'សាលារៀន'}</h5>
                 ${cfg.schoolNameEn ? `<p class="text-[5.5px] font-semibold uppercase text-slate-400 tracking-tight leading-none">${cfg.schoolNameEn}</p>` : ''}
@@ -966,16 +995,16 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
          style="width: ${widthMm}mm; height: ${heightMm}mm; max-width: ${widthMm}mm; max-height: ${heightMm}mm; --card-accent: ${accent};">
       
       ${bgHtml}
+      ${backCustomImageHtml}
 
       <div class="card-body-content relative z-10 mx-2 my-1.5 flex flex-col justify-between flex-1 h-full min-w-0">
         
-        <!-- Top Bar: Logo & School & Title -->
+        <!-- Top Bar: School & Title (no front logo) -->
         <div class="border-b border-slate-200/90 pb-1 text-center w-full shrink-0 relative z-20 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 rounded select-none"
              data-asset-type="backHeader"
              style="${backHeaderTransform}">
           <div class="flex items-center justify-center gap-1.5 mb-0.5 pointer-events-none">
-            ${schoolLogoMiniHtml}
-            <div class="text-left min-w-0">
+            <div class="text-center min-w-0">
               <h5 class="text-[7.5px] font-bold font-khmer uppercase text-slate-800 truncate leading-tight">${cfg.schoolNameKh || 'សាលារៀន'}</h5>
               ${cfg.schoolNameEn ? `<p class="text-[5.5px] font-semibold uppercase text-slate-400 tracking-tight leading-none">${cfg.schoolNameEn}</p>` : ''}
             </div>

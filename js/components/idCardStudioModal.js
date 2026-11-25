@@ -866,8 +866,18 @@ export const IDCardStudioModal = {
                   maxOffset: 600
                 })}
 
-                <!-- Photo Border Color & Radius -->
+                <!-- Photo Standard Size, Border Color & Radius -->
                 <div class="mt-2.5 p-2.5 rounded-lg border border-border/70 bg-background/70 space-y-2">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-[11px] font-semibold font-khmer text-muted-foreground">${isKm ? 'ខ្នាតស្តង់ដាររូបថត' : 'Standard Photo Size'}</span>
+                    <select id="sel-photo-aspect-ratio" class="h-7 px-2 rounded border border-input bg-background text-xs font-medium cursor-pointer">
+                      <option value="default" ${(!this.config.photoAspectRatio || this.config.photoAspectRatio === 'default') ? 'selected' : ''}>${isKm ? 'លំនាំដើម' : 'Default'}</option>
+                      <option value="3x4" ${this.config.photoAspectRatio === '3x4' ? 'selected' : ''}>3x4</option>
+                      <option value="4x6" ${this.config.photoAspectRatio === '4x6' ? 'selected' : ''}>4x6</option>
+                      <option value="2x3" ${this.config.photoAspectRatio === '2x3' ? 'selected' : ''}>2x3</option>
+                      <option value="1x1" ${this.config.photoAspectRatio === '1x1' ? 'selected' : ''}>1x1 (${isKm ? 'ការ៉េ' : 'Square'})</option>
+                    </select>
+                  </div>
                   <div class="flex items-center justify-between gap-2">
                     <span class="text-[11px] font-semibold font-khmer text-muted-foreground">${isKm ? 'ពណ៌ស៊ុមរូបថត' : 'Photo Border Color'}</span>
                     <div class="flex items-center gap-1.5">
@@ -1572,6 +1582,46 @@ export const IDCardStudioModal = {
                     </div>
                     <input type="range" id="range-back-bg-opacity" min="10" max="100" step="5" value="${this.config.backBackgroundOpacity !== undefined ? this.config.backBackgroundOpacity : 100}" class="w-full accent-primary cursor-pointer" />
                   </div>
+                ` : ''}
+              </div>
+
+              <!-- Back Custom PNG Image / Graphic -->
+              <div class="space-y-3 p-3 rounded-xl bg-card border border-border/80 shadow-2xs">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="font-bold text-xs font-khmer text-foreground block">${isKm ? 'បញ្ចូលរូបភាព PNG ផ្នែកខាងក្រោយ' : 'Back Custom PNG Image'}</span>
+                    <span class="text-[10px] text-muted-foreground font-khmer block">${isKm ? 'រូបភាពថ្លា PNG អាចអូសរំកិល និងពង្រីកបាន' : 'Transparent PNG graphic, draggable & scalable'}</span>
+                  </div>
+                  <span class="text-[10px] text-muted-foreground font-mono">PNG</span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <input type="file" id="file-back-custom-img" accept="image/png,image/*" class="hidden" />
+                  <button type="button" id="btn-upload-back-custom-img" class="flex-1 py-1.5 px-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-khmer text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
+                    ${getIcon('upload', 'w-3.5 h-3.5')}
+                    <span>${this.config.backCustomImage ? (isKm ? 'ប្តូររូបភាព PNG' : 'Change PNG Image') : (isKm ? 'បញ្ចូលរូបភាព PNG' : 'Upload PNG Image')}</span>
+                  </button>
+                  ${this.config.backCustomImage ? `
+                    <button type="button" id="btn-remove-back-custom-img" class="py-1.5 px-2.5 rounded-lg border border-destructive/30 bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs cursor-pointer transition-colors" title="${isKm ? 'លុបរូបភាព' : 'Remove Image'}">
+                      ${getIcon('trash', 'w-3.5 h-3.5')}
+                    </button>
+                  ` : ''}
+                </div>
+
+                ${this.config.backCustomImage ? `
+                  ${this.renderTransformWidget({
+                    targetKey: 'backCustomImage',
+                    titleKh: 'ពង្រីក & រំកិលរូបភាព PNG ខាងក្រោយ',
+                    titleEn: 'Back PNG Scale & Position',
+                    isKm,
+                    scale: this.config.backCustomImageScale || 100,
+                    offsetX: this.config.backCustomImageOffsetX || 0,
+                    offsetY: this.config.backCustomImageOffsetY || 0,
+                    minScale: 20,
+                    maxScale: 400,
+                    minOffset: -400,
+                    maxOffset: 400
+                  })}
                 ` : ''}
               </div>
 
@@ -2738,7 +2788,12 @@ export const IDCardStudioModal = {
       this.updatePreview();
     });
 
-    // 5a. Photo Border Color & Radius + Front QR Controls + Back QR Border/Radius
+    // 5a. Photo Standard Size, Border Color & Radius + Front QR Controls + Back QR Border/Radius
+    overlay.querySelector('#sel-photo-aspect-ratio')?.addEventListener('change', (e) => {
+      this.config.photoAspectRatio = e.target.value || 'default';
+      this.savePersistedSettings();
+      this.updatePreview();
+    });
     overlay.querySelector('#inp-photo-border-color')?.addEventListener('input', (e) => {
       this.config.photoBorderColor = e.target.value;
       this.savePersistedSettings();
@@ -2857,6 +2912,30 @@ export const IDCardStudioModal = {
       if (label) label.textContent = `${val}%`;
       this.savePersistedSettings();
       this.updatePreview();
+    });
+
+    // 6b. Back Custom PNG Image (preserve alpha transparency)
+    overlay.querySelector('#btn-upload-back-custom-img')?.addEventListener('click', () => {
+      overlay.querySelector('#file-back-custom-img')?.click();
+    });
+    overlay.querySelector('#file-back-custom-img')?.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      e.target.value = '';
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          this.config.backCustomImage = reader.result;
+          this.savePersistedSettings();
+          this.renderModal();
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    overlay.querySelector('#btn-remove-back-custom-img')?.addEventListener('click', () => {
+      this.config.backCustomImage = '';
+      this.savePersistedSettings();
+      this.renderModal();
     });
 
     // Asset Move & Zoom transform sliders
@@ -3430,6 +3509,7 @@ export const IDCardStudioModal = {
           backRules: 'back',
           backContact: 'back',
           backSignature: 'back',
+          backCustomImage: 'back',
           fields: 'fields',
           title: 'signature',
           signature: 'signature',
