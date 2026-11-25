@@ -46,7 +46,7 @@ export class Sidebar {
     if (cleanRole === 'ADMIN') {
       this.activeRoute = (baseRoute === 'settings' || baseRoute === 'download-data') ? baseRoute : 'users';
     } else if (cleanRole === 'OFFICER') {
-      this.activeRoute = (baseRoute === 'students' || baseRoute === 'classes') ? baseRoute : (baseRoute || 'teachers');
+      this.activeRoute = (baseRoute === 'students' || baseRoute === 'classes' || baseRoute === 'settings') ? baseRoute : (baseRoute || 'teachers');
     } else {
       this.activeRoute = baseRoute;
     }
@@ -115,7 +115,8 @@ export class Sidebar {
       allNavItems = [
         { id: 'teachers', labelKey: 'nav.teachersManagement', icon: 'teachers', href: '#teachers' },
         { id: 'students', labelKey: 'nav.students', icon: 'students', href: '#students' },
-        { id: 'classes', labelKey: 'nav.classes', icon: 'classes', href: '#classes' }
+        { id: 'classes', labelKey: 'nav.classes', icon: 'classes', href: '#classes' },
+        { id: 'settings', labelKey: 'nav.settings', icon: 'settings', href: '#settings' }
       ];
     } else {
       allNavItems = [

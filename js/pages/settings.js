@@ -22,6 +22,14 @@ import { UsersPage } from './users.js';
 import { syncStateManager, AUTO_SAVE_PRESETS } from '../services/syncStateManager.js';
 
 export const SettingsPage = {
+  queueSettingsSync() {
+    if (authService.isOfficer()) {
+      syncStateManager.scheduleAutoSync(500);
+    } else {
+      this.queueSettingsSync();
+    }
+  },
+
   async render(container) {
     this.container = container;
     const currentUser = authService.getCurrentUser();
@@ -416,6 +424,7 @@ export const SettingsPage = {
         </div>
 
         <!-- Admin Central Data Sheet (Master Cloud Sync for Settings, Accounts, Passwords & Roles) -->
+        ${!authService.isOfficer() ? `
         <div class="p-6 rounded-xl border border-primary/30 bg-primary/5 shadow-sm space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
@@ -528,6 +537,7 @@ export const SettingsPage = {
             <div id="settings-admin-cloud-feedback" class="hidden p-2.5 rounded-md text-xs"></div>
           </div>
         </div>
+        ` : ''}
 
         <!-- Google Drive & Google Sheets User Workspace Cloud Sync Settings -->
         <div class="p-6 rounded-xl border border-border bg-card shadow-sm space-y-4">
@@ -717,7 +727,7 @@ export const SettingsPage = {
       btn.addEventListener('click', () => {
         const theme = btn.getAttribute('data-theme-choice');
         themeService.setTheme(theme);
-        AdminDataService.queueAutoSync();
+        this.queueSettingsSync();
         this.render(container);
         toast.success(`Theme updated to ${theme}`);
       });
@@ -732,7 +742,7 @@ export const SettingsPage = {
       btn.addEventListener('click', () => {
         const hex = btn.getAttribute('data-hex');
         themeService.setPrimaryColor(hex);
-        AdminDataService.queueAutoSync();
+        this.queueSettingsSync();
         this.render(container);
         toast.success(currentLocale === 'km' ? 'បានផ្លាស់ប្តូរពណ៌ចម្បងដោយជោគជ័យ' : 'Theme color updated');
       });
@@ -743,7 +753,7 @@ export const SettingsPage = {
       btn.addEventListener('click', () => {
         const lang = btn.getAttribute('data-lang-choice');
         i18n.setLocale(lang);
-        AdminDataService.queueAutoSync();
+        this.queueSettingsSync();
         this.render(container);
         toast.success(lang === 'km' ? 'ភាសាត្រូវបានផ្លាស់ប្តូរទៅ ភាសាខ្មែរ' : 'Language changed to English');
       });
@@ -755,7 +765,7 @@ export const SettingsPage = {
     selectFontEn?.addEventListener('change', (e) => {
       const selected = e.target.value;
       fontService.setEnglishFont(selected);
-      AdminDataService.queueAutoSync();
+      this.queueSettingsSync();
       if (previewFontEn) {
         previewFontEn.style.fontFamily = fontService.getEnglishStack(selected);
       }
@@ -770,7 +780,7 @@ export const SettingsPage = {
     selectFontKm?.addEventListener('change', (e) => {
       const selected = e.target.value;
       fontService.setKhmerFont(selected);
-      AdminDataService.queueAutoSync();
+      this.queueSettingsSync();
       if (previewFontKm) {
         previewFontKm.style.fontFamily = fontService.getKhmerStack(selected);
       }
@@ -794,7 +804,7 @@ export const SettingsPage = {
         if (!FONT_SIZES[sizeKey]) return;
 
         fontService.setFontSize(sizeKey);
-        AdminDataService.queueAutoSync();
+        this.queueSettingsSync();
 
         // Update active button styles
         container.querySelectorAll('.font-size-choice-btn').forEach(b => {
@@ -839,7 +849,7 @@ export const SettingsPage = {
         if (!year) return;
         try {
           await SettingsService.setActiveAcademicYear(year);
-          AdminDataService.queueAutoSync();
+          this.queueSettingsSync();
           toast.success(currentLocale === 'km' ? `បានកំណត់ឆ្នាំសិក្សា ${year} ជាឆ្នាំសកម្ម` : `Active academic year set to ${year}`);
           window.dispatchEvent(new CustomEvent('app:refresh-data'));
           await this.render(container);
@@ -907,7 +917,7 @@ export const SettingsPage = {
           try {
             const success = await SettingsService.deleteAcademicYear(id || name);
             if (success) {
-              AdminDataService.queueAutoSync();
+              this.queueSettingsSync();
               toast.success(t('settings.deleteYearSuccess').replace('{year}', name || id));
               window.dispatchEvent(new CustomEvent('app:refresh-data'));
               await this.render(container);
@@ -1059,7 +1069,11 @@ export const SettingsPage = {
       setCloudSyncUrl(url);
       toast.success(currentLocale === 'km' ? 'បានរក្សាទុកអាសយដ្ឋាន Web App ដោយជោគជ័យ' : 'Google Script Web App URL saved successfully.');
       try {
-        await AdminDataService.saveToGoogleSheet({ silent: true });
+        if (authService.isOfficer()) {
+          await CloudSyncService.syncToDrive(authService.getCurrentUser(), { silent: true });
+        } else {
+          await AdminDataService.saveToGoogleSheet({ silent: true });
+        }
       } catch (e) {
         console.warn('Auto sync on URL save error:', e);
       }
@@ -1418,7 +1432,7 @@ export const SettingsPage = {
 
             try {
               await SettingsService.createAcademicYear({ name, startDate, endDate });
-              AdminDataService.queueAutoSync();
+              this.queueSettingsSync();
               const succMsg = currentLocale === 'km' ? `បានបង្កើតឆ្នាំសិក្សា "${name}" ដោយជោគជ័យ` : `Academic year "${name}" created successfully`;
               if (window.UI?.toast) {
                 window.UI.toast('success', succMsg);
@@ -1458,7 +1472,7 @@ export const SettingsPage = {
 
       try {
         await SettingsService.createAcademicYear({ name, startDate, endDate });
-        AdminDataService.queueAutoSync();
+        this.queueSettingsSync();
         toast.success(currentLocale === 'km' ? `បានបង្កើតឆ្នាំសិក្សា "${name}" ដោយជោគជ័យ` : `Academic year "${name}" created successfully`);
         modal.close();
         window.dispatchEvent(new CustomEvent('app:refresh-data'));
@@ -1530,7 +1544,7 @@ export const SettingsPage = {
 
             try {
               await SettingsService.updateAcademicYear(ay.id || ay.name, { name, startDate, endDate });
-              AdminDataService.queueAutoSync();
+              this.queueSettingsSync();
               const succMsg = currentLocale === 'km' ? `បានកែប្រែឆ្នាំសិក្សា "${name}" ដោយជោគជ័យ` : `Academic year "${name}" updated successfully`;
               if (window.UI?.toast) {
                 window.UI.toast('success', succMsg);
@@ -1570,7 +1584,7 @@ export const SettingsPage = {
 
       try {
         await SettingsService.updateAcademicYear(ay.id || ay.name, { name, startDate, endDate });
-        AdminDataService.queueAutoSync();
+        this.queueSettingsSync();
         toast.success(currentLocale === 'km' ? `បានកែប្រែឆ្នាំសិក្សា "${name}" ដោយជោគជ័យ` : `Academic year "${name}" updated successfully`);
         modal.close();
         window.dispatchEvent(new CustomEvent('app:refresh-data'));

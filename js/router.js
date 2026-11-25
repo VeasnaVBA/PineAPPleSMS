@@ -98,7 +98,7 @@ export class Router {
     if (cleanRole === 'ADMIN') {
       defaultRoute = 'users';
     } else if (cleanRole === 'OFFICER') {
-      defaultRoute = (baseRoute === 'students' || baseRoute === 'classes') ? baseRoute : 'teachers';
+      defaultRoute = (baseRoute === 'students' || baseRoute === 'classes' || baseRoute === 'settings') ? baseRoute : 'teachers';
     }
     let route = routes[baseRoute] ? baseRoute : defaultRoute;
 
@@ -140,7 +140,7 @@ export class Router {
     if (cleanRole === 'ADMIN') {
       defaultRoute = 'users';
     } else if (cleanRole === 'OFFICER') {
-      defaultRoute = (effectiveRouteKey === 'students' || effectiveRouteKey === 'classes') ? effectiveRouteKey : 'teachers';
+      defaultRoute = (effectiveRouteKey === 'students' || effectiveRouteKey === 'classes' || effectiveRouteKey === 'settings') ? effectiveRouteKey : 'teachers';
     }
 
     // Automatic redirect if user does not have permission to access this route
@@ -165,7 +165,7 @@ export class Router {
     if (cleanRole === 'ADMIN') {
       defaultFallback = routes.users;
     } else if (cleanRole === 'OFFICER') {
-      defaultFallback = (effectiveRouteKey === 'students') ? routes.students : (effectiveRouteKey === 'classes' ? routes.classes : OfficerTeachersPage);
+      defaultFallback = (effectiveRouteKey === 'students') ? routes.students : (effectiveRouteKey === 'classes' ? routes.classes : (effectiveRouteKey === 'settings' ? routes.settings : OfficerTeachersPage));
     }
     let page = routes[effectiveRouteKey] || defaultFallback;
     if (effectiveRouteKey === 'teachers' && cleanRole === 'OFFICER') {

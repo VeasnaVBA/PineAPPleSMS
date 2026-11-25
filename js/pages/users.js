@@ -466,11 +466,18 @@ export const UsersPage = {
         icon: 'classes',
         isPrimary: true,
         desc: isKm ? 'ម៉ឺនុយគ្រប់គ្រង និងបង្កើតថ្នាក់រៀនគ្មានដែនកំណត់' : 'Classroom Management menu (Unlimited classes)'
+      },
+      {
+        key: 'settings',
+        label: isKm ? 'ការកំណត់ប្រព័ន្ធ' : 'Settings',
+        icon: 'settings',
+        isPrimary: false,
+        desc: isKm ? 'ការកំណត់ផ្ទាល់ខ្លួន និងសមកាលកម្មទិន្នន័យទៅ Google Sheet របស់ Officer ផ្ទាល់' : 'Personal settings & sync to Officer account Google Sheet only'
       }
     ];
 
     return officerMenuDefs.map((def) => {
-      const isChecked = (def.key === 'teachers' || def.key === 'students' || def.key === 'classes')
+      const isChecked = (def.key === 'teachers' || def.key === 'students' || def.key === 'classes' || def.key === 'settings')
         ? (officerPerms[def.key] !== false)
         : Boolean(officerPerms[def.key]);
 
@@ -773,7 +780,7 @@ export const UsersPage = {
     document.getElementById('btn-save-perms')?.addEventListener('click', async () => {
       const directorPerms = {};
       const teacherPerms = {};
-      const officerPerms = this.permissions?.OFFICER || { teachers: true, students: true, classes: true };
+      const officerPerms = this.permissions?.OFFICER || { teachers: true, students: true, classes: true, settings: true };
 
       this.container.querySelectorAll('.perm-checkbox').forEach(cb => {
         const role = cb.getAttribute('data-role');
