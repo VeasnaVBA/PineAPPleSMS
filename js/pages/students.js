@@ -733,7 +733,13 @@ export const StudentsPage = {
                   <th class="px-3 py-3">${t('students.motherOccupation')}</th>
                   <!-- 29. លេខទូរសព្ទ -->
                   <th class="px-3 py-3">${t('students.motherPhone')}</th>
-                  <!-- 30. ផ្សេងៗ -->
+                  <!-- 30. ឈ្មោះអាណាព្យាបាល -->
+                  <th class="px-3 py-3">${t('students.guardianName')}</th>
+                  <!-- 31. មុខរបរ (អាណាព្យាបាល) -->
+                  <th class="px-3 py-3">${t('students.guardianOccupation')}</th>
+                  <!-- 32. លេខទូរសព្ទ (អាណាព្យាបាល) -->
+                  <th class="px-3 py-3">${t('students.guardianPhone')}</th>
+                  <!-- 33. ផ្សេងៗ -->
                   <th class="px-3 py-3">${t('students.notes')}</th>
                   <!-- Actions (sticky right) -->
                   <th class="w-[50px] px-2 py-3 text-center sticky right-0 bg-muted z-30">${t('common.actions')}</th>
@@ -741,7 +747,7 @@ export const StudentsPage = {
               </thead>
               <tbody id="student-table-body" class="divide-y divide-border">
                 <tr>
-                  <td colspan="32" class="py-12 text-center text-muted-foreground">
+                  <td colspan="35" class="py-12 text-center text-muted-foreground">
                     <div class="flex items-center justify-center gap-2">
                       <div class="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
                       <span>${t('common.loading')}</span>
@@ -939,6 +945,8 @@ export const StudentsPage = {
           (s.fatherPhone && s.fatherPhone.includes(q)) ||
           (s.motherName && s.motherName.toLowerCase().includes(q)) ||
           (s.motherPhone && s.motherPhone.includes(q)) ||
+          (s.guardianName && s.guardianName.toLowerCase().includes(q)) ||
+          (s.guardianPhone && s.guardianPhone.includes(q)) ||
           (s.birthVillage && s.birthVillage.toLowerCase().includes(q)) ||
           (s.birthCommune && s.birthCommune.toLowerCase().includes(q)) ||
           (s.birthDistrict && s.birthDistrict.toLowerCase().includes(q)) ||
@@ -1207,7 +1215,7 @@ export const StudentsPage = {
     if (!students || students.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="32" class="py-12 text-center text-muted-foreground">
+          <td colspan="35" class="py-12 text-center text-muted-foreground">
             <div class="max-w-xs mx-auto space-y-2">
               <div class="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto text-muted-foreground">
                 ${getIcon('search', 'w-5 h-5')}
@@ -1425,7 +1433,22 @@ export const StudentsPage = {
             ${student.motherPhone || '—'}
           </td>
 
-          <!-- 29. ផ្សេងៗ (notes) -->
+          <!-- 29. ឈ្មោះអាណាព្យាបាល (guardianName) -->
+          <td class="px-3 py-2.5 text-foreground">
+            ${student.guardianName || '—'}
+          </td>
+
+          <!-- 30. មុខរបរ (guardianOccupation) -->
+          <td class="px-3 py-2.5 text-muted-foreground">
+            ${student.guardianOccupation || '—'}
+          </td>
+
+          <!-- 31. លេខទូរសព្ទ (guardianPhone) -->
+          <td class="px-3 py-2.5 font-mono text-muted-foreground">
+            ${student.guardianPhone || '—'}
+          </td>
+
+          <!-- 32. ផ្សេងៗ (notes) -->
           <td class="px-3 py-2.5 text-muted-foreground max-w-xs truncate" title="${student.notes || ''}">
             ${student.notes || '—'}
           </td>
@@ -2457,6 +2480,16 @@ export const StudentsPage = {
                 <div class="flex justify-between"><span class="text-muted-foreground ${isKm ? 'font-khmer' : ''}">${t('students.motherName')}:</span> <span class="font-medium text-foreground">${student.motherName || '—'}</span></div>
                 <div class="flex justify-between"><span class="text-muted-foreground ${isKm ? 'font-khmer' : ''}">${t('students.motherOccupation')}:</span> <span class="text-foreground">${student.motherOccupation || '—'}</span></div>
                 <div class="flex justify-between"><span class="text-muted-foreground ${isKm ? 'font-khmer' : ''}">${t('students.motherPhone')}:</span> <span class="font-mono text-foreground">${student.motherPhone || '—'}</span></div>
+              </div>
+
+              <!-- Guardian -->
+              <div class="p-2.5 rounded-md bg-muted/30 border border-border/60 space-y-1 sm:col-span-2">
+                <span class="text-[11px] font-bold text-foreground block mb-1 ${isKm ? 'font-khmer' : ''}">${t('students.secGuardianInfo')}</span>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div class="flex justify-between sm:justify-start sm:gap-2"><span class="text-muted-foreground ${isKm ? 'font-khmer' : ''}">${t('students.guardianName')}:</span> <span class="font-medium text-foreground">${student.guardianName || '—'}</span></div>
+                  <div class="flex justify-between sm:justify-start sm:gap-2"><span class="text-muted-foreground ${isKm ? 'font-khmer' : ''}">${t('students.guardianOccupation')}:</span> <span class="text-foreground">${student.guardianOccupation || '—'}</span></div>
+                  <div class="flex justify-between sm:justify-start sm:gap-2"><span class="text-muted-foreground ${isKm ? 'font-khmer' : ''}">${t('students.guardianPhone')}:</span> <span class="font-mono text-foreground">${student.guardianPhone || '—'}</span></div>
+                </div>
               </div>
             </div>
           </div>

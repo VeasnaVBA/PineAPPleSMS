@@ -76,6 +76,10 @@ export function normalizeStudentRecord(raw) {
   s.motherOccupation = s.motherOccupation || '';
   s.motherPhone = s.motherPhone || '';
 
+  s.guardianName = s.guardianName || raw?.['ឈ្មោះអាណាព្យាបាល'] || raw?.['Guardian Name'] || '';
+  s.guardianOccupation = s.guardianOccupation || raw?.guardianJob || raw?.['មុខរបរអាណាព្យាបាល'] || raw?.['Guardian Occupation'] || '';
+  s.guardianPhone = s.guardianPhone || raw?.['ទូរសព្ទអាណាព្យាបាល'] || raw?.['លេខទូរសព្ទអាណាព្យាបាល'] || raw?.['Guardian Phone'] || '';
+
   // 10. Notes (ផ្សេងៗ)
   s.notes = s.notes || raw?.['ផ្សេងៗ'] || raw?.['ចំណាំ'] || raw?.remarks || raw?.remark || raw?.other || '';
   s['ផ្សេងៗ'] = s.notes;
@@ -346,6 +350,8 @@ export const StudentService = {
           (s.fatherPhone && s.fatherPhone.includes(q)) ||
           (s.motherName && s.motherName.toLowerCase().includes(q)) ||
           (s.motherPhone && s.motherPhone.includes(q)) ||
+          (s.guardianName && s.guardianName.toLowerCase().includes(q)) ||
+          (s.guardianPhone && s.guardianPhone.includes(q)) ||
           (s.birthVillage && s.birthVillage.toLowerCase().includes(q)) ||
           (s.birthProvince && s.birthProvince.toLowerCase().includes(q)) ||
           (s.currentVillage && s.currentVillage.toLowerCase().includes(q)) ||

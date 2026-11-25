@@ -18,6 +18,9 @@ export const DEFAULT_FIELD_STYLES = {
   gender: { font: 'Kantumruy Pro', size: 7.5, color: '#1e293b', bold: false },
   fatherName: { font: 'Kantumruy Pro', size: 7.5, color: '#1e293b', bold: false },
   motherName: { font: 'Kantumruy Pro', size: 7.5, color: '#1e293b', bold: false },
+  guardianName: { font: 'Kantumruy Pro', size: 7.5, color: '#1e293b', bold: false },
+  guardianOccupation: { font: 'Kantumruy Pro', size: 7.5, color: '#1e293b', bold: false },
+  guardianPhone: { font: 'monospace', size: 7.5, color: '#1e293b', bold: false },
   phone: { font: 'monospace', size: 7.5, color: '#1e293b', bold: false }
 };
 
@@ -51,6 +54,9 @@ export const DEFAULT_FIELD_ORDER = [
   'gender',
   'fatherName',
   'motherName',
+  'guardianName',
+  'guardianOccupation',
+  'guardianPhone',
   'phone'
 ];
 
@@ -165,6 +171,9 @@ export const DEFAULT_CARD_CONFIG = {
     gender: true,
     fatherName: false,
     motherName: false,
+    guardianName: false,
+    guardianOccupation: false,
+    guardianPhone: false,
     phone: false
   },
 
@@ -179,6 +188,9 @@ export const DEFAULT_CARD_CONFIG = {
     'gender',
     'fatherName',
     'motherName',
+    'guardianName',
+    'guardianOccupation',
+    'guardianPhone',
     'phone'
   ],
 
@@ -317,6 +329,9 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
   const gender = student.gender === 'Female' || student.gender === 'ស្រី' ? 'ស្រី' : 'ប្រុស';
   const fatherName = student.fatherName || '';
   const motherName = student.motherName || '';
+  const guardianName = student.guardianName || '';
+  const guardianOccupation = student.guardianOccupation || student.guardianJob || '';
+  const guardianPhone = student.guardianPhone || '';
   const phone = student.studentPhone || student.phone || student.fatherPhone || '';
 
   // Photo resolution
@@ -489,6 +504,30 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
             <div class="${colClass}">
               <span class="text-slate-500 font-semibold font-khmer">ម្តាយ</span>
               <span class="truncate" style="${getFieldValStyle('motherName', 'Kantumruy Pro', 7.5, '#1e293b', false)}">: ${motherName}</span>
+            </div>
+          `;
+        case 'guardianName':
+          if (!cfg.fields.guardianName || !guardianName) return '';
+          return `
+            <div class="${colClass}">
+              <span class="text-slate-500 font-semibold font-khmer">អាណាព្យាបាល</span>
+              <span class="truncate" style="${getFieldValStyle('guardianName', 'Kantumruy Pro', 7.5, '#1e293b', false)}">: ${guardianName}</span>
+            </div>
+          `;
+        case 'guardianOccupation':
+          if (!cfg.fields.guardianOccupation || !guardianOccupation) return '';
+          return `
+            <div class="${colClass}">
+              <span class="text-slate-500 font-semibold font-khmer">មុខរបរ</span>
+              <span class="truncate" style="${getFieldValStyle('guardianOccupation', 'Kantumruy Pro', 7.5, '#1e293b', false)}">: ${guardianOccupation}</span>
+            </div>
+          `;
+        case 'guardianPhone':
+          if (!cfg.fields.guardianPhone || !guardianPhone) return '';
+          return `
+            <div class="${colClass}">
+              <span class="text-slate-500 font-semibold font-khmer">ទូរសព្ទអាណាព្យាបាល</span>
+              <span class="truncate font-mono" style="${getFieldValStyle('guardianPhone', 'monospace', 7.5, '#1e293b', false)}">: ${guardianPhone}</span>
             </div>
           `;
         case 'phone':

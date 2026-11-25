@@ -69,9 +69,12 @@ export const STUDENT_EXCEL_COLUMNS = [
   { index: 25, key: 'fatherOccupation', headerKm: 'មុខរបរ',                 headerEn: 'Father Occupation',  required: false },
   { index: 26, key: 'fatherPhone',      headerKm: 'លេខទូរសព្ទ',              headerEn: 'Father Phone',       required: false },
   { index: 27, key: 'motherName',       headerKm: 'ឈ្មោះម្តាយ',              headerEn: 'Mother Name',        required: false },
-  { index: 28, key: 'motherOccupation', headerKm: 'មុខរបរ',                 headerEn: 'Mother Occupation',  required: false },
-  { index: 29, key: 'motherPhone',      headerKm: 'លេខទូរសព្ទ',              headerEn: 'Mother Phone',       required: false },
-  { index: 30, key: 'notes',            headerKm: 'ផ្សេងៗ',                  headerEn: 'Notes',              required: false }
+  { index: 28, key: 'motherOccupation',   headerKm: 'មុខរបរ',                 headerEn: 'Mother Occupation',   required: false },
+  { index: 29, key: 'motherPhone',        headerKm: 'លេខទូរសព្ទ',              headerEn: 'Mother Phone',        required: false },
+  { index: 30, key: 'guardianName',       headerKm: 'ឈ្មោះអាណាព្យាបាល',        headerEn: 'Guardian Name',       required: false },
+  { index: 31, key: 'guardianOccupation', headerKm: 'មុខរបរ',                 headerEn: 'Guardian Occupation', required: false },
+  { index: 32, key: 'guardianPhone',      headerKm: 'លេខទូរសព្ទ',              headerEn: 'Guardian Phone',      required: false },
+  { index: 33, key: 'notes',              headerKm: 'ផ្សេងៗ',                  headerEn: 'Notes',               required: false }
 ];
 
 export const StudentExcelService = {
@@ -213,7 +216,10 @@ export const StudentExcelService = {
         norm.motherName || '',                                    // 27. ឈ្មោះម្តាយ
         norm.motherOccupation || '',                              // 28. មុខរបរ
         norm.motherPhone || '',                                   // 29. លេខទូរសព្ទ
-        norm.notes || ''                                          // 30. ផ្សេងៗ
+        norm.guardianName || '',                                  // 30. ឈ្មោះអាណាព្យាបាល
+        norm.guardianOccupation || norm.guardianJob || '',        // 31. មុខរបរ (អាណាព្យាបាល)
+        norm.guardianPhone || '',                                 // 32. លេខទូរសព្ទ (អាណាព្យាបាល)
+        norm.notes || ''                                          // 33. ផ្សេងៗ
       ];
     });
 
@@ -557,35 +563,39 @@ export const StudentExcelService = {
 
     const headerRow = rawRows[0].map(h => String(h || '').trim().toLowerCase());
 
-    // Map column index by Khmer header or English header or key name
+    // Map column index by Khmer header or English header or key name (disambiguating repeated headers like មុខរបរ / លេខទូរសព្ទ)
     const colIndexMap = {};
+    const usedColIndices = new Set();
     STUDENT_EXCEL_COLUMNS.forEach((col, idx) => {
-      // Direct position match fallback
       let matchedIdx = idx;
 
-      // Header name search
       const kmLower = col.headerKm.toLowerCase();
       const enLower = col.headerEn.toLowerCase();
       const keyLower = col.key.toLowerCase();
 
-      let foundIdx = headerRow.findIndex(h => 
-        h === kmLower || 
-        h === enLower || 
-        h === keyLower || 
-        h.includes(kmLower) || 
-        h.includes(enLower)
+      let foundIdx = headerRow.findIndex((h, i) =>
+        !usedColIndices.has(i) && (
+          h === kmLower ||
+          h === enLower ||
+          h === keyLower ||
+          h.includes(kmLower) ||
+          h.includes(enLower)
+        )
       );
 
       if (foundIdx === -1 && col.key === 'lastYearSchool') {
-        foundIdx = headerRow.findIndex(h =>
-          h.includes('សាលារៀនឆ្នាំមុន') ||
-          h.includes('last year') ||
-          h.includes('previous school')
+        foundIdx = headerRow.findIndex((h, i) =>
+          !usedColIndices.has(i) && (
+            h.includes('សាលារៀនឆ្នាំមុន') ||
+            h.includes('last year') ||
+            h.includes('previous school')
+          )
         );
       }
 
       if (foundIdx !== -1) {
         matchedIdx = foundIdx;
+        usedColIndices.add(foundIdx);
       }
       colIndexMap[col.key] = matchedIdx;
     });
@@ -700,6 +710,10 @@ export const StudentExcelService = {
         motherName: getVal('motherName'),
         motherOccupation: getVal('motherOccupation'),
         motherPhone: getVal('motherPhone'),
+        guardianName: getVal('guardianName'),
+        guardianOccupation: getVal('guardianOccupation'),
+        guardianJob: getVal('guardianOccupation'),
+        guardianPhone: getVal('guardianPhone'),
         notes: getVal('notes')
       };
 

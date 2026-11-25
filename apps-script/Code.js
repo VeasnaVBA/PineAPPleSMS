@@ -723,7 +723,7 @@ function getOrCreateUserSpreadsheet(fileName, username) {
   ];
   
   var defaultHeaders = {
-    students: ['id', 'studentId', 'name', 'latinName', 'gender', 'dateOfBirth', 'classId', 'grade', 'academicYear', 'photo', 'qrCode', 'parentPhone', 'phone', 'address', 'status', 'createdAt', 'updatedAt'],
+    students: ['id', 'studentId', 'name', 'latinName', 'gender', 'dateOfBirth', 'classId', 'grade', 'academicYear', 'photo', 'qrCode', 'parentPhone', 'phone', 'guardianName', 'guardianOccupation', 'guardianPhone', 'address', 'status', 'createdAt', 'updatedAt'],
     schools: ['id', 'code', 'name', 'nameEn', 'address', 'director', 'phone', 'notes', 'updatedAt'],
     classes: ['id', 'name', 'grade', 'academicYear', 'room', 'teacherId', 'capacity', 'shift', 'status', 'createdAt', 'updatedAt'],
     teachers: ['id', 'teacherId', 'name', 'gender', 'phone', 'email', 'subject', 'role', 'status', 'photo', 'createdAt', 'updatedAt'],

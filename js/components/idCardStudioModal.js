@@ -3857,6 +3857,9 @@ export const IDCardStudioModal = {
       gender: { key: 'gender', labelKh: 'ភេទ', labelEn: 'Gender' },
       fatherName: { key: 'fatherName', labelKh: 'ឈ្មោះឪពុក', labelEn: 'Father Name' },
       motherName: { key: 'motherName', labelKh: 'ឈ្មោះម្តាយ', labelEn: 'Mother Name' },
+      guardianName: { key: 'guardianName', labelKh: 'ឈ្មោះអាណាព្យាបាល', labelEn: 'Guardian Name' },
+      guardianOccupation: { key: 'guardianOccupation', labelKh: 'មុខរបរអាណាព្យាបាល', labelEn: 'Guardian Occupation' },
+      guardianPhone: { key: 'guardianPhone', labelKh: 'លេខទូរសព្ទអាណាព្យាបាល', labelEn: 'Guardian Phone' },
       phone: { key: 'phone', labelKh: 'លេខទូរសព្ទ', labelEn: 'Phone Number' }
     };
 
