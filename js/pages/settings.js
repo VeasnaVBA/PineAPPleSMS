@@ -1070,7 +1070,7 @@ export const SettingsPage = {
       toast.success(currentLocale === 'km' ? 'បានរក្សាទុកអាសយដ្ឋាន Web App ដោយជោគជ័យ' : 'Google Script Web App URL saved successfully.');
       try {
         if (authService.isOfficer()) {
-          await CloudSyncService.syncToDrive(authService.getCurrentUser(), { silent: true });
+          await CloudSyncService.pullToDrive(authService.getCurrentUser(), { silent: true });
         } else {
           await AdminDataService.saveToGoogleSheet({ silent: true });
         }

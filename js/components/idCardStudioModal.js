@@ -4322,7 +4322,7 @@ export const IDCardStudioModal = {
 
       // Trigger Drive sync for card templates/design AND student photos & QR codes to user's Drive sheet
       const success = await CloudSyncService.syncCardSettingsToDrive(null, { silent: false });
-      const dataSuccess = await CloudSyncService.syncToDrive(null, { silent: true });
+      const dataSuccess = await CloudSyncService.pullToDrive(null, { silent: true });
       if (success) {
         toast.success(
           isKm
