@@ -1077,6 +1077,9 @@ export const StudentsPage = {
       return String(a.studentId || '').localeCompare(String(b.studentId || ''), ['km', 'en'], { numeric: true, sensitivity: 'base' });
     });
 
+    // Store exact filtered & sorted dataset for ID Card Studio & exports
+    this.currentFilteredStudents = items;
+
     // 6. Pagination
     const totalRecords = items.length;
     const totalPages = Math.max(1, Math.ceil(totalRecords / this.state.pageSize));
@@ -6653,124 +6656,26 @@ export const StudentsPage = {
   },
 
   /**
-   * Open the Student ID Card Studio for selected or filtered students
+   * Open the Student ID Card Studio for selected or currently filtered/sorted table students
    */
   async openIDCardStudio() {
     const isKm = i18n.getLocale() === 'km';
-    if (!this.cachedStudents) {
-      this.cachedStudents = await StudentService.getAll();
+    if (!this.currentFilteredStudents) {
+      await this.loadData();
     }
 
-    const matchesTargetClass = (s, targetVal) => {
-      const targetClass = (this.state.classes || []).find(c =>
-        c.id === targetVal || (c.name && c.name.toLowerCase() === String(targetVal).toLowerCase())
-      );
-      const targetClassName = targetClass?.name ? targetClass.name.trim().toLowerCase() : '';
-      const targetId = targetClass?.id || String(targetVal).trim();
-      const sClass = String(s.classId || s.assignedClassId || '').trim();
-      return sClass === targetId || (targetClassName && sClass.toLowerCase() === targetClassName);
-    };
-
+    const tableStudents = this.currentFilteredStudents || [];
     let studentsForCards = [];
 
-    // 1. If rows are specifically checked via checkboxes
+    // 1. If rows are specifically checked via checkboxes, scope to checked rows in the current table view
     if (this.state.selectedIds && this.state.selectedIds.size > 0) {
-      studentsForCards = (this.cachedStudents || []).filter(s => this.state.selectedIds.has(s.id));
-      if (this.state.classId && this.state.classId !== 'all') {
-        studentsForCards = studentsForCards.filter(s => matchesTargetClass(s, this.state.classId));
+      studentsForCards = tableStudents.filter(s => this.state.selectedIds.has(s.id));
+      if (studentsForCards.length === 0) {
+        studentsForCards = (this.cachedStudents || []).filter(s => this.state.selectedIds.has(s.id));
       }
     } else {
-      // 2. Use the exact same filtered dataset currently displayed in the table
-      let items = [...(this.cachedStudents || [])];
-
-      if (this.state.classId && this.state.classId !== 'all') {
-        items = items.filter(s => matchesTargetClass(s, this.state.classId));
-      }
-
-      if (this.state.status && this.state.status !== 'all') {
-        const targetStatus = this.state.status.trim().toLowerCase();
-        items = items.filter(s => {
-          if (!s.status) return false;
-          if (targetStatus === 'inactive') {
-            const st = s.status.trim().toLowerCase();
-            return st === 'inactive' || st === 'dropout' || s.status === 'អសកម្ម' || s.status === 'បោះបង់' || s.status === 'បោះបង់ការសិក្សា';
-          }
-          return s.status.trim().toLowerCase() === targetStatus;
-        });
-      }
-
-      if (this.state.academicYear && this.state.academicYear !== 'all') {
-        const normDash = y => String(y || '').replace(/[–—−]/g, '-').trim().toLowerCase();
-        items = items.filter(s => normDash(s.academicYear) === normDash(this.state.academicYear));
-      }
-
-      if (this.state.search && this.state.search.trim()) {
-        const q = this.state.search.trim().toLowerCase();
-        items = items.filter(s =>
-          (s.studentId && s.studentId.toLowerCase().includes(q)) ||
-          (s.lastNameKh && s.lastNameKh.toLowerCase().includes(q)) ||
-          (s.firstNameKh && s.firstNameKh.toLowerCase().includes(q)) ||
-          (s.lastNameLatin && s.lastNameLatin.toLowerCase().includes(q)) ||
-          (s.firstNameLatin && s.firstNameLatin.toLowerCase().includes(q)) ||
-          (s.khmerName && s.khmerName.toLowerCase().includes(q)) ||
-          (s.englishName && s.englishName.toLowerCase().includes(q)) ||
-          (s.classId && s.classId.toLowerCase().includes(q))
-        );
-      }
-
-      // Drill-down filter
-      if (this.state.filterField && this.state.filterValue && this.state.filterValue !== 'all') {
-        const field = this.state.filterField;
-        const targetVal = this.state.filterValue.trim().toLowerCase();
-        items = items.filter(s => {
-          if (field === 'village') {
-            return (s.currentVillage && s.currentVillage.trim().toLowerCase() === targetVal) ||
-                   (s.birthVillage && s.birthVillage.trim().toLowerCase() === targetVal);
-          }
-          if (field === 'commune') {
-            return (s.currentCommune && s.currentCommune.trim().toLowerCase() === targetVal) ||
-                   (s.birthCommune && s.birthCommune.trim().toLowerCase() === targetVal);
-          }
-          if (field === 'district') {
-            return (s.currentDistrict && s.currentDistrict.trim().toLowerCase() === targetVal) ||
-                   (s.birthDistrict && s.birthDistrict.trim().toLowerCase() === targetVal);
-          }
-          if (field === 'province') {
-            return (s.currentProvince && s.currentProvince.trim().toLowerCase() === targetVal) ||
-                   (s.birthProvince && s.birthProvince.trim().toLowerCase() === targetVal);
-          }
-          if (field === 'gender') {
-            return s.gender && s.gender.trim().toLowerCase() === targetVal;
-          }
-          if (field === 'classId') {
-            return matchesTargetClass(s, this.state.filterValue);
-          }
-          if (field === 'academicYear') {
-            return s.academicYear && s.academicYear.trim().toLowerCase() === targetVal;
-          }
-          if (field === 'photoStatus') {
-            const hasPhoto = !!(s.photoBlob || (s.photo && String(s.photo).startsWith('data:')));
-            return targetVal === 'has_photo' ? hasPhoto : !hasPhoto;
-          }
-          if (field === 'qrStatus') {
-            const hasQr = !!(s.qrCode && String(s.qrCode).trim() !== '');
-            return targetVal === 'has_qr' ? hasQr : !hasQr;
-          }
-          return s[field] && String(s[field]).trim().toLowerCase() === targetVal;
-        });
-      }
-
-      // Sort to match table order
-      const sortField = this.state.sortBy || 'lastNameKh';
-      const sortDir = this.state.sortDir || 'asc';
-      items.sort((a, b) => {
-        const valA = String(a[sortField] ?? '').trim();
-        const valB = String(b[sortField] ?? '').trim();
-        const cmp = valA.localeCompare(valB, ['km', 'en'], { numeric: true, sensitivity: 'base' });
-        return sortDir === 'desc' ? -cmp : cmp;
-      });
-
-      studentsForCards = items;
+      // 2. Use the exact filtered and sorted students currently in the table
+      studentsForCards = [...tableStudents];
     }
 
     if (!studentsForCards || studentsForCards.length === 0) {
