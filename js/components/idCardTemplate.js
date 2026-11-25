@@ -913,17 +913,11 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
 
         <div class="card-body-content relative z-10 mx-2 my-1 flex flex-col justify-between flex-1 h-full min-w-0">
           
-          <!-- Top Header: School Name & Title (no front logo) -->
-          <div class="border-b border-slate-200/90 pb-0.5 flex items-center justify-between w-full shrink-0 relative z-20 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 rounded select-none"
+          <!-- Top Header: Title Only -->
+          <div class="border-b border-slate-200/90 pb-0.5 flex items-center justify-center w-full shrink-0 relative z-20 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 rounded select-none"
                data-asset-type="backHeader"
                style="${backHeaderTransform}">
-            <div class="flex items-center gap-1.5 min-w-0 pointer-events-none">
-              <div class="min-w-0">
-                <h5 class="text-[7px] font-bold font-khmer uppercase text-slate-800 truncate leading-tight">${cfg.schoolNameKh || 'សាលារៀន'}</h5>
-                ${cfg.schoolNameEn ? `<p class="text-[5.5px] font-semibold uppercase text-slate-400 tracking-tight leading-none">${cfg.schoolNameEn}</p>` : ''}
-              </div>
-            </div>
-            <span class="px-1.5 py-0.2 rounded text-[6px] font-bold font-khmer text-white shrink-0 pointer-events-none" style="background: ${accent};">
+            <span class="px-2 py-0.5 rounded-full text-[6px] font-bold font-khmer text-white shrink-0 pointer-events-none" style="background: ${accent};">
               ${cfg.backSideTitleKh || 'លក្ខខណ្ឌប្រើប្រាស់'}
             </span>
           </div>
@@ -1001,16 +995,10 @@ export function renderIDCardBackHtml(student = {}, config = DEFAULT_CARD_CONFIG,
 
       <div class="card-body-content relative z-10 mx-2 my-1.5 flex flex-col justify-between flex-1 h-full min-w-0">
         
-        <!-- Top Bar: School & Title (no front logo) -->
+        <!-- Top Bar: Title Only -->
         <div class="border-b border-slate-200/90 pb-1 text-center w-full shrink-0 relative z-20 draggable-card-asset cursor-grab active:cursor-grabbing hover:ring-1 hover:ring-primary/60 rounded select-none"
              data-asset-type="backHeader"
              style="${backHeaderTransform}">
-          <div class="flex items-center justify-center gap-1.5 mb-0.5 pointer-events-none">
-            <div class="text-center min-w-0">
-              <h5 class="text-[7.5px] font-bold font-khmer uppercase text-slate-800 truncate leading-tight">${cfg.schoolNameKh || 'សាលារៀន'}</h5>
-              ${cfg.schoolNameEn ? `<p class="text-[5.5px] font-semibold uppercase text-slate-400 tracking-tight leading-none">${cfg.schoolNameEn}</p>` : ''}
-            </div>
-          </div>
           <div class="inline-block px-2 py-0.5 rounded-full text-[6px] font-bold font-khmer text-white tracking-wide pointer-events-none" style="background: ${accent};">
             ${cfg.backSideTitleKh || 'បទបញ្ជាផ្ទៃក្នុង & លក្ខខណ្ឌ'}
           </div>
