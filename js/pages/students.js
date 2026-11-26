@@ -6709,29 +6709,37 @@ export const StudentsPage = {
    * Immediately sync student deletions to Google Drive Sheet (fast DELETE_STUDENTS with pullToDrive fallback)
    */
   async syncStudentDeletionToSheet(deletedKeys = []) {
+    const isKm = i18n.getLocale() === 'km';
     try {
-      if (CloudSyncService.isOnline?.() && getCloudSyncUrl()) {
-        let ok = false;
-        if (Array.isArray(deletedKeys) && deletedKeys.length > 0 && typeof CloudSyncService.deleteStudentsFromDrive === 'function') {
-          try {
-            ok = await CloudSyncService.deleteStudentsFromDrive(deletedKeys);
-          } catch (_) {
-            ok = false;
-          }
+      if (!CloudSyncService.isOnline?.() || !getCloudSyncUrl()) return;
+
+      // Cancel any pending debounced dirty auto-sync so it cannot race with deletion
+      syncStateManager.markClean();
+
+      let ok = false;
+      if (Array.isArray(deletedKeys) && deletedKeys.length > 0 && typeof CloudSyncService.deleteStudentsFromDrive === 'function') {
+        try {
+          ok = await CloudSyncService.deleteStudentsFromDrive(deletedKeys);
+        } catch (_) {
+          ok = false;
         }
-        if (!ok) {
-          const remaining = await StudentService.getAll();
-          ok = await CloudSyncService.pullToDrive(null, {
-            silent: true,
-            allowEmptyWipe: remaining.length === 0 ? ['students'] : false
-          });
-        }
-        if (ok) {
-          syncStateManager.markClean();
-        }
+      }
+
+      if (!ok) {
+        const remaining = await StudentService.getAll();
+        ok = await CloudSyncService.pullToDrive(null, {
+          silent: false,
+          allowEmptyWipe: remaining.length === 0 ? ['students'] : false
+        });
+      }
+
+      if (ok) {
+        syncStateManager.markClean();
+        toast.success(isKm ? 'បានលុបទិន្នន័យសិស្សចេញពី Google Sheet រួចរាល់' : 'Removed deleted student(s) from Google Sheet');
       }
     } catch (err) {
       console.warn('Could not sync student deletion to Sheet:', err);
+      toast.error(isKm ? 'មិនអាចលុបសិស្សចេញពី Google Sheet បានទេ: ' + (err.message || '') : 'Failed to remove student from Google Sheet: ' + (err.message || ''));
     }
   },
 
