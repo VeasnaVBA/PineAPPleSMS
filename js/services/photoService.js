@@ -29,9 +29,9 @@ class PhotoService {
       };
 
       img.onload = () => {
-        const maxWidth = options.maxWidth || 500;
-        const maxHeight = options.maxHeight || 650;
-        const quality = options.quality !== undefined ? options.quality : 0.85;
+        const maxWidth = options.maxWidth || 300;
+        const maxHeight = options.maxHeight || 390;
+        const quality = options.quality !== undefined ? options.quality : 0.75;
 
         let width = img.width;
         let height = img.height;
@@ -139,6 +139,54 @@ class PhotoService {
       reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
+  }
+
+  /**
+   * Ensures a data:image/* URL fits comfortably inside Google Sheets' 50,000-char cell limit.
+   */
+  async compressDataUrlToLimit(dataUrl, maxChars = 45000) {
+    if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) {
+      return dataUrl || '';
+    }
+    if (dataUrl.length <= maxChars) return dataUrl;
+
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const steps = [
+          [280, 0.72],
+          [240, 0.65],
+          [200, 0.58],
+          [160, 0.50],
+          [130, 0.42]
+        ];
+        let best = dataUrl;
+        for (const [maxDim, quality] of steps) {
+          const ratio = Math.min(1, maxDim / Math.max(img.width || 1, img.height || 1));
+          const w = Math.max(1, Math.round((img.width || maxDim) * ratio));
+          const h = Math.max(1, Math.round((img.height || maxDim) * ratio));
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const candidate = canvas.toDataURL('image/jpeg', quality);
+          best = candidate;
+          if (candidate.length <= maxChars) break;
+        }
+        resolve(best);
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  }
+
+  /**
+   * Converts a Blob to a compact Base64 Data URL that fits in a single Google Sheet cell.
+   */
+  async blobToDataUrlForSheet(blob, maxChars = 45000) {
+    const raw = await this.blobToDataUrl(blob);
+    return this.compressDataUrlToLimit(raw, maxChars);
   }
 
   /**

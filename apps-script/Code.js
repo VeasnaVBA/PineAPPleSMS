@@ -831,16 +831,17 @@ function handlePullToDrive(fileName, username, data, payload) {
 
   var photoFolder = getOrCreatePhotosFolder(username);
 
-  // Save student photos & QR codes to Drive folder and put Drive link in sheet
+  // Keep student photos & QR codes directly inside the 'students' sheet cell whenever <= 48,000 chars.
+  // Only fall back to Drive file storage if an image exceeds Google Sheets' 50,000-char cell limit.
   if (Array.isArray(data.students)) {
     for (var s = 0; s < data.students.length; s++) {
       var std = data.students[s];
       var sId = String(std.studentId || std.id || ('std_' + s)).replace(/[^a-zA-Z0-9_-]/g, '_');
-      if (std.photo && typeof std.photo === 'string' && (std.photo.indexOf('data:image/') === 0 || std.photo.indexOf('base64,') > -1)) {
+      if (std.photo && typeof std.photo === 'string' && std.photo.length > 48000 && (std.photo.indexOf('data:image/') === 0 || std.photo.indexOf('base64,') > -1)) {
         var sUrl = savePhotoFileToDrive(photoFolder, 'student_' + sId + '.jpg', std.photo);
         if (sUrl) std.photo = sUrl;
       }
-      if (std.qrCode && typeof std.qrCode === 'string' && (std.qrCode.indexOf('data:image/') === 0 || std.qrCode.indexOf('base64,') > -1)) {
+      if (std.qrCode && typeof std.qrCode === 'string' && std.qrCode.length > 48000 && (std.qrCode.indexOf('data:image/') === 0 || std.qrCode.indexOf('base64,') > -1)) {
         var qrUrl = savePhotoFileToDrive(photoFolder, 'student_qr_' + sId + '.png', std.qrCode);
         if (qrUrl) std.qrCode = qrUrl;
       }

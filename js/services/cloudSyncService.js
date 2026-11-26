@@ -365,12 +365,17 @@ export const CloudSyncService = {
         const clean = { ...norm };
         if (clean.photoBlob instanceof Blob) {
           try {
-            clean.photo = await photoService.blobToDataUrl(clean.photoBlob);
+            clean.photo = await photoService.blobToDataUrlForSheet(clean.photoBlob, 45000);
           } catch (_) {
             if (!clean.photo || clean.photo === '(Photo attached)') clean.photo = '';
           }
         } else if (clean.photo === '(Photo attached)') {
           clean.photo = '';
+        } else if (clean.photo && typeof clean.photo === 'string' && clean.photo.startsWith('data:image/') && clean.photo.length > 45000) {
+          clean.photo = await photoService.compressDataUrlToLimit(clean.photo, 45000);
+        }
+        if (clean.qrCode && typeof clean.qrCode === 'string' && clean.qrCode.startsWith('data:image/') && clean.qrCode.length > 45000) {
+          clean.qrCode = await photoService.compressDataUrlToLimit(clean.qrCode, 45000);
         }
         delete clean.photoBlob;
         return clean;
@@ -422,12 +427,17 @@ export const CloudSyncService = {
         }
         if (clean.photoBlob instanceof Blob) {
           try {
-            clean.photo = await photoService.blobToDataUrl(clean.photoBlob);
+            clean.photo = await photoService.blobToDataUrlForSheet(clean.photoBlob, 45000);
           } catch (_) {
             if (!clean.photo || clean.photo === '(Photo attached)') clean.photo = '';
           }
         } else if (clean.photo === '(Photo attached)') {
           clean.photo = '';
+        } else if (clean.photo && typeof clean.photo === 'string' && clean.photo.startsWith('data:image/') && clean.photo.length > 45000) {
+          clean.photo = await photoService.compressDataUrlToLimit(clean.photo, 45000);
+        }
+        if (clean.qrCode && typeof clean.qrCode === 'string' && clean.qrCode.startsWith('data:image/') && clean.qrCode.length > 45000) {
+          clean.qrCode = await photoService.compressDataUrlToLimit(clean.qrCode, 45000);
         }
         delete clean.photoBlob;
         return clean;
