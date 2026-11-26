@@ -1168,54 +1168,79 @@ function handlePushToApp(fileName, username) {
     resultData[sheetName] = items;
   }
 
-  // Load photo files from SchoolPhotos_<username> folder to restore full-res 100KB photos
+  // Only load fallback photo files from SchoolPhotos_<username> when a row does NOT already have an inline data:image/ photo in the sheet
   try {
-    var photoFolder = getOrCreatePhotosFolder(username);
-    var photoMap = {};
-    var pFiles = photoFolder.getFiles();
-    while (pFiles.hasNext()) {
-      var pf = pFiles.next();
-      photoMap[pf.getName()] = pf;
-    }
-
+    var needsFallbackPhoto = false;
     if (Array.isArray(resultData.students)) {
-      for (var si = 0; si < resultData.students.length; si++) {
-        var sItem = resultData.students[si];
-        var sId = String(sItem.studentId || sItem.id || '').replace(/[^a-zA-Z0-9_-]/g, '_');
-        var sFile = photoMap['student_' + sId + '.jpg'] || (sItem.id ? photoMap['student_' + String(sItem.id).replace(/[^a-zA-Z0-9_-]/g, '_') + '.jpg'] : null);
-        if (sFile) {
-          try {
-            sItem.photo = 'data:image/jpeg;base64,' + Utilities.base64Encode(sFile.getBlob().getBytes());
-            sItem.drivePhotoUrl = sFile.getUrl();
-          } catch (_) {}
+      for (var cs = 0; cs < resultData.students.length; cs++) {
+        var sp = resultData.students[cs].photo;
+        if (!sp || String(sp).indexOf('data:image/') !== 0) {
+          needsFallbackPhoto = true;
+          break;
+        }
+      }
+    }
+    if (!needsFallbackPhoto && Array.isArray(resultData.teachers)) {
+      for (var ct = 0; ct < resultData.teachers.length; ct++) {
+        var tp = resultData.teachers[ct].photo;
+        if (!tp || String(tp).indexOf('data:image/') !== 0) {
+          needsFallbackPhoto = true;
+          break;
         }
       }
     }
 
-    if (Array.isArray(resultData.teachers)) {
-      for (var ti = 0; ti < resultData.teachers.length; ti++) {
-        var tItem = resultData.teachers[ti];
-        var tId = String(tItem.teacherId || tItem.id || '').replace(/[^a-zA-Z0-9_-]/g, '_');
-        var tFile = photoMap['teacher_' + tId + '.jpg'] || (tItem.id ? photoMap['teacher_' + String(tItem.id).replace(/[^a-zA-Z0-9_-]/g, '_') + '.jpg'] : null);
-        if (tFile) {
-          try {
-            tItem.photo = 'data:image/jpeg;base64,' + Utilities.base64Encode(tFile.getBlob().getBytes());
-            tItem.drivePhotoUrl = tFile.getUrl();
-          } catch (_) {}
+    if (needsFallbackPhoto) {
+      var photoFolder = getOrCreatePhotosFolder(username);
+      var photoMap = {};
+      var pFiles = photoFolder.getFiles();
+      while (pFiles.hasNext()) {
+        var pf = pFiles.next();
+        photoMap[pf.getName()] = pf;
+      }
+
+      if (Array.isArray(resultData.students)) {
+        for (var si = 0; si < resultData.students.length; si++) {
+          var sItem = resultData.students[si];
+          if (sItem.photo && String(sItem.photo).indexOf('data:image/') === 0) continue;
+          var sId = String(sItem.studentId || sItem.id || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+          var sFile = photoMap['student_' + sId + '.jpg'] || (sItem.id ? photoMap['student_' + String(sItem.id).replace(/[^a-zA-Z0-9_-]/g, '_') + '.jpg'] : null);
+          if (sFile) {
+            try {
+              sItem.photo = 'data:image/jpeg;base64,' + Utilities.base64Encode(sFile.getBlob().getBytes());
+              sItem.drivePhotoUrl = 'https://lh3.googleusercontent.com/d/' + sFile.getId();
+            } catch (_) {}
+          }
         }
       }
-    }
 
-    if (Array.isArray(resultData.registration_queue)) {
-      for (var qi = 0; qi < resultData.registration_queue.length; qi++) {
-        var qItem = resultData.registration_queue[qi];
-        var qId = String(qItem.tempStudentId || qItem.studentId || qItem.id || '').replace(/[^a-zA-Z0-9_-]/g, '_');
-        var qFile = photoMap['registration_' + qId + '.jpg'] || (qItem.id ? photoMap['registration_' + String(qItem.id).replace(/[^a-zA-Z0-9_-]/g, '_') + '.jpg'] : null);
-        if (qFile) {
-          try {
-            qItem.photo = 'data:image/jpeg;base64,' + Utilities.base64Encode(qFile.getBlob().getBytes());
-            qItem.drivePhotoUrl = qFile.getUrl();
-          } catch (_) {}
+      if (Array.isArray(resultData.teachers)) {
+        for (var ti = 0; ti < resultData.teachers.length; ti++) {
+          var tItem = resultData.teachers[ti];
+          if (tItem.photo && String(tItem.photo).indexOf('data:image/') === 0) continue;
+          var tId = String(tItem.teacherId || tItem.id || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+          var tFile = photoMap['teacher_' + tId + '.jpg'] || (tItem.id ? photoMap['teacher_' + String(tItem.id).replace(/[^a-zA-Z0-9_-]/g, '_') + '.jpg'] : null);
+          if (tFile) {
+            try {
+              tItem.photo = 'data:image/jpeg;base64,' + Utilities.base64Encode(tFile.getBlob().getBytes());
+              tItem.drivePhotoUrl = 'https://lh3.googleusercontent.com/d/' + tFile.getId();
+            } catch (_) {}
+          }
+        }
+      }
+
+      if (Array.isArray(resultData.registration_queue)) {
+        for (var qi = 0; qi < resultData.registration_queue.length; qi++) {
+          var qItem = resultData.registration_queue[qi];
+          if (qItem.photo && String(qItem.photo).indexOf('data:image/') === 0) continue;
+          var qId = String(qItem.tempStudentId || qItem.studentId || qItem.id || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+          var qFile = photoMap['registration_' + qId + '.jpg'] || (qItem.id ? photoMap['registration_' + String(qItem.id).replace(/[^a-zA-Z0-9_-]/g, '_') + '.jpg'] : null);
+          if (qFile) {
+            try {
+              qItem.photo = 'data:image/jpeg;base64,' + Utilities.base64Encode(qFile.getBlob().getBytes());
+              qItem.drivePhotoUrl = 'https://lh3.googleusercontent.com/d/' + qFile.getId();
+            } catch (_) {}
+          }
         }
       }
     }

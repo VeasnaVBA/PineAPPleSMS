@@ -1030,7 +1030,7 @@ export const StudentsPage = {
           return s.academicYear && s.academicYear.trim().toLowerCase() === targetVal;
         }
         if (field === 'photoStatus') {
-          const hasPhoto = !!(s.photoBlob || (s.photo && String(s.photo).startsWith('data:')));
+          const hasPhoto = !!photoService.resolvePhotoUrl(s);
           return targetVal === 'has_photo' ? hasPhoto : !hasPhoto;
         }
         if (field === 'qrStatus') {
@@ -6442,7 +6442,7 @@ export const StudentsPage = {
     let activeStatusFilter = 'all'; // 'all' | 'has_photo' | 'no_photo' | 'has_qr' | 'no_qr' | 'missing_any' | 'ready'
     let activeSort = 'photo_missing'; // 'photo_missing' | 'photo_has' | 'qr_missing' | 'qr_has' | 'studentId' | 'name'
 
-    const hasPhoto = (s) => !!(s.photoBlob || (s.photo && String(s.photo).startsWith('data:')));
+    const hasPhoto = (s) => !!photoService.resolvePhotoUrl(s);
     const hasQr = (s) => !!(s.qrCode && String(s.qrCode).trim() !== '');
 
     const getScopedStudents = () => {

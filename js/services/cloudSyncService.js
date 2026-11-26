@@ -599,7 +599,7 @@ export const CloudSyncService = {
         username: currentUser.username
       };
 
-      const timeoutMs = isLogin ? 35000 : (isForce ? 60000 : 45000);
+      const timeoutMs = isLogin ? 60000 : (isForce ? 60000 : 45000);
       const result = await this.dispatchGoogleScriptRequest(endpoint, payload, timeoutMs);
 
       if (!result || result.success === false) {
