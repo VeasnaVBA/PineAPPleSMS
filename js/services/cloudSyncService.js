@@ -667,7 +667,7 @@ export const CloudSyncService = {
         confirmText: t('common.confirm'),
         cancelText: t('common.cancel'),
         onConfirm: async () => {
-          await this.applyRestoredData(incomingData, currentUser);
+          await this.applyRestoredData(incomingData, currentUser, { allowEmptyWipe: true });
         }
       });
 
