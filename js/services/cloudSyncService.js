@@ -100,7 +100,7 @@ export const CloudSyncService = {
    * Helper: Dispatch POST request to Google Apps Script Web App handling CORS redirects.
    * Note: 'text/plain;charset=utf-8' is used to avoid CORS preflight OPTIONS blocking by browsers.
    */
-  async dispatchGoogleScriptRequest(endpoint, payload, timeoutMs = 45000) {
+  async dispatchGoogleScriptRequest(endpoint, payload, timeoutMs = 120000) {
     if (!endpoint || !endpoint.startsWith('http')) {
       throw new Error('Please configure a valid Google Apps Script Web App URL starting with https://');
     }
@@ -164,7 +164,7 @@ export const CloudSyncService = {
     } catch (err) {
       clearTimeout(timeoutId);
       if (err.name === 'AbortError') {
-        throw new Error('Connection timed out after 45 seconds. Please check your internet connection or Google Script status.');
+        throw new Error(`Connection timed out after ${Math.round(timeoutMs / 1000)} seconds. Please check your internet connection or Google Script status.`);
       }
       if (err.message === 'Failed to fetch') {
         throw new Error('Failed to fetch: Connection blocked or rejected by Google Script. Please ensure your Web App is deployed with "Who has access: Anyone" and ends in "/exec".');
@@ -207,7 +207,7 @@ export const CloudSyncService = {
         data: card_settings
       };
 
-      const result = await this.dispatchGoogleScriptRequest(endpoint, payload);
+      const result = await this.dispatchGoogleScriptRequest(endpoint, payload, 120000);
       if (!result || !result.success) {
         throw new Error(result?.error || 'Failed to sync card settings to Google Drive.');
       }
@@ -249,7 +249,7 @@ export const CloudSyncService = {
         username: currentUser.username
       };
 
-      const result = await this.dispatchGoogleScriptRequest(endpoint, payload);
+      const result = await this.dispatchGoogleScriptRequest(endpoint, payload, 120000);
       if (!result || !result.success) {
         throw new Error(result?.error || 'Failed to fetch card settings from Google Drive.');
       }
@@ -533,7 +533,7 @@ export const CloudSyncService = {
         }
       };
 
-      const result = await this.dispatchGoogleScriptRequest(endpoint, payload);
+      const result = await this.dispatchGoogleScriptRequest(endpoint, payload, 120000);
 
       if (!result || !result.success) {
         throw new Error(result?.error || 'Unknown error occurred while syncing to Google Drive.');
@@ -639,7 +639,7 @@ export const CloudSyncService = {
         username: currentUser.username
       };
 
-      const timeoutMs = isLogin ? 60000 : (isForce ? 60000 : 45000);
+      const timeoutMs = 120000;
       const result = await this.dispatchGoogleScriptRequest(endpoint, payload, timeoutMs);
 
       if (!result || result.success === false) {
@@ -1254,7 +1254,7 @@ export const CloudSyncService = {
         username: cleanUsername
       };
 
-      const result = await this.dispatchGoogleScriptRequest(endpoint, payload, 50000);
+      const result = await this.dispatchGoogleScriptRequest(endpoint, payload, 120000);
       if (result && result.success && result.found) {
         if (result.isNewlyCreated) {
           try {
@@ -1300,7 +1300,7 @@ export const CloudSyncService = {
         username: currentUser.username
       };
 
-      const result = await this.dispatchGoogleScriptRequest(endpoint, payload, 60000);
+      const result = await this.dispatchGoogleScriptRequest(endpoint, payload, 120000);
       if (result && result.success && result.found) {
         if (currentUser?.id) {
           const { initUserDatabase } = await import('../database/db.js');
