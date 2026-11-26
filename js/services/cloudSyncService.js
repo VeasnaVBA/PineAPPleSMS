@@ -838,16 +838,15 @@ export const CloudSyncService = {
         if (existingClasses.length > 0 && data.classes.length === 0 && !options?.allowEmptyWipe) {
           console.warn('[CloudSync] Safety Guard: Incoming class list from Drive is empty. Preserving local classes.');
         } else {
-        await db.clear('classes');
-        for (const item of data.classes) {
-          if (!item.id && !item.name) continue;
-          const cleanItem = {
-            ...item,
-            id: item.id ? String(item.id).trim() : `cls-${Date.now()}_${Math.random().toString(36).substr(2, 4)}`
-          };
-          await db.put('classes', cleanItem);
-          classCount++;
-        }
+          await db.clear('classes');
+          const cleanClasses = data.classes
+            .filter(item => item && (item.id || item.name))
+            .map(item => ({
+              ...item,
+              id: item.id ? String(item.id).trim() : `cls-${Date.now()}_${Math.random().toString(36).substr(2, 4)}`
+            }));
+          await Promise.all(cleanClasses.map(c => db.put('classes', c)));
+          classCount = cleanClasses.length;
         }
       }
 

@@ -875,20 +875,21 @@ function handlePullToDrive(fileName, username, data, payload) {
     }
   }
   
+  // Write lightweight metadata/structure sheets FIRST so a large 'students' photo payload never delays or blocks classes/schools/settings
   var sheetsDef = [
-    { name: 'students', data: data.students || [] },
     { name: 'schools', data: data.schools || [] },
     { name: 'classes', data: data.classes || [] },
-    { name: 'teachers', data: data.teachers || [] },
-    { name: 'attendance', data: data.attendance || [] },
-    { name: 'scores', data: data.scores || [] },
     { name: 'academicYears', data: data.academicYears || [] },
     { name: 'subjects', data: data.subjects || [] },
     { name: 'groups', data: data.groups || [] },
     { name: 'report_settings', data: data.report_settings || [] },
     { name: 'card_settings', data: data.card_settings || [] },
-    { name: 'registration_queue', data: data.registration_queue || [] },
-    { name: 'settings', data: data.settings || [] }
+    { name: 'settings', data: data.settings || [] },
+    { name: 'teachers', data: data.teachers || [] },
+    { name: 'students', data: data.students || [] },
+    { name: 'attendance', data: data.attendance || [] },
+    { name: 'scores', data: data.scores || [] },
+    { name: 'registration_queue', data: data.registration_queue || [] }
   ];
   
   // Dynamically include any extra tables sent in data (e.g. card_settings or custom tables)
