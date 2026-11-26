@@ -1220,13 +1220,13 @@ function handlePushToApp(fileName, username) {
     resultData[sheetName] = items;
   }
 
-  // Only load fallback photo files from SchoolPhotos_<username> when a row does NOT already have an inline data:image/ photo in the sheet
+  // Only load fallback photo files from SchoolPhotos_<username> when a row has '(Photo attached)' placeholder.
+  // Rows with empty '', inline 'data:image/', or 'https://' URLs do NOT trigger a slow Drive folder scan.
   try {
     var needsFallbackPhoto = false;
     if (Array.isArray(resultData.students)) {
       for (var cs = 0; cs < resultData.students.length; cs++) {
-        var sp = resultData.students[cs].photo;
-        if (!sp || String(sp).indexOf('data:image/') !== 0) {
+        if (resultData.students[cs].photo === '(Photo attached)') {
           needsFallbackPhoto = true;
           break;
         }
@@ -1234,8 +1234,7 @@ function handlePushToApp(fileName, username) {
     }
     if (!needsFallbackPhoto && Array.isArray(resultData.teachers)) {
       for (var ct = 0; ct < resultData.teachers.length; ct++) {
-        var tp = resultData.teachers[ct].photo;
-        if (!tp || String(tp).indexOf('data:image/') !== 0) {
+        if (resultData.teachers[ct].photo === '(Photo attached)') {
           needsFallbackPhoto = true;
           break;
         }

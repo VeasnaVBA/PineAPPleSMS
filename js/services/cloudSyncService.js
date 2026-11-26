@@ -727,38 +727,41 @@ export const CloudSyncService = {
           }
 
           await db.clear('students');
-        for (const item of data.students) {
-          if (!item.id && !item.studentId) continue;
-          let dob = item.dateOfBirth;
-          if (dob && typeof dob === 'string' && dob.includes('T')) {
-            dob = dob.split('T')[0];
-          }
+          const cleanStudents = await Promise.all(
+            data.students
+              .filter(item => item && (item.id || item.studentId))
+              .map(async (item) => {
+                let dob = item.dateOfBirth;
+                if (dob && typeof dob === 'string' && dob.includes('T')) {
+                  dob = dob.split('T')[0];
+                }
 
-          const normalizedPhotoUrl = photoService.normalizeImageUrl(item.photo);
-          const normalizedQrUrl = photoService.normalizeImageUrl(item.qrCode);
+                const normalizedPhotoUrl = photoService.normalizeImageUrl(item.photo);
+                const normalizedQrUrl = photoService.normalizeImageUrl(item.qrCode);
 
-          let restoredBlob = null;
-          if (normalizedPhotoUrl && normalizedPhotoUrl.startsWith('data:image/')) {
-            try {
-              restoredBlob = await photoService.dataUrlToBlob(normalizedPhotoUrl);
-            } catch (_) {}
-          }
-          if (!restoredBlob && (existingStudentPhotoMap.has(item.id) || existingStudentPhotoMap.has(item.studentId))) {
-            restoredBlob = existingStudentPhotoMap.get(item.id) || existingStudentPhotoMap.get(item.studentId);
-          }
+                let restoredBlob = null;
+                if (normalizedPhotoUrl && normalizedPhotoUrl.startsWith('data:image/')) {
+                  try {
+                    restoredBlob = await photoService.dataUrlToBlob(normalizedPhotoUrl);
+                  } catch (_) {}
+                }
+                if (!restoredBlob && (existingStudentPhotoMap.has(item.id) || existingStudentPhotoMap.has(item.studentId))) {
+                  restoredBlob = existingStudentPhotoMap.get(item.id) || existingStudentPhotoMap.get(item.studentId);
+                }
 
-          const cleanItem = normalizeStudentRecord({
-            ...item,
-            id: item.id ? String(item.id).trim() : `std-${item.studentId || Date.now()}`,
-            studentId: item.studentId ? String(item.studentId).trim() : '',
-            dateOfBirth: dob || '',
-            photoBlob: restoredBlob || null,
-            photo: normalizedPhotoUrl || (restoredBlob ? '(Photo attached)' : ''),
-            qrCode: normalizedQrUrl || (item.qrCode ? String(item.qrCode).trim() : '')
-          });
-          await db.put('students', cleanItem);
-          studentCount++;
-        }
+                return normalizeStudentRecord({
+                  ...item,
+                  id: item.id ? String(item.id).trim() : `std-${item.studentId || Date.now()}`,
+                  studentId: item.studentId ? String(item.studentId).trim() : '',
+                  dateOfBirth: dob || '',
+                  photoBlob: restoredBlob || null,
+                  photo: normalizedPhotoUrl || (restoredBlob ? '(Photo attached)' : ''),
+                  qrCode: normalizedQrUrl || (item.qrCode ? String(item.qrCode).trim() : '')
+                });
+              })
+          );
+          await Promise.all(cleanStudents.map(cleanItem => db.put('students', cleanItem)));
+          studentCount = cleanStudents.length;
         }
       }
 
@@ -1273,25 +1276,27 @@ export const CloudSyncService = {
 
     this._isRestoring = true;
     try {
-      if (currentUser?.id) {
-        const { initUserDatabase } = await import('../database/db.js');
-        await initUserDatabase(currentUser.id);
-      }
-      await db.open();
-      const localTeachersCount = await db.count('teachers').catch(() => 0);
-      const localSchoolsCount = await db.count('schools').catch(() => 0);
-      const localStudentsCount = await db.count('students').catch(() => 0);
-      const localClassesCount = await db.count('classes').catch(() => 0);
-      const isLocalEmpty = (localStudentsCount === 0 && localTeachersCount === 0 && localSchoolsCount === 0 && localClassesCount === 0);
-
       const payload = {
         action: 'PUSH_TO_APP',
         username: currentUser.username
       };
 
-      const result = await this.dispatchGoogleScriptRequest(endpoint, payload, 30000);
+      const result = await this.dispatchGoogleScriptRequest(endpoint, payload, 60000);
       if (result && result.success && result.found) {
+        if (currentUser?.id) {
+          const { initUserDatabase } = await import('../database/db.js');
+          await initUserDatabase(currentUser.id);
+        }
+        await db.open();
+
         if (result.isNewlyCreated) {
+          const [localTeachersCount, localSchoolsCount, localStudentsCount, localClassesCount] = await Promise.all([
+            db.count('teachers').catch(() => 0),
+            db.count('schools').catch(() => 0),
+            db.count('students').catch(() => 0),
+            db.count('classes').catch(() => 0)
+          ]);
+          const isLocalEmpty = (localStudentsCount === 0 && localTeachersCount === 0 && localSchoolsCount === 0 && localClassesCount === 0);
           // Only seed newly created cloud sheet if local actually has data
           if (!isLocalEmpty) {
             try {
