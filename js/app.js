@@ -82,17 +82,17 @@ class SchoolApp {
         await initUserDatabase(user.id);
       }
 
-      // Render the App Shell immediately from local IndexedDB for instant load (<100ms)
-      this.showAppShell();
-
-      // Background check for latest Google Drive workspace data (non-blocking)
+      // Always pull fresh data directly from this account's Google Sheet in Drive before rendering
       if (typeof navigator !== 'undefined' && navigator.onLine && user && user.role !== 'ADMIN') {
-        import('./services/cloudSyncService.js').then(({ CloudSyncService }) => {
-          CloudSyncService.checkAndSyncOnStartup(user).catch(cloudErr => {
-            console.warn('Startup workspace sync notice:', cloudErr);
-          });
-        }).catch(() => {});
+        try {
+          const { CloudSyncService } = await import('./services/cloudSyncService.js');
+          await CloudSyncService.checkAndSyncOnStartup(user);
+        } catch (cloudErr) {
+          console.warn('Startup workspace sync notice:', cloudErr);
+        }
       }
+
+      this.showAppShell();
     } else {
       this.showLogin();
     }

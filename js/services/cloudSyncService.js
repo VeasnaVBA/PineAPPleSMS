@@ -130,6 +130,7 @@ export const CloudSyncService = {
       const response = await fetch(endpoint, {
         method: 'POST',
         mode: 'cors',
+        cache: 'no-store',
         redirect: 'follow',
         headers: {
           'Content-Type': 'text/plain;charset=utf-8'
@@ -653,7 +654,7 @@ export const CloudSyncService = {
 
       // 5. If force option or login is active, apply immediately without confirmation prompt
       if (isForce) {
-        await this.applyRestoredData(incomingData, currentUser, { silent: isSilent });
+        await this.applyRestoredData(incomingData, currentUser, { silent: isSilent, allowEmptyWipe: true });
         return true;
       }
 
@@ -745,7 +746,7 @@ export const CloudSyncService = {
                     restoredBlob = await photoService.dataUrlToBlob(normalizedPhotoUrl);
                   } catch (_) {}
                 }
-                if (!restoredBlob && (existingStudentPhotoMap.has(item.id) || existingStudentPhotoMap.has(item.studentId))) {
+                if (!restoredBlob && item.photo === '(Photo attached)' && (existingStudentPhotoMap.has(item.id) || existingStudentPhotoMap.has(item.studentId))) {
                   restoredBlob = existingStudentPhotoMap.get(item.id) || existingStudentPhotoMap.get(item.studentId);
                 }
 
@@ -1251,7 +1252,7 @@ export const CloudSyncService = {
         }
 
         if (result.data) {
-          await this.applyRestoredData(result.data, currentUser, { silent: options?.silent ?? false });
+          await this.applyRestoredData(result.data, currentUser, { silent: options?.silent ?? false, allowEmptyWipe: true });
           return true;
         }
       }
@@ -1307,7 +1308,7 @@ export const CloudSyncService = {
         }
 
         if (result.data) {
-          await this.applyRestoredData(result.data, currentUser, { silent: true });
+          await this.applyRestoredData(result.data, currentUser, { silent: true, allowEmptyWipe: true });
           WorkspaceSetupService.notifySetupChange();
           return true;
         }
