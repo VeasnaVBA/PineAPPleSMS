@@ -15,7 +15,7 @@ import { ExitSyncModal } from '../components/exitSyncModal.js';
 import { setWorkspaceMutationCallback } from '../database/db.js';
 
 export const AUTO_SAVE_INTERVAL_KEY = 'school_auto_save_interval';
-export const DEFAULT_AUTO_SAVE_INTERVAL = 1500;
+export const DEFAULT_AUTO_SAVE_INTERVAL = 0;
 
 export const AUTO_SAVE_PRESETS = [
   { value: 1500, labelKm: '១.៥ វិនាទី (ភ្លាមៗ - លំនាំដើម)', labelEn: '1.5 seconds (Instant - Default)' },
@@ -119,10 +119,6 @@ class SyncStateManager {
       // 1. Online / Offline network listeners
       window.addEventListener('online', () => {
         this.notify();
-        // If there were unsynced changes accumulated while offline, trigger auto-sync
-        if (this._isDirty && !this._isAutoSyncing) {
-          this.scheduleAutoSync(1000);
-        }
       });
 
       window.addEventListener('offline', () => {
@@ -184,10 +180,9 @@ class SyncStateManager {
           btnText.includes('submit');
 
         if (isSaveOrSubmit) {
-          // Allow 150ms for local IndexedDB transaction to settle, then fire auto-sync to Drive
+          // Mark dirty so the navbar Save button highlights unsaved changes; sync runs when user clicks Save
           setTimeout(() => {
             this.markDirty('button.click');
-            this.scheduleAutoSync(200);
           }, 150);
         }
       }, true);
@@ -199,7 +194,6 @@ class SyncStateManager {
         }
         setTimeout(() => {
           this.markDirty('form.submit');
-          this.scheduleAutoSync(200);
         }, 150);
       }, true);
 
@@ -228,7 +222,6 @@ class SyncStateManager {
           if (target.closest('table, tr, td, form, .score-cell-input, [data-row-idx], .att-cell-btn')) {
             setTimeout(() => {
               this.markDirty('input.change');
-              this.scheduleAutoSync(Math.min(this.DEBOUNCE_MS || 1500, 1500));
             }, 100);
           }
         }
@@ -244,7 +237,6 @@ class SyncStateManager {
     this._isDirty = true;
     this._mutationCount++;
     this.notify();
-    this.scheduleAutoSync(this.DEBOUNCE_MS);
   }
 
   /**
