@@ -375,12 +375,44 @@ export const CloudSyncService = {
         await initUserDatabase(currentUser.id);
       }
 
-      // Read all stores from active user's isolated IndexedDB
-      const rawStudents = await db.getAll('students');
+      // Read all stores from active user's isolated IndexedDB in parallel for maximum speed
+      const { SettingsService } = await import('./settingsService.js');
+      const [
+        rawStudents,
+        rawSchools,
+        classes,
+        rawTeachers,
+        attendance,
+        scores,
+        academicYears,
+        subjects,
+        groups,
+        report_settings,
+        rawRegs,
+        rawCardSettings,
+        rawSettings
+      ] = await Promise.all([
+        db.getAll('students'),
+        db.getAll('schools'),
+        db.getAll('classes'),
+        db.getAll('teachers'),
+        db.getAll('attendance'),
+        db.getAll('scores'),
+        db.getAll('academicYears'),
+        db.getAll('subjects'),
+        db.getAll('groups'),
+        db.getAll('report_settings'),
+        db.getAll('registration_queue'),
+        SettingsService.getAllCardSettings(),
+        db.getAll('settings')
+      ]);
+
       const students = await Promise.all(rawStudents.map(async (s) => {
         const norm = normalizeStudentRecord(s);
         const clean = { ...norm };
-        if (clean.photoBlob instanceof Blob) {
+        if (clean.photo && typeof clean.photo === 'string' && clean.photo.startsWith('data:image/') && clean.photo.length <= 45000) {
+          // Already has compact sheet-ready Data URL — skip slow canvas re-encoding
+        } else if (clean.photoBlob instanceof Blob) {
           try {
             clean.photo = await photoService.blobToDataUrlForSheet(clean.photoBlob, 45000);
           } catch (_) {
@@ -398,7 +430,6 @@ export const CloudSyncService = {
         return clean;
       }));
 
-      const rawSchools = await db.getAll('schools');
       const schools = rawSchools.map(sch => {
         const addrParts = (!sch.village && !sch.commune && !sch.district && !sch.province && sch.address)
           ? SchoolService.parseAddressToParts(sch.address)
@@ -432,8 +463,6 @@ export const CloudSyncService = {
         };
       });
 
-      const classes = await db.getAll('classes');
-      const rawTeachers = await db.getAll('teachers');
       const teachers = await Promise.all(rawTeachers.map(async (t) => {
         const norm = normalizeTeacherRecord(t);
         const clean = { ...norm };
@@ -442,7 +471,9 @@ export const CloudSyncService = {
           clean.userId = clean.userId || currentUser.id;
           clean.accountId = clean.accountId || currentUser.id;
         }
-        if (clean.photoBlob instanceof Blob) {
+        if (clean.photo && typeof clean.photo === 'string' && clean.photo.startsWith('data:image/') && clean.photo.length <= 45000) {
+          // Already has compact sheet-ready Data URL
+        } else if (clean.photoBlob instanceof Blob) {
           try {
             clean.photo = await photoService.blobToDataUrlForSheet(clean.photoBlob, 45000);
           } catch (_) {
@@ -459,18 +490,14 @@ export const CloudSyncService = {
         delete clean.photoBlob;
         return clean;
       }));
-      const attendance = await db.getAll('attendance');
-      const scores = await db.getAll('scores');
-      const academicYears = await db.getAll('academicYears');
-      const subjects = await db.getAll('subjects');
-      const groups = await db.getAll('groups');
-      const report_settings = await db.getAll('report_settings');
-      const rawRegs = await db.getAll('registration_queue');
+
       const registration_queue = await Promise.all(rawRegs.map(async (r) => {
         const clean = { ...r };
-        if (clean.photoBlob instanceof Blob) {
+        if (clean.photo && typeof clean.photo === 'string' && clean.photo.startsWith('data:image/') && clean.photo.length <= 45000) {
+          // Keep inline Data URL
+        } else if (clean.photoBlob instanceof Blob) {
           try {
-            clean.photo = await photoService.blobToDataUrl(clean.photoBlob);
+            clean.photo = await photoService.blobToDataUrlForSheet(clean.photoBlob, 45000);
           } catch (_) {}
         } else if (clean.photo === '(Photo attached)') {
           clean.photo = '';
@@ -478,11 +505,7 @@ export const CloudSyncService = {
         delete clean.photoBlob;
         return clean;
       }));
-      const { SettingsService } = await import('./settingsService.js');
-      const rawCardSettings = await SettingsService.getAllCardSettings();
       const card_settings = prepareSettingsForDrive(rawCardSettings, true);
-
-      const rawSettings = await db.getAll('settings');
       const settings = prepareSettingsForDrive(rawSettings, false);
 
       // 5. Construct payload matching specification
@@ -874,92 +897,88 @@ export const CloudSyncService = {
       // 5. Attendance
       if (Array.isArray(data.attendance)) {
         await db.clear('attendance');
-        for (const item of data.attendance) {
-          if (!item.id && !item.date) continue;
-          let attDate = item.date;
-          if (attDate && typeof attDate === 'string' && attDate.includes('T')) {
-            attDate = attDate.split('T')[0];
-          }
-          const cleanItem = {
-            ...item,
-            id: item.id ? String(item.id).trim() : `att-${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-            date: attDate || ''
-          };
-          await db.put('attendance', cleanItem);
-          attendanceCount++;
-        }
+        const cleanAtt = data.attendance
+          .filter(item => item && (item.id || item.date))
+          .map(item => {
+            let attDate = item.date;
+            if (attDate && typeof attDate === 'string' && attDate.includes('T')) {
+              attDate = attDate.split('T')[0];
+            }
+            return {
+              ...item,
+              id: item.id ? String(item.id).trim() : `att-${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+              date: attDate || ''
+            };
+          });
+        await Promise.all(cleanAtt.map(c => db.put('attendance', c)));
+        attendanceCount = cleanAtt.length;
       }
 
       // 6. Scores
       if (Array.isArray(data.scores)) {
         await db.clear('scores');
-        for (const item of data.scores) {
-          if (!item.id && !item.studentId) continue;
-          const cleanItem = {
+        const cleanScores = data.scores
+          .filter(item => item && (item.id || item.studentId))
+          .map(item => ({
             ...item,
             id: item.id ? String(item.id).trim() : `scr-${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
             studentId: item.studentId ? String(item.studentId).trim() : '',
             score: item.score !== undefined && item.score !== '' ? Number(item.score) : null
-          };
-          await db.put('scores', cleanItem);
-          scoreCount++;
-        }
+          }));
+        await Promise.all(cleanScores.map(c => db.put('scores', c)));
+        scoreCount = cleanScores.length;
       }
 
       // 7. Academic Years (Director module: Academic Years & Promotions)
       if (Array.isArray(data.academicYears)) {
-        for (const item of data.academicYears) {
-          if (!item.id && !item.name) continue;
-          const cleanItem = {
+        const cleanAys = data.academicYears
+          .filter(item => item && (item.id || item.name))
+          .map(item => ({
             ...item,
             id: item.id ? String(item.id).trim() : `ay-${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
             name: item.name ? String(item.name).trim() : '',
             isActive: item.isActive === true || item.isActive === 'true' || item.isActive === 1
-          };
-          await db.put('academicYears', cleanItem);
-          academicYearCount++;
-        }
+          }));
+        await Promise.all(cleanAys.map(c => db.put('academicYears', c)));
+        academicYearCount = cleanAys.length;
       }
 
       // 8. Subjects (Director module: Curriculum Subjects)
       if (Array.isArray(data.subjects)) {
-        for (const item of data.subjects) {
-          if (!item.id && !item.name && !item.code) continue;
-          const cleanItem = {
+        const cleanSubs = data.subjects
+          .filter(item => item && (item.id || item.name || item.code))
+          .map(item => ({
             ...item,
             id: item.id ? String(item.id).trim() : `sub-${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
             code: item.code ? String(item.code).trim() : '',
             name: item.name ? String(item.name).trim() : ''
-          };
-          await db.put('subjects', cleanItem);
-          subjectCount++;
-        }
+          }));
+        await Promise.all(cleanSubs.map(c => db.put('subjects', c)));
+        subjectCount = cleanSubs.length;
       }
 
       // 9. Groups (Director / Teacher module: Student groups)
       if (Array.isArray(data.groups)) {
-        for (const item of data.groups) {
-          if (!item.id && !item.name && !item.classId) continue;
-          const cleanItem = {
+        const cleanGrps = data.groups
+          .filter(item => item && (item.id || item.name || item.classId))
+          .map(item => ({
             ...item,
             id: item.id ? String(item.id).trim() : `grp-${Date.now()}_${Math.random().toString(36).substr(2, 4)}`
-          };
-          await db.put('groups', cleanItem);
-          groupCount++;
-        }
+          }));
+        await Promise.all(cleanGrps.map(c => db.put('groups', c)));
+        groupCount = cleanGrps.length;
       }
 
       // 10. Report Settings (Director module: Report card layouts & signatures)
       if (Array.isArray(data.report_settings)) {
-        for (const item of data.report_settings) {
-          if (!item.id && !item.key && !item.type) continue;
-          const cleanItem = {
+        const cleanRs = data.report_settings
+          .filter(item => item && (item.id || item.key || item.type))
+          .map(item => ({
             ...item,
             id: item.id ? String(item.id).trim() : (item.key ? String(item.key).trim() : `rs-${Date.now()}`)
-          };
-          await db.put('report_settings', cleanItem);
-          reportSettingCount++;
-        }
+          }));
+        await Promise.all(cleanRs.map(c => db.put('report_settings', c)));
+        reportSettingCount = cleanRs.length;
       }
 
       // 11. Registration Queue (Director module: New Student Admissions / Staging)

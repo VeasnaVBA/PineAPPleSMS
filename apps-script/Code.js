@@ -961,8 +961,10 @@ function handlePullToDrive(fileName, username, data, payload) {
         // PRESERVE existing data in Drive!
         counts[def.name] = lastRow - 1;
       } else if (isWipeAllowed) {
-        sheet.clear();
-        sheet.getRange(1, 1).setValue('No records');
+        if (!(lastRow === 1 && sheet.getRange(1, 1).getValue() === 'No records')) {
+          sheet.clear();
+          sheet.getRange(1, 1).setValue('No records');
+        }
         counts[def.name] = 0;
       } else {
         // Safe preserve when sheet already has headers or empty state
