@@ -153,6 +153,8 @@ function doPost(e) {
       return handleFetchCardSettings(fileName, username);
     } else if (action === 'PULL_TO_DRIVE') {
       return handlePullToDrive(fileName, username, payload.data || {}, payload);
+    } else if (action === 'DELETE_STUDENTS') {
+      return handleDeleteStudents(fileName, username, payload.studentIds || payload.ids || []);
     } else if (action === 'PUSH_TO_APP') {
       return handlePushToApp(fileName, username);
     } else if (action === 'DELETE_USER_DRIVE_FILE') {
@@ -983,6 +985,55 @@ function handlePullToDrive(fileName, username, data, payload) {
     fileName: spreadsheet.getName(),
     spreadsheetUrl: spreadsheet.getUrl(),
     counts: counts
+  });
+}
+
+/**
+ * Directly delete specific student rows from the 'students' sheet by id or studentId.
+ * Fast & reliable even when the sheet contains many student photos.
+ */
+function handleDeleteStudents(fileName, username, studentIds) {
+  if (!Array.isArray(studentIds) || studentIds.length === 0) {
+    return jsonResponse({ success: true, deletedCount: 0 });
+  }
+  var fileInfo = getOrCreateUserSpreadsheet(fileName, username);
+  var spreadsheet = fileInfo.spreadsheet;
+  var sheet = spreadsheet.getSheetByName('students');
+  if (!sheet || sheet.getLastRow() <= 1) {
+    return jsonResponse({ success: true, deletedCount: 0 });
+  }
+
+  var targetSet = {};
+  for (var i = 0; i < studentIds.length; i++) {
+    var k = String(studentIds[i] || '').trim().toLowerCase();
+    if (k) targetSet[k] = true;
+  }
+
+  var values = sheet.getDataRange().getValues();
+  var headers = values[0] || [];
+  var idCol = headers.indexOf('id');
+  var stuIdCol = headers.indexOf('studentId');
+  var deletedCount = 0;
+
+  for (var r = values.length - 1; r >= 1; r--) {
+    var row = values[r];
+    var vId = idCol >= 0 ? String(row[idCol] || '').trim().toLowerCase() : '';
+    var vStuId = stuIdCol >= 0 ? String(row[stuIdCol] || '').trim().toLowerCase() : '';
+    if ((vId && targetSet[vId]) || (vStuId && targetSet[vStuId])) {
+      sheet.deleteRow(r + 1);
+      deletedCount++;
+    }
+  }
+
+  if (sheet.getLastRow() <= 1) {
+    sheet.clear();
+    sheet.getRange(1, 1).setValue('No records');
+  }
+
+  return jsonResponse({
+    success: true,
+    deletedCount: deletedCount,
+    fileName: spreadsheet.getName()
   });
 }
 

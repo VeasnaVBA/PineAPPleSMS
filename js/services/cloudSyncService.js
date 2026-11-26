@@ -313,6 +313,22 @@ export const CloudSyncService = {
     }
   },
 
+  async deleteStudentsFromDrive(studentIds = [], user = null) {
+    if (!Array.isArray(studentIds) || studentIds.length === 0) return true;
+    if (!this.isOnline()) return false;
+    const currentUser = user || authService.getCurrentUser();
+    if (!currentUser || !currentUser.username) return false;
+    const endpoint = getCloudSyncUrl();
+    if (!endpoint) return false;
+
+    const result = await this.dispatchGoogleScriptRequest(endpoint, {
+      action: 'DELETE_STUDENTS',
+      username: currentUser.username,
+      studentIds
+    }, 30000);
+    return !!(result && result.success !== false);
+  },
+
   /**
    * 1. Pull Data to Drive (Export local IndexedDB to Google Sheets)
    * @param {Object} [user=null] - Active user account

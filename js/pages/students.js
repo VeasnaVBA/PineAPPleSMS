@@ -1540,11 +1540,12 @@ export const StudentsPage = {
                       message: t('students.confirmDelete', { name: `${s.khmerName || ''} (${s.englishName || ''})` }),
                       destructive: true,
                       onConfirm: async () => {
+                        const deletedKeys = [student.id, student.studentId].filter(Boolean);
                         await StudentService.delete(student.id);
                         this.state.selectedIds.delete(student.id);
                         toast.success(t('students.deletedSuccess'));
                         await this.loadData(true);
-                        await this.syncStudentDeletionToSheet();
+                        await this.syncStudentDeletionToSheet(deletedKeys);
                       }
                     });
                   }
@@ -2103,12 +2104,22 @@ export const StudentsPage = {
         message: t('students.confirmBulkDelete', { count }),
         destructive: true,
         onConfirm: async () => {
-          await StudentService.bulkDelete(Array.from(this.state.selectedIds));
+          const selectedIdList = Array.from(this.state.selectedIds);
+          const allStudents = await StudentService.getAll();
+          const selectedSet = new Set(selectedIdList);
+          const deletedKeys = [];
+          for (const st of allStudents) {
+            if (selectedSet.has(st.id)) {
+              if (st.id) deletedKeys.push(st.id);
+              if (st.studentId) deletedKeys.push(st.studentId);
+            }
+          }
+          await StudentService.bulkDelete(selectedIdList);
           this.state.selectedIds.clear();
           if (selectAllCheckbox) selectAllCheckbox.checked = false;
           toast.success(t('students.bulkDeleteSuccess', { count }));
           await this.loadData(true);
-          await this.syncStudentDeletionToSheet();
+          await this.syncStudentDeletionToSheet(deletedKeys.length > 0 ? deletedKeys : selectedIdList);
         }
       });
     });
@@ -2224,11 +2235,12 @@ export const StudentsPage = {
           message: t('students.confirmDelete', { name: `${student.khmerName || ''} (${student.englishName || ''})` }),
           destructive: true,
           onConfirm: async () => {
+            const deletedKeys = [id, student.studentId].filter(Boolean);
             await StudentService.delete(id);
             this.state.selectedIds.delete(id);
             toast.success(t('students.deletedSuccess'));
             await this.loadData(true);
-            await this.syncStudentDeletionToSheet();
+            await this.syncStudentDeletionToSheet(deletedKeys);
           }
         });
       });
@@ -6694,16 +6706,26 @@ export const StudentsPage = {
   },
 
   /**
-   * Immediately sync student deletions to Google Drive Sheet (allowing empty wipe when 0 remain)
+   * Immediately sync student deletions to Google Drive Sheet (fast DELETE_STUDENTS with pullToDrive fallback)
    */
-  async syncStudentDeletionToSheet() {
+  async syncStudentDeletionToSheet(deletedKeys = []) {
     try {
-      const remaining = await StudentService.getAll();
       if (CloudSyncService.isOnline?.() && getCloudSyncUrl()) {
-        const ok = await CloudSyncService.pullToDrive(null, {
-          silent: true,
-          allowEmptyWipe: remaining.length === 0
-        });
+        let ok = false;
+        if (Array.isArray(deletedKeys) && deletedKeys.length > 0 && typeof CloudSyncService.deleteStudentsFromDrive === 'function') {
+          try {
+            ok = await CloudSyncService.deleteStudentsFromDrive(deletedKeys);
+          } catch (_) {
+            ok = false;
+          }
+        }
+        if (!ok) {
+          const remaining = await StudentService.getAll();
+          ok = await CloudSyncService.pullToDrive(null, {
+            silent: true,
+            allowEmptyWipe: remaining.length === 0 ? ['students'] : false
+          });
+        }
         if (ok) {
           syncStateManager.markClean();
         }
