@@ -396,13 +396,16 @@ export function renderIDCardHtml(student = {}, config = DEFAULT_CARD_CONFIG, cla
   let photoBoxSizeClass = isLandscape ? 'w-13 h-16 sm:w-14 sm:h-[68px]' : 'w-14 h-16 sm:w-16 sm:h-[72px]';
   if (photoRatio === '3x4') {
     photoBoxSizeClass = '';
-    photoBoxSizeStyle = isLandscape ? 'width: 13.5mm; height: 18mm;' : 'width: 15mm; height: 20mm;';
-  } else if (photoRatio === '4x6' || photoRatio === '2x3') {
+    photoBoxSizeStyle = 'width: 30mm; height: 40mm;';
+  } else if (photoRatio === '4x6') {
     photoBoxSizeClass = '';
-    photoBoxSizeStyle = isLandscape ? 'width: 13mm; height: 19.5mm;' : 'width: 14mm; height: 21mm;';
+    photoBoxSizeStyle = 'width: 40mm; height: 60mm;';
+  } else if (photoRatio === '2x3') {
+    photoBoxSizeClass = '';
+    photoBoxSizeStyle = 'width: 20mm; height: 30mm;';
   } else if (photoRatio === '1x1') {
     photoBoxSizeClass = '';
-    photoBoxSizeStyle = isLandscape ? 'width: 15mm; height: 15mm;' : 'width: 17mm; height: 17mm;';
+    photoBoxSizeStyle = 'width: 25mm; height: 25mm;';
   }
   const fieldsTransform = `transform: translate(${cfg.fieldsOffsetX || 0}px, ${cfg.fieldsOffsetY || 0}px) scale(${(cfg.fieldsScale || 100) / 100}); transform-origin: center center;`;
 

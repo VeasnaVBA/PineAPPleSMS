@@ -940,10 +940,10 @@ export const IDCardStudioModal = {
                     <span class="text-[11px] font-semibold font-khmer text-muted-foreground">${isKm ? 'ខ្នាតស្តង់ដាររូបថត' : 'Standard Photo Size'}</span>
                     <select id="sel-photo-aspect-ratio" class="h-7 px-2 rounded border border-input bg-background text-xs font-medium cursor-pointer">
                       <option value="default" ${(!this.config.photoAspectRatio || this.config.photoAspectRatio === 'default') ? 'selected' : ''}>${isKm ? 'លំនាំដើម' : 'Default'}</option>
-                      <option value="3x4" ${this.config.photoAspectRatio === '3x4' ? 'selected' : ''}>3x4</option>
-                      <option value="4x6" ${this.config.photoAspectRatio === '4x6' ? 'selected' : ''}>4x6</option>
-                      <option value="2x3" ${this.config.photoAspectRatio === '2x3' ? 'selected' : ''}>2x3</option>
-                      <option value="1x1" ${this.config.photoAspectRatio === '1x1' ? 'selected' : ''}>1x1 (${isKm ? 'ការ៉េ' : 'Square'})</option>
+                      <option value="3x4" ${this.config.photoAspectRatio === '3x4' ? 'selected' : ''}>3cm × 4cm</option>
+                      <option value="4x6" ${this.config.photoAspectRatio === '4x6' ? 'selected' : ''}>4cm × 6cm</option>
+                      <option value="2x3" ${this.config.photoAspectRatio === '2x3' ? 'selected' : ''}>2cm × 3cm</option>
+                      <option value="1x1" ${this.config.photoAspectRatio === '1x1' ? 'selected' : ''}>2.5cm × 2.5cm (1x1)</option>
                     </select>
                   </div>
                   <div class="flex items-center justify-between gap-2">
