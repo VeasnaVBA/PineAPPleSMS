@@ -805,13 +805,12 @@ function savePhotoFileToDrive(folder, filename, photoData) {
     var blob = Utilities.newBlob(bytes, mime, filename);
 
     var existingFiles = folder.getFilesByName(filename);
-    var file;
-    if (existingFiles.hasNext()) {
-      file = existingFiles.next();
-      file.setContent(blob.getBytes());
-    } else {
-      file = folder.createFile(blob);
+    while (existingFiles.hasNext()) {
+      try {
+        existingFiles.next().setTrashed(true);
+      } catch (_) {}
     }
+    var file = folder.createFile(blob);
 
     try {
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
@@ -837,7 +836,9 @@ function handlePullToDrive(fileName, username, data, payload) {
     for (var s = 0; s < data.students.length; s++) {
       var std = data.students[s];
       var sId = String(std.studentId || std.id || ('std_' + s)).replace(/[^a-zA-Z0-9_-]/g, '_');
-      if (std.photo && typeof std.photo === 'string' && std.photo.length > 48000 && (std.photo.indexOf('data:image/') === 0 || std.photo.indexOf('base64,') > -1)) {
+      if (std.photo && typeof std.photo === 'string' && std.photo.indexOf('data:image/') === 0 && std.photo.length <= 48000) {
+        std.drivePhotoUrl = '';
+      } else if (std.photo && typeof std.photo === 'string' && std.photo.length > 48000 && (std.photo.indexOf('data:image/') === 0 || std.photo.indexOf('base64,') > -1)) {
         var sUrl = savePhotoFileToDrive(photoFolder, 'student_' + sId + '.jpg', std.photo);
         if (sUrl) std.photo = sUrl;
       }
